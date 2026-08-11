@@ -1,7 +1,7 @@
 /**
  * Google Sheet Product Synchronizer Service
- * Customized for User Sheet Schema:
- * STT | MÃ SẢN PHẨM | TÊN SẢN PHẨM | THƯƠNG HIỆU | PHÂN LOẠI | ẢNH SẢN PHẨM | MÔ TẢ, GHI CHÚ SẢN PHẨM | XUẤT SỨ | GIÁ THÀNH(VNĐ) | GIÁ THÀNH(WON) | ĐÁNH GIÁ
+ * Customized for User Sheet Schema (12 Columns):
+ * STT | MÃ SẢN PHẨM | TÊN SẢN PHẨM | THƯƠNG HIỆU | PHÂN LOẠI | ẢNH SẢN PHẨM | MÔ TẢ, GHI CHÚ SẢN PHẨM | XUẤT SỨ | GIÁ THÀNH(VNĐ) | GIÁ THÀNH(WON) | ĐÁNH GIÁ | LINK SẢN PHẨM HÀN QUỐC
  */
 
 export const DEFAULT_USER_GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1rlXji8EI6ry_aNqo9Q80uiQsT0qyOfgno2MEx-zsf9U/edit?usp=sharing';
@@ -137,6 +137,7 @@ export const fetchProductsFromGoogleSheet = async (sheetUrl = DEFAULT_USER_GOOGL
     const idxVndPrice = getIndex(['giathanhvnd', 'giavnd', 'vnd']);
     const idxWonPrice = getIndex(['giathanhwon', 'giawon', 'won', 'foreignprice']);
     const idxRating = getIndex(['danhgia', 'rating', 'sao']);
+    const idxLink = getIndex(['linksanpham', 'link', 'url', 'danklink']);
 
     const products = [];
 
@@ -171,6 +172,7 @@ export const fetchProductsFromGoogleSheet = async (sheetUrl = DEFAULT_USER_GOOGL
         description: idxDesc > -1 && r[idxDesc] ? r[idxDesc] : 'Sản phẩm mua hộ chính hãng từ Store Hàn Quốc.',
         origin: idxOrigin > -1 && r[idxOrigin] ? r[idxOrigin] : 'Store Olive Young Seoul, Hàn Quốc',
         rating: idxRating > -1 && parseFloat(r[idxRating]) ? parseFloat(r[idxRating]) : 4.9,
+        productUrl: idxLink > -1 && r[idxLink] ? r[idxLink] : '',
         reviewsCount: 100 + i * 12
       };
 
