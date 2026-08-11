@@ -402,16 +402,53 @@ export default function KROrderHomePage() {
           </div>
         </section>
 
-        {/* 6. Hướng dẫn Thanh toán VietQR & Ngân hàng Hàn Quốc */}
+        {/* 6. Hướng dẫn Thanh toán VietQR & Tỷ giá Hàn - Việt */}
         <section id="payment" style={{ padding: '70px 0', background: '#FFF' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '2px', color: 'var(--purple-primary)', textTransform: 'uppercase' }}>
-                HƯỚNG DẪN THANH TOÁN
+                BẢNG TỶ GIÁ & THANH TOÁN
               </span>
               <h2 style={{ fontSize: '2.4rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', marginTop: '6px' }}>
-                Thanh Toán Linh Hoạt Cho Người Việt
+                Thanh Toán Linh Hoạt & Tỷ Giá Hôm Nay
               </h2>
+            </div>
+
+            {/* Khối Tỷ giá Won Hàn / VNĐ */}
+            <div style={{
+              backgroundColor: 'var(--purple-light)',
+              borderRadius: '16px',
+              padding: '24px 30px',
+              marginBottom: '35px',
+              border: '1px solid rgba(122, 75, 158, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '20px'
+            }}>
+              <div>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--purple-primary)' }}>
+                  🇰🇷 TỶ GIÁ QUY ĐỔI THỜI GIAN THỰC
+                </span>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-dark)', marginTop: '4px' }}>
+                  1 Won (₩) = <span style={{ color: 'var(--purple-primary)', fontSize: '1.6rem' }}>{krwRate} VNĐ (đ)</span>
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  * Giá sản phẩm trên website được tự động cập nhật chính xác theo tỷ giá này.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <div style={{ background: '#FFF', padding: '12px 20px', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>10.000 Won (₩)</span>
+                  <strong style={{ fontSize: '1.1rem', color: 'var(--purple-primary)' }}>{(10000 * krwRate).toLocaleString('vi-VN')} đ</strong>
+                </div>
+                <div style={{ background: '#FFF', padding: '12px 20px', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>50.000 Won (₩)</span>
+                  <strong style={{ fontSize: '1.1rem', color: 'var(--purple-primary)' }}>{(50000 * krwRate).toLocaleString('vi-VN')} đ</strong>
+                </div>
+              </div>
             </div>
 
             <div style={{
