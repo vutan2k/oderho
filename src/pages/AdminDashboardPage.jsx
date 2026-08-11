@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast';
 import AdminProductManager from '../components/AdminProductManager';
 import {
   LogOut, Search, Edit3,
-  RefreshCw, Truck, FileSpreadsheet, ShoppingBag
+  RefreshCw, FileSpreadsheet, ShoppingBag
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {

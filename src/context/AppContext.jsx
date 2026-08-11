@@ -121,7 +121,17 @@ export const AppProvider = ({ children }) => {
 
   const [products, setProducts] = useState(() => {
     const savedCustom = localStorage.getItem('tavy_custom_products');
-    return savedCustom ? JSON.parse(savedCustom) : OLIVE_YOUNG_CATALOG;
+    if (savedCustom) {
+      const parsed = JSON.parse(savedCustom);
+      // Dedupe by goodsNo (keep first occurrence)
+      const seen = new Set();
+      return parsed.filter(p => {
+        if (!p.goodsNo || seen.has(p.goodsNo)) return false;
+        seen.add(p.goodsNo);
+        return true;
+      });
+    }
+    return OLIVE_YOUNG_CATALOG;
   });
 
   // CRUD: persist products to localStorage on every change
@@ -130,7 +140,13 @@ export const AppProvider = ({ children }) => {
   }, [products]);
 
   const addProduct = (product) => {
-    setProducts(prev => [product, ...prev]);
+    setProducts(prev => {
+      if (prev.some(p => p.goodsNo === product.goodsNo)) {
+        // Replace existing instead of duplicate
+        return prev.map(p => p.goodsNo === product.goodsNo ? { ...p, ...product } : p);
+      }
+      return [product, ...prev];
+    });
   };
 
   const updateProduct = (goodsNo, updates) => {
