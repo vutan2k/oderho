@@ -252,6 +252,19 @@ export const AppProvider = ({ children }) => {
     return { success: true };
   };
 
+  const loginWithGoogleAuth = async () => {
+    const { loginWithGoogle } = await import('../firebase');
+    const res = await loginWithGoogle();
+    if (res.success) {
+      setCurrentUser(res.user);
+      const existing = users.find((u) => u.email.toLowerCase() === res.user.email.toLowerCase());
+      if (!existing) {
+        setUsers((prev) => [...prev, res.user]);
+      }
+    }
+    return res;
+  };
+
   const logoutUser = () => {
     setCurrentUser(null);
   };
@@ -344,6 +357,7 @@ export const AppProvider = ({ children }) => {
         currentUser,
         registerUser,
         loginUser,
+        loginWithGoogleAuth,
         logoutUser,
         createOrder,
         updateRates,
