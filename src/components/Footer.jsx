@@ -7,14 +7,14 @@ export default function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div>
-            <a href="#" className="brand-logo" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '16px' }}>
+            <a href="#" className="brand-logo" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '16px' }}>
               <img
-                src="/tavy-logo.jpg"
+                src="/tavy-logo.png"
                 alt="TAVY Logo"
-                style={{ height: '40px', borderRadius: '8px', objectFit: 'cover' }}
+                style={{ height: '48px', width: 'auto', display: 'block', objectFit: 'contain' }}
               />
-              <span className="brand-logo-text" style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--purple-primary)', fontFamily: 'var(--font-serif)' }}>
-                TAVY<span>KOREA</span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                KOREA
               </span>
             </a>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '20px' }}>

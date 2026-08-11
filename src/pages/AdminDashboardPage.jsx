@@ -99,7 +99,7 @@ export default function AdminDashboardPage() {
       <header style={{ backgroundColor: '#1F2937', color: '#FFF', padding: '16px 0', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img src="/tavy-logo.jpg" alt="TAVY Logo" style={{ height: '36px', borderRadius: '6px' }} />
+            <img src="/tavy-logo.png" alt="TAVY Logo" style={{ height: '40px', width: 'auto', objectFit: 'contain' }} />
             <span style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', padding: '6px 12px', borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
               ADMIN PORTAL
             </span>

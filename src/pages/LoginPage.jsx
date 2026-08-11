@@ -58,9 +58,9 @@ export default function LoginPage() {
       }}>
         {/* Title Header */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <img src="/tavy-logo.jpg" alt="TAVY Logo" style={{ height: '48px', borderRadius: '10px', marginBottom: '8px' }} />
-          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '1px' }}>
-            TAVY KOREA
+          <img src="/tavy-logo.png" alt="TAVY Logo" style={{ height: '60px', width: 'auto', display: 'inline-block', objectFit: 'contain', marginBottom: '4px' }} />
+          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '2px', textTransform: 'uppercase' }}>
+            KOREA
           </div>
           <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400, marginTop: '4px' }}>
             {isLoginTab ? 'Đăng Nhập Tài Khoản' : 'Đăng Ký Tài Khoản'}

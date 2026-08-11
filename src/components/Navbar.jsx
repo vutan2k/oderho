@@ -26,14 +26,14 @@ export default function Navbar({ logoSrc }) {
         width: '100%',
       }}>
         {/* Logo Link */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
           <img
-            src="/tavy-logo.jpg"
+            src="/tavy-logo.png"
             alt="TAVY Logo"
-            style={{ height: '42px', borderRadius: '8px', objectFit: 'cover' }}
+            style={{ height: '48px', width: 'auto', display: 'block', objectFit: 'contain' }}
           />
-          <span style={{ fontWeight: 800, fontSize: '1.4rem', color: 'var(--purple-primary)', letterSpacing: '1px', fontFamily: 'var(--font-serif)' }}>
-            TAVY
+          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '2px', textTransform: 'uppercase' }}>
+            KOREA
           </span>
         </Link>
 

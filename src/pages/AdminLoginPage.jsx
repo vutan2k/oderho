@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
       }}>
         {/* Title Header */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <img src="/tavy-logo.jpg" alt="TAVY Logo" style={{ height: '52px', borderRadius: '10px', marginBottom: '12px' }} />
+          <img src="/tavy-logo.png" alt="TAVY Logo" style={{ height: '64px', width: 'auto', display: 'inline-block', objectFit: 'contain', marginBottom: '8px' }} />
           <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400 }}>
             Quản Trị Hệ Thống
           </h2>
