@@ -420,8 +420,9 @@ h1, h2, h3, h4, .font-serif {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.2fr 1.2fr 1.5fr;
-  gap: 40px;
+  grid-template-columns: 1.5fr 1fr 1.2fr;
+  justify-content: space-between;
+  gap: 80px;
   margin-bottom: 50px;
 }
 
