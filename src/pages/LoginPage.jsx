@@ -58,10 +58,11 @@ export default function LoginPage() {
       }}>
         {/* Title Header */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '2px', color: 'var(--purple-primary)', textTransform: 'uppercase' }}>
-            K-MART VIỆT HÀN
-          </span>
-          <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400, marginTop: '4px' }}>
+          <img src="/tavy-logo.jpg" alt="TAVY Logo" style={{ height: '48px', borderRadius: '10px', marginBottom: '8px' }} />
+          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '1px' }}>
+            TAVY KOREA
+          </div>
+          <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400, marginTop: '4px' }}>
             {isLoginTab ? 'Đăng Nhập Tài Khoản' : 'Đăng Ký Tài Khoản'}
           </h2>
         </div>

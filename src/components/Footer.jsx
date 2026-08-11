@@ -7,11 +7,18 @@ export default function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div>
-            <a href="#" className="brand-logo" style={{ marginBottom: '16px' }}>
-              <span className="brand-logo-text">K-MART<span>VIỆT HÀN</span></span>
+            <a href="#" className="brand-logo" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '16px' }}>
+              <img
+                src="/tavy-logo.jpg"
+                alt="TAVY Logo"
+                style={{ height: '40px', borderRadius: '8px', objectFit: 'cover' }}
+              />
+              <span className="brand-logo-text" style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--purple-primary)', fontFamily: 'var(--font-serif)' }}>
+                TAVY<span>KOREA</span>
+              </span>
             </a>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '20px' }}>
-              Hệ thống chuyên phân phối Mỹ phẩm Olive Young & Thực phẩm chức năng, thuốc nội địa Hàn Quốc chính hãng cho người Việt.
+              TAVY - Hệ thống mua hộ & phân phối Mỹ phẩm Olive Young, Thực phẩm chức năng & Thuốc nội địa Hàn Quốc chính hãng 100% cho người Việt.
             </p>
           </div>
 
@@ -26,7 +33,7 @@ export default function Footer() {
           </div>
 
           <div className="footer-col">
-            <h5>LIÊN HỆ</h5>
+            <h5>LIÊN HỆ TAVY</h5>
             <ul className="footer-links" style={{ gap: '12px' }}>
               <li style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <Phone size={14} color="var(--purple-primary)" />
@@ -38,7 +45,7 @@ export default function Footer() {
               </li>
               <li style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <Mail size={14} color="var(--purple-primary)" />
-                <span>support@kmartviethan.vn</span>
+                <span>support@tavykorea.vn</span>
               </li>
             </ul>
           </div>
@@ -51,7 +58,7 @@ export default function Footer() {
           fontSize: '0.8rem',
           color: 'var(--text-light)'
         }}>
-          © 2026 K-MART VIỆT HÀN. Tất cả quyền được bảo lưu. Dịch vụ hàng xách tay & nhập khẩu Hàn Quốc uy tín.
+          © 2026 TAVY KOREA. Tất cả quyền được bảo lưu. Dịch vụ hàng xách tay & nhập khẩu Hàn Quốc uy tín.
         </div>
       </div>
     </footer>

@@ -42,26 +42,14 @@ export default function AdminLoginPage() {
         padding: '40px 32px',
         boxShadow: 'var(--shadow-md)'
       }}>
+        {/* Title Header */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--purple-light)',
-            color: 'var(--purple-primary)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '16px',
-            border: '1px solid rgba(122, 75, 158, 0.2)'
-          }}>
-            <ShieldCheck size={32} />
-          </div>
+          <img src="/tavy-logo.jpg" alt="TAVY Logo" style={{ height: '52px', borderRadius: '10px', marginBottom: '12px' }} />
           <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400 }}>
             Quản Trị Hệ Thống
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-            K-MART VIỆT HÀN • CỔNG DÀNH CHO QUẢN TRỊ VIÊN
+            TAVY KOREA • CỔNG DÀNH CHO QUẢN TRỊ VIÊN
           </p>
         </div>
 

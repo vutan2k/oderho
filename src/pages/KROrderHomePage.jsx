@@ -44,14 +44,15 @@ export default function KROrderHomePage() {
       <header className="site-header">
         <div className="container">
           <div className="site-nav-wrap">
-            <a href="#" className="brand-logo">
-              <div style={{
-                width: '38px', height: '38px', borderRadius: '50%',
-                background: 'var(--purple-primary)', color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.1rem', fontWeight: 'bold', fontFamily: 'var(--font-serif)'
-              }}>KR</div>
-              <span className="brand-logo-text">K-MART<span>VIỆT HÀN</span></span>
+            <a href="#" className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+              <img
+                src="/tavy-logo.jpg"
+                alt="TAVY Logo"
+                style={{ height: '44px', borderRadius: '8px', objectFit: 'cover' }}
+              />
+              <span className="brand-logo-text" style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--purple-primary)', fontFamily: 'var(--font-serif)' }}>
+                TAVY<span>KOREA</span>
+              </span>
             </a>
 
             <nav>

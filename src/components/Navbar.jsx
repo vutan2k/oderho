@@ -26,33 +26,14 @@ export default function Navbar({ logoSrc }) {
         width: '100%',
       }}>
         {/* Logo Link */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-          {logoSrc ? (
-            <img
-              src={logoSrc}
-              alt="BeautyCargo"
-              style={{ height: '44px', width: 'auto', display: 'block' }}
-            />
-          ) : (
-            <svg
-              width="44"
-              height="44"
-              viewBox="0 0 44 44"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-label="BeautyCargo"
-            >
-              <rect x="10" y="20" width="24" height="16" rx="2" stroke="#1a1a1a" strokeWidth="1.8" fill="none"/>
-              <line x1="22" y1="20" x2="22" y2="36" stroke="#B76E79" strokeWidth="1.8"/>
-              <line x1="10" y1="27" x2="34" y2="27" stroke="#B76E79" strokeWidth="1.8"/>
-              <path d="M17 20 Q14 14 18 12 Q22 10 22 16" stroke="#1a1a1a" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-              <path d="M27 20 Q30 14 26 12 Q22 10 22 16" stroke="#1a1a1a" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-              <path d="M8 10 Q22 4 36 10" stroke="#B76E79" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeDasharray="2 2"/>
-              <polyline points="33,7 36,10 33,13" stroke="#B76E79" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-          <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text)', letterSpacing: '-0.02em' }}>
-            Beauty<span style={{ color: 'var(--accent)' }}>Cargo</span>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+          <img
+            src="/tavy-logo.jpg"
+            alt="TAVY Logo"
+            style={{ height: '42px', borderRadius: '8px', objectFit: 'cover' }}
+          />
+          <span style={{ fontWeight: 800, fontSize: '1.4rem', color: 'var(--purple-primary)', letterSpacing: '1px', fontFamily: 'var(--font-serif)' }}>
+            TAVY
           </span>
         </Link>
 

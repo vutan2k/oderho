@@ -110,7 +110,7 @@ export default function OrderDrawer({ product, onClose }) {
               </div>
               <h3 style={{ fontWeight: 800, marginBottom: 8, fontSize: '1.3rem', color: '#111827' }}>GỬI YÊU CẦU MUA HỘ THÀNH CÔNG!</h3>
               <p style={{ fontSize: '0.88rem', color: '#4B5563', lineHeight: 1.6, marginBottom: 20 }}>
-                Hệ thống đã tự động ghi nhận đơn hàng. Bạn có thể chuyển khoản cọc 50% trước để K-MART tiến hành mua hàng tại Hàn Quốc ngay lập tức.
+                Hệ thống đã tự động ghi nhận đơn hàng. Bạn có thể chuyển khoản cọc 50% trước để TAVY KOREA tiến hành mua hàng tại Hàn Quốc ngay lập tức.
               </p>
 
               {/* Thông tin Chuyển Khoản Ngân Hàng */}
@@ -120,7 +120,7 @@ export default function OrderDrawer({ product, onClose }) {
                 </span>
                 <p style={{ fontSize: '0.85rem', margin: '6px 0 2px 0' }}><strong>Ngân hàng:</strong> MB Bank (NHTM CP Quân Đội)</p>
                 <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Số tài khoản:</strong> <span style={{ color: 'var(--purple-primary)', fontWeight: 800 }}>0988 888 888</span></p>
-                <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Chủ tài khoản:</strong> K MART VIET HAN</p>
+                <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Chủ tài khoản:</strong> TAVY KOREA</p>
               </div>
 
               <div style={{ backgroundColor: '#F4F8FF', border: '1.5px solid #3B82F6', borderRadius: '16px', padding: '16px', textAlign: 'left', marginBottom: '24px' }}>
@@ -129,7 +129,7 @@ export default function OrderDrawer({ product, onClose }) {
                 </span>
                 <p style={{ fontSize: '0.85rem', margin: '6px 0 2px 0' }}><strong>Ngân hàng:</strong> Woori Bank (우리은행)</p>
                 <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Số tài khoản:</strong> <span style={{ color: '#3B82F6', fontWeight: 800 }}>1002-123-456789</span></p>
-                <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Chủ tài khoản:</strong> K-MART CO., LTD</p>
+                <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Chủ tài khoản:</strong> TAVY CO., LTD</p>
               </div>
 
               <button

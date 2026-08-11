@@ -75,7 +75,7 @@ export default function UserProfilePage() {
 
           <div>
             <h2 style={{ margin: '0 0 6px 0', fontSize: '1.6rem', color: '#111827' }}>
-              {currentUser.name || 'Khách Hàng K-MART'}
+              {currentUser.name || 'Khách Hàng TAVY'}
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6B7280', fontSize: '0.9rem' }}>
               <Mail size={16} />

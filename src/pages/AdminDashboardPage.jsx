@@ -99,10 +99,11 @@ export default function AdminDashboardPage() {
       <header style={{ backgroundColor: '#1F2937', color: '#FFF', padding: '16px 0', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img src="/tavy-logo.jpg" alt="TAVY Logo" style={{ height: '36px', borderRadius: '6px' }} />
             <span style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', padding: '6px 12px', borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
               ADMIN PORTAL
             </span>
-            <h1 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#FFF' }}>K-MART VIỆT HÀN</h1>
+            <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#FFF', letterSpacing: '1px' }}>TAVY KOREA</h1>
           </div>
           <button
             onClick={() => { logoutAdmin(); navigate('/admin/login'); }}
