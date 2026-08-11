@@ -14,12 +14,13 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
       gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
       gap: '28px'
     }}>
-      {products.map((product) => {
-        const calculatedVnd = product.foreignPrice * krwRate;
+      {products.map((product, pIdx) => {
+        const calculatedVnd = (product.foreignPrice || 0) * krwRate;
+        const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
 
         return (
           <div
-            key={product.goodsNo}
+            key={product.goodsNo || `grid-prod-${pIdx}`}
             style={{
               borderRadius: '16px',
               overflow: 'hidden',
@@ -37,9 +38,10 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
               onClick={() => onViewDetail && onViewDetail(product)}
             >
               <img
-                src={product.productImage}
-                alt={product.name}
+                src={product.productImage || defaultImg}
+                alt={product.name || 'Sản phẩm Hàn Quốc'}
                 loading="lazy"
+                onError={(e) => { e.target.src = defaultImg; }}
                 style={{
                   position: 'absolute',
                   top: 0, left: 0,
@@ -59,7 +61,7 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
                 borderRadius: '20px',
                 textTransform: 'uppercase'
               }}>
-                {product.brand}
+                {product.brand || 'Olive Young'}
               </span>
             </div>
 

@@ -91,13 +91,14 @@ export default function OliveCatalog({ onSelectProduct }) {
           gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
           gap: '30px'
         }}>
-          {filteredProducts.map((product) => {
-            const calculatedVnd = product.foreignPrice * krwRate;
-            const detailUrl = `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${product.goodsNo}`;
+          {filteredProducts.map((product, pIdx) => {
+            const calculatedVnd = (product.foreignPrice || 0) * krwRate;
+            const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
+            const detailUrl = `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${product.goodsNo || 'A000000261415'}`;
 
             return (
               <div
-                key={product.goodsNo}
+                key={product.goodsNo || `olive-prod-${pIdx}`}
                 className="glass"
                 style={{
                   borderRadius: 'var(--radius-md)',
