@@ -38,6 +38,20 @@ export default function KROrderHomePage() {
     return cat === activeCategory;
   }) : [];
 
+  const handleNavCategoryClick = (e, catId) => {
+    e.preventDefault();
+    setActiveCategory(catId);
+    if (catId === 'all') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const elem = document.getElementById('products');
+      if (elem) {
+        elem.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
@@ -50,7 +64,7 @@ export default function KROrderHomePage() {
       <header className="site-header">
         <div className="container">
           <div className="site-nav-wrap">
-            <a href="#" className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <a href="#" onClick={(e) => handleNavCategoryClick(e, 'all')} className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
               <img
                 src="/tavy-logo.png"
                 alt="TAVY Logo"
@@ -63,22 +77,24 @@ export default function KROrderHomePage() {
 
             <nav>
               <ul className="nav-links">
-                <li><a href="#" className="active">TRANG CHỦ</a></li>
-                <li><a href="#skincare">MỸ PHẨM</a></li>
-                <li><a href="#health">THỰC PHẨM CHỨC NĂNG</a></li>
-                <li><a href="#pharmacy">HIỆU THUỐC HÀN</a></li>
-                {currentUser ? (
-                  <>
-                    <li><Link to="/orders" style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>ĐƠN CỦA TÔI</Link></li>
-                    <li><button onClick={() => logoutUser()} style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600, letterSpacing: '1px' }}>ĐĂNG XUẤT</button></li>
-                  </>
-                ) : (
-                  <li><Link to="/login">ĐĂNG NHẬP</Link></li>
-                )}
+                <li><a href="#" onClick={(e) => handleNavCategoryClick(e, 'all')} className={activeCategory === 'all' ? 'active' : ''}>TRANG CHỦ</a></li>
+                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'skincare')} className={activeCategory === 'skincare' ? 'active' : ''}>MỸ PHẨM</a></li>
+                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'health')} className={activeCategory === 'health' ? 'active' : ''}>THỰC PHẨM CHỨC NĂNG</a></li>
+                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'pharmacy')} className={activeCategory === 'pharmacy' ? 'active' : ''}>HIỆU THUỐC HÀN</a></li>
               </ul>
             </nav>
 
             <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              {/* ĐĂNG NHẬP / ĐƠN CỦA TÔI ĐƯỢC CHUYỂN SANG BÊN PHẢI CẠNH KÍNH LÚP TÌM KIẾM */}
+              {currentUser ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Link to="/orders" style={{ color: 'var(--purple-primary)', fontWeight: 700, textDecoration: 'none', fontSize: '0.82rem', letterSpacing: '1px' }}>ĐƠN CỦA TÔI</Link>
+                  <button onClick={() => logoutUser()} style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600, letterSpacing: '1px' }}>ĐĂNG XUẤT</button>
+                </div>
+              ) : (
+                <Link to="/login" style={{ color: 'var(--purple-primary)', fontWeight: 700, textDecoration: 'none', fontSize: '0.85rem', letterSpacing: '1px' }}>ĐĂNG NHẬP</Link>
+              )}
+
               <a href="#products" className="icon-btn" aria-label="Tìm kiếm" title="Tìm kiếm">
                 <Search size={18} />
               </a>
@@ -101,10 +117,10 @@ export default function KROrderHomePage() {
             boxShadow: 'var(--shadow-md)', padding: '20px 24px', zIndex: 99
           }}>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <li><a href="#" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>TRANG CHỦ</a></li>
-              <li><a href="#skincare" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>MỸ PHẨM</a></li>
-              <li><a href="#health" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>THỰC PHẨM CHỨC NĂNG</a></li>
-              <li><a href="#pharmacy" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>HIỆU THUỐC HÀN</a></li>
+              <li><a href="#" onClick={(e) => handleNavCategoryClick(e, 'all')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>TRANG CHỦ</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'skincare')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>MỸ PHẨM</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'health')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>THỰC PHẨM CHỨC NĂNG</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'pharmacy')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>HIỆU THUỐC HÀN</a></li>
               {currentUser ? (
                 <>
                   <li><Link to="/orders" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>ĐƠN CỦA TÔI</Link></li>

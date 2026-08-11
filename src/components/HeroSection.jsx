@@ -27,7 +27,7 @@ export default function HeroSection() {
               display: 'block',
               marginBottom: '16px'
             }}>
-              🇰🇷 CHUYÊN MỸ PHẨM & THỰC PHẨM CHỨC NĂNG HÀN QUỐC
+              CHUYÊN MỸ PHẨM & THỰC PHẨM CHỨC NĂNG HÀN QUỐC
             </span>
 
             <h1 style={{
@@ -50,7 +50,7 @@ export default function HeroSection() {
               lineHeight: '1.7',
               fontWeight: 500
             }}>
-              Cung cấp các sản phẩm Mỹ phẩm Olive Young, Hồng Sâm, Collagen & Các loại thuốc nội địa Hàn Quốc bán tại nhà thuốc. Hiển thị song song giá Won (₩) và VNĐ (đ).
+              Cung cấp các sản phẩm Mỹ phẩm Olive Young, Hồng Sâm, Collagen & Các loại thuốc nội địa Hàn Quốc bán tại nhà thuốc.
             </p>
 
             <div style={{ marginBottom: '40px', display: 'flex', gap: '15px' }}>
