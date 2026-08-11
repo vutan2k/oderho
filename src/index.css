@@ -25,6 +25,20 @@
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
 
+  /* Aliases & Fallbacks for components */
+  --primary-rose: #7A4B9E;
+  --primary-rose-dark: #583377;
+  --primary-rose-light: #F0E8F5;
+  --charcoal: #222222;
+  --charcoal-light: #666666;
+  --white: #FFFFFF;
+  --cream-bg: #FAF8F5;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
   --shadow-md: 0 8px 24px rgba(0,0,0,0.07);
   --shadow-lg: 0 16px 32px rgba(0,0,0,0.1);
@@ -108,14 +122,19 @@ h1, h2, h3, h4, .font-serif {
   gap: 10px;
   text-decoration: none;
   color: var(--text-dark);
+  white-space: nowrap;
 }
 
 .brand-logo-text {
   font-family: var(--font-serif);
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   color: var(--text-dark);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .brand-logo-text span {
@@ -125,20 +144,21 @@ h1, h2, h3, h4, .font-serif {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 16px;
   list-style: none;
 }
 
 .nav-links a {
   text-decoration: none;
   color: var(--text-dark);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   transition: var(--transition);
   position: relative;
   padding: 4px 0;
+  white-space: nowrap;
 }
 
 .nav-links a:hover,
@@ -308,7 +328,6 @@ h1, h2, h3, h4, .font-serif {
   gap: 14px;
   text-decoration: none;
   cursor: pointer;
-  group: true;
 }
 
 .category-icon-bg {
@@ -488,6 +507,10 @@ h1, h2, h3, h4, .font-serif {
   animation: fadeInUp 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
 }
 
+.mobile-menu-toggle {
+  display: none;
+}
+
 /* Media Queries */
 @media (max-width: 1024px) {
   .footer-grid {
@@ -498,6 +521,9 @@ h1, h2, h3, h4, .font-serif {
 @media (max-width: 768px) {
   .nav-links {
     display: none;
+  }
+  .mobile-menu-toggle {
+    display: flex;
   }
   .footer-grid {
     grid-template-columns: 1fr;

@@ -1,0 +1,55 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+export default function NotFoundPage() {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #F9F6FA 0%, #EDE6F2 100%)',
+      padding: '40px 20px',
+      textAlign: 'center'
+    }}>
+      <div style={{ maxWidth: '500px' }}>
+        <h1 style={{
+          fontSize: '6rem',
+          fontFamily: 'Georgia, serif',
+          color: '#7A4B9E',
+          lineHeight: 1,
+          marginBottom: '8px'
+        }}>
+          404
+        </h1>
+        <h2 style={{
+          fontSize: '1.5rem',
+          color: '#333',
+          fontWeight: 600,
+          marginBottom: '16px'
+        }}>
+          Trang không tồn tại
+        </h2>
+        <p style={{ color: '#666', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
+          Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.
+        </p>
+        <Link
+          to="/"
+          style={{
+            display: 'inline-block',
+            padding: '12px 32px',
+            borderRadius: '30px',
+            background: '#7A4B9E',
+            color: '#fff',
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            textDecoration: 'none',
+            letterSpacing: '1px'
+          }}
+        >
+          VỀ TRANG CHỦ
+        </Link>
+      </div>
+    </div>
+  );
+}

@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
-import { X, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function OrderDrawer({ product, onClose }) {
@@ -37,9 +37,7 @@ export default function OrderDrawer({ product, onClose }) {
   const formatVnd = (n) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-  const totalVnd = product
-    ? Math.round(product.foreignPrice * krwRate * qty * 1.15) // rough estimate incl. fees
-    : 0;
+
 
   const handleSubmit = (e) => {
     e.preventDefault();

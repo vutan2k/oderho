@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Link, ShoppingCart, CheckCircle, Package, RefreshCw } from 'lucide-react';
+import { ShoppingCart, CheckCircle, RefreshCw } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const sampleImages = [

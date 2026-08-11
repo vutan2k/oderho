@@ -2,8 +2,8 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { 
-  Package, Clock, CheckCircle2, Truck, LogOut, Search, Edit3, 
-  Save, AlertCircle, RefreshCw, Copy, Check
+  Package, Clock, LogOut, Search, Edit3, 
+  Save, RefreshCw
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -18,7 +18,7 @@ export default function AdminDashboardPage() {
   const [newStatus, setNewStatus] = useState('');
   const [newTrackingCode, setNewTrackingCode] = useState('');
   const [newNote, setNewNote] = useState('');
-  const [copiedId, setCopiedId] = useState('');
+
 
   // State tỷ giá KRW
   const [krwRateInput, setKrwRateInput] = useState(rates?.KRW?.rate || 19.5);
@@ -30,7 +30,7 @@ export default function AdminDashboardPage() {
   }
 
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
-  const formatKrw = (n) => new Intl.NumberFormat('ko-KR').format(n) + ' ₩';
+
 
   const handleOpenEdit = (order) => {
     setEditingOrder(order);

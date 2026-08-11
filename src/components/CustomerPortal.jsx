@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Calendar, Package, ArrowRight, DollarSign, MapPin, Phone, User, Check, ExternalLink, HelpCircle } from 'lucide-react';
+import { Calendar, Package, MapPin, Phone, User, Check, ExternalLink, HelpCircle } from 'lucide-react';
 
 export default function CustomerPortal() {
   const { orders, rates, user, confirmPayment } = useContext(AppContext);

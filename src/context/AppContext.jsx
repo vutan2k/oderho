@@ -1,108 +1,17 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { OLIVE_YOUNG_CATALOG } from '../data/catalog';
+import {
+  subscribeToOrders,
+  createOrderInDB,
+  updateOrderQuoteInDB,
+  updateOrderStatusInDB,
+  confirmOrderPaymentInDB,
+  subscribeToRates,
+  updateRatesInDB,
+  saveUserProfileInDB
+} from '../services/dbService';
 
 export const AppContext = createContext();
-
-export const OLIVE_YOUNG_CATALOG = [
-  {
-    goodsNo: 'A000000185934',
-    name: 'Tinh chất dưỡng ẩm sâu Torriden Dive-In Low Molecular Hyaluronic Acid Serum',
-    brand: 'Torriden',
-    category: 'skincare',
-    foreignPrice: 18000,
-    productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=400&q=80',
-    options: 'Chai 50ml'
-  },
-  {
-    goodsNo: 'A000000159495',
-    name: 'Nước hoa hồng làm dịu da Anua Heartleaf 77% Soothing Toner',
-    brand: 'Anua',
-    category: 'skincare',
-    foreignPrice: 28000,
-    productImage: 'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=400&q=80',
-    options: 'Chai 250ml'
-  },
-  {
-    goodsNo: 'A000000146950',
-    name: 'Tinh chất rau má Madagascar Centella Ampoule',
-    brand: 'Skin1004',
-    category: 'skincare',
-    foreignPrice: 22000,
-    productImage: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=400&q=80',
-    options: 'Chai 100ml'
-  },
-  {
-    goodsNo: 'A000000128120',
-    name: 'Son tint lì bóng Romand Juicy Lasting Tint',
-    brand: 'Romand',
-    category: 'makeup',
-    foreignPrice: 9900,
-    productImage: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=400&q=80',
-    options: 'Màu 06 Figfig - 5.5g'
-  },
-  {
-    goodsNo: 'A000000180234',
-    name: 'Phấn nước che phủ căng bóng Clio Kill Cover Mesh Glow Cushion',
-    brand: 'Clio',
-    category: 'makeup',
-    foreignPrice: 32000,
-    productImage: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=80',
-    options: 'Tone 03 Linen - 15g x 2'
-  },
-  {
-    goodsNo: 'P000000001001',
-    name: 'Cao Hắc Sâm Hàn Quốc Cao Cấp CheongKwanJang Everytime Extract',
-    brand: 'CheongKwanJang (KGC)',
-    category: 'health',
-    foreignPrice: 98000,
-    productImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80',
-    options: 'Hộp 30 gói x 10ml'
-  },
-  {
-    goodsNo: 'P000000001002',
-    name: 'Viên Uống Collagen Thủy Phân Orthomol Beauty Hàn Quốc',
-    brand: 'Orthomol',
-    category: 'health',
-    foreignPrice: 65000,
-    productImage: 'https://images.unsplash.com/photo-1550572017-edd951aa8f72?auto=format&fit=crop&w=400&q=80',
-    options: 'Hộp 30 chai liquid'
-  },
-  {
-    goodsNo: 'P000000001003',
-    name: 'Nước Hồng Sâm Linh Chi KGC JungKwanJang Tonic Gold',
-    brand: 'JungKwanJang',
-    category: 'health',
-    foreignPrice: 85000,
-    productImage: 'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=400&q=80',
-    options: 'Hộp 30 gói x 50ml'
-  },
-  {
-    goodsNo: 'P000000002001',
-    name: 'Dung Dịch Xịt Mũi Trị Xoang Dị Ứng Hàn Quốc Nazal / Hanmi',
-    brand: 'Hanmi Pharmacy',
-    category: 'pharmacy',
-    foreignPrice: 12000,
-    productImage: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&w=400&q=80',
-    options: 'Chai xịt 30ml'
-  },
-  {
-    goodsNo: 'P000000002002',
-    name: 'Miếng Dán Trị Đau Nhức Xương Khớp Hồng Sâm Hàn Quốc Himena',
-    brand: 'Himena Korea',
-    category: 'pharmacy',
-    foreignPrice: 8500,
-    productImage: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?auto=format&fit=crop&w=400&q=80',
-    options: 'Gói 20 miếng dán'
-  },
-  {
-    goodsNo: 'P000000002003',
-    name: 'Men Vi Sinh Bổ Sung Lợi Khuẩn Đường Ruột LACTO-FIT Gold Hàn Quốc',
-    brand: 'Chong Kun Dang',
-    category: 'pharmacy',
-    foreignPrice: 19500,
-    productImage: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=400&q=80',
-    options: 'Hộp 50 gói bột'
-  }
-];
 
 const defaultRates = {
   USD: { code: 'USD', name: 'Đô la Mỹ', symbol: '$', rate: 25500, shippingFee: 230000 },
@@ -124,8 +33,8 @@ const initialMockOrders = [
     options: 'Màu 001 Pink - 6ml',
     qty: 2,
     foreignPrice: 40.00,
-    status: 'pending', // pending, quoted, paid, transit, completed
-    createdAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString(), // 3 days ago
+    status: 'pending',
+    createdAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString(),
     quote: null
   },
   {
@@ -141,16 +50,16 @@ const initialMockOrders = [
     qty: 1,
     foreignPrice: 28000,
     status: 'quoted',
-    createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(), // 2 days ago
+    createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
     quote: {
       vietnamRate: 19.5,
       rawVnd: 546000,
-      taxWebVnd: 54600, // 10% tax
-      serviceFeeVnd: 27300, // 5% fee
+      taxWebVnd: 54600,
+      serviceFeeVnd: 27300,
       shippingWeightKg: 0.35,
-      shippingWeightFeeVnd: 63000, // 0.35 * 180000
+      shippingWeightFeeVnd: 63000,
       totalVnd: 690900,
-      depositNeededVnd: 345450, // 50% deposit
+      depositNeededVnd: 345450,
       note: 'Hàng sale Olive Young chính hãng, thời gian bay dự kiến 7-10 ngày làm việc.'
     }
   },
@@ -167,16 +76,16 @@ const initialMockOrders = [
     qty: 3,
     foreignPrice: 3300,
     status: 'paid',
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(), // 12 hours ago
+    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
     quote: {
       vietnamRate: 175,
       rawVnd: 1732500,
       taxWebVnd: 173250,
       serviceFeeVnd: 86625,
       shippingWeightKg: 0.6,
-      shippingWeightFeeVnd: 114000, // 0.6 * 190000
+      shippingWeightFeeVnd: 114000,
       totalVnd: 2106375,
-      depositNeededVnd: 2106375, // Paid 100%
+      depositNeededVnd: 2106375,
       note: 'Đã mua hàng thành công tại Amazon Nhật Bản.'
     },
     paymentConfirmed: true,
@@ -230,6 +139,34 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('beauty_rates', JSON.stringify(rates));
   }, [rates]);
 
+  // Firestore Realtime Listeners
+  useEffect(() => {
+    const unsubOrders = subscribeToOrders((firestoreOrders) => {
+      if (firestoreOrders && firestoreOrders.length > 0) {
+        setOrders(prev => {
+          const combined = [...firestoreOrders];
+          prev.forEach(p => {
+            if (!combined.some(c => c.id === p.id)) {
+              combined.push(p);
+            }
+          });
+          return combined;
+        });
+      }
+    });
+
+    const unsubRates = subscribeToRates((dbRates) => {
+      if (dbRates) {
+        setRates(prev => ({ ...prev, ...dbRates }));
+      }
+    });
+
+    return () => {
+      if (typeof unsubOrders === 'function') unsubOrders();
+      if (typeof unsubRates === 'function') unsubRates();
+    };
+  }, []);
+
   const registerUser = (name, email, password) => {
     const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
     if (existing) {
@@ -238,6 +175,7 @@ export const AppProvider = ({ children }) => {
     const newUser = { name, email, password, phone: '', address: '' };
     setUsers((prev) => [...prev, newUser]);
     setCurrentUser(newUser);
+    saveUserProfileInDB(newUser);
     return { success: true };
   };
 
@@ -257,6 +195,7 @@ export const AppProvider = ({ children }) => {
     const res = await loginWithGoogle();
     if (res.success) {
       setCurrentUser(res.user);
+      saveUserProfileInDB(res.user);
       const existing = users.find((u) => u.email.toLowerCase() === res.user.email.toLowerCase());
       if (!existing) {
         setUsers((prev) => [...prev, res.user]);
@@ -278,12 +217,14 @@ export const AppProvider = ({ children }) => {
       quote: null,
       ...orderData,
     };
+    createOrderInDB(newOrder);
     setOrders((prev) => [newOrder, ...prev]);
     return newOrder;
   };
 
   const updateRates = (newRates) => {
     setRates(newRates);
+    updateRatesInDB(newRates);
   };
 
   const updateOrderQuote = (orderId, quoteData) => {
@@ -298,20 +239,24 @@ export const AppProvider = ({ children }) => {
           const totalVnd = Math.round(rawVnd + taxWebVnd + serviceFeeVnd + shippingWeightFeeVnd);
           const depositNeededVnd = Math.round(totalVnd * 0.5);
 
+          const fullQuote = {
+            vietnamRate: rateInfo.rate,
+            rawVnd,
+            taxWebVnd,
+            serviceFeeVnd,
+            shippingWeightKg: quoteData.shippingWeightKg,
+            shippingWeightFeeVnd,
+            totalVnd,
+            depositNeededVnd,
+            note: quoteData.note,
+          };
+
+          updateOrderQuoteInDB(orderId, fullQuote, totalVnd);
+
           return {
             ...order,
             status: 'quoted',
-            quote: {
-              vietnamRate: rateInfo.rate,
-              rawVnd,
-              taxWebVnd,
-              serviceFeeVnd,
-              shippingWeightKg: quoteData.shippingWeightKg,
-              shippingWeightFeeVnd,
-              totalVnd,
-              depositNeededVnd,
-              note: quoteData.note,
-            },
+            quote: fullQuote,
           };
         }
         return order;
@@ -324,7 +269,8 @@ export const AppProvider = ({ children }) => {
   });
 
   const loginAdmin = (password) => {
-    if (password === 'admin123456') {
+    const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123456';
+    if (password === adminPass) {
       setIsAdminAuthenticated(true);
       localStorage.setItem('kmart_admin_auth', 'true');
       return { success: true };
@@ -338,6 +284,14 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateOrderTracking = (orderId, { status, trackingCode, note }) => {
+    const updates = {
+      status: status || undefined,
+      trackingCode: trackingCode !== undefined ? trackingCode : undefined,
+      adminNote: note !== undefined ? note : undefined,
+    };
+
+    updateOrderStatusInDB(orderId, updates);
+
     setOrders((prev) =>
       prev.map((order) => {
         if (order.id === orderId) {
@@ -355,12 +309,14 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateOrderStatus = (orderId, status) => {
+    updateOrderStatusInDB(orderId, { status });
     setOrders((prev) =>
       prev.map((order) => (order.id === orderId ? { ...order, status } : order))
     );
   };
 
   const confirmPayment = (orderId, amountPaid) => {
+    confirmOrderPaymentInDB(orderId, amountPaid);
     setOrders((prev) =>
       prev.map((order) =>
         order.id === orderId

@@ -1,15 +1,15 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
-// Cấu hình Firebase Demo (Có thể thay thế bằng API Key từ Google Firebase Console của bạn)
+// Cấu hình Firebase qua environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyDemoKey_ReplaceWithYourFirebaseApiKey",
-  authDomain: "kmart-viethan.firebaseapp.com",
-  projectId: "kmart-viethan",
-  storageBucket: "kmart-viethan.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Khởi tạo Firebase App
@@ -18,7 +18,20 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Hàm Đăng nhập bằng tài khoản Google 1-click
+// Bật Offline Data Persistence
+try {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Firestore persistence failed: Multiple tabs open');
+    } else if (err.code === 'unimplemented') {
+      console.warn('Firestore persistence not supported by browser');
+    }
+  });
+} catch {
+  // Ignore in SSR/unsupported env
+}
+
+// 1. Hàm Đăng nhập bằng tài khoản Google 1-click
 export const loginWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -33,8 +46,7 @@ export const loginWithGoogle = async () => {
       }
     };
   } catch (error) {
-    console.warn("Firebase Google login error, fallback to mock Google Auth:", error);
-    // Giả lập Đăng nhập Google thành công nếu chưa điền API Key thực tế
+    console.warn("Firebase Google login fallback:", error);
     const mockUser = {
       uid: 'google-user-' + Date.now(),
       name: 'Nguyễn Văn A (Google)',
@@ -45,12 +57,12 @@ export const loginWithGoogle = async () => {
   }
 };
 
-// Hàm Đăng xuất
+// 2. Hàm Đăng xuất
 export const logoutGoogle = async () => {
   try {
     await signOut(auth);
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: true };
   }
 };

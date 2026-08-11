@@ -423,7 +423,7 @@ export default function AdminPortal() {
                         {order.status === 'transit' && (
                           <button 
                             className="btn btn-secondary btn-sm"
-                            style={{ backgroundColor: '#2E7D32', color: '#white', color: 'white', border: 'none' }}
+                            style={{ backgroundColor: '#2E7D32', color: 'white', border: 'none' }}
                             onClick={() => {
                               if (window.confirm('Xác nhận hàng đã về kho VN và giao hàng thành công cho khách?')) {
                                 updateOrderStatus(order.id, 'completed');
