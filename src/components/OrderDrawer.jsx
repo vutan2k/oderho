@@ -87,24 +87,7 @@ export default function OrderDrawer({ product, onClose }) {
       {/* Drawer panel */}
       <div className={`drawer ${isOpen ? 'open' : ''}`}>
 
-        {/* Header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '18px 24px',
-          borderBottom: '1px solid var(--border)',
-          flexShrink: 0,
-        }}>
-          <span></span>
-          <button
-            onClick={handleClose}
-            className="btn-ghost"
-            style={{ padding: '6px', borderRadius: '50%' }}
-          >
-            <X size={20} />
-          </button>
-        </div>
+
 
         {/* Body — scrollable */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
