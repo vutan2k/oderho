@@ -1,106 +1,126 @@
-import React, { useState, useEffect } from 'react';
-import { LOCATION_DATA } from '../data/vietnamAddressData';
-import { MapPin, Globe, Building, Navigation, Home } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { fetchVietnamProvinces, fetchVietnamSubDivisions } from '../services/vietnamAddressService';
+import { MapPin, Building, Navigation } from 'lucide-react';
 
 export default function CascadingAddressSelector({ initialAddress = '', onChange, required = true }) {
-  // Level States
-  const [selectedCountryCode, setSelectedCountryCode] = useState('VN');
+  const [provinces, setProvinces] = useState([]);
+  const [subDivisions, setSubDivisions] = useState([]);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingSubDivisions, setLoadingSubDivisions] = useState(false);
+
   const [selectedProvinceCode, setSelectedProvinceCode] = useState('');
-  const [selectedDistrictCode, setSelectedDistrictCode] = useState('');
-  const [selectedWardName, setSelectedWardName] = useState('');
+  const [selectedProvinceName, setSelectedProvinceName] = useState('');
+  const [selectedSubDivisionCode, setSelectedSubDivisionCode] = useState('');
+  const [selectedSubDivisionName, setSelectedSubDivisionName] = useState('');
   const [streetAddress, setStreetAddress] = useState('');
 
-  // Repopulate Cascading Lists
-  const countryObj = LOCATION_DATA[selectedCountryCode] || LOCATION_DATA['VN'];
-  const provinceList = countryObj.provinces || [];
+  const isInitialParsedRef = useRef(false);
 
-  const provinceObj = provinceList.find((p) => p.code === selectedProvinceCode);
-  const districtList = provinceObj ? provinceObj.districts : [];
-
-  const districtObj = districtList.find((d) => d.code === selectedDistrictCode);
-  const wardList = districtObj ? districtObj.wards : [];
-
-  // Parse initial address string on first mount if provided
+  // 1. Fetch 63 Provinces from Vietnam Open API (or fallback)
   useEffect(() => {
-    if (initialAddress && typeof initialAddress === 'string' && !selectedProvinceCode) {
-      setStreetAddress(initialAddress);
-      // Auto-select SG / District if matching keyword
-      if (initialAddress.includes('Hồ Chí Minh') || initialAddress.includes('TP.HCM') || initialAddress.includes('Sài Gòn')) {
-        setSelectedCountryCode('VN');
-        setSelectedProvinceCode('SG');
-      } else if (initialAddress.includes('Hà Nội')) {
-        setSelectedCountryCode('VN');
-        setSelectedProvinceCode('HN');
-      } else if (initialAddress.includes('Đà Nẵng')) {
-        setSelectedCountryCode('VN');
-        setSelectedProvinceCode('DN');
+    let isMounted = true;
+    async function loadProvinces() {
+      setLoadingProvinces(true);
+      const list = await fetchVietnamProvinces();
+      if (isMounted) {
+        setProvinces(list);
+        setLoadingProvinces(false);
+      }
+    }
+    loadProvinces();
+    return () => { isMounted = false; };
+  }, []);
+
+  // 2. Parse initialAddress ONLY ONCE on mount (prevent circular state loop!)
+  useEffect(() => {
+    if (initialAddress && typeof initialAddress === 'string' && !isInitialParsedRef.current) {
+      isInitialParsedRef.current = true;
+
+      // Extract street part if initialAddress is a comma-separated full string
+      const parts = initialAddress.split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length > 0) {
+        // If initial address contains multiple parts, take first part as street address
+        const possibleStreet = parts.find(p => !p.includes('Việt Nam') && !p.includes('Thành phố') && !p.includes('Tỉnh'));
+        setStreetAddress(possibleStreet || parts[0]);
+      } else {
+        setStreetAddress(initialAddress);
       }
     }
   }, [initialAddress]);
 
-  // Construct formatted full address
+  // 3. Fetch 2nd Level (Xã / Phường / Quận / Huyện) when Province changes
   useEffect(() => {
-    const provinceName = provinceObj ? provinceObj.name : '';
-    const districtName = districtObj ? districtObj.name : '';
+    let isMounted = true;
+    async function loadSubDivisions() {
+      if (!selectedProvinceCode) {
+        setSubDivisions([]);
+        setSelectedSubDivisionCode('');
+        setSelectedSubDivisionName('');
+        return;
+      }
 
+      setLoadingSubDivisions(true);
+      const list = await fetchVietnamSubDivisions(selectedProvinceCode);
+      if (isMounted) {
+        setSubDivisions(list);
+        setLoadingSubDivisions(false);
+      }
+    }
+    loadSubDivisions();
+    return () => { isMounted = false; };
+  }, [selectedProvinceCode]);
+
+  // 4. Emit structured Address & Full String to parent without circular state loop
+  useEffect(() => {
     const parts = [
       streetAddress.trim(),
-      selectedWardName,
-      districtName,
-      provinceName,
-      countryObj ? countryObj.name : ''
+      selectedSubDivisionName,
+      selectedProvinceName
     ].filter(Boolean);
 
-    const fullAddress = parts.join(', ');
+    // Dedupe parts
+    const uniqueParts = [];
+    parts.forEach(p => {
+      if (p && !uniqueParts.includes(p)) uniqueParts.push(p);
+    });
+
+    const fullAddress = uniqueParts.join(', ');
 
     if (onChange) {
       onChange({
-        countryCode: selectedCountryCode,
-        countryName: countryObj ? countryObj.name : '',
         provinceCode: selectedProvinceCode,
-        provinceName,
-        districtCode: selectedDistrictCode,
-        districtName,
-        wardName: selectedWardName,
+        provinceName: selectedProvinceName,
+        subDivisionCode: selectedSubDivisionCode,
+        subDivisionName: selectedSubDivisionName,
         streetAddress: streetAddress.trim(),
         fullAddress
       });
     }
-  }, [selectedCountryCode, selectedProvinceCode, selectedDistrictCode, selectedWardName, streetAddress]);
+  }, [selectedProvinceCode, selectedProvinceName, selectedSubDivisionCode, selectedSubDivisionName, streetAddress]);
 
-  // Handle Level Cascading Resets
-  const handleCountryChange = (e) => {
-    const code = e.target.value;
-    setSelectedCountryCode(code);
-    setSelectedProvinceCode('');
-    setSelectedDistrictCode('');
-    setSelectedWardName('');
-  };
-
-  const handleProvinceChange = (e) => {
+  // Handlers
+  const handleProvinceSelect = (e) => {
     const code = e.target.value;
     setSelectedProvinceCode(code);
-    setSelectedDistrictCode('');
-    setSelectedWardName('');
+    const pObj = provinces.find(p => String(p.code) === String(code));
+    setSelectedProvinceName(pObj ? pObj.name : '');
+    setSelectedSubDivisionCode('');
+    setSelectedSubDivisionName('');
   };
 
-  const handleDistrictChange = (e) => {
+  const handleSubDivisionSelect = (e) => {
     const code = e.target.value;
-    setSelectedDistrictCode(code);
-    setSelectedWardName('');
+    setSelectedSubDivisionCode(code);
+    const subObj = subDivisions.find(s => String(s.code) === String(code));
+    setSelectedSubDivisionName(subObj ? subObj.name : '');
   };
 
-  const handleWardChange = (e) => {
-    setSelectedWardName(e.target.value);
-  };
-
-  // Modern Form Styling
   const labelStyle = {
     display: 'block',
     fontSize: '0.78rem',
     fontWeight: 700,
     color: '#374151',
-    marginBottom: '4px',
+    marginBottom: '6px',
     textTransform: 'uppercase',
     letterSpacing: '0.5px'
   };
@@ -114,88 +134,63 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
     backgroundColor: '#FFF',
     outline: 'none',
     transition: 'border-color 0.2s',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+    boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
   };
 
   return (
-    <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
+    <div style={{ backgroundColor: '#FFF', border: '1px solid #E5E7EB', padding: '18px', borderRadius: '12px', marginBottom: '16px' }}>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px', borderBottom: '1px solid #E5E7EB', paddingBottom: '8px' }}>
+      {/* Sleek Minimal Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
         <MapPin size={16} color="var(--purple-primary)" />
-        <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: 'var(--purple-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          ĐỊA CHỈ NHẬN HÀNG PHÂN CẤP (CASCADING LOCATION)
+        <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          ĐỊA CHỈ {required && <span style={{ color: '#EF4444' }}>*</span>}
         </h4>
       </div>
 
-      {/* Grid Dropdowns */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+      {/* 2 Cascading Levels (Vietnam Open API 2-Level) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
         
-        {/* 1. Quốc gia */}
+        {/* Cấp 1: Tỉnh / Thành phố */}
         <div>
           <label style={labelStyle}>
-            <Globe size={11} style={{ display: 'inline', marginRight: '3px' }} /> Quốc Gia
+            <Building size={12} style={{ display: 'inline', marginRight: '4px' }} /> Tỉnh / Thành Phố
           </label>
-          <select value={selectedCountryCode} onChange={handleCountryChange} style={inputStyle} required={required}>
-            {Object.keys(LOCATION_DATA).map((cKey) => (
-              <option key={cKey} value={cKey}>{LOCATION_DATA[cKey].name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* 2. Tỉnh / Thành phố */}
-        <div>
-          <label style={labelStyle}>
-            <Building size={11} style={{ display: 'inline', marginRight: '3px' }} /> Tỉnh / Thành Phố
-          </label>
-          <select value={selectedProvinceCode} onChange={handleProvinceChange} style={inputStyle} required={required}>
-            <option value="">-- Chọn Tỉnh / TP --</option>
-            {provinceList.map((p) => (
+          <select
+            value={selectedProvinceCode}
+            onChange={handleProvinceSelect}
+            style={inputStyle}
+            required={required}
+          >
+            <option value="">{loadingProvinces ? 'Đang tải danh sách...' : '-- Chọn Tỉnh / Thành Phố --'}</option>
+            {provinces.map((p) => (
               <option key={p.code} value={p.code}>{p.name}</option>
             ))}
           </select>
         </div>
 
-        {/* 3. Quận / Huyện / Thị xã */}
+        {/* Cấp 2: Quận / Huyện / Phường / Xã */}
         <div>
           <label style={labelStyle}>
-            <Navigation size={11} style={{ display: 'inline', marginRight: '3px' }} /> Quận / Huyện
+            <Navigation size={12} style={{ display: 'inline', marginRight: '4px' }} /> Quận / Huyện / Phường / Xã
           </label>
           <select
-            value={selectedDistrictCode}
-            onChange={handleDistrictChange}
-            disabled={!selectedProvinceCode}
+            value={selectedSubDivisionCode}
+            onChange={handleSubDivisionSelect}
+            disabled={!selectedProvinceCode || loadingSubDivisions}
             style={{ ...inputStyle, opacity: !selectedProvinceCode ? 0.6 : 1 }}
             required={required}
           >
-            <option value="">-- Chọn Quận / Huyện --</option>
-            {districtList.map((d) => (
-              <option key={d.code} value={d.code}>{d.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* 4. Phường / Xã */}
-        <div>
-          <label style={labelStyle}>
-            <Home size={11} style={{ display: 'inline', marginRight: '3px' }} /> Phường / Xã
-          </label>
-          <select
-            value={selectedWardName}
-            onChange={handleWardChange}
-            disabled={!selectedDistrictCode}
-            style={{ ...inputStyle, opacity: !selectedDistrictCode ? 0.6 : 1 }}
-            required={required}
-          >
-            <option value="">-- Chọn Phường / Xã --</option>
-            {wardList.map((w, idx) => (
-              <option key={idx} value={w}>{w}</option>
+            <option value="">{loadingSubDivisions ? 'Đang tải...' : (selectedProvinceCode ? '-- Chọn Quận / Huyện / Phường / Xã --' : '-- Chọn Tỉnh/TP trước --')}</option>
+            {subDivisions.map((s) => (
+              <option key={s.code} value={s.code}>{s.name}</option>
             ))}
           </select>
         </div>
 
       </div>
 
-      {/* 5. Số nhà & Tên đường */}
+      {/* Cấp 3: Số nhà & Tên đường */}
       <div>
         <label style={labelStyle}>Số Nhà & Tên Đường (Địa Chỉ Cụ Thể)</label>
         <input
