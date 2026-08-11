@@ -31,16 +31,27 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
     return () => { isMounted = false; };
   }, []);
 
-  // 2. Parse initialAddress ONCE on mount to extract street input (prevent circular loop bug!)
+  // 2. Parse initialAddress CHỈ NẾU là địa chỉ thực sự của người dùng (tuyệt đối KHÔNG tự điền Tỉnh/TP vào ô Số nhà)
   useEffect(() => {
     if (initialAddress && typeof initialAddress === 'string' && !isInitialParsedRef.current) {
       isInitialParsedRef.current = true;
       const parts = initialAddress.split(',').map(s => s.trim()).filter(Boolean);
-      if (parts.length > 0) {
-        const possibleStreet = parts.find(p => !p.includes('Việt Nam') && !p.includes('Thành phố') && !p.includes('Tỉnh'));
-        setStreetAddress(possibleStreet || parts[0]);
+      // Tìm phần tử không chứa từ khóa Tỉnh/Thành phố/Quận/Huyện/Xã/Phường
+      const actualStreet = parts.find(p => 
+        !p.startsWith('Tỉnh') && 
+        !p.startsWith('Thành phố') && 
+        !p.startsWith('Quận') && 
+        !p.startsWith('Huyện') && 
+        !p.startsWith('Phường') && 
+        !p.startsWith('Xã') && 
+        !p.includes('Việt Nam')
+      );
+
+      // Nếu chỉ có tên Tỉnh/TP thì để trống hoàn toàn
+      if (actualStreet) {
+        setStreetAddress(actualStreet);
       } else {
-        setStreetAddress(initialAddress);
+        setStreetAddress('');
       }
     }
   }, [initialAddress]);
