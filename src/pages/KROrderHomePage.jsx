@@ -1,14 +1,15 @@
 import React, { useState, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Search, User, ShoppingBag, ArrowRight, Star, Heart, Check, 
   Sparkles, Leaf, ShieldCheck, Award, Pill, Smile, Globe, Package, Phone, Mail, MapPin,
-  Share2, QrCode, CreditCard
+  Share2, QrCode, CreditCard, LogIn, LogOut
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import OrderDrawer from '../components/OrderDrawer';
 
 export default function KROrderHomePage() {
-  const { oliveYoungCatalog, rates } = useContext(AppContext);
+  const { oliveYoungCatalog, rates, currentUser, logoutUser } = useContext(AppContext);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [emailInput, setEmailInput] = useState('');
@@ -88,14 +89,95 @@ export default function KROrderHomePage() {
               </ul>
             </nav>
 
-            {/* Action Icons */}
-            <div className="nav-icons">
-              <a href="#products" className="icon-btn" aria-label="Tìm kiếm">
-                <Search size={20} />
+            {/* Action Icons & User Auth Controls */}
+            <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <a href="#products" className="icon-btn" aria-label="Tìm kiếm" title="Tìm kiếm">
+                <Search size={18} />
               </a>
-              <a href="#payment" className="icon-btn" aria-label="Thanh toán VietQR">
-                <QrCode size={20} />
+              <a href="#payment" className="icon-btn" aria-label="Thanh toán VietQR" title="Thanh toán VietQR">
+                <QrCode size={18} />
               </a>
+
+              {/* Phân biệt khi đã Đăng nhập và chưa Đăng nhập */}
+              {currentUser ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Link
+                    to="/orders"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      backgroundColor: 'rgba(122, 75, 158, 0.1)',
+                      color: 'var(--purple-primary)',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <Package size={15} />
+                    <span>Đơn của tôi</span>
+                  </Link>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-dark)' }}>
+                    {currentUser.photoURL ? (
+                      <img src={currentUser.photoURL} alt="" style={{ width: '26px', height: '26px', borderRadius: '50%' }} />
+                    ) : (
+                      <User size={16} color="var(--purple-primary)" />
+                    )}
+                    <span>{currentUser.name || currentUser.email.split('@')[0]}</span>
+                  </div>
+
+                  <button
+                    onClick={() => logoutUser()}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#9CA3AF',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      padding: '4px'
+                    }}
+                    title="Đăng xuất"
+                  >
+                    <LogOut size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Link
+                    to="/login"
+                    className="btn-gold"
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '0.82rem',
+                      borderRadius: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <LogIn size={15} />
+                    <span>Đăng nhập / Đăng ký</span>
+                  </Link>
+                </div>
+              )}
+
+              {/* Lối vào Admin */}
+              <Link
+                to="/admin/login"
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  color: '#9CA3AF',
+                  textDecoration: 'none',
+                  paddingLeft: '8px',
+                  borderLeft: '1px solid #E5E7EB'
+                }}
+              >
+                Admin
+              </Link>
             </div>
           </div>
         </div>
