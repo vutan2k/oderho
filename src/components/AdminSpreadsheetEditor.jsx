@@ -1,14 +1,14 @@
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
-import { fetchProductsFromGoogleSheet } from '../services/googleSheetService';
+import { fetchProductsFromGoogleSheet, DEFAULT_USER_GOOGLE_SHEET_URL } from '../services/googleSheetService';
 import { FileSpreadsheet, RefreshCw, Plus, Trash2, Save } from 'lucide-react';
 
 export default function AdminSpreadsheetEditor() {
   const { products, setProducts, rates } = useContext(AppContext);
   const showToast = useToast();
 
-  const [sheetUrl, setSheetUrl] = useState(() => localStorage.getItem('tavy_google_sheet_url') || '');
+  const [sheetUrl, setSheetUrl] = useState(() => localStorage.getItem('tavy_google_sheet_url') || DEFAULT_USER_GOOGLE_SHEET_URL);
   const [loadingSync, setLoadingSync] = useState(false);
   const [gridData, setGridData] = useState(() => JSON.parse(JSON.stringify(products)));
 

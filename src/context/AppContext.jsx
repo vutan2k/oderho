@@ -126,15 +126,14 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const savedSheetUrl = localStorage.getItem('tavy_google_sheet_url');
-    if (savedSheetUrl) {
-      import('../services/googleSheetService').then(({ fetchProductsFromGoogleSheet }) => {
-        fetchProductsFromGoogleSheet(savedSheetUrl).then((res) => {
-          if (res.success && res.products.length > 0) {
-            setProducts(res.products);
-          }
-        });
+    import('../services/googleSheetService').then(({ fetchProductsFromGoogleSheet, DEFAULT_USER_GOOGLE_SHEET_URL }) => {
+      const urlToFetch = savedSheetUrl || DEFAULT_USER_GOOGLE_SHEET_URL;
+      fetchProductsFromGoogleSheet(urlToFetch).then((res) => {
+        if (res.success && res.products.length > 0) {
+          setProducts(res.products);
+        }
       });
-    }
+    });
   }, []);
 
   useEffect(() => {
