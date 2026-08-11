@@ -119,6 +119,24 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : defaultRates;
   });
 
+  const [products, setProducts] = useState(() => {
+    const savedCustom = localStorage.getItem('tavy_custom_products');
+    return savedCustom ? JSON.parse(savedCustom) : OLIVE_YOUNG_CATALOG;
+  });
+
+  useEffect(() => {
+    const savedSheetUrl = localStorage.getItem('tavy_google_sheet_url');
+    if (savedSheetUrl) {
+      import('../services/googleSheetService').then(({ fetchProductsFromGoogleSheet }) => {
+        fetchProductsFromGoogleSheet(savedSheetUrl).then((res) => {
+          if (res.success && res.products.length > 0) {
+            setProducts(res.products);
+          }
+        });
+      });
+    }
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('beauty_users', JSON.stringify(users));
   }, [users]);
@@ -360,7 +378,9 @@ export const AppProvider = ({ children }) => {
         updateOrderTracking,
         confirmPayment,
         resetAllData,
-        oliveYoungCatalog: OLIVE_YOUNG_CATALOG,
+        products,
+        setProducts,
+        oliveYoungCatalog: products || OLIVE_YOUNG_CATALOG,
       }}
     >
       {children}
