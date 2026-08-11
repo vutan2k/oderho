@@ -1,10 +1,9 @@
 /**
- * Ultra-High-Performance Korean Product Auto-Scraper Service (Engine v2.0)
- * Bypasses anti-bot mechanisms, parses JSON-LD schema tags, cleans Korean promotional tags [1+1/기획],
- * and extracts exact Product Name, Brand, KRW Price, High-Res Image, Description, and Category.
+ * Korean Product Auto-Scraper Service v3.0
+ * Multi-proxy fallback, JSON-LD/OG/meta parsing, Korean price format support,
+ * KNOWN_KOREAN_GOODS_DB cache for verified products.
  */
 
-// Database dictionary for Olive Young & Korean Top Beauty Goods
 const KNOWN_KOREAN_GOODS_DB = {
   'A000000261415': {
     name: 'Tinh chất Cà Chua Xanh Se Khít Lỗ Chân Lông & Nâng Cơ Sungboon Editor Green Tomato Pore Lifting Ampoule Serum 30ml [Bộ 기획 TOP 3 Olive Young]',
@@ -12,7 +11,7 @@ const KNOWN_KOREAN_GOODS_DB = {
     category: 'skincare',
     foreignPrice: 24900,
     productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-    description: 'Serum Cà Chua Xanh se khít lỗ chân lông quốc dân nổi tiếng TOP 3 Olive Young Korea. Chiết xuất Cà chua xanh chứa Tomatidine độc quyền kết hợp PHA, Volufiline & Hyaluronic Acid giúp se khít lỗ chân lông to lâu năm và nâng cơ mặt bị chảy xệ.',
+    description: 'Serum Cà Chua Xanh se khít lỗ chân lông quốc dân nổi tiếng TOP 3 Olive Young Korea. Chiết xuất Cà chua xanh chứa Tomatidine độc quyền kết hợp PHA, Volufiline & Hyaluronic Acid.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
   },
@@ -22,7 +21,7 @@ const KNOWN_KOREAN_GOODS_DB = {
     category: 'skincare',
     foreignPrice: 18000,
     productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-    description: 'Serum cấp nước đa tầng quốc dân Hàn Quốc TOP 1 Olive Young 3 năm liên tiếp. Phục hồi da nhạy cảm.',
+    description: 'Serum cấp nước đa tầng quốc dân Hàn Quốc TOP 1 Olive Young 3 năm liên tiếp.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
   },
@@ -32,7 +31,7 @@ const KNOWN_KOREAN_GOODS_DB = {
     category: 'skincare',
     foreignPrice: 28000,
     productImage: 'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80',
-    description: 'Toner chứa 77% chiết xuất lá rau diếp cá thu hoạch tại Hàn Quốc. Giúp làm dịu da mẩn đỏ kiềm dầu mụn.',
+    description: 'Toner chứa 77% chiết xuất lá rau diếp cá thu hoạch tại Hàn Quốc.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.8
   },
@@ -42,66 +41,92 @@ const KNOWN_KOREAN_GOODS_DB = {
     category: 'skincare',
     foreignPrice: 22000,
     productImage: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80',
-    description: '100% chiết xuất rau má tinh khiết từ vùng đảo Madagascar. Phục hồi hàng rào bảo vệ da bị tổn thương.',
+    description: '100% chiết xuất rau má tinh khiết từ Madagascar.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
   },
   'A000000201102': {
-    name: 'Kem chống nắng nâng tông Round Lab Birch Juice Moisturizing Sunscreen SPF50+ PA++++',
+    name: 'Kem chống nắng Round Lab Birch Juice Moisturizing Sunscreen SPF50+ PA++++',
     brand: 'Round Lab',
     category: 'skincare',
     foreignPrice: 25000,
     productImage: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=600&q=80',
-    description: 'Kem chống nắng nhựa cây Bạch Dương nổi tiếng TOP 1 Olive Young. Mỏng nhẹ không nhờn rít.',
+    description: 'Kem chống nắng nhựa cây Bạch Dương TOP 1 Olive Young.',
     origin: 'Store Olive Young Myeongdong, Hàn Quốc',
     rating: 4.9
   },
   'A000000192301': {
-    name: 'Kem dưỡng ẩm sâm cổ truyền Beauty of Joseon Dynasty Cream 50ml',
+    name: 'Kem dưỡng ẩm sâm Beauty of Joseon Dynasty Cream 50ml',
     brand: 'Beauty of Joseon',
     category: 'skincare',
     foreignPrice: 24000,
     productImage: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80',
-    description: 'Kem dưỡng ẩm đông y Hàn Quốc chiết xuất nhân sâm, nước gạo nếp nuôi dưỡng da căng mọng.',
+    description: 'Kem dưỡng đông y Hàn Quốc chiết xuất nhân sâm, nước gạo nếp.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.8
   },
   'A000000128120': {
-    name: 'Son tint lì bóng căng mọng Romand Juicy Lasting Tint',
+    name: 'Son tint lì bóng Romand Juicy Lasting Tint',
     brand: 'Romand',
     category: 'makeup',
     foreignPrice: 9900,
     productImage: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80',
-    description: 'Son tint bóng bám màu siêu lâu nổi tiếng của Romand. Lên màu chuẩn xác với hiệu ứng căng mọng.',
+    description: 'Son tint bóng bám màu siêu lâu nổi tiếng của Romand.',
     origin: 'Store Olive Young Myeongdong, Hàn Quốc',
     rating: 4.7
   },
   'A000000180234': {
-    name: 'Phấn nước che phủ căng bóng Clio Kill Cover Mesh Glow Cushion SPF50+ PA++++',
+    name: 'Phấn nước Clio Kill Cover Mesh Glow Cushion SPF50+ PA++++',
     brand: 'Clio',
     category: 'makeup',
     foreignPrice: 32000,
     productImage: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=80',
-    description: 'Cushion dạng lưới thế hệ mới giúp che khuyết điểm hoàn hảo căng bóng trong suốt chuẩn Hàn.',
+    description: 'Cushion dạng lưới che phủ hoàn hảo căng bóng chuẩn Hàn.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
   }
 };
 
-/**
- * Clean up promotional brackets from Korean titles like [단독/기획] [1+1] [올리브영]
- */
-const cleanKoreanTitle = (rawTitle) => {
-  if (!rawTitle) return '';
-  return rawTitle
-    .replace(/\[[^\]]+\]/g, '') // remove brackets like [1+1], [단독기획]
-    .replace(/\([^\)]*\)/g, '')  // remove parens
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&gt;/g, '>')
-    .replace(/&lt;/g, '<')
-    .replace(/&amp;/g, '&')
+/** Clean Korean promotional brackets [단독/기획] [1+1] etc */
+const cleanKoreanTitle = (raw) => {
+  if (!raw) return '';
+  return raw
+    .replace(/\[[^\]]+\]/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&')
     .trim();
+};
+
+/** Parse Korean price formats: 29,900원, ₩29900, "price":"29900" */
+const parseKoreanPrice = (html) => {
+  const patterns = [
+    // JSON key "salePrice" or "price" with numeric value
+    /"(?:sale[Pp]rice|price|finalPrice)"\s*:\s*"?([0-9,]+)"?/,
+    // og:price:amount
+    /property=["'](?:og:price:amount|product:price:amount)["'][^>]*content=["']([0-9,]+)["']/i,
+    // Korean won format: 29,900원
+    /([0-9]{1,3}(?:,[0-9]{3})+)\s*원/,
+    // Plain number near 원
+    /₩\s*([0-9,]+)/,
+  ];
+  for (const pat of patterns) {
+    const m = html.match(pat);
+    if (m && m[1]) {
+      const val = parseFloat(m[1].replace(/,/g, ''));
+      if (val > 100) return val;
+    }
+  }
+  return null;
+};
+
+/** Guess category from product name */
+const guessCategory = (name) => {
+  const lower = (name || '').toLowerCase();
+  if (/cushion|파운데이션|foundation|son |tint|lip|phấn|chì kẻ|mascara|eyeliner/i.test(lower)) return 'makeup';
+  if (/sâm|ginseng|collagen|vitamin|viên uống|kẹo dẻo|thực phẩm/i.test(lower)) return 'health';
+  if (/thuốc|dược|pharmacy|cao dán|xịt mũi/i.test(lower)) return 'pharmacy';
+  return 'skincare';
 };
 
 export const scrapeProductMetadata = async (url) => {
@@ -111,7 +136,7 @@ export const scrapeProductMetadata = async (url) => {
 
   const cleanUrl = url.trim();
 
-  // 1. Check if URL contains known goodsNo in Olive Young
+  // 1. Known goods DB cache lookup
   const goodsNoMatch = cleanUrl.match(/goodsNo=([A-Z0-9]+)/i);
   const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : null;
 
@@ -120,7 +145,7 @@ export const scrapeProductMetadata = async (url) => {
     return {
       success: true,
       product: {
-        goodsNo: goodsNo,
+        goodsNo,
         name: known.name,
         brand: known.brand,
         category: known.category,
@@ -135,130 +160,119 @@ export const scrapeProductMetadata = async (url) => {
     };
   }
 
-  // 2. Fetch using multi-proxy fallback
+  // 2. Multi-proxy fetch
   const generatedId = goodsNo || `SP-${Math.floor(100000 + Math.random() * 900000)}`;
   const proxies = [
     `https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`
+    `https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanUrl)}`
   ];
 
   for (const proxy of proxies) {
     try {
-      const response = await fetch(proxy);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(proxy, { signal: controller.signal });
+      clearTimeout(timeout);
       if (!response.ok) continue;
 
-      let htmlText = '';
+      let html = '';
       if (proxy.includes('allorigins')) {
         const json = await response.json();
-        htmlText = json.contents || '';
+        html = json.contents || '';
       } else {
-        htmlText = await response.text();
+        html = await response.text();
       }
 
-      if (htmlText) {
-        // Method A: JSON-LD Schema.org parser
-        const jsonLdMatch = htmlText.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
-        if (jsonLdMatch && jsonLdMatch[1]) {
-          try {
-            const schemaData = JSON.parse(jsonLdMatch[1]);
-            const schemaObj = Array.isArray(schemaData) ? schemaData[0] : schemaData;
+      if (!html || html.length < 200) continue;
 
-            if (schemaObj && (schemaObj.name || schemaObj.title)) {
-              const rawName = schemaObj.name || schemaObj.title;
-              const cleanTitle = cleanKoreanTitle(rawName);
-              const brand = schemaObj.brand?.name || schemaObj.brand || 'Olive Young Korea';
-              const image = Array.isArray(schemaObj.image) ? schemaObj.image[0] : (schemaObj.image || '');
-              const price = schemaObj.offers?.price || schemaObj.price || 22000;
-              const rating = schemaObj.aggregateRating?.ratingValue || 4.9;
+      // Method A: JSON-LD Schema.org
+      const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+      if (jsonLdMatch && jsonLdMatch[1]) {
+        try {
+          const schema = JSON.parse(jsonLdMatch[1]);
+          const obj = Array.isArray(schema) ? schema[0] : schema;
+          if (obj && (obj.name || obj.title)) {
+            const rawName = obj.name || obj.title;
+            const brand = typeof obj.brand === 'string' ? obj.brand : obj.brand?.name || 'Korea Brand';
+            const image = Array.isArray(obj.image) ? obj.image[0] : (obj.image || '');
+            const price = parseFloat(obj.offers?.price) || parseKoreanPrice(html) || 22000;
+            const rating = parseFloat(obj.aggregateRating?.ratingValue) || 4.9;
+            const cleanName = cleanKoreanTitle(rawName);
 
-              return {
-                success: true,
-                product: {
-                  goodsNo: generatedId,
-                  name: cleanTitle || rawName,
-                  brand: typeof brand === 'string' ? brand : 'Olive Young Korea',
-                  category: cleanTitle.toLowerCase().includes('cushion') || cleanTitle.toLowerCase().includes('son') ? 'makeup' :
-                            cleanTitle.toLowerCase().includes('sâm') || cleanTitle.toLowerCase().includes('collagen') ? 'health' : 'skincare',
-                  foreignPrice: parseFloat(price) || 22000,
-                  productImage: image || 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-                  description: schemaObj.description ? cleanKoreanTitle(schemaObj.description) : 'Sản phẩm mua hộ chính hãng từ Store Hàn Quốc.',
-                  origin: 'Store Olive Young Seoul, Hàn Quốc',
-                  rating: parseFloat(rating) || 4.9,
-                  productUrl: cleanUrl,
-                  reviewsCount: 180
-                }
-              };
-            }
-          } catch (e) {
-            console.warn("JSON-LD parse warning:", e);
+            return {
+              success: true,
+              product: {
+                goodsNo: generatedId,
+                name: cleanName || rawName,
+                brand,
+                category: guessCategory(cleanName),
+                foreignPrice: price,
+                productImage: image || 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product',
+                description: obj.description ? cleanKoreanTitle(obj.description) : 'Sản phẩm chính hãng Hàn Quốc.',
+                origin: 'Store Olive Young Seoul, Hàn Quốc',
+                rating,
+                productUrl: cleanUrl,
+                reviewsCount: parseInt(obj.aggregateRating?.reviewCount) || 150
+              }
+            };
           }
+        } catch (e) {
+          // JSON-LD parse fail, continue to OG tags
         }
+      }
 
-        // Method B: OpenGraph & Meta Tag extractor
-        const ogTitleMatch = htmlText.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
-                             htmlText.match(/<title>([^<]+)<\/title>/i);
-        const ogImageMatch = htmlText.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
-        const ogDescMatch = htmlText.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
-        const priceMatch = htmlText.match(/["']price["']\s*:\s*["']?([0-9,]+)["']?/i) ||
-                           htmlText.match(/([0-9]{1,3}(?:,[0-9]{3})+)\s*원/i);
+      // Method B: OG Tags + Meta
+      const ogTitle = (html.match(/property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
+                        html.match(/<title>([^<]+)<\/title>/i))?.[1];
+      const ogImage = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)?.[1];
+      const ogDesc = html.match(/property=["']og:description["'][^>]*content=["']([^"']+)["']/i)?.[1];
+      const price = parseKoreanPrice(html) || 22000;
 
-        if (ogTitleMatch && ogTitleMatch[1]) {
-          const rawOgTitle = ogTitleMatch[1];
-          let cleanedName = cleanKoreanTitle(rawOgTitle);
-          let brandName = 'Olive Young Korea';
+      if (ogTitle) {
+        const cleanName = cleanKoreanTitle(ogTitle);
+        let brand = 'Olive Young Korea';
+        // Try to extract brand from [Brand] Title pattern
+        const bracketBrand = ogTitle.match(/^\[([^\]]{2,20})\]/);
+        if (bracketBrand) brand = bracketBrand[1].trim();
 
-          if (rawOgTitle.includes(']')) {
-            const possibleBrand = rawOgTitle.split(']')[0].replace('[', '').trim();
-            if (possibleBrand && possibleBrand.length < 25) {
-              brandName = possibleBrand;
-            }
+        return {
+          success: true,
+          product: {
+            goodsNo: generatedId,
+            name: cleanName || ogTitle,
+            brand,
+            category: guessCategory(cleanName),
+            foreignPrice: price,
+            productImage: ogImage || 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product',
+            description: ogDesc ? cleanKoreanTitle(ogDesc) : 'Sản phẩm chính hãng từ Hàn Quốc.',
+            origin: 'Store Olive Young Seoul, Hàn Quốc',
+            rating: 4.9,
+            productUrl: cleanUrl,
+            reviewsCount: 150
           }
-
-          let foreignPrice = 22000;
-          if (priceMatch && priceMatch[1]) {
-            const p = parseFloat(priceMatch[1].replace(/,/g, ''));
-            if (p && p > 100) foreignPrice = p;
-          }
-
-          return {
-            success: true,
-            product: {
-              goodsNo: generatedId,
-              name: cleanedName || rawOgTitle,
-              brand: brandName,
-              category: cleanedName.toLowerCase().includes('cushion') || cleanedName.toLowerCase().includes('son') ? 'makeup' :
-                        cleanedName.toLowerCase().includes('sâm') || cleanedName.toLowerCase().includes('collagen') ? 'health' : 'skincare',
-              foreignPrice: foreignPrice,
-              productImage: ogImageMatch ? ogImageMatch[1] : 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-              description: ogDescMatch ? cleanKoreanTitle(ogDescMatch[1]) : 'Sản phẩm mua hộ chính hãng từ Store Hàn Quốc.',
-              origin: 'Store Olive Young Seoul, Hàn Quốc',
-              rating: 4.9,
-              productUrl: cleanUrl,
-              reviewsCount: 150
-            }
-          };
-        }
+        };
       }
     } catch (err) {
-      console.warn("Proxy attempt failed:", err);
+      // proxy failed, try next
     }
   }
 
-  // Smart Fallback Extractor if site is completely locked by anti-bot
+  // 3. Fallback when all proxies fail (WAF blocked)
   return {
     success: true,
     product: {
       goodsNo: generatedId,
-      name: `Sản Phẩm Olive Young Hàn Quốc (${generatedId})`,
-      brand: 'Olive Young Korea',
+      name: `Sản Phẩm Hàn Quốc (${generatedId})`,
+      brand: 'Korea Brand',
       category: 'skincare',
       foreignPrice: 22000,
-      productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-      description: 'Sản phẩm mua hộ chính hãng cào từ đường dẫn Hàn Quốc.',
+      productImage: 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product',
+      description: 'Sản phẩm cào từ link Hàn Quốc. Vui lòng chỉnh sửa thông tin thủ công.',
       origin: 'Store Olive Young Seoul, Hàn Quốc',
       rating: 4.9,
       productUrl: cleanUrl,
-      reviewsCount: 150
+      reviewsCount: 100
     }
   };
 };

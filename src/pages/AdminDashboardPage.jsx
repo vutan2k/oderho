@@ -2,10 +2,10 @@ import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
-import AdminSpreadsheetEditor from '../components/AdminSpreadsheetEditor';
-import { 
-  LogOut, Search, Edit3, 
-  Save, RefreshCw, CheckCircle, Truck, PackageCheck, AlertCircle, Copy, Check, FileSpreadsheet, ShoppingBag
+import AdminProductManager from '../components/AdminProductManager';
+import {
+  LogOut, Search, Edit3,
+  RefreshCw, Truck, FileSpreadsheet, ShoppingBag
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
     note: ''
   });
 
-  const [copiedCode, setCopiedCode] = useState('');
+
 
   if (!isAdminAuthenticated) {
     return (
@@ -94,11 +94,7 @@ export default function AdminDashboardPage() {
     if (showToast) showToast(`Đã gửi báo giá đơn ${orderId} thành công!`, 'success');
   };
 
-  const handleCopyCode = (code) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(''), 2500);
-  };
+
 
   const filteredOrders = orders.filter(o => {
     const matchStatus = filterStatus === 'all' || o.status === filterStatus;
@@ -190,12 +186,12 @@ export default function AdminDashboardPage() {
             }}
           >
             <FileSpreadsheet size={18} />
-            <span>QUẢN LÝ SẢN PHẨM & GOOGLE SHEET</span>
+            <span>QUẢN LÝ SẢN PHẨM</span>
           </button>
         </div>
 
         {activeMainTab === 'products' ? (
-          <AdminSpreadsheetEditor />
+          <AdminProductManager />
         ) : (
           <>
             {/* Top Controls & Tỷ giá */}

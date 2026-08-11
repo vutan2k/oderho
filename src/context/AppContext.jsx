@@ -124,17 +124,22 @@ export const AppProvider = ({ children }) => {
     return savedCustom ? JSON.parse(savedCustom) : OLIVE_YOUNG_CATALOG;
   });
 
+  // CRUD: persist products to localStorage on every change
   useEffect(() => {
-    const savedSheetUrl = localStorage.getItem('tavy_google_sheet_url');
-    import('../services/googleSheetService').then(({ fetchProductsFromGoogleSheet, DEFAULT_USER_GOOGLE_SHEET_URL }) => {
-      const urlToFetch = savedSheetUrl || DEFAULT_USER_GOOGLE_SHEET_URL;
-      fetchProductsFromGoogleSheet(urlToFetch).then((res) => {
-        if (res.success && res.products.length > 0) {
-          setProducts(res.products);
-        }
-      });
-    });
-  }, []);
+    localStorage.setItem('tavy_custom_products', JSON.stringify(products));
+  }, [products]);
+
+  const addProduct = (product) => {
+    setProducts(prev => [product, ...prev]);
+  };
+
+  const updateProduct = (goodsNo, updates) => {
+    setProducts(prev => prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p));
+  };
+
+  const deleteProduct = (goodsNo) => {
+    setProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+  };
 
   useEffect(() => {
     localStorage.setItem('beauty_users', JSON.stringify(users));
@@ -379,6 +384,9 @@ export const AppProvider = ({ children }) => {
         resetAllData,
         products,
         setProducts,
+        addProduct,
+        updateProduct,
+        deleteProduct,
         oliveYoungCatalog: products || OLIVE_YOUNG_CATALOG,
       }}
     >
