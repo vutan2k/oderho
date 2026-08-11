@@ -26,66 +26,67 @@ export default function AdminLoginPage() {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 64px)',
+      minHeight: 'calc(100vh - 120px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1A1C23 0%, #111319 100%)',
-      color: '#FFF',
-      padding: '20px'
+      background: 'var(--bg-ivory)',
+      padding: '40px 20px'
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '400px',
-        backgroundColor: '#242731',
-        borderRadius: '16px',
-        border: '1px solid rgba(255,255,255,0.1)',
-        padding: '36px 30px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+        maxWidth: '440px',
+        backgroundColor: '#FFFFFF',
+        borderRadius: '20px',
+        border: '1px solid var(--border-color)',
+        padding: '40px 32px',
+        boxShadow: 'var(--shadow-md)'
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
-            width: '56px',
-            height: '56px',
+            width: '60px',
+            height: '60px',
             borderRadius: '50%',
-            backgroundColor: 'rgba(122, 75, 158, 0.2)',
+            backgroundColor: 'var(--purple-light)',
             color: 'var(--purple-primary)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '12px',
-            border: '1px solid var(--purple-primary)'
+            marginBottom: '16px',
+            border: '1px solid rgba(122, 75, 158, 0.2)'
           }}>
-            <ShieldCheck size={30} />
+            <ShieldCheck size={32} />
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFF' }}>Cổng Quản Trị Admin</h2>
-          <p style={{ fontSize: '0.85rem', color: '#9CA3AF', marginTop: '6px' }}>
-            Hệ thống quản lý đơn hàng K-MART VIỆT HÀN
+          <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400 }}>
+            Quản Trị Hệ Thống
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '6px' }}>
+            K-MART VIỆT HÀN • CỔNG DÀNH CHO QUẢN TRỊ VIÊN
           </p>
         </div>
 
         {error && (
           <div style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid #EF4444',
-            color: '#F87171',
-            padding: '12px 14px',
-            borderRadius: '8px',
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FCA5A5',
+            color: '#991B1B',
+            padding: '12px 16px',
+            borderRadius: '10px',
             fontSize: '0.85rem',
-            marginBottom: '20px',
+            marginBottom: '24px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '10px'
           }}>
-            <AlertCircle size={16} />
+            <AlertCircle size={18} />
             <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#D1D5DB', marginBottom: '8px' }}>
-              Mật khẩu cấp cao Admin
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-dark)', marginBottom: '8px' }}>
+              Mật khẩu Admin cấp cao
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -96,43 +97,45 @@ export default function AdminLoginPage() {
                 required
                 style={{
                   width: '100%',
-                  padding: '12px 14px 12px 40px',
-                  borderRadius: '8px',
-                  border: '1px solid #374151',
-                  backgroundColor: '#1F2937',
-                  color: '#FFF',
-                  fontSize: '0.9rem',
-                  outline: 'none'
+                  padding: '14px 16px 14px 44px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: '#FFF',
+                  color: 'var(--text-dark)',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  transition: 'border 0.2s ease'
                 }}
               />
-              <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
+              <Lock size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--purple-primary)' }} />
             </div>
           </div>
 
           <button
             type="submit"
             className="btn-gold"
-            style={{ width: '100%', padding: '12px 0', justifyContent: 'center', fontSize: '0.9rem' }}
+            style={{ width: '100%', padding: '14px 0', justifyContent: 'center', fontSize: '0.85rem', borderRadius: '10px' }}
           >
-            ĐĂNG NHẬP ADMIN
+            ĐĂNG NHẬP VÀO HỆ THỐNG
           </button>
         </form>
 
-        <div style={{ marginTop: '24px', textAlign: 'center' }}>
+        <div style={{ marginTop: '28px', textAlign: 'center' }}>
           <button
             onClick={() => navigate('/')}
             style={{
               background: 'none',
               border: 'none',
-              color: '#9CA3AF',
+              color: 'var(--text-muted)',
               fontSize: '0.85rem',
+              fontWeight: 500,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px'
             }}
           >
-            <ArrowLeft size={14} /> Quay về Trang chủ
+            <ArrowLeft size={16} /> Quay về Trang chủ
           </button>
         </div>
       </div>

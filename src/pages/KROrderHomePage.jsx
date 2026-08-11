@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Search, User, ShoppingBag, ArrowRight, Star, Heart, Check, 
+import {
+  Search, User, ShoppingBag, ArrowRight, Star, Heart, Check,
   Sparkles, Leaf, ShieldCheck, Award, Pill, Smile, Globe, Package, Phone, Mail, MapPin,
   Share2, QrCode, CreditCard, LogIn, LogOut
 } from 'lucide-react';
@@ -47,7 +47,7 @@ export default function KROrderHomePage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      
+
       {/* 1. Thanh thông báo hàng đầu */}
       <div className="top-announcement-bar">
         MUA HÀNG HÀN QUỐC CHÍNH HÃNG 100% | <span>GIAO HÀNG TẬN NƠI TẠI VIỆT NAM (BAY AIR 3-5 NGÀY)</span>
@@ -212,7 +212,7 @@ export default function KROrderHomePage() {
                 }}>
                   🇰🇷 CHUYÊN MỸ PHẨM & THỰC PHẨM CHỨC NĂNG HÀN QUỐC
                 </span>
-                
+
                 <h1 style={{
                   fontSize: '3.2rem',
                   lineHeight: '1.2',
