@@ -4,13 +4,12 @@ import { ShoppingBag, ArrowRight } from 'lucide-react';
 
 export default function OliveCatalog({ onSelectProduct }) {
   const { oliveYoungCatalog, rates } = useContext(AppContext);
-  const [activeCategory, setActiveCategory] = useState('skincare');
-
   const categories = [
+    { id: 'all', name: 'Tất cả sản phẩm' },
     { id: 'skincare', name: 'Dưỡng da (Skincare)' },
     { id: 'makeup', name: 'Trang điểm (Makeup)' },
-    { id: 'haircare', name: 'Chăm sóc tóc (Haircare)' },
-    { id: 'bodycare', name: 'Chăm sóc cơ thể (Bodycare)' }
+    { id: 'health', name: 'Thực phẩm chức năng' },
+    { id: 'pharmacy', name: 'Hiệu thuốc Hàn Quốc' }
   ];
 
   const krwRate = rates?.KRW?.rate || 19.5;
@@ -19,9 +18,15 @@ export default function OliveCatalog({ onSelectProduct }) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
   };
 
-  const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter(
-    (product) => product.category === activeCategory
-  ) : [];
+  const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
+    if (activeCategory === 'all') return true;
+    const cat = (product.category || '').toLowerCase();
+    if (activeCategory === 'skincare') return cat.includes('skin') || cat.includes('dưỡng');
+    if (activeCategory === 'makeup') return cat.includes('make') || cat.includes('trang');
+    if (activeCategory === 'health') return cat.includes('health') || cat.includes('thực phẩm') || cat.includes('sâm') || cat.includes('collagen');
+    if (activeCategory === 'pharmacy') return cat.includes('pharm') || cat.includes('thuốc');
+    return cat === activeCategory;
+  }) : [];
 
   return (
     <div style={{ padding: '60px 0 40px 0', borderBottom: '1px solid var(--border-color)' }}>

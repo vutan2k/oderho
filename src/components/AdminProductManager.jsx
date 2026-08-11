@@ -20,7 +20,7 @@ export default function AdminProductManager() {
   const {
     products, addProduct, updateProduct, deleteProduct, rates,
     botIsRunning, toggleBot, pendingProducts,
-    approvePendingProduct, approveAllPendingProducts, rejectPendingProduct
+    approvePendingProduct, approveSelectedPendingProducts, approveAllPendingProducts, rejectPendingProduct
   } = useContext(AppContext);
   const showToast = useToast();
 
@@ -30,6 +30,7 @@ export default function AdminProductManager() {
   const [scrapedPreview, setScrapedPreview] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCat, setFilterCat] = useState('all');
+  const [selectedPendingGoodsNo, setSelectedPendingGoodsNo] = useState([]);
   const [editModal, setEditModal] = useState(null); // product object or null
   const [editForm, setEditForm] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -244,23 +245,50 @@ export default function AdminProductManager() {
                 <Sparkles size={18} />
                 BẢNG SẢN PHẨM CHỜ ADMIN DUYỆT ({pendingProducts.length} sản phẩm vừa cào)
               </h4>
-              <span style={{ fontSize: '0.8rem', color: '#B45309' }}>Bot tự động thu thập từ Olive Young Korea. Kiểm tra & bấm Duyệt để đăng lên Website.</span>
+              <span style={{ fontSize: '0.8rem', color: '#B45309' }}>Tích chọn sản phẩm cần duyệt hoặc bấm Đẩy Lên Website tức thì.</span>
             </div>
-            <button
-              onClick={() => {
-                approveAllPendingProducts();
-                if (showToast) showToast(`Đã duyệt tất cả ${pendingProducts.length} sản phẩm lên Website!`, 'success');
-              }}
-              style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', padding: '8px 18px', borderRadius: '10px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <CheckCircle2 size={16} /> Duyệt Tất Cả ({pendingProducts.length})
-            </button>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {/* Nút Đẩy Sản Phẩm Được Chọn Lên Website */}
+              {selectedPendingGoodsNo.length > 0 && (
+                <button
+                  onClick={() => {
+                    approveSelectedPendingProducts(selectedPendingGoodsNo);
+                    if (showToast) showToast(`🚀 Đã đẩy ${selectedPendingGoodsNo.length} sản phẩm được chọn lên Website thành công!`, 'success');
+                    setSelectedPendingGoodsNo([]);
+                  }}
+                  style={{ backgroundColor: '#7A4B9E', color: '#FFF', border: 'none', padding: '8px 18px', borderRadius: '10px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 10px rgba(122, 75, 158, 0.3)' }}
+                >
+                  <Sparkles size={16} /> 🚀 ĐẨY {selectedPendingGoodsNo.length} SẢN PHẨM ĐÃ CHỌN LÊN WEBSITE
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  approveAllPendingProducts();
+                  if (showToast) showToast(`Đã duyệt tất cả ${pendingProducts.length} sản phẩm lên Website!`, 'success');
+                }}
+                style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', padding: '8px 18px', borderRadius: '10px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <CheckCircle2 size={16} /> Duyệt Tất Cả ({pendingProducts.length})
+              </button>
+            </div>
           </div>
 
           <div style={{ overflowX: 'auto', backgroundColor: '#FFF', borderRadius: '12px', border: '1px solid #FCD34D' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ backgroundColor: '#FFFBEB', color: '#78350F', textTransform: 'uppercase', fontSize: '0.75rem', borderBottom: '1.5px solid #FCD34D' }}>
+                  <th style={{ padding: '10px 12px', textAlign: 'center', width: '40px' }}>
+                    <input
+                      type="checkbox"
+                      checked={pendingProducts.length > 0 && selectedPendingGoodsNo.length === pendingProducts.length}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedPendingGoodsNo(pendingProducts.map(p => p.goodsNo));
+                        else setSelectedPendingGoodsNo([]);
+                      }}
+                    />
+                  </th>
                   <th style={{ padding: '10px 12px', textAlign: 'center', width: '50px' }}>STT</th>
                   <th style={{ padding: '10px 12px', width: '60px' }}>Ảnh</th>
                   <th style={{ padding: '10px 12px', textAlign: 'left' }}>Tên Sản Phẩm Cào Về</th>
@@ -273,8 +301,20 @@ export default function AdminProductManager() {
               <tbody>
                 {pendingProducts.map((p, idx) => {
                   const vndEst = Math.round((p.foreignPrice || 0) * krwRate);
+                  const isChecked = selectedPendingGoodsNo.includes(p.goodsNo);
                   return (
-                    <tr key={p.goodsNo || idx} style={{ borderBottom: '1px solid #FEF3C7' }}>
+                    <tr key={p.goodsNo || idx} style={{ borderBottom: '1px solid #FEF3C7', backgroundColor: isChecked ? '#FEFCE8' : 'transparent' }}>
+                      <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            setSelectedPendingGoodsNo(prev =>
+                              prev.includes(p.goodsNo) ? prev.filter(g => g !== p.goodsNo) : [...prev, p.goodsNo]
+                            );
+                          }}
+                        />
+                      </td>
                       <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700, color: '#B45309' }}>{idx + 1}</td>
                       <td style={{ padding: '8px 12px' }}>
                         <img src={p.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #E5E7EB' }} />
@@ -291,11 +331,11 @@ export default function AdminProductManager() {
                           <button
                             onClick={() => {
                               approvePendingProduct(p.goodsNo);
-                              if (showToast) showToast(`Đã duyệt sản phẩm "${p.name}" lên Website!`, 'success');
+                              if (showToast) showToast(`🚀 Đã đẩy sản phẩm "${p.name}" lên Website!`, 'success');
                             }}
-                            style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                            style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', padding: '5px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                           >
-                            ✓ Duyệt
+                            🚀 Đẩy Lên Web
                           </button>
                           <button
                             onClick={() => {

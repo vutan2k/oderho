@@ -28,9 +28,15 @@ export default function KROrderHomePage() {
     { id: 'pharmacy', name: 'Thuốc Hiệu Thuốc Hàn' }
   ];
 
-  const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter(
-    (product) => activeCategory === 'all' || product.category === activeCategory
-  ) : [];
+  const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
+    if (activeCategory === 'all') return true;
+    const cat = (product.category || '').toLowerCase();
+    if (activeCategory === 'skincare') return cat.includes('skin') || cat.includes('dưỡng');
+    if (activeCategory === 'makeup') return cat.includes('make') || cat.includes('trang');
+    if (activeCategory === 'health') return cat.includes('health') || cat.includes('thực phẩm') || cat.includes('sâm') || cat.includes('collagen');
+    if (activeCategory === 'pharmacy') return cat.includes('pharm') || cat.includes('thuốc');
+    return cat === activeCategory;
+  }) : [];
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

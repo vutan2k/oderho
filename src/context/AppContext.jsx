@@ -189,6 +189,22 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const approveSelectedPendingProducts = (goodsNoArray = []) => {
+    if (!goodsNoArray || goodsNoArray.length === 0) return;
+    const selectedSet = new Set(goodsNoArray);
+    const targets = pendingProducts.filter(p => selectedSet.has(p.goodsNo));
+    
+    // Add all selected to products catalog
+    setProducts(prev => {
+      const existingIds = new Set(prev.map(p => p.goodsNo));
+      const newItems = targets.filter(p => !existingIds.has(p.goodsNo));
+      return [...newItems, ...prev];
+    });
+
+    // Remove from pending queue
+    setPendingProducts(prev => prev.filter(p => !selectedSet.has(p.goodsNo)));
+  };
+
   const approveAllPendingProducts = () => {
     pendingProducts.forEach(p => addProduct(p));
     setPendingProducts([]);
@@ -466,6 +482,7 @@ export const AppProvider = ({ children }) => {
         toggleBot,
         pendingProducts,
         approvePendingProduct,
+        approveSelectedPendingProducts,
         approveAllPendingProducts,
         rejectPendingProduct,
         oliveYoungCatalog: products || OLIVE_YOUNG_CATALOG,
