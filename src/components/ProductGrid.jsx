@@ -1,7 +1,7 @@
 import React from 'react';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Eye } from 'lucide-react';
 
-export default function ProductGrid({ products, krwRate, onSelectProduct }) {
+export default function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
   const formatVnd = (num) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
 
@@ -32,7 +32,10 @@ export default function ProductGrid({ products, krwRate, onSelectProduct }) {
             }}
           >
             {/* Product Image */}
-            <div style={{ position: 'relative', width: '100%', paddingTop: '90%', overflow: 'hidden' }}>
+            <div
+              style={{ position: 'relative', width: '100%', paddingTop: '90%', overflow: 'hidden', cursor: 'pointer' }}
+              onClick={() => onViewDetail && onViewDetail(product)}
+            >
               <img
                 src={product.productImage}
                 alt={product.name}
@@ -63,18 +66,23 @@ export default function ProductGrid({ products, krwRate, onSelectProduct }) {
             {/* Product Info */}
             <div style={{ padding: '20px', display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <h3 style={{
-                  fontSize: '0.95rem',
-                  fontWeight: 700,
-                  color: 'var(--text-dark)',
-                  marginBottom: '8px',
-                  lineHeight: '1.4',
-                  height: '42px',
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical'
-                }} title={product.name}>
+                <h3
+                  onClick={() => onViewDetail && onViewDetail(product)}
+                  style={{
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    color: 'var(--text-dark)',
+                    marginBottom: '8px',
+                    lineHeight: '1.4',
+                    height: '42px',
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    cursor: 'pointer'
+                  }}
+                  title={product.name}
+                >
                   {product.name}
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
@@ -99,15 +107,38 @@ export default function ProductGrid({ products, krwRate, onSelectProduct }) {
                   </div>
                 </div>
 
-                {/* Button Order */}
-                <button
-                  onClick={() => onSelectProduct(product)}
-                  className="btn-gold"
-                  style={{ width: '100%', justifyContent: 'center', padding: '10px 0' }}
-                >
-                  <ShoppingBag size={15} />
-                  <span>ĐẶT MUA NGAY</span>
-                </button>
+                {/* Buttons Action: Xem Chi Tiết & Đặt Mua Ngay */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '8px' }}>
+                  <button
+                    onClick={() => onViewDetail && onViewDetail(product)}
+                    style={{
+                      padding: '10px 0',
+                      borderRadius: '30px',
+                      border: '1px solid var(--purple-primary)',
+                      backgroundColor: '#FFF',
+                      color: 'var(--purple-primary)',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Eye size={14} />
+                    <span>CHI TIẾT</span>
+                  </button>
+
+                  <button
+                    onClick={() => onSelectProduct(product)}
+                    className="btn-gold"
+                    style={{ width: '100%', justifyContent: 'center', padding: '10px 0', fontSize: '0.8rem' }}
+                  >
+                    <ShoppingBag size={14} />
+                    <span>ĐẶT MUA</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

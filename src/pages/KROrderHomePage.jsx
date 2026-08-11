@@ -1,11 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Search, Sparkles, Heart, Leaf, Pill,
-  QrCode, CreditCard, Menu, X
+  Search, QrCode, CreditCard, Menu, X
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import OrderDrawer from '../components/OrderDrawer';
+import ProductDetailModal from '../components/ProductDetailModal';
 import HeroSection from '../components/HeroSection';
 import WhyChooseUs from '../components/WhyChooseUs';
 import ProductGrid from '../components/ProductGrid';
@@ -14,6 +14,7 @@ import Footer from '../components/Footer';
 export default function KROrderHomePage() {
   const { oliveYoungCatalog, rates, currentUser, logoutUser } = useContext(AppContext);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [detailProduct, setDetailProduct] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -146,7 +147,12 @@ export default function KROrderHomePage() {
               ))}
             </div>
 
-            <ProductGrid products={filteredProducts} krwRate={krwRate} onSelectProduct={setSelectedProduct} />
+            <ProductGrid
+              products={filteredProducts}
+              krwRate={krwRate}
+              onSelectProduct={setSelectedProduct}
+              onViewDetail={setDetailProduct}
+            />
           </div>
         </section>
 
@@ -233,6 +239,14 @@ export default function KROrderHomePage() {
       </main>
 
       <Footer />
+
+      {/* Modal Xem Chi Tiết Sản Phẩm */}
+      <ProductDetailModal
+        product={detailProduct}
+        krwRate={krwRate}
+        onClose={() => setDetailProduct(null)}
+        onOrderNow={(prod) => setSelectedProduct(prod)}
+      />
 
       {/* Drawer Đặt Hàng */}
       <OrderDrawer

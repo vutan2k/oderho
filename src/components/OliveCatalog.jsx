@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Sparkles, ShoppingBag, ArrowRight } from 'lucide-react';
+import { ShoppingBag, ArrowRight } from 'lucide-react';
 
 export default function OliveCatalog({ onSelectProduct }) {
   const { oliveYoungCatalog, rates } = useContext(AppContext);

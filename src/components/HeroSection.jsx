@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, ShieldCheck, Pill, CreditCard } from 'lucide-react';
 
-export default function HeroSection({ krwRate }) {
+export default function HeroSection() {
   return (
     <section style={{
       background: 'linear-gradient(135deg, #F9F6FA 0%, #EDE6F2 100%)',
