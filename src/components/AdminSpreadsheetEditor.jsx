@@ -3,7 +3,7 @@ import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { fetchProductsFromGoogleSheet, DEFAULT_USER_GOOGLE_SHEET_URL } from '../services/googleSheetService';
 import { scrapeProductMetadata } from '../services/productScraperService';
-import { FileSpreadsheet, RefreshCw, Plus, Trash2, Save, Download, Copy, Check, Sparkles, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { FileSpreadsheet, RefreshCw, Plus, Trash2, Save, Download, Copy, Check, Sparkles, Link as LinkIcon, Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function AdminSpreadsheetEditor() {
   const { products, setProducts, rates } = useContext(AppContext);
@@ -13,6 +13,7 @@ export default function AdminSpreadsheetEditor() {
   const [loadingSync, setLoadingSync] = useState(false);
   const [loadingScrape, setLoadingScrape] = useState(false);
   const [quickLink, setQuickLink] = useState('');
+  const [scrapedPreview, setScrapedPreview] = useState(null);
   const [gridData, setGridData] = useState(() => JSON.parse(JSON.stringify(products)));
   const [copiedSheetData, setCopiedSheetData] = useState(false);
 
@@ -40,7 +41,7 @@ export default function AdminSpreadsheetEditor() {
     }
   };
 
-  // Quick product URL auto-extract & push to website
+  // Quick product URL auto-extract & preview
   const handleAutoScrapeProductLink = async (e) => {
     e.preventDefault();
     if (!quickLink.trim()) {
@@ -49,23 +50,30 @@ export default function AdminSpreadsheetEditor() {
     }
 
     setLoadingScrape(true);
-    if (showToast) showToast('Agent đang truy cập link Hàn Quốc cào thông tin & ảnh HD...', 'info');
+    setScrapedPreview(null);
+    if (showToast) showToast('Agent đang bóc tách thông tin & ảnh HD từ link Hàn Quốc...', 'info');
 
     const res = await scrapeProductMetadata(quickLink.trim());
     setLoadingScrape(false);
 
     if (res.success && res.product) {
-      const scrapedProd = res.product;
-      const updated = [scrapedProd, ...gridData];
-      setGridData(updated);
-      setProducts(updated);
-      localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-      setQuickLink('');
-
-      if (showToast) showToast(`Agent đã cào thành công "${scrapedProd.name.substring(0, 35)}..." và đẩy 100% lên Website!`, 'success');
+      setScrapedPreview(res.product);
+      if (showToast) showToast('Đã bóc tách dữ liệu sản phẩm thành công! Kiểm tra thẻ xem trước bên dưới.', 'success');
     } else {
       if (showToast) showToast(`Không thể cào dữ liệu: ${res.error}`, 'error');
     }
+  };
+
+  // Confirm and Push Scraped Product to Grid & Website
+  const handleConfirmPushScrapedProduct = () => {
+    if (!scrapedPreview) return;
+    const updated = [scrapedPreview, ...gridData];
+    setGridData(updated);
+    setProducts(updated);
+    localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+    setScrapedPreview(null);
+    setQuickLink('');
+    if (showToast) showToast('Đã đẩy sản phẩm mới 100% lên Website thành công!', 'success');
   };
 
   // Update cell value directly
@@ -160,10 +168,10 @@ export default function AdminSpreadsheetEditor() {
       <div style={{ backgroundColor: '#FEF3C7', border: '1.5px solid #F59E0B', borderRadius: '14px', padding: '18px 20px', marginBottom: '24px' }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#B45309', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Sparkles size={20} />
-          Ô DÁN LINK HÀN QUỐC (AGENT CÀO TỰ ĐỘNG & PUSH SẢN PHẨM LÊN WEBSITE)
+          Ô DÁN LINK HÀN QUỐC (AGENT CÀO DỮ LIỆU BỐC TÁCH NGUYÊN BẢN v2.0)
         </h3>
         <p style={{ fontSize: '0.83rem', color: '#92400E', margin: '0 0 12px 0' }}>
-          Dán bất kỳ liên kết sản phẩm Hàn Quốc nào (Olive Young, Naver, Coupang...), Agent sẽ tự động cào ảnh HD, tên, giá Won ₩ và đồng bộ thẳng lên Website.
+          Dán bất kỳ đường dẫn Olive Young, Naver, Coupang... Agent v2.0 sẽ tự động trích xuất Tên, Thương hiệu, Giá Won ₩, Ảnh HD và Đánh giá sao.
         </p>
 
         <form onSubmit={handleAutoScrapeProductLink} style={{ display: 'flex', gap: '10px' }}>
@@ -173,7 +181,7 @@ export default function AdminSpreadsheetEditor() {
               type="url"
               className="input"
               style={{ width: '100%', paddingLeft: '36px', backgroundColor: '#FFF' }}
-              placeholder="https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=..."
+              placeholder="https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000185934"
               value={quickLink}
               onChange={(e) => setQuickLink(e.target.value)}
             />
@@ -185,9 +193,42 @@ export default function AdminSpreadsheetEditor() {
             style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
           >
             {loadingScrape ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-            <span>{loadingScrape ? 'AGENT ĐANG CÀO DỮ LIỆU...' : 'KÍCH HOẠT AGENT CÀO & PUSH'}</span>
+            <span>{loadingScrape ? 'AGENT ĐANG CÀO BỐC TÁCH...' : 'KÍCH HOẠT AGENT CÀO LINK'}</span>
           </button>
         </form>
+
+        {/* Live Scraped Preview Card */}
+        {scrapedPreview && (
+          <div style={{ marginTop: '16px', backgroundColor: '#FFF', border: '2px solid #10B981', borderRadius: '12px', padding: '16px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <img
+              src={scrapedPreview.productImage}
+              alt={scrapedPreview.name}
+              style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E5E7EB' }}
+            />
+            <div style={{ flex: 1, minWidth: '220px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, backgroundColor: '#ECFDF5', color: '#047857', padding: '2px 8px', borderRadius: '12px' }}>
+                  {scrapedPreview.brand}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>Mã: {scrapedPreview.goodsNo}</span>
+              </div>
+              <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: '#111827', fontWeight: 700 }}>
+                {scrapedPreview.name}
+              </h4>
+              <div style={{ fontSize: '0.85rem', color: 'var(--purple-primary)', fontWeight: 700 }}>
+                Giá Won: {scrapedPreview.foreignPrice.toLocaleString()} ₩ ({formatVnd(Math.round(scrapedPreview.foreignPrice * krwRate))})
+              </div>
+            </div>
+            <button
+              onClick={handleConfirmPushScrapedProduct}
+              className="btn-primary"
+              style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', backgroundColor: '#10B981' }}
+            >
+              <CheckCircle2 size={16} />
+              <span>XÁC NHẬN & PUSH LÊN WEBSITE</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Header Sync Bar */}
