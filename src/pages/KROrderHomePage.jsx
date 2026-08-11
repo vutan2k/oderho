@@ -105,9 +105,6 @@ export default function KROrderHomePage() {
               <a href="#payment" className="icon-btn" aria-label="Thanh toán VietQR" title="Thanh toán VietQR">
                 <QrCode size={18} />
               </a>
-              <Link to="/admin/login" className="icon-btn" aria-label="Admin" title="Cổng Admin" style={{ opacity: 0.5, fontSize: '0.75rem', fontWeight: 600 }}>
-                ADMIN
-              </Link>
             </div>
           </div>
         </div>
