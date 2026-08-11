@@ -120,16 +120,32 @@ export const AppProvider = ({ children }) => {
   });
 
   const [products, setProducts] = useState(() => {
-    const savedCustom = localStorage.getItem('tavy_custom_products');
-    if (savedCustom) {
-      const parsed = JSON.parse(savedCustom);
-      // Dedupe by goodsNo (keep first occurrence)
-      const seen = new Set();
-      return parsed.filter(p => {
-        if (!p.goodsNo || seen.has(p.goodsNo)) return false;
-        seen.add(p.goodsNo);
-        return true;
-      });
+    try {
+      const savedCustom = localStorage.getItem('tavy_custom_products');
+      if (savedCustom) {
+        const parsed = JSON.parse(savedCustom);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const seen = new Set();
+          const combined = [];
+          // Ưu tiên sản phẩm đã lưu/cào mới lên đầu
+          parsed.forEach(p => {
+            if (p && p.goodsNo && !seen.has(p.goodsNo)) {
+              seen.add(p.goodsNo);
+              combined.push(p);
+            }
+          });
+          // Bổ sung các sản phẩm mẫu nếu chưa có
+          OLIVE_YOUNG_CATALOG.forEach(p => {
+            if (p && p.goodsNo && !seen.has(p.goodsNo)) {
+              seen.add(p.goodsNo);
+              combined.push(p);
+            }
+          });
+          return combined;
+        }
+      }
+    } catch (e) {
+      console.warn("Lỗi đọc tavy_custom_products:", e);
     }
     return OLIVE_YOUNG_CATALOG;
   });
@@ -143,6 +159,13 @@ export const AppProvider = ({ children }) => {
     const saved = localStorage.getItem('tavy_pending_products');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // 💾 BẮT BUỘC: Lưu danh sách sản phẩm vào localStorage khi có thay đổi (Chống mất khi F5 reload)
+  useEffect(() => {
+    if (products && products.length > 0) {
+      localStorage.setItem('tavy_custom_products', JSON.stringify(products));
+    }
+  }, [products]);
 
   useEffect(() => {
     localStorage.setItem('tavy_bot_is_running', botIsRunning ? 'true' : 'false');
@@ -189,19 +212,32 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const addProduct = (product) => {
+    if (!product) return;
+    const cleanProduct = {
+      ...product,
+      goodsNo: product.goodsNo || `SP-${Date.now()}`
+    };
+
+    setProducts(prev => {
+      const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
+      const updated = [cleanProduct, ...filtered];
+      try {
+        localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
   const approveSelectedPendingProducts = (goodsNoArray = []) => {
     if (!goodsNoArray || goodsNoArray.length === 0) return;
     const selectedSet = new Set(goodsNoArray);
     const targets = pendingProducts.filter(p => selectedSet.has(p.goodsNo));
     
-    // Add all selected to products catalog
-    setProducts(prev => {
-      const existingIds = new Set(prev.map(p => p.goodsNo));
-      const newItems = targets.filter(p => !existingIds.has(p.goodsNo));
-      return [...newItems, ...prev];
+    targets.forEach(item => {
+      addProduct(item);
     });
 
-    // Remove from pending queue
     setPendingProducts(prev => prev.filter(p => !selectedSet.has(p.goodsNo)));
   };
 
@@ -214,22 +250,24 @@ export const AppProvider = ({ children }) => {
     setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
   };
 
-  const addProduct = (product) => {
+  const updateProduct = (goodsNo, updates) => {
     setProducts(prev => {
-      if (prev.some(p => p.goodsNo === product.goodsNo)) {
-        // Replace existing instead of duplicate
-        return prev.map(p => p.goodsNo === product.goodsNo ? { ...p, ...product } : p);
-      }
-      return [product, ...prev];
+      const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
+      try {
+        localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
     });
   };
 
-  const updateProduct = (goodsNo, updates) => {
-    setProducts(prev => prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p));
-  };
-
   const deleteProduct = (goodsNo) => {
-    setProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+    setProducts(prev => {
+      const updated = prev.filter(p => p.goodsNo !== goodsNo);
+      try {
+        localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   useEffect(() => {
