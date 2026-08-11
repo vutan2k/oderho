@@ -17,17 +17,38 @@ const CATEGORIES = [
 const categoryLabel = (val) => CATEGORIES.find(c => c.value === val)?.label || val;
 
 export default function AdminProductManager() {
-  const { products, addProduct, updateProduct, deleteProduct, rates } = useContext(AppContext);
+  const {
+    products, addProduct, updateProduct, deleteProduct, rates,
+    botIsRunning, toggleBot, pendingProducts,
+    approvePendingProduct, approveAllPendingProducts, rejectPendingProduct
+  } = useContext(AppContext);
   const showToast = useToast();
 
   const [quickLink, setQuickLink] = useState('');
   const [loadingScrape, setLoadingScrape] = useState(false);
+  const [loadingBotInstant, setLoadingBotInstant] = useState(false);
   const [scrapedPreview, setScrapedPreview] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCat, setFilterCat] = useState('all');
   const [editModal, setEditModal] = useState(null); // product object or null
   const [editForm, setEditForm] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  // Manual Trigger 1-Run for Bot
+  const handleTriggerBotInstant = async () => {
+    setLoadingBotInstant(true);
+    if (showToast) showToast('Bot đang tự động quét Olive Young Best Sellers...', 'info');
+    const { executeSingleBotRun } = await import('../services/autoScraperBotService');
+    const res = await executeSingleBotRun(products, pendingProducts);
+    setLoadingBotInstant(false);
+
+    if (res.success && res.product) {
+      approvePendingProduct(res.product.goodsNo); // or put in queue
+      if (showToast) showToast(`Bot đã cào thành công: "${res.product.name}"! Đã thêm vào hàng chờ duyệt.`, 'success');
+    } else {
+      if (showToast) showToast(`Lỗi bot cào: ${res.error}`, 'error');
+    }
+  };
 
   const krwRate = rates?.KRW?.rate || 19.5;
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -139,7 +160,162 @@ export default function AdminProductManager() {
   return (
     <div style={s.card}>
 
-      {/* ═══════════ AGENT SCRAPER BAR ═══════════ */}
+      {/* 🤖 ═══════════ BOT CÀO ĐỊNH KỲ 30 PHÚT & SWITCH BẬT/TẮT ═══════════ */}
+      <div style={{
+        background: botIsRunning ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)' : 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+        border: botIsRunning ? '2px solid #10B981' : '1px solid #D1D5DB',
+        borderRadius: '16px',
+        padding: '20px 24px',
+        marginBottom: '24px',
+        display: 'flex',
+        justify: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '16px',
+        boxShadow: botIsRunning ? '0 4px 14px rgba(16, 185, 129, 0.15)' : 'none'
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+            <span style={{
+              display: 'inline-block',
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              backgroundColor: botIsRunning ? '#10B981' : '#6B7280',
+              boxShadow: botIsRunning ? '0 0 10px #10B981' : 'none'
+            }} />
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: botIsRunning ? '#065F46' : '#374151', fontWeight: 800 }}>
+              BOT CÀO DỮ LIỆU TỰ ĐỘNG CHU KỲ 30 PHÚT (OLIVE YOUNG BEST SELLERS)
+            </h3>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: botIsRunning ? '#047857' : '#6B7280' }}>
+            {botIsRunning
+              ? '🟢 Bot đang CHẠY TỰ ĐỘNG! Cứ hoàn thành 1 sản phẩm → Tự nghỉ 30 phút → Tự động cào tiếp & đẩy vào Bảng Chờ Duyệt.'
+              : '🔴 Bot đang TẮT. Bật công tắc bên phải để kích hoạt vòng lặp cào dữ liệu tự động 30 phút/lần.'}
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <button
+            onClick={handleTriggerBotInstant}
+            disabled={loadingBotInstant}
+            style={{
+              backgroundColor: '#FFF',
+              color: 'var(--purple-primary)',
+              border: '1.5px solid var(--purple-primary)',
+              padding: '8px 16px',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            {loadingBotInstant ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            <span>{loadingBotInstant ? 'Đang Quét...' : 'Cho Bot Chạy 1 Lần Ngay'}</span>
+          </button>
+
+          {/* Toggle Switch */}
+          <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', gap: '10px', backgroundColor: '#FFF', padding: '6px 14px', borderRadius: '30px', border: '1px solid #D1D5DB' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: botIsRunning ? '#10B981' : '#6B7280' }}>
+              {botIsRunning ? 'BẬT BOT (ACTIVE)' : 'TẮT BOT'}
+            </span>
+            <input
+              type="checkbox"
+              checked={botIsRunning}
+              onChange={(e) => {
+                toggleBot(e.target.checked);
+                if (showToast) showToast(e.target.checked ? '🟢 Đã BẬT Bot Cào Tự Động 30 phút/lần!' : '🔴 Đã TẮT Bot Cào Tự Động', e.target.checked ? 'success' : 'info');
+              }}
+              style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#10B981' }}
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* 📥 ═══════════ BẢNG SẢN PHẨM CHỜ ADMIN DUYỆT ═══════════ */}
+      {pendingProducts && pendingProducts.length > 0 && (
+        <div style={{ backgroundColor: '#FEF3C7', border: '2px dashed #F59E0B', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#92400E', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={18} />
+                BẢNG SẢN PHẨM CHỜ ADMIN DUYỆT ({pendingProducts.length} sản phẩm vừa cào)
+              </h4>
+              <span style={{ fontSize: '0.8rem', color: '#B45309' }}>Bot tự động thu thập từ Olive Young Korea. Kiểm tra & bấm Duyệt để đăng lên Website.</span>
+            </div>
+            <button
+              onClick={() => {
+                approveAllPendingProducts();
+                if (showToast) showToast(`Đã duyệt tất cả ${pendingProducts.length} sản phẩm lên Website!`, 'success');
+              }}
+              style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', padding: '8px 18px', borderRadius: '10px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <CheckCircle2 size={16} /> Duyệt Tất Cả ({pendingProducts.length})
+            </button>
+          </div>
+
+          <div style={{ overflowX: 'auto', backgroundColor: '#FFF', borderRadius: '12px', border: '1px solid #FCD34D' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#FFFBEB', color: '#78350F', textTransform: 'uppercase', fontSize: '0.75rem', borderBottom: '1.5px solid #FCD34D' }}>
+                  <th style={{ padding: '10px 12px', textAlign: 'center', width: '50px' }}>STT</th>
+                  <th style={{ padding: '10px 12px', width: '60px' }}>Ảnh</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left' }}>Tên Sản Phẩm Cào Về</th>
+                  <th style={{ padding: '10px 12px', width: '110px' }}>Thương Hiệu</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'right', width: '100px' }}>Giá Won (₩)</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'right', width: '110px' }}>VNĐ Ước Tính</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'center', width: '150px' }}>Thao Tác Duyệt</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingProducts.map((p, idx) => {
+                  const vndEst = Math.round((p.foreignPrice || 0) * krwRate);
+                  return (
+                    <tr key={p.goodsNo || idx} style={{ borderBottom: '1px solid #FEF3C7' }}>
+                      <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700, color: '#B45309' }}>{idx + 1}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <img src={p.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #E5E7EB' }} />
+                      </td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#111827' }}>
+                        {p.name}
+                        <div style={{ fontSize: '0.72rem', color: '#6B7280', fontWeight: 400 }}>Mã: {p.goodsNo}</div>
+                      </td>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{p.brand}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--purple-primary)' }}>₩{(p.foreignPrice || 0).toLocaleString()}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: '#111827' }}>{formatVnd(vndEst)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                          <button
+                            onClick={() => {
+                              approvePendingProduct(p.goodsNo);
+                              if (showToast) showToast(`Đã duyệt sản phẩm "${p.name}" lên Website!`, 'success');
+                            }}
+                            style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            ✓ Duyệt
+                          </button>
+                          <button
+                            onClick={() => {
+                              rejectPendingProduct(p.goodsNo);
+                              if (showToast) showToast(`Đã từ chối sản phẩm khỏi hàng chờ`, 'info');
+                            }}
+                            style={{ backgroundColor: '#EF4444', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            ✕ Xóa
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       <div style={s.agentBar}>
         <h3 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', color: '#92400E', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Sparkles size={20} />

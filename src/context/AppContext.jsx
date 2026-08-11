@@ -134,10 +134,69 @@ export const AppProvider = ({ children }) => {
     return OLIVE_YOUNG_CATALOG;
   });
 
-  // CRUD: persist products to localStorage on every change
+  // 🤖 AUTO SCRAPER BOT STATE & PENDING APPROVAL QUEUE
+  const [botIsRunning, setBotIsRunning] = useState(() => {
+    return localStorage.getItem('tavy_bot_is_running') === 'true';
+  });
+
+  const [pendingProducts, setPendingProducts] = useState(() => {
+    const saved = localStorage.getItem('tavy_pending_products');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
-    localStorage.setItem('tavy_custom_products', JSON.stringify(products));
-  }, [products]);
+    localStorage.setItem('tavy_bot_is_running', botIsRunning ? 'true' : 'false');
+  }, [botIsRunning]);
+
+  useEffect(() => {
+    localStorage.setItem('tavy_pending_products', JSON.stringify(pendingProducts));
+  }, [pendingProducts]);
+
+  // Periodic Auto-Scraper Bot Effect (Runs every 30 minutes when botIsRunning is TRUE)
+  useEffect(() => {
+    if (!botIsRunning) return;
+
+    const runBotCycle = async () => {
+      const { executeSingleBotRun } = await import('../services/autoScraperBotService');
+      const res = await executeSingleBotRun(products, pendingProducts);
+      if (res.success && res.product) {
+        setPendingProducts(prev => {
+          if (prev.some(p => p.goodsNo === res.product.goodsNo)) return prev;
+          return [res.product, ...prev];
+        });
+      }
+    };
+
+    // Run first cycle after 5 seconds of enabling, then every 30 minutes (1,800,000 ms)
+    const initialTimer = setTimeout(runBotCycle, 5000);
+    const intervalTimer = setInterval(runBotCycle, 30 * 60 * 1000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(intervalTimer);
+    };
+  }, [botIsRunning, products]);
+
+  const toggleBot = (enabled) => {
+    setBotIsRunning(enabled);
+  };
+
+  const approvePendingProduct = (goodsNo) => {
+    const target = pendingProducts.find(p => p.goodsNo === goodsNo);
+    if (target) {
+      addProduct(target);
+      setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+    }
+  };
+
+  const approveAllPendingProducts = () => {
+    pendingProducts.forEach(p => addProduct(p));
+    setPendingProducts([]);
+  };
+
+  const rejectPendingProduct = (goodsNo) => {
+    setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+  };
 
   const addProduct = (product) => {
     setProducts(prev => {
@@ -403,6 +462,12 @@ export const AppProvider = ({ children }) => {
         addProduct,
         updateProduct,
         deleteProduct,
+        botIsRunning,
+        toggleBot,
+        pendingProducts,
+        approvePendingProduct,
+        approveAllPendingProducts,
+        rejectPendingProduct,
         oliveYoungCatalog: products || OLIVE_YOUNG_CATALOG,
       }}
     >
