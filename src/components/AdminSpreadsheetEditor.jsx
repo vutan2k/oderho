@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { fetchProductsFromGoogleSheet, DEFAULT_USER_GOOGLE_SHEET_URL } from '../services/googleSheetService';
-import { FileSpreadsheet, RefreshCw, Plus, Trash2, Save } from 'lucide-react';
+import { FileSpreadsheet, RefreshCw, Plus, Trash2, Save, Download, Copy, Check } from 'lucide-react';
 
 export default function AdminSpreadsheetEditor() {
   const { products, setProducts, rates } = useContext(AppContext);
@@ -11,6 +11,7 @@ export default function AdminSpreadsheetEditor() {
   const [sheetUrl, setSheetUrl] = useState(() => localStorage.getItem('tavy_google_sheet_url') || DEFAULT_USER_GOOGLE_SHEET_URL);
   const [loadingSync, setLoadingSync] = useState(false);
   const [gridData, setGridData] = useState(() => JSON.parse(JSON.stringify(products)));
+  const [copiedSheetData, setCopiedSheetData] = useState(false);
 
   const krwRate = rates?.KRW?.rate || 19.5;
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -78,6 +79,47 @@ export default function AdminSpreadsheetEditor() {
     if (showToast) showToast('Đã lưu toàn bộ danh mục sản phẩm mới thành công!', 'success');
   };
 
+  // Copy all products in TSV format (Tab Separated) to paste straight into Google Sheets A1 cell
+  const handleCopyForGoogleSheet = () => {
+    const titleHeader = "DANH SÁCH HÀNG HOÁ TAVY KOREA\t\t\t\t\t\t\t\t\t\t\n";
+    const colHeader = "STT\tMÃ SẢN PHẨM\tTÊN SẢN PHẨM\tTHƯƠNG HIỆU\tPHÂN LOẠI\tẢNH SẢN PHẨM\tMÔ TẢ, GHI CHÚ SẢN PHẨM\tXUẤT SỨ\tGIÁ THÀNH(VNĐ)\tGIÁ THÀNH(WON)\tĐÁNH GIÁ\n";
+
+    const rowsText = gridData.map((p, idx) => {
+      const vnd = p.explicitVndPrice || Math.round((p.foreignPrice || 0) * krwRate);
+      return `${idx + 1}\t${p.goodsNo || ''}\t${p.name || ''}\t${p.brand || ''}\t${p.category || 'skincare'}\t${p.productImage || ''}\t${p.description || ''}\t${p.origin || 'Korea'}\t${vnd}\t${p.foreignPrice || 0}\t${p.rating || 4.9}`;
+    }).join('\n');
+
+    const fullSheetText = titleHeader + colHeader + rowsText;
+    navigator.clipboard.writeText(fullSheetText);
+    setCopiedSheetData(true);
+    if (showToast) showToast('Đã sao chép toàn bộ dữ liệu! Hãy mở Google Sheet bấm Ctrl+V (Cmd+V) vào ô A1 để dán.', 'success');
+    setTimeout(() => setCopiedSheetData(false), 3000);
+  };
+
+  // Download CSV file
+  const handleDownloadCSV = () => {
+    const titleHeader = "DANH SÁCH HÀNG HOÁ TAVY KOREA,,,,,,,,,,";
+    const colHeader = "STT,MÃ SẢN PHẨM,TÊN SẢN PHẨM,THƯƠNG HIỆU,PHÂN LOẠI,ẢNH SẢN PHẨM,MÔ TẢ, GHI CHÚ SẢN PHẨM,XUẤT SỨ,GIÁ THÀNH(VNĐ),GIÁ THÀNH(WON),ĐÁNH GIÁ";
+
+    const rowsCsv = gridData.map((p, idx) => {
+      const vnd = p.explicitVndPrice || Math.round((p.foreignPrice || 0) * krwRate);
+      const cleanDesc = `"${(p.description || '').replace(/"/g, '""')}"`;
+      const cleanName = `"${(p.name || '').replace(/"/g, '""')}"`;
+      return `${idx + 1},${p.goodsNo || ''},${cleanName},${p.brand || ''},${p.category || 'skincare'},${p.productImage || ''},${cleanDesc},${p.origin || 'Korea'},${vnd},${p.foreignPrice || 0},${p.rating || 4.9}`;
+    }).join('\n');
+
+    const csvContent = "\uFEFF" + titleHeader + "\n" + colHeader + "\n" + rowsCsv;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'TAVY_KOREA_DANH_SACH_HANG_HOA.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    if (showToast) showToast('Đã tải xuống tệp TAVY_KOREA_DANH_SACH_HANG_HOA.csv!', 'info');
+  };
+
   return (
     <div style={{ backgroundColor: '#FFF', borderRadius: '16px', border: '1px solid #E5E7EB', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
       
@@ -91,7 +133,7 @@ export default function AdminSpreadsheetEditor() {
           Nhập đường dẫn Google Sheet công khai (Chia sẻ ở chế độ "Bất kỳ ai có liên kết"). Website sẽ tự động quét và cập nhật giá & sản phẩm tức thì.
         </p>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
           <input
             type="url"
             className="input"
@@ -110,6 +152,28 @@ export default function AdminSpreadsheetEditor() {
             <span>{loadingSync ? 'ĐANG ĐỒNG BỘ...' : 'ĐỒNG BỘ NGAY'}</span>
           </button>
         </div>
+
+        {/* Quick Export / Copy Tools for Google Sheet */}
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '12px', borderTop: '1px dashed rgba(122, 75, 158, 0.3)' }}>
+          <button
+            onClick={handleCopyForGoogleSheet}
+            className="btn-outline"
+            style={{ backgroundColor: '#FFF', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', borderColor: 'var(--purple-primary)', color: 'var(--purple-primary)' }}
+          >
+            {copiedSheetData ? <Check size={16} color="#10B981" /> : <Copy size={16} />}
+            <span>{copiedSheetData ? 'ĐÃ SAO CHÉP HÀNG HOÁ!' : '1-CLICK SAO CHÉP DÁN VÀO GOOGLE SHEET'}</span>
+          </button>
+
+          <button
+            onClick={handleDownloadCSV}
+            className="btn-outline"
+            style={{ backgroundColor: '#FFF', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem' }}
+          >
+            <Download size={16} />
+            <span>TẢI TỆP MẪU GOOGLE SHEET (.CSV)</span>
+          </button>
+        </div>
+
       </div>
 
       {/* Grid Action Tools */}
@@ -151,7 +215,7 @@ export default function AdminSpreadsheetEditor() {
           </thead>
           <tbody>
             {gridData.map((prod, idx) => {
-              const vndVal = Math.round((prod.foreignPrice || 0) * krwRate);
+              const vndVal = prod.explicitVndPrice || Math.round((prod.foreignPrice || 0) * krwRate);
 
               return (
                 <tr key={prod.goodsNo || idx} style={{ borderBottom: '1px solid #F3F4F6', backgroundColor: idx % 2 === 0 ? '#FFF' : '#FDFBF7' }}>
