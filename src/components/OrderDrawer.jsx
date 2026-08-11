@@ -96,9 +96,7 @@ export default function OrderDrawer({ product, onClose }) {
           borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}>
-          <span style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-dark)' }}>
-            {success ? 'Đặt hàng thành công 🎉' : 'Đặt Mua Sản Phẩm Hàn Quốc 🇰🇷'}
-          </span>
+          <span></span>
           <button
             onClick={handleClose}
             className="btn-ghost"
