@@ -2,7 +2,8 @@ import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { fetchProductsFromGoogleSheet, DEFAULT_USER_GOOGLE_SHEET_URL } from '../services/googleSheetService';
-import { FileSpreadsheet, RefreshCw, Plus, Trash2, Save, Download, Copy, Check, Sparkles, Link as LinkIcon } from 'lucide-react';
+import { scrapeProductMetadata } from '../services/productScraperService';
+import { FileSpreadsheet, RefreshCw, Plus, Trash2, Save, Download, Copy, Check, Sparkles, Link as LinkIcon, Loader2 } from 'lucide-react';
 
 export default function AdminSpreadsheetEditor() {
   const { products, setProducts, rates } = useContext(AppContext);
@@ -10,6 +11,7 @@ export default function AdminSpreadsheetEditor() {
 
   const [sheetUrl, setSheetUrl] = useState(() => localStorage.getItem('tavy_google_sheet_url') || DEFAULT_USER_GOOGLE_SHEET_URL);
   const [loadingSync, setLoadingSync] = useState(false);
+  const [loadingScrape, setLoadingScrape] = useState(false);
   const [quickLink, setQuickLink] = useState('');
   const [gridData, setGridData] = useState(() => JSON.parse(JSON.stringify(products)));
   const [copiedSheetData, setCopiedSheetData] = useState(false);
@@ -38,36 +40,32 @@ export default function AdminSpreadsheetEditor() {
     }
   };
 
-  // Quick product URL auto-extract simulation / agent trigger
-  const handleAutoScrapeProductLink = (e) => {
+  // Quick product URL auto-extract & push to website
+  const handleAutoScrapeProductLink = async (e) => {
     e.preventDefault();
-    if (!quickLink.trim()) return;
+    if (!quickLink.trim()) {
+      if (showToast) showToast('Vui lòng dán đường dẫn sản phẩm Hàn Quốc!', 'error');
+      return;
+    }
 
-    // Extract product ID if available from URL
-    const matchNo = quickLink.match(/goodsNo=([A-Z0-9]+)/i);
-    const goodsNo = matchNo ? matchNo[1] : `SP-${Math.floor(1000 + Math.random() * 9000)}`;
+    setLoadingScrape(true);
+    if (showToast) showToast('Agent đang truy cập link Hàn Quốc cào thông tin & ảnh HD...', 'info');
 
-    const newScrapedProd = {
-      goodsNo: goodsNo,
-      name: `Sản Phẩm Hàn Quốc Mới (${goodsNo})`,
-      brand: 'Olive Young Korea',
-      category: 'skincare',
-      foreignPrice: 22000,
-      productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-      description: 'Sản phẩm mua hộ chính hãng cào tự động từ link Hàn Quốc.',
-      origin: 'Store Olive Young Seoul, Hàn Quốc',
-      rating: 5.0,
-      productUrl: quickLink.trim(),
-      reviewsCount: 120
-    };
+    const res = await scrapeProductMetadata(quickLink.trim());
+    setLoadingScrape(false);
 
-    const updated = [newScrapedProd, ...gridData];
-    setGridData(updated);
-    setProducts(updated);
-    localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-    setQuickLink('');
+    if (res.success && res.product) {
+      const scrapedProd = res.product;
+      const updated = [scrapedProd, ...gridData];
+      setGridData(updated);
+      setProducts(updated);
+      localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      setQuickLink('');
 
-    if (showToast) showToast('Agent đã cào thành công thông tin sản phẩm và đồng bộ 100% lên Website!', 'success');
+      if (showToast) showToast(`Agent đã cào thành công "${scrapedProd.name.substring(0, 35)}..." và đẩy 100% lên Website!`, 'success');
+    } else {
+      if (showToast) showToast(`Không thể cào dữ liệu: ${res.error}`, 'error');
+    }
   };
 
   // Update cell value directly
@@ -180,9 +178,14 @@ export default function AdminSpreadsheetEditor() {
               onChange={(e) => setQuickLink(e.target.value)}
             />
           </div>
-          <button type="submit" className="btn-gold" style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-            <Sparkles size={16} />
-            <span>KÍCH HOẠT AGENT CÀO & PUSH</span>
+          <button
+            type="submit"
+            disabled={loadingScrape}
+            className="btn-gold"
+            style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+          >
+            {loadingScrape ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            <span>{loadingScrape ? 'AGENT ĐANG CÀO DỮ LIỆU...' : 'KÍCH HOẠT AGENT CÀO & PUSH'}</span>
           </button>
         </form>
       </div>
