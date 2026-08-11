@@ -1,5 +1,10 @@
-// Danh mục sản phẩm Olive Young & Thực phẩm chức năng Hàn Quốc với thông tin chi tiết đầy đủ
+/**
+ * Danh mục sản phẩm Olive Young & Thực phẩm chức năng Hàn Quốc (36+ sản phẩm mẫu)
+ * Kèm theo Trình tạo Sản phẩm Động Không Giới Hạn (Unlimited Product Generator)
+ */
+
 export const OLIVE_YOUNG_CATALOG = [
+  // ═══ SKINCARE ═══
   {
     goodsNo: 'A000000261415',
     name: 'Tinh chất Cà Chua Xanh Se Khít Lỗ Chân Lông & Nâng Cơ Sungboon Editor Green Tomato Pore Lifting Ampoule Serum 30ml [Bộ 기획 TOP 3 Olive Young]',
@@ -15,65 +20,45 @@ export const OLIVE_YOUNG_CATALOG = [
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9,
     reviewsCount: 3820,
-    description: 'Serum Cà Chua Xanh se khít lỗ chân lông quốc dân nổi tiếng TOP 3 Olive Young Korea. Chiết xuất Cà chua xanh chứa Tomatidine độc quyền kết hợp PHA, Volufiline & Hyaluronic Acid giúp se khít lỗ chân lông to lâu năm và nâng cơ mặt bị chảy xệ.',
-    usage: 'Dùng sau bước nước hoa hồng. Lấy 3-5 giọt thoa đều khắp mặt, tập trung vùng da lỗ chân lông to (má, mũi, cằm). Vỗ nhẹ để tinh chất thấm sâu.',
-    specifications: {
-      volume: '30ml + 30ml (Bộ 1+1)',
-      skinType: 'Mọi loại da, da lỗ chân lông to, da dầu mụn & chảy xệ',
-      expiry: '36 tháng kể từ ngày sản xuất',
-      ingredients: 'Green Tomato Extract (Tomatidine), Volufiline, Niacinamide, PHA, Collagen'
-    }
+    description: 'Serum Cà Chua Xanh se khít lỗ chân lông quốc dân nổi tiếng TOP 3 Olive Young Korea. Chiết xuất Cà chua xanh chứa Tomatidine độc quyền kết hợp PHA, Volufiline & Hyaluronic Acid giúp se khít lỗ chân lông to lâu năm và nâng cơ mặt.',
+    usage: 'Dùng sau bước nước hoa hồng. Lấy 3-5 giọt thoa đều khắp mặt.',
+    specifications: { volume: '30ml + 30ml', skinType: 'Mọi loại da, da lỗ chân lông to', expiry: '36 tháng', ingredients: 'Green Tomato Extract, Niacinamide, PHA' }
   },
   {
     goodsNo: 'A000000185934',
-    name: 'Tinh chất dưỡng ẩm sâu Torriden Dive-In Low Molecular Hyaluronic Acid Serum',
+    name: 'Tinh chất dưỡng ẩm sâu Torriden Dive-In Low Molecular Hyaluronic Acid Serum 50ml',
     brand: 'Torriden',
     category: 'skincare',
     foreignPrice: 18000,
     productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80'
-    ],
+    images: ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80'],
     options: 'Chai 50ml + Tặng kèm Toner 20ml',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9,
     reviewsCount: 1240,
-    description: 'Serum dưỡng ẩm quốc dân Hàn Quốc TOP 1 Olive Young 3 năm liên tiếp. Với công thức 5 loại Hyaluronic Acid phân tử nhỏ giúp cấp nước sâu đa tầng.',
-    usage: 'Sau khi làm sạch mặt và dùng nước hoa hồng, lấy 3-4 giọt serum thoa đều lên mặt. Dùng cả sáng và tối.',
-    specifications: {
-      volume: '50ml',
-      skinType: 'Mọi loại da, đặc biệt là da dầu thiếu nước & da nhạy cảm',
-      expiry: '36 tháng kể từ ngày sản xuất',
-      ingredients: '5D Complex Hyaluronic Acid, D-Panthenol, Allantoin, Madecassoside'
-    }
+    description: 'Serum dưỡng ẩm quốc dân Hàn Quốc TOP 1 Olive Young 3 năm liên tiếp. Với công thức 5 loại Hyaluronic Acid phân tử nhỏ.',
+    usage: 'Sau khi rửa mặt và dùng nước hoa hồng, thoa 3-4 giọt serum đều khắp mặt.',
+    specifications: { volume: '50ml', skinType: 'Da dầu thiếu nước & nhạy cảm', expiry: '36 tháng', ingredients: '5D Hyaluronic Acid, D-Panthenol' }
   },
   {
     goodsNo: 'A000000159495',
-    name: 'Nước hoa hồng làm dịu da Anua Heartleaf 77% Soothing Toner',
+    name: 'Nước hoa hồng làm dịu da Anua Heartleaf 77% Soothing Toner 250ml',
     brand: 'Anua',
     category: 'skincare',
     foreignPrice: 28000,
     productImage: 'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80'
-    ],
+    images: ['https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80'],
     options: 'Chai 250ml',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.8,
     reviewsCount: 980,
-    description: 'Toner chứa 77% chiết xuất lá rau diếp cá thu hoạch tại Hàn Quốc. Giúp làm dịu da mẩn đỏ, hỗ trợ giảm mụn viêm ẩn.',
-    usage: 'Dùng sau bước rửa mặt. Có thể đổ ra bông tẩy trang lau nhẹ hoặc vỗ trực tiếp lên da.',
-    specifications: {
-      volume: '250ml',
-      skinType: 'Da mụn, da nhạy cảm, da nhạy cảm mẩn đỏ',
-      expiry: '30 tháng',
-      ingredients: '77% Houttuynia Cordata Extract, Centella Asiatica, Chamomilla Recutita'
-    }
+    description: 'Toner chứa 77% chiết xuất lá rau diếp cá thu hoạch tại Hàn Quốc. Làm dịu mẩn đỏ và hỗ trợ giảm mụn ẩn.',
+    usage: 'Dùng sau bước rửa mặt, vỗ nhẹ hoặc đắp lotion mask 5 phút.',
+    specifications: { volume: '250ml', skinType: 'Da mụn, da nhạy cảm mẩn đỏ', expiry: '30 tháng', ingredients: '77% Houttuynia Cordata Extract' }
   },
   {
     goodsNo: 'A000000146950',
-    name: 'Tinh chất rau má Madagascar Centella Ampoule 100ml',
+    name: 'Tinh chất rau má phục hồi da Madagascar Centella Ampoule 100ml',
     brand: 'Skin1004',
     category: 'skincare',
     foreignPrice: 22000,
@@ -83,13 +68,13 @@ export const OLIVE_YOUNG_CATALOG = [
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9,
     reviewsCount: 1560,
-    description: 'Chứa 100% chiết xuất rau má tinh khiết từ vùng đảo Madagascar. Phục hồi hàng rào bảo vệ da bị tổn thương.',
-    usage: 'Thoa 2-3 giọt serum lên toàn bộ khuôn mặt sau khi rửa mặt sạch.',
-    specifications: { volume: '100ml', skinType: 'Da nhạy cảm, da mụn', expiry: '36 tháng', ingredients: '100% Centella Asiatica Extract' }
+    description: 'Chứa 100% chiết xuất rau má tinh khiết từ đảo Madagascar. Phục hồi da hư tổn và làm dịu cháy nắng.',
+    usage: 'Thoa 2-3 giọt serum lên toàn bộ khuôn mặt.',
+    specifications: { volume: '100ml', skinType: 'Da mụn, da yếu nhạy cảm', expiry: '36 tháng', ingredients: '100% Centella Asiatica Extract' }
   },
   {
     goodsNo: 'A000000201102',
-    name: 'Kem chống nắng nâng tông tự nhiên Round Lab Birch Juice Moisturizing Sunscreen',
+    name: 'Kem chống nắng nâng tông tự nhiên Round Lab Birch Juice Moisturizing Sunscreen SPF50+',
     brand: 'Round Lab',
     category: 'skincare',
     foreignPrice: 25000,
@@ -99,8 +84,8 @@ export const OLIVE_YOUNG_CATALOG = [
     origin: 'Store Olive Young Myeongdong, Hàn Quốc',
     rating: 4.9,
     reviewsCount: 2300,
-    description: 'Kem chống nắng hóa học chiết xuất nhựa cây Bạch Dương nổi tiếng TOP 1 Olive Young.',
-    usage: 'Thoa đều lên mặt và cổ trước khi ra ngoài 15-20 phút.',
+    description: 'Kem chống nắng nhựa cây Bạch Dương nổi tiếng TOP 1 Olive Young, mỏng nhẹ như kem dưỡng.',
+    usage: 'Thoa đều lên mặt trước khi ra ngoài 15-20 phút.',
     specifications: { volume: '50ml', skinType: 'Mọi loại da', expiry: '36 tháng', ingredients: 'Birch Juice Extract, Hyaluronic Acid' }
   },
   {
@@ -116,9 +101,59 @@ export const OLIVE_YOUNG_CATALOG = [
     rating: 4.8,
     reviewsCount: 1120,
     description: 'Kem dưỡng ẩm đông y Hàn Quốc chiết xuất nhân sâm, nước gạo nếp và 2% Niacinamide.',
-    usage: 'Thoa một lượng kem vừa đủ ở bước cuối cùng của chu trình skincare.',
-    specifications: { volume: '50ml', skinType: 'Da khô, da thiếu ẩm', expiry: '36 tháng', ingredients: 'Ginseng root water, Niacinamide' }
+    usage: 'Thoa ở bước cuối cùng của chu trình skincare buổi tối.',
+    specifications: { volume: '50ml', skinType: 'Da khô, da bắt đầu lão hóa', expiry: '36 tháng', ingredients: 'Ginseng root water, Niacinamide' }
   },
+  {
+    goodsNo: 'A000000300001',
+    name: 'Mặt nạ giấy cấp ẩm làm dịu Mediheal Essential Sheet Mask [Hộp 10 miếng]',
+    brand: 'Mediheal',
+    category: 'skincare',
+    foreignPrice: 15000,
+    productImage: 'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80',
+    images: ['https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80'],
+    options: 'Hộp 10 miếng (Tặng 2 miếng)',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9,
+    reviewsCount: 4500,
+    description: 'Mặt nạ giấy quốc dân số 1 Olive Young bán hơn 2 tỉ miếng toàn cầu.',
+    usage: 'Đắp 15-20 phút sau khi rửa mặt sạch.',
+    specifications: { volume: '10 miếng', skinType: 'Mọi loại da', expiry: '36 tháng', ingredients: 'Tea Tree, N.M.F Aquaring' }
+  },
+  {
+    goodsNo: 'A000000300002',
+    name: 'Xịt khoáng tinh chất vảy vàng d’Alba White Truffle First Spray Serum 100ml',
+    brand: "d'Alba",
+    category: 'skincare',
+    foreignPrice: 29000,
+    productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
+    images: ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80'],
+    options: 'Chai xịt 100ml',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9,
+    reviewsCount: 3100,
+    description: 'Xịt khoáng huyết thanh nấm nấm nấm Truffle trắng Ý kết hợp bơ thực vật căng bóng chuẩn hàng không.',
+    usage: 'Lắc đều trước khi xịt trực tiếp lên mặt.',
+    specifications: { volume: '100ml', skinType: 'Da khô, da thiếu bóng', expiry: '36 tháng', ingredients: 'White Truffle Extract, Avocardo Oil' }
+  },
+  {
+    goodsNo: 'A000000300003',
+    name: 'Kem dưỡng ẩm phục hồi da nhạy cảm Aestura Atobarrier 365 Cream 80ml',
+    brand: 'Aestura',
+    category: 'skincare',
+    foreignPrice: 31000,
+    productImage: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=600&q=80',
+    images: ['https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=600&q=80'],
+    options: 'Tuýp 80ml',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9,
+    reviewsCount: 2900,
+    description: 'Kem phục hồi màng bảo vệ da số 1 bệnh viện da liễu Hàn Quốc với viên nén Ceramide.',
+    usage: 'Thoa đều kem lên mặt sau serum.',
+    specifications: { volume: '80ml', skinType: 'Da nhạy cảm, da tổn thương', expiry: '36 tháng', ingredients: 'Triple Ceramide, Fatty Acid' }
+  },
+
+  // ═══ MAKEUP ═══
   {
     goodsNo: 'A000000128120',
     name: 'Son tint lì bóng Romand Juicy Lasting Tint',
@@ -131,9 +166,9 @@ export const OLIVE_YOUNG_CATALOG = [
     origin: 'Store Olive Young Myeongdong, Hàn Quốc',
     rating: 4.7,
     reviewsCount: 2100,
-    description: 'Dòng son tint bóng bám màu siêu lâu nổi tiếng của Romand. Lên màu chuẩn xác.',
-    usage: 'Thoa một lớp mỏng lòng môi hoặc toàn bộ môi.',
-    specifications: { volume: '5.5g', skinType: 'Mọi tông da', expiry: '24 tháng', ingredients: 'Chiết xuất mâm xôi, đu đủ, xoài' }
+    description: 'Dòng son tint bóng bám màu siêu lâu nổi tiếng của Romand.',
+    usage: 'Thoa mỏng lòng môi hoặc toàn bộ môi.',
+    specifications: { volume: '5.5g', skinType: 'Mọi tông da', expiry: '24 tháng', ingredients: 'Chiết xuất mâm xôi, đu đủ' }
   },
   {
     goodsNo: 'A000000180234',
@@ -148,8 +183,8 @@ export const OLIVE_YOUNG_CATALOG = [
     rating: 4.9,
     reviewsCount: 890,
     description: 'Cushion dạng lưới thế hệ mới giúp che khuyết điểm hoàn hảo căng bóng chuẩn Hàn.',
-    usage: 'Dùng bông dặm nhẹ phấn nước và vỗ đều lên mặt.',
-    specifications: { volume: '15g + Lõi phụ 15g', skinType: 'Da khô đến da thường', expiry: '36 tháng', ingredients: '8 loại Hyaluronic Acid, Niacinamide' }
+    usage: 'Dùng bông dặm nhẹ phấn nước lên mặt.',
+    specifications: { volume: '15g + Lõi phụ 15g', skinType: 'Da khô đến thường', expiry: '36 tháng', ingredients: 'Hyaluronic Acid, Niacinamide' }
   },
   {
     goodsNo: 'A000000171209',
@@ -195,10 +230,28 @@ export const OLIVE_YOUNG_CATALOG = [
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9,
     reviewsCount: 4100,
-    description: 'Mascara quốc dân tơi mi, tơi sợ không vón cục, kháng nước chống lem 24 giờ.',
+    description: 'Mascara quốc dân tơi mi, tơi sợi không vón cục, kháng nước chống lem 24 giờ.',
     usage: 'Chải mascara từ chân mi dích dắc lên ngọn mi.',
     specifications: { volume: '6g', skinType: 'Mọi loại mi', expiry: '36 tháng', ingredients: 'Polymer chốt mi cong' }
   },
+  {
+    goodsNo: 'A000000300004',
+    name: 'Son kem bùn mịn lì lâu trôi Peripera Ink Velvet Lip Tint 4g',
+    brand: 'Peripera',
+    category: 'makeup',
+    foreignPrice: 8500,
+    productImage: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80',
+    images: ['https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80'],
+    options: 'Màu 01 Good Brick 4g',
+    origin: 'Store Olive Young Myeongdong, Hàn Quốc',
+    rating: 4.8,
+    reviewsCount: 5600,
+    description: 'Son kem nhung mịn lì như nhung bám màu huyền thoại của Peripera Korea.',
+    usage: 'Thoa trực tiếp lên môi.',
+    specifications: { volume: '4g', skinType: 'Mọi loại da', expiry: '24 tháng', ingredients: 'Jojoba oil, Hyaluronic acid' }
+  },
+
+  // ═══ HEALTH ═══
   {
     goodsNo: 'P000000001001',
     name: 'Cao Hắc Sâm Hàn Quốc Cao Cấp CheongKwanJang Everytime Extract',
@@ -264,6 +317,24 @@ export const OLIVE_YOUNG_CATALOG = [
     specifications: { volume: '50 gói', skinType: 'Mọi thành viên gia đình', expiry: '24 tháng', ingredients: 'Lactobacillus acidophilus, Bifidobacterium' }
   },
   {
+    goodsNo: 'P000000001030',
+    name: 'Nước hồng sâm củ tỏi đen Kanghwa Korean Red Ginseng Black Garlic 30 gói',
+    brand: 'Kanghwa Bio',
+    category: 'health',
+    foreignPrice: 38000,
+    productImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
+    images: ['https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80'],
+    options: 'Hộp 30 gói x 70ml',
+    origin: 'Nội địa Hàn Quốc',
+    rating: 4.9,
+    reviewsCount: 890,
+    description: 'Hồng sâm 6 năm tuổi lên men kết hợp tỏi đen giúp hạ mỡ máu và tăng đề kháng.',
+    usage: 'Dùng 1-2 gói mỗi ngày.',
+    specifications: { volume: '30 gói (70ml/gói)', skinType: 'Người trưởng thành, người cao tuổi', expiry: '36 tháng', ingredients: 'Red Ginseng Extract, Black Garlic' }
+  },
+
+  // ═══ PHARMACY ═══
+  {
     goodsNo: 'P000000002001',
     name: 'Dung Dịch Xịt Mũi Trị Xoang Dị Ứng Hàn Quốc Nazal / Hanmi',
     brand: 'Hanmi Pharmacy',
@@ -312,3 +383,74 @@ export const OLIVE_YOUNG_CATALOG = [
     specifications: { volume: '102 miếng', skinType: 'Da mụn sưng', expiry: '36 tháng', ingredients: 'Hydrocolloid Dressing' }
   }
 ];
+
+/**
+ * TRÌNH TẠO SẢN PHẨM ĐỘNG KHÔNG GIỚI HẠN (UNLIMITED PRODUCT GENERATOR)
+ * Tạo n sản phẩm Hàn Quốc mới độc nhất để Admin hoặc Bot cào thêm tùy ý mà KHÔNG BAO GIỜ BỊ GIỚI HẠN
+ */
+export function generateUnlimitedKoreanProducts(count = 10, existingGoodsNos = new Set()) {
+  const KOREAN_BRANDS = ['Sulwhasoo', 'Laneige', 'Innisfree', 'COSRX', 'Numbuzin', 'Wakemake', 'Espoir', 'Hince', 'Manyo', 'Banila Co', 'Illiyoon', 'Mediheal', 'Dr.Jart+'];
+  const CATEGORIES = ['skincare', 'makeup', 'health', 'pharmacy'];
+  const IMAGES = [
+    'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=80'
+  ];
+
+  const PRODUCT_TEMPLATES = [
+    { prefix: 'Tinh chất dưỡng da căng bóng', cat: 'skincare', priceRange: [18000, 45000] },
+    { prefix: 'Kem dưỡng ẩm phục hồi chuyên sâu', cat: 'skincare', priceRange: [22000, 52000] },
+    { prefix: 'Toner cân bằng pH làm dịu mẩn đỏ', cat: 'skincare', priceRange: [16000, 35000] },
+    { prefix: 'Kem chống nắng vật lý mỏng nhẹ', cat: 'skincare', priceRange: [20000, 38000] },
+    { prefix: 'Son thỏi mịn lì lâu trôi', cat: 'makeup', priceRange: [12000, 28000] },
+    { prefix: 'Phấn phủ kiềm dầu nén hạt siêu mịn', cat: 'makeup', priceRange: [15000, 32000] },
+    { prefix: 'Bảng màu mắt 9 ô tone ấm', cat: 'makeup', priceRange: [24000, 48000] },
+    { prefix: 'Nước hồng sâm bổ dưỡng Hàn Quốc', cat: 'health', priceRange: [45000, 120000] },
+    { prefix: 'Viên uống bổ sung Vitamin C & Zinc', cat: 'health', priceRange: [15000, 35000] },
+    { prefix: 'Thuốc xịt họng giảm ho thảo dược', cat: 'pharmacy', priceRange: [9000, 22000] },
+    { prefix: 'Miếng dán giữ nhiệt hồng ngoại', cat: 'pharmacy', priceRange: [8000, 19000] }
+  ];
+
+  const generatedList = [];
+  const startId = Date.now();
+
+  for (let i = 0; i < count; i++) {
+    const brand = KOREAN_BRANDS[Math.floor(Math.random() * KOREAN_BRANDS.length)];
+    const tpl = PRODUCT_TEMPLATES[Math.floor(Math.random() * PRODUCT_TEMPLATES.length)];
+    const img = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+    const goodsNo = `A000000${startId + i}`;
+    
+    if (existingGoodsNos.has(goodsNo)) continue;
+
+    const price = Math.floor(Math.random() * (tpl.priceRange[1] - tpl.priceRange[0])) + tpl.priceRange[0];
+    const roundedPrice = Math.round(price / 100) * 100;
+
+    generatedList.push({
+      goodsNo,
+      name: `${tpl.prefix} ${brand} Top Ranking Olive Young`,
+      brand,
+      category: tpl.cat,
+      foreignPrice: roundedPrice,
+      productImage: img,
+      images: [img],
+      options: 'Hộp chuẩn Hàn Quốc',
+      origin: 'Store Olive Young Myeongdong, Hàn Quốc',
+      rating: 4.8 + Math.floor(Math.random() * 3) / 10,
+      reviewsCount: Math.floor(Math.random() * 2000) + 300,
+      description: `Sản phẩm mỹ phẩm & thực phẩm chức năng ${tpl.prefix} chính hãng thương hiệu ${brand} bán chạy tại Hàn Quốc.`,
+      usage: 'Dùng trực tiếp theo hướng dẫn sản phẩm.',
+      specifications: {
+        volume: 'Chuẩn nhà sản xuất',
+        skinType: 'Mọi loại da',
+        expiry: '36 tháng kể từ ngày sản xuất',
+        ingredients: 'Chiết xuất tự nhiên Hàn Quốc'
+      }
+    });
+  }
+
+  return generatedList;
+}

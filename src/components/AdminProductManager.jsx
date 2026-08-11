@@ -418,7 +418,7 @@ export default function AdminProductManager() {
         <div>
           <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#111827', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Package size={20} />
-            DANH MỤC SẢN PHẨM ({products.length})
+            DANH MỤC SẢN PHẨM ({products.length} SP - KHÔNG GIỚI HẠN)
           </h4>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -430,7 +430,7 @@ export default function AdminProductManager() {
               placeholder="Tìm tên, brand, mã..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ ...s.input, width: '200px', paddingLeft: '32px', fontSize: '0.82rem', padding: '8px 10px 8px 32px' }}
+              style={{ ...s.input, width: '180px', paddingLeft: '32px', fontSize: '0.82rem', padding: '8px 10px 8px 32px' }}
             />
           </div>
           {/* Category filter */}
