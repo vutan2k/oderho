@@ -1,26 +1,33 @@
-# 📘 HƯỚNG DẪN SỬ DỤNG CHI TIẾT HỆ THỐNG TAVY KOREA
-*(Dành cho Quản Trị Viên & Chủ Cửa Hàng Mua Hàng Hộ Hàn Quốc)*
+# 📘 HƯỚNG DẪN SỬ DỤNG CHI TIẾT HỆ THỐNG TAVY KOREA & DATABASE FIRESTORE
+*(Dành cho Quản Trị Viên, Kỹ Thuật Viên & Chủ Cửa Hàng)*
 
 ---
 
 ## 📌 MỤC LỤC
-1. [Giới Thiệu Tổng Quan](#1-giới-thiệu-tổng-quan)
-2. [Hướng Dẫn Quản Lý Sản Phẩm Bằng Google Trang Tính (Google Sheet)](#2-hướng-dẫn-quản-lý-sản-phẩm-bằng-google-trang-tính-google-sheet)
+1. [Hướng Dẫn Chi Tiết Truy Cập Trang Admin (Quản Trị Viên)](#1-hướng-dẫn-chi-tiết-truy-cập-trang-admin)
+2. [Hướng Dẫn Quản Lý Sản Phẩm Bằng Google Trang Tính (Google Sheet)](#2-hướng-dẫn-quản-lý-sản-phẩm-bằng-google-trang-tính)
 3. [Hướng Dẫn Sử Dụng Trang Quản Trị Admin Dashboard](#3-hướng-dẫn-sử-dụng-trang-quản-trị-admin-dashboard)
-4. [Hướng Dẫn Quy Trình Đặt Hàng & Quản Lý Đơn Hàng](#4-hướng-dẫn-quy-trình-đặt-hàng--quản-lý-đơn-hàng)
-5. [Cấu Trúc Cột Mẫu Google Sheet (Sao Chép Vào Google Docs / Sheet)](#5-cấu-trúc-cột-mẫu-google-sheet)
+4. [Hướng Dẫn Cấu Trúc & Quản Lý CSDL Firebase Firestore (Database)](#4-hướng-dẫn-cấu-trúc--quản-lý-csdl-firebase-firestore)
+5. [Hướng Dẫn Quy Trình Đặt Hàng & Quản Lý Đơn Hàng Dành Cho Khách Hàng](#5-hướng-dẫn-quy-trình-đặt-hàng--quản-lý-đơn-hàng)
+6. [Cấu Trúc Cột Mẫu Google Sheet (Copy Dán Nhanh)](#6-cấu-trúc-cột-mẫu-google-sheet)
 
 ---
 
-## 1. GIỚI THIỆU TỔNG QUAN
+## 1. HƯỚNG DẪN CHI TIẾT TRUY CẬP TRANG ADMIN
 
-Website **TAVY KOREA** (`https://github.com/vutan2k/oderho.git`) là nền tảng chuyên mua hộ mỹ phẩm Olive Young, thực phẩm chức năng và thuốc nội địa Hàn Quốc chính hãng cho người Việt.
+### 🔑 Bước 1: Mở đường dẫn trang Quản trị
+Mở trình duyệt web và nhập chính xác một trong các đường dẫn sau:
+- **Truy cập trực tiếp đường dẫn Admin**: `https://<ten-mien-website>/admin/login` (hoặc `http://localhost:3000/admin/login` khi chạy máy nội bộ).
+- **Mẹo truy cập nhanh**: Trên bàn phím, gõ trực tiếp đuôi `/admin/login` vào sau tên miền website của bạn.
 
-### Các Tính Năng Nổi Bật:
-- **Đồng bộ dữ liệu thời gian thực từ Google Sheet**: Nhập/sửa sản phẩm trên Google Trang Tính, website tự động cập nhật sản phẩm và tỷ giá Won ₩ -> VNĐ.
-- **Bảng Quản lý Admin Spreadsheet Editor**: Chỉnh sửa trực tiếp từng ô giá, tên, danh mục sản phẩm theo dạng bảng Excel ngay trên website.
-- **Hệ thống Đăng nhập & Sổ Địa chỉ Khách hàng**: Lưu địa chỉ giao hàng mặc định, tự động điền form đặt hàng.
-- **Theo dõi tiến trình vận chuyển 5 Bước**: Chờ cọc ➔ Đã cọc ➔ Đã mua tại Hàn ➔ Đang bay Air ➔ Đã giao thành công (kèm Mã vận đơn Air Seoul - Việt Nam).
+### 🔑 Bước 2: Nhập thông tin xác thực Admin
+- **Mật khẩu Quản Trị (Admin Password)**: `admin123`
+- Bấm nút **ĐĂNG NHẬP ADMIN**.
+
+### 🔑 Bước 3: Chuyển hướng vào Admin Dashboard (`/admin/dashboard`)
+Sau khi đăng nhập thành công, bạn sẽ được tự động chuyển vào trang điều hành **TAVY KOREA ADMIN PORTAL** với 2 phân khu chính:
+1. **Phân Khu 1: QUẢN LÝ ĐƠN HÀNG (Shopping Bag)**: Quản lý yêu cầu mua hộ, duyệt cọc, nhập cước Air và theo dõi vận đơn.
+2. **Phân Khu 2: QUẢN LÝ SẢN PHẨM & GOOGLE SHEET (Spreadsheet)**: Nhập link Google Sheet để đồng bộ sản phẩm tự động hoặc chỉnh sửa bảng giá trực tiếp.
 
 ---
 
@@ -59,10 +66,6 @@ Nhập các tên cột ở dòng đầu tiên (Hàng 1) chính xác như sau:
 
 ## 3. HƯỚNG DẪN SỬ DỤNG TRANG QUẢN TRỊ ADMIN DASHBOARD
 
-### 🔑 Đăng nhập Admin Portal
-- Đường dẫn: `/admin/login`
-- Mật khẩu mặc định: `admin123` (hoặc tài khoản Admin cấu hình).
-
 ### 🛠️ Các tính năng trang Admin Dashboard (`/admin/dashboard`):
 1. **Cập nhật Tỷ Giá Won (KRW/VND)**:
    - Nhập tỷ giá hôm nay (ví dụ: `19.5`) và bấm **Lưu Tỷ Giá**. Toàn bộ giá quy đổi VNĐ trên website sẽ tự động cập nhật chính xác theo tỷ giá mới.
@@ -77,7 +80,54 @@ Nhập các tên cột ở dòng đầu tiên (Hàng 1) chính xác như sau:
 
 ---
 
-## 4. HƯỚNG DẪN QUY TRÌNH ĐẶT HÀNG & QUẢN LÝ ĐƠN HÀNG
+## 4. HƯỚNG DẪN CẤU TRÚC & QUẢN LÝ CSDL FIREBASE FIRESTORE (DATABASE)
+
+Hệ thống sử dụng **Google Firebase Firestore** thế hệ mới (Modular v10+) để lưu trữ CSDL thời gian thực (Realtime Sync) với chế độ lưu đệm ngoại tuyến (Offline Persistence via IndexedDB).
+
+### 🗄️ Các Tập Hợp CSDL (Collections):
+
+#### 1. Collection `orders` (Quản lý Đơn Hàng)
+Lưu trữ thông tin chi tiết các đơn đặt mua hộ của khách hàng:
+- `id` (String): Mã đơn hàng (VD: `ORD-827192`).
+- `userEmail` (String): Email khách hàng.
+- `customerName` (String), `customerPhone` (String), `customerAddress` (String): Thông tin nhận hàng tại Việt Nam.
+- `productName` (String), `brand` (String), `qty` (Number), `foreignPrice` (Number): Thông tin sản phẩm mua hộ tại Hàn Quốc.
+- `status` (String): Trạng thái đơn (`pending` -> `quoted` -> `purchased` -> `transit` -> `completed`).
+- `trackingCode` (String): Mã vận đơn AirSeoul.
+- `createdAt` (Timestamp), `updatedAt` (Timestamp).
+
+#### 2. Collection `users` (Quản lý Tài Khoản & Sổ Địa Chỉ)
+- `uid` (String): Mã tài khoản người dùng.
+- `email` (String), `name` (String), `phone` (String), `address` (String): Sổ địa chỉ mặc định.
+- `role` (String): Phân quyền (`user` / `admin`).
+
+#### 3. Collection `system_config` (Cấu Hình Tỷ Giá Hệ Thống)
+- Doc `rates`:
+  - `KRW` (Object): `{ code: 'KRW', rate: 19.5, shippingFee: 180000 }`
+  - `updatedAt` (Timestamp).
+
+### 🛡️ Quy Tắc Bảo Mật Firestore (`firestore.rules`):
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /orders/{orderId} {
+      allow read, write: if true; // Cho phép khách hàng gửi đơn & Admin quản lý
+    }
+    match /system_config/{configId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
+```
+
+---
+
+## 5. HƯỚNG DẪN QUY TRÌNH ĐẶT HÀNG & QUẢN LÝ ĐƠN HÀNG
 
 ### 🛒 Dành cho Khách Hàng:
 1. **Tìm kiếm & Chọn sản phẩm**: Xem danh mục Mỹ phẩm & Thực phẩm chức năng Hàn Quốc trên trang chủ TAVY KOREA.
@@ -93,16 +143,16 @@ Nhập các tên cột ở dòng đầu tiên (Hàng 1) chính xác như sau:
 
 ---
 
-## 5. CẤU TRÚC CỘT MẪU GOOGLE SHEET
+## 6. CẤU TRÚC CỘT MẪU GOOGLE SHEET
 *(Có thể copy bảng bên dưới dán trực tiếp vào Google Trang Tính)*
 
-```text
-goodsNo	name	brand	category	foreignPrice	productImage	description	origin	rating
-A001	Serum Dưỡng Ẩm Torriden Dive-In 50ml	Torriden	skincare	18000	https://images.unsplash.com/photo-1620916566398-39f1143ab7be	Cấp nước đa tầng làm dịu da tức thì	Olive Young Seoul	4.9
-A002	Toner Lá Rau Diếp Cá Anua 77% 250ml	Anua	skincare	28000	https://images.unsplash.com/photo-1556229174-5e42a09e45af	Làm dịu da mẩn đỏ kiềm dầu mụn	Olive Young Seoul	4.8
-A003	Son Tint Lì Bóng Romand Juicy Lasting	Romand	makeup	9900	https://images.unsplash.com/photo-1586495777744-4413f21062fa	Son tint bóng lâu trôi mọng môi	Store Myeongdong	4.7
-P001	Cao Hắc Sâm Chính Phủ KGC Everytime	KGC	health	98000	https://images.unsplash.com/photo-1584308666744-24d5c474f2ae	Bồi bổ sức khỏe tăng đề kháng	KGC Korea	5.0
-P002	Chai Xịt Mũi Viêm Xoang Hanmi 30ml	Hanmi	pharmacy	12000	https://images.unsplash.com/photo-1584017911766-d451b3d0e843	Giảm nghẹt mũi sổ mũi tức thì	Nhà thuốc Seoul	4.8
+```csv
+goodsNo,name,brand,category,foreignPrice,productImage,description,origin,rating
+A001,Serum Dưỡng Ẩm Torriden Dive-In 50ml,Torriden,skincare,18000,https://images.unsplash.com/photo-1620916566398-39f1143ab7be,Cấp nước đa tầng làm dịu da tức thì,Olive Young Seoul,4.9
+A002,Toner Lá Rau Diếp Cá Anua 77% 250ml,Anua,skincare,28000,https://images.unsplash.com/photo-1556229174-5e42a09e45af,Làm dịu da mẩn đỏ kiềm dầu mụn,Olive Young Seoul,4.8
+A003,Son Tint Lì Bóng Romand Juicy Lasting,Romand,makeup,9900,https://images.unsplash.com/photo-1586495777744-4413f21062fa,Son tint bóng lâu trôi mọng môi,Store Myeongdong,4.7
+P001,Cao Hắc Sâm Chính Phủ KGC Everytime,KGC,health,98000,https://images.unsplash.com/photo-1584308666744-24d5c474f2ae,Bồi bổ sức khỏe tăng đề kháng,KGC Korea,5.0
+P002,Chai Xịt Mũi Viêm Xoang Hanmi 30ml,Hanmi,pharmacy,12000,https://images.unsplash.com/photo-1584017911766-d451b3d0e843,Giảm nghẹt mũi sổ mũi tức thì,Nhà thuốc Seoul,4.8
 ```
 
 ---
