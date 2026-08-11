@@ -2,26 +2,26 @@
 export const OLIVE_YOUNG_CATALOG = [
   {
     goodsNo: 'A000000261415',
-    name: "Serum Xịt Khoáng Nấm Trắng Phục Hồi & Nâng Tông Da d'Alba White Truffle First Spray Serum 100ml [Bộ 기획 TOP 3 Olive Young]",
-    brand: "d'Alba",
+    name: 'Tinh chất Cà Chua Xanh Se Khít Lỗ Chân Lông & Nâng Cơ Sungboon Editor Green Tomato Pore Lifting Ampoule Serum 30ml [Bộ 기획 TOP 3 Olive Young]',
+    brand: 'Sungboon Editor',
     category: 'skincare',
-    foreignPrice: 29900,
+    foreignPrice: 24900,
     productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
     images: [
       'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
       'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80'
     ],
-    options: 'Chai 100ml + Tặng kèm Chai 50ml [Bộ 기획]',
+    options: 'Chai 30ml + Tặng kèm Chai 30ml [Bộ 기획 1+1]',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9,
-    reviewsCount: 2450,
-    description: 'Serum dạng xịt khoáng nấm trúc trắng Nổi tiếng TOP 3 Bán Chạy Nhất Olive Young Korea. Chiết xuất nấm Truffle trắng Ý kết hợp Tinh dầu bơ thuần chay giúp căng bóng da thu nhỏ lỗ chân lông tức thì.',
-    usage: 'Lắc đều chai trước khi dùng để lớp tinh dầu và nước hoa hòa quyện. Xịt trực tiếp lên mặt ở khoảng cách 20cm trước hoặc sau khi trang điểm.',
+    reviewsCount: 3820,
+    description: 'Serum Cà Chua Xanh se khít lỗ chân lông quốc dân nổi tiếng TOP 3 Olive Young Korea. Chiết xuất Cà chua xanh chứa Tomatidine độc quyền kết hợp PHA, Volufiline & Hyaluronic Acid giúp se khít lỗ chân lông to lâu năm và nâng cơ mặt bị chảy xệ.',
+    usage: 'Dùng sau bước nước hoa hồng. Lấy 3-5 giọt thoa đều khắp mặt, tập trung vùng da lỗ chân lông to (má, mũi, cằm). Vỗ nhẹ để tinh chất thấm sâu.',
     specifications: {
-      volume: '100ml + 50ml',
-      skinType: 'Mọi loại da, da khô, da hỗn hợp thiếu ẩm',
+      volume: '30ml + 30ml (Bộ 1+1)',
+      skinType: 'Mọi loại da, da lỗ chân lông to, da dầu mụn & chảy xệ',
       expiry: '36 tháng kể từ ngày sản xuất',
-      ingredients: 'White Truffle Extract, Avocado Oil, Tocopherol, Niacinamide'
+      ingredients: 'Green Tomato Extract (Tomatidine), Volufiline, Niacinamide, PHA, Collagen'
     }
   },
   {
