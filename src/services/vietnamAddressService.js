@@ -1,32 +1,78 @@
 /**
- * Vietnam Open API Service (provinces.open-api.vn)
- * Supports 2-level administrative structure for Vietnam (Tỉnh/Thành phố → Quận/Huyện/Xã/Phường)
- * Includes offline pre-cached fallback data for instant loading and 100% reliability.
+ * Official Vietnam Open API Service (provinces.open-api.vn)
+ * Real-time 2-Level Administrative Structure: Tỉnh/Thành phố → Xã/Phường/Quận/Huyện
+ * Full 63 Official Provinces/Cities of Vietnam with Instant Offline Fallback
  */
 
-// Official 63 Provinces Pre-Cached Fallback Dataset
-export const OFFLINE_PROVINCES = [
-  { code: 79, name: 'Thành phố Hồ Chí Minh', codename: 'ho_chi_minh' },
-  { code: 1, name: 'Thành phố Hà Nội', codename: 'ha_noi' },
-  { code: 48, name: 'Thành phố Đà Nẵng', codename: 'da_nang' },
-  { code: 31, name: 'Thành phố Hải Phòng', codename: 'hai_phong' },
-  { code: 92, name: 'Thành phố Cần Thơ', codename: 'can_tho' },
-  { code: 74, name: 'Tỉnh Bình Dương', codename: 'binh_duong' },
-  { code: 75, name: 'Tỉnh Đồng Nai', codename: 'dong_nai' },
-  { code: 77, name: 'Tỉnh Bà Rịa - Vũng Tàu', codename: 'ba_ria_vung_tau' },
-  { code: 46, name: 'Tỉnh Thừa Thiên Huế', codename: 'thua_thien_hue' },
-  { code: 22, name: 'Tỉnh Quảng Ninh', codename: 'quang_ninh' },
-  { code: 56, name: 'Tỉnh Khánh Hòa', codename: 'khanh_hoa' },
-  { code: 68, name: 'Tỉnh Lâm Đồng', codename: 'lam_dong' },
-  { code: 89, name: 'Tỉnh An Giang', codename: 'an_giang' },
-  { code: 40, name: 'Tỉnh Nghệ An', codename: 'nghe_an' },
-  { code: 38, name: 'Tỉnh Thanh Hóa', codename: 'thanh_hoa' }
+export const ALL_63_VIETNAM_PROVINCES = [
+  { code: 1, name: 'Thành phố Hà Nội' },
+  { code: 79, name: 'Thành phố Hồ Chí Minh' },
+  { code: 48, name: 'Thành phố Đà Nẵng' },
+  { code: 31, name: 'Thành phố Hải Phòng' },
+  { code: 46, name: 'Thành phố Huế' },
+  { code: 92, name: 'Thành phố Cần Thơ' },
+  { code: 74, name: 'Tỉnh Bình Dương' },
+  { code: 75, name: 'Tỉnh Đồng Nai' },
+  { code: 77, name: 'Tỉnh Bà Rịa - Vũng Tàu' },
+  { code: 2, name: 'Tỉnh Hà Giang' },
+  { code: 4, name: 'Tỉnh Cao Bằng' },
+  { code: 6, name: 'Tỉnh Bắc Kạn' },
+  { code: 8, name: 'Tỉnh Tuyên Quang' },
+  { code: 10, name: 'Tỉnh Lào Cai' },
+  { code: 11, name: 'Tỉnh Điện Biên' },
+  { code: 12, name: 'Tỉnh Lai Châu' },
+  { code: 14, name: 'Tỉnh Sơn La' },
+  { code: 15, name: 'Tỉnh Yên Bái' },
+  { code: 17, name: 'Tỉnh Hoà Bình' },
+  { code: 19, name: 'Tỉnh Thái Nguyên' },
+  { code: 20, name: 'Tỉnh Lạng Sơn' },
+  { code: 22, name: 'Tỉnh Quảng Ninh' },
+  { code: 24, name: 'Tỉnh Bắc Giang' },
+  { code: 25, name: 'Tỉnh Phú Thọ' },
+  { code: 26, name: 'Tỉnh Vĩnh Phúc' },
+  { code: 27, name: 'Tỉnh Bắc Ninh' },
+  { code: 30, name: 'Tỉnh Hải Dương' },
+  { code: 33, name: 'Tỉnh Hưng Yên' },
+  { code: 34, name: 'Tỉnh Thái Bình' },
+  { code: 35, name: 'Tỉnh Hà Nam' },
+  { code: 36, name: 'Tỉnh Nam Định' },
+  { code: 37, name: 'Tỉnh Ninh Bình' },
+  { code: 38, name: 'Tỉnh Thanh Hóa' },
+  { code: 40, name: 'Tỉnh Nghệ An' },
+  { code: 42, name: 'Tỉnh Hà Tĩnh' },
+  { code: 44, name: 'Tỉnh Quảng Bình' },
+  { code: 45, name: 'Tỉnh Quảng Trị' },
+  { code: 49, name: 'Tỉnh Quảng Nam' },
+  { code: 51, name: 'Tỉnh Quảng Ngãi' },
+  { code: 52, name: 'Tỉnh Bình Định' },
+  { code: 54, name: 'Tỉnh Phú Yên' },
+  { code: 56, name: 'Tỉnh Khánh Hòa' },
+  { code: 58, name: 'Tỉnh Ninh Thuận' },
+  { code: 60, name: 'Tỉnh Bình Thuận' },
+  { code: 62, name: 'Tỉnh Kon Tum' },
+  { code: 64, name: 'Tỉnh Gia Lai' },
+  { code: 66, name: 'Tỉnh Đắk Lắk' },
+  { code: 67, name: 'Tỉnh Đắk Nông' },
+  { code: 68, name: 'Tỉnh Lâm Đồng' },
+  { code: 70, name: 'Tỉnh Bình Phước' },
+  { code: 72, name: 'Tỉnh Tây Ninh' },
+  { code: 80, name: 'Tỉnh Long An' },
+  { code: 82, name: 'Tỉnh Tiền Giang' },
+  { code: 83, name: 'Tỉnh Bến Tre' },
+  { code: 84, name: 'Tỉnh Trà Vinh' },
+  { code: 86, name: 'Tỉnh Vĩnh Long' },
+  { code: 87, name: 'Tỉnh Đồng Tháp' },
+  { code: 89, name: 'Tỉnh An Giang' },
+  { code: 91, name: 'Tỉnh Kiên Giang' },
+  { code: 93, name: 'Tỉnh Hậu Giang' },
+  { code: 94, name: 'Tỉnh Sóc Trăng' },
+  { code: 95, name: 'Tỉnh Bạc Liêu' },
+  { code: 96, name: 'Tỉnh Cà Mau' }
 ];
 
-// Offline Districts/Wards 2nd-Level Fallback per Province Code
-export const OFFLINE_SUB_DIVISIONS = {
+export const COMMON_SUB_DIVISIONS = {
   79: [
-    { code: 760, name: 'Thành phố Thủ Đức (Sát nhập Q2, Q9, Thủ Đức)' },
+    { code: 760, name: 'Thành phố Thủ Đức' },
     { code: 769, name: 'Quận 1' },
     { code: 770, name: 'Quận 3' },
     { code: 771, name: 'Quận 4' },
@@ -76,6 +122,13 @@ export const OFFLINE_SUB_DIVISIONS = {
     { code: 494, name: 'Quận Liên Chiểu' },
     { code: 495, name: 'Quận Cẩm Lệ' },
     { code: 497, name: 'Huyện Hòa Vang' }
+  ],
+  46: [
+    { code: 474, name: 'Quận Thuận Hóa' },
+    { code: 475, name: 'Quận Phú Xuân' },
+    { code: 476, name: 'Thị xã Phong Điền' },
+    { code: 479, name: 'Thị xã Hương Thủy' },
+    { code: 480, name: 'Thị xã Hương Trà' }
   ]
 };
 
@@ -88,17 +141,17 @@ export async function fetchVietnamProvinces() {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        return data.map(p => ({ code: p.code, name: p.name, codename: p.codename }));
+        return data.map(p => ({ code: p.code, name: p.name }));
       }
     }
   } catch (err) {
-    console.warn('Vietnam Open API offline mode, using cached provinces data.', err);
+    console.warn('Vietnam Open API offline fallback.', err);
   }
-  return OFFLINE_PROVINCES;
+  return ALL_63_VIETNAM_PROVINCES;
 }
 
 /**
- * Fetch 2nd Level Units (Districts/Wards) for a Province from Open API (with offline fallback)
+ * Fetch 2nd Level Units (Districts/Wards/Cities) for a Province from Open API
  */
 export async function fetchVietnamSubDivisions(provinceCode) {
   if (!provinceCode) return [];
@@ -111,10 +164,10 @@ export async function fetchVietnamSubDivisions(provinceCode) {
       }
     }
   } catch (err) {
-    console.warn(`Vietnam Open API fetch sub-divisions failed for province ${provinceCode}, using offline fallback.`, err);
+    console.warn(`Vietnam Open API fetch sub-divisions failed for province ${provinceCode}`, err);
   }
-  return OFFLINE_SUB_DIVISIONS[provinceCode] || [
-    { code: 'sub-1', name: 'Trung tâm Thành phố / Quận chính' },
+  return COMMON_SUB_DIVISIONS[provinceCode] || [
+    { code: 'sub-1', name: 'Khu vực Trung tâm / Thành phố' },
     { code: 'sub-2', name: 'Khu vực Ngoại thành / Huyện' }
   ];
 }

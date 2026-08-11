@@ -31,15 +31,12 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
     return () => { isMounted = false; };
   }, []);
 
-  // 2. Parse initialAddress ONLY ONCE on mount (prevent circular state loop!)
+  // 2. Parse initialAddress ONCE on mount to extract street input (prevent circular loop bug!)
   useEffect(() => {
     if (initialAddress && typeof initialAddress === 'string' && !isInitialParsedRef.current) {
       isInitialParsedRef.current = true;
-
-      // Extract street part if initialAddress is a comma-separated full string
       const parts = initialAddress.split(',').map(s => s.trim()).filter(Boolean);
       if (parts.length > 0) {
-        // If initial address contains multiple parts, take first part as street address
         const possibleStreet = parts.find(p => !p.includes('Việt Nam') && !p.includes('Thành phố') && !p.includes('Tỉnh'));
         setStreetAddress(possibleStreet || parts[0]);
       } else {
@@ -70,7 +67,7 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
     return () => { isMounted = false; };
   }, [selectedProvinceCode]);
 
-  // 4. Emit structured Address & Full String to parent without circular state loop
+  // 4. Emit clean full address to parent
   useEffect(() => {
     const parts = [
       streetAddress.trim(),
@@ -78,7 +75,6 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
       selectedProvinceName
     ].filter(Boolean);
 
-    // Dedupe parts
     const uniqueParts = [];
     parts.forEach(p => {
       if (p && !uniqueParts.includes(p)) uniqueParts.push(p);
@@ -138,17 +134,17 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
   };
 
   return (
-    <div style={{ backgroundColor: '#FFF', border: '1px solid #E5E7EB', padding: '18px', borderRadius: '12px', marginBottom: '16px' }}>
+    <div style={{ backgroundColor: '#FFF', border: '1px solid #E5E7EB', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
       
-      {/* Sleek Minimal Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
+      {/* Sleek Minimal Header - CHỈ ĐỂ "ĐỊA CHỈ" */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
         <MapPin size={16} color="var(--purple-primary)" />
-        <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           ĐỊA CHỈ {required && <span style={{ color: '#EF4444' }}>*</span>}
-        </h4>
+        </span>
       </div>
 
-      {/* 2 Cascading Levels (Vietnam Open API 2-Level) */}
+      {/* 2 Cấp Hành Chính (Tỉnh/Thành phố → Xã/Phường/Quận/Huyện) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
         
         {/* Cấp 1: Tỉnh / Thành phố */}
@@ -162,17 +158,17 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
             style={inputStyle}
             required={required}
           >
-            <option value="">{loadingProvinces ? 'Đang tải danh sách...' : '-- Chọn Tỉnh / Thành Phố --'}</option>
+            <option value="">{loadingProvinces ? 'Đang tải...' : '-- Chọn Tỉnh / TP --'}</option>
             {provinces.map((p) => (
               <option key={p.code} value={p.code}>{p.name}</option>
             ))}
           </select>
         </div>
 
-        {/* Cấp 2: Quận / Huyện / Phường / Xã */}
+        {/* Cấp 2: Xã / Phường / Quận / Huyện */}
         <div>
           <label style={labelStyle}>
-            <Navigation size={12} style={{ display: 'inline', marginRight: '4px' }} /> Quận / Huyện / Phường / Xã
+            <Navigation size={12} style={{ display: 'inline', marginRight: '4px' }} /> Xã / Phường / Quận / Huyện
           </label>
           <select
             value={selectedSubDivisionCode}
@@ -181,7 +177,7 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
             style={{ ...inputStyle, opacity: !selectedProvinceCode ? 0.6 : 1 }}
             required={required}
           >
-            <option value="">{loadingSubDivisions ? 'Đang tải...' : (selectedProvinceCode ? '-- Chọn Quận / Huyện / Phường / Xã --' : '-- Chọn Tỉnh/TP trước --')}</option>
+            <option value="">{loadingSubDivisions ? 'Đang tải...' : (selectedProvinceCode ? '-- Chọn Xã/Phường/Quận/Huyện --' : '-- Chọn Tỉnh/TP trước --')}</option>
             {subDivisions.map((s) => (
               <option key={s.code} value={s.code}>{s.name}</option>
             ))}
@@ -192,10 +188,10 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
 
       {/* Cấp 3: Số nhà & Tên đường */}
       <div>
-        <label style={labelStyle}>Số Nhà & Tên Đường (Địa Chỉ Cụ Thể)</label>
+        <label style={labelStyle}>Số Nhà & Tên Đường</label>
         <input
           type="text"
-          placeholder="VD: Số 123 Đường Lê Lợi, Tòa nhà Bitexco..."
+          placeholder="Số nhà, tên đường..."
           value={streetAddress}
           onChange={(e) => setStreetAddress(e.target.value)}
           style={inputStyle}
