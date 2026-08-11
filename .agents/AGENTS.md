@@ -6,6 +6,9 @@ Tất cả các Sub-Agent được đăng ký và sẵn sàng khởi chạy tự
 - **[Planning Architect](file:///.agents/agents/task-planner-agent.md)** (`.agents/agents/task-planner-agent.md`)
   - **Mục tiêu:** Chuyên trách phân tích codebase, phỏng vấn yêu cầu, lập kiến trúc và lên kế hoạch thực thi (Strict Zero-Code Execution).
 
+- **[Product Data Auto-Scraper Agent](file:///.agents/agents/product-data-scraper-agent.md)** (`.agents/agents/product-data-scraper-agent.md`)
+  - **Mục tiêu:** Tự động cào dữ liệu sản phẩm từ đường link Hàn Quốc (Olive Young/Naver/Coupang), trích xuất thông tin & ảnh HD, định dạng chuẩn 11 cột Google Sheet và tự động đẩy lên Website.
+
 ## 2. HOW TO ADD A NEW AGENT (HƯỚNG DẪN THÊM AGENT MỚI)
 Khi muốn tạo một Agent mới (ví dụ: `security-auditor-agent.md`, `qa-tester-agent.md`):
 

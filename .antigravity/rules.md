@@ -9,6 +9,7 @@
 
 ## 2. REGISTERED AGENTS POOL
 - **Planning Architect:** [.agents/agents/task-planner-agent.md](file:///.agents/agents/task-planner-agent.md)
+- **Product Data Auto-Scraper Agent:** [.agents/agents/product-data-scraper-agent.md](file:///.agents/agents/product-data-scraper-agent.md)
 
 ---
 
