@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function OrderDrawer({ product, onClose }) {
@@ -85,9 +85,15 @@ export default function OrderDrawer({ product, onClose }) {
       {/* Drawer panel */}
       <div className={`drawer ${isOpen ? 'open' : ''}`}>
 
-
-
-        {/* Body — scrollable */}
+        {/* Drawer Header */}
+        <div className="drawer-header">
+          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-dark)' }}>
+            GỬI YÊU CẦU MUA HÀNG HỘ
+          </h3>
+          <button onClick={handleClose} className="drawer-close-btn">
+            <X size={20} />
+          </button>
+        </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
 
           {success ? (

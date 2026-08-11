@@ -28,9 +28,9 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
       <div style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '24px',
-        maxWidth: '1000px',
+        maxWidth: '960px',
         width: '100%',
-        maxHeight: '92vh',
+        maxHeight: '90vh',
         overflowY: 'auto',
         position: 'relative',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -60,14 +60,14 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
           <X size={22} color="#4B5563" />
         </button>
 
-        <div style={{ padding: '36px', display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '40px' }}>
+        <div style={{ padding: '36px', display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '36px' }}>
           
           {/* Cột Trái: Slide Bộ Ảnh */}
           <div>
             {/* Ảnh Chính */}
             <div style={{
               width: '100%',
-              height: '380px',
+              height: '360px',
               borderRadius: '20px',
               overflow: 'hidden',
               backgroundColor: '#F9FAFB',
@@ -136,8 +136,8 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                 </div>
               </div>
 
-              {/* Tên sản phẩm lớn hơn */}
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#111827', lineHeight: '1.35', marginBottom: '14px' }}>
+              {/* Tên sản phẩm lớn */}
+              <h2 style={{ fontSize: '1.55rem', fontWeight: 800, color: '#111827', lineHeight: '1.35', marginBottom: '14px' }}>
                 {product.name}
               </h2>
 
@@ -178,8 +178,8 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                 ))}
               </div>
 
-              {/* Nội dung Tab rộng rãi & chữ lớn hơn */}
-              <div style={{ minHeight: '170px', fontSize: '1.02rem', color: '#374151', lineHeight: '1.7', fontWeight: 400 }}>
+              {/* Nội dung Tab */}
+              <div style={{ minHeight: '160px', fontSize: '1.02rem', color: '#374151', lineHeight: '1.7', fontWeight: 400 }}>
                 {activeTab === 'description' && (
                   <p style={{ margin: 0 }}>{product.description || 'Sản phẩm chính hãng Hàn Quốc được nhập khẩu và phân phối trực tiếp.'}</p>
                 )}
@@ -198,7 +198,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
 
             </div>
 
-            {/* Khối Nút Đặt Hàng Ngay Đã Nhúng Giá Tiền Vào Bên Trong Nút */}
+            {/* Nút Bấm Đặt Mua: Đã Bỏ Chữ "Đặt Mua Ngay Sản Phẩm Này", Chỉ Hiển Thị Số Tiền Việt Nam */}
             <div style={{ paddingTop: '20px', borderTop: '1px solid #F3F4F6' }}>
               <button
                 onClick={() => {
@@ -210,7 +210,8 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                   width: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
+                  justifyContent: 'center',
+                  gap: '12px',
                   padding: '16px 28px',
                   borderRadius: '50px',
                   boxShadow: '0 10px 25px -5px rgba(122, 75, 158, 0.4)',
@@ -218,26 +219,13 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                   border: 'none'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <ShoppingBag size={22} />
-                  <span style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '0.5px' }}>ĐẶT MUA NGAY SẢN PHẨM NÀY</span>
-                </div>
-
-                {/* Nhúng Giá Won & VNĐ chìm trực tiếp trong Nút */}
-                <div style={{
-                  textAlign: 'right',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-end',
-                  lineHeight: '1.2',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  padding: '6px 16px',
-                  borderRadius: '20px',
-                  backdropFilter: 'blur(4px)'
-                }}>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 800 }}>{formatVnd(calculatedVnd)}</span>
-                  <span style={{ fontSize: '0.78rem', opacity: 0.9, fontWeight: 600 }}>Tỷ giá Hàn: {formatKrw(product.foreignPrice)}</span>
-                </div>
+                <ShoppingBag size={22} />
+                <span style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '0.5px' }}>
+                  {formatVnd(calculatedVnd)}
+                </span>
+                <span style={{ fontSize: '0.85rem', opacity: 0.85, fontWeight: 600 }}>
+                  ({formatKrw(product.foreignPrice)})
+                </span>
               </button>
             </div>
 
