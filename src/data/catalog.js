@@ -74,6 +74,53 @@ export const OLIVE_YOUNG_CATALOG = [
     }
   },
   {
+    goodsNo: 'A000000201102',
+    name: 'Kem chống nắng nâng tông tự nhiên Round Lab Birch Juice Moisturizing Sunscreen',
+    brand: 'Round Lab',
+    category: 'skincare',
+    foreignPrice: 25000,
+    productImage: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=600&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80'
+    ],
+    options: 'Tuýp 50ml',
+    origin: 'Store Olive Young Myeongdong, Hàn Quốc',
+    rating: 4.9,
+    reviewsCount: 2300,
+    description: 'Kem chống nắng hóa học chiết xuất nhựa cây Bạch Dương nổi tiếng TOP 1 Olive Young. Khả năng chống nắng đỉnh cao SPF50+ PA++++ kiềm dầu và mỏng nhẹ như kem dưỡng.',
+    usage: 'Thoa đều lên mặt và cổ trước khi ra ngoài 15-20 phút.',
+    specifications: {
+      volume: '50ml',
+      skinType: 'Mọi loại da, da dầu mụn & da nhạy cảm',
+      expiry: '36 tháng',
+      ingredients: 'Birch Juice Extract, Hyaluronic Acid, Niacinamide'
+    }
+  },
+  {
+    goodsNo: 'A000000192301',
+    name: 'Kem dưỡng sâm cổ truyền Beauty of Joseon Dynasty Cream',
+    brand: 'Beauty of Joseon',
+    category: 'skincare',
+    foreignPrice: 24000,
+    productImage: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80'
+    ],
+    options: 'Hũ 50ml',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.8,
+    reviewsCount: 1120,
+    description: 'Kem dưỡng ẩm đông y Hàn Quốc chiết xuất nhân sâm, nước gạo nếp và 2% Niacinamide giúp nuôi dưỡng làn da căng mọng, chống lão hóa và dưỡng sáng chuyên sâu.',
+    usage: 'Thoa một lượng kem vừa đủ ở bước cuối cùng của chu trình skincare buổi tối.',
+    specifications: {
+      volume: '50ml',
+      skinType: 'Da khô, da thiếu ẩm, da bắt đầu lão hóa',
+      expiry: '36 tháng',
+      ingredients: '29% Ginseng root water, 2% Niacinamide, Rice bran water'
+    }
+  },
+  {
     goodsNo: 'A000000128120',
     name: 'Son tint lì bóng Romand Juicy Lasting Tint',
     brand: 'Romand',
@@ -119,6 +166,29 @@ export const OLIVE_YOUNG_CATALOG = [
       skinType: 'Da thường đến da khô, da hỗn hợp',
       expiry: '36 tháng',
       ingredients: 'Chứa 8 loại Hyaluronic Acid, Niacinamide, SPF50+ PA++++'
+    }
+  },
+  {
+    goodsNo: 'A000000171209',
+    name: 'Chì kẻ chân mày tự nhiên lâu trôi Etude House Drawing Eye Brow',
+    brand: 'Etude House',
+    category: 'makeup',
+    foreignPrice: 4500,
+    productImage: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80'
+    ],
+    options: 'Màu 02 Dark Brown - 0.25g',
+    origin: 'Store Etude Korea',
+    rating: 4.6,
+    reviewsCount: 3100,
+    description: 'Chì kẻ mày hai đầu quốc dân Hàn Quốc với đầu chì hình vát dễ tạo dáng gẩy sợi chân mày tự nhiên và không bị vón cục.',
+    usage: 'Xoay nhẹ đầu chì và phẩy sợi theo dáng lông mày tự nhiên.',
+    specifications: {
+      volume: '0.25g',
+      skinType: 'Mọi loại da',
+      expiry: '36 tháng',
+      ingredients: 'Vitamin E, Dầu hạt jojoba'
     }
   },
   {
@@ -169,6 +239,29 @@ export const OLIVE_YOUNG_CATALOG = [
     }
   },
   {
+    goodsNo: 'P000000001009',
+    name: 'Kẹo dẻo bổ sung Collagen lựu đỏ BOTO Pomegranate Small Molecule Collagen Gummy',
+    brand: 'BOTO Korea',
+    category: 'health',
+    foreignPrice: 18500,
+    productImage: 'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=600&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=600&q=80'
+    ],
+    options: 'Túi 90g (30 viên kẹo)',
+    origin: 'Nội địa Seoul, Hàn Quốc',
+    rating: 4.8,
+    reviewsCount: 1450,
+    description: 'Kẹo dẻo vị lựu đỏ thơm ngon bổ sung Collagen phân tử nhỏ từ cá ngừ đại dương kết hợp Vitamin C giúp da sáng mịn và chống lão hóa hiệu quả.',
+    usage: 'Nhai 3 viên mỗi ngày như món ăn vặt mượt da.',
+    specifications: {
+      volume: 'Gói 90g',
+      skinType: 'Mọi lứa tuổi',
+      expiry: '24 tháng',
+      ingredients: 'Low molecular fish collagen, Pomegranate concentrate, Vitamin C'
+    }
+  },
+  {
     goodsNo: 'P000000002001',
     name: 'Dung Dịch Xịt Mũi Trị Xoang Dị Ứng Hàn Quốc Nazal / Hanmi',
     brand: 'Hanmi Pharmacy',
@@ -189,6 +282,29 @@ export const OLIVE_YOUNG_CATALOG = [
       skinType: 'Người bị nghẹt mũi, sổ mũi, viêm xoang dị ứng',
       expiry: '36 tháng',
       ingredients: 'Naphazoline Hydrochloride, Chlorpheniramine Maleate, Benzalkonium Chloride'
+    }
+  },
+  {
+    goodsNo: 'P000000002008',
+    name: 'Cao dán nhức mỏng giảm đau xương khớp Hồng Sâm Sinsin Pas Korea',
+    brand: 'Sinsin Pharm',
+    category: 'pharmacy',
+    foreignPrice: 9500,
+    productImage: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?auto=format&fit=crop&w=600&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1603398938378-e54eab446dde?auto=format&fit=crop&w=600&q=80'
+    ],
+    options: 'Gói 10 miếng dán hồng sâm',
+    origin: 'Nhà thuốc Hàn Quốc',
+    rating: 4.9,
+    reviewsCount: 880,
+    description: 'Cao dán hồng sâm nóng giảm đau nhức xương khớp, vai gáy và bong gân thể thao tức thì của Dược phẩm Sinsin Hàn Quốc.',
+    usage: 'Làm sạch vùng da bị đau rồi dán trực tiếp 1 miếng lên.',
+    specifications: {
+      volume: 'Túi 10 miếng dán',
+      skinType: 'Người già đau nhức, vận động viên, dân văn phòng',
+      expiry: '36 tháng',
+      ingredients: 'Chiết xuất Hồng Sâm, Menthol, Methyl Salicylate'
     }
   }
 ];

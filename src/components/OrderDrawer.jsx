@@ -98,26 +98,46 @@ export default function OrderDrawer({ product, onClose }) {
 
           {success ? (
             /* Success state */
-            <div style={{ textAlign: 'center', paddingTop: '40px' }}>
+            <div style={{ textAlign: 'center', paddingTop: '20px' }}>
               <div style={{
                 width: 64, height: 64,
-                background: 'var(--accent-light)',
+                background: '#D1FAE5',
                 borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 20px',
+                margin: '0 auto 16px',
               }}>
-                <CheckCircle size={36} color="var(--accent)" />
+                <CheckCircle size={36} color="#059669" />
               </div>
-              <h3 style={{ fontWeight: 700, marginBottom: 8 }}>Yêu cầu đã được gửi!</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Chúng tôi sẽ kiểm tra nguồn hàng và gửi báo giá chi tiết cho bạn trong vòng <strong>5–15 phút</strong>.
+              <h3 style={{ fontWeight: 800, marginBottom: 8, fontSize: '1.3rem', color: '#111827' }}>GỬI YÊU CẦU MUA HỘ THÀNH CÔNG!</h3>
+              <p style={{ fontSize: '0.88rem', color: '#4B5563', lineHeight: 1.6, marginBottom: 20 }}>
+                Hệ thống đã tự động ghi nhận đơn hàng. Bạn có thể chuyển khoản cọc 50% trước để K-MART tiến hành mua hàng tại Hàn Quốc ngay lập tức.
               </p>
+
+              {/* Thông tin Chuyển Khoản Ngân Hàng */}
+              <div style={{ backgroundColor: '#FDFBFF', border: '1.5px solid var(--purple-primary)', borderRadius: '16px', padding: '16px', textAlign: 'left', marginBottom: '16px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--purple-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  🇻🇳 CHUYỂN KHOẢN VIỆT NAM (VIETQR)
+                </span>
+                <p style={{ fontSize: '0.85rem', margin: '6px 0 2px 0' }}><strong>Ngân hàng:</strong> MB Bank (NHTM CP Quân Đội)</p>
+                <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Số tài khoản:</strong> <span style={{ color: 'var(--purple-primary)', fontWeight: 800 }}>0988 888 888</span></p>
+                <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Chủ tài khoản:</strong> K MART VIET HAN</p>
+              </div>
+
+              <div style={{ backgroundColor: '#F4F8FF', border: '1.5px solid #3B82F6', borderRadius: '16px', padding: '16px', textAlign: 'left', marginBottom: '24px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  🇰🇷 CHUYỂN KHOẢN HÀN QUỐC (WON ₩)
+                </span>
+                <p style={{ fontSize: '0.85rem', margin: '6px 0 2px 0' }}><strong>Ngân hàng:</strong> Woori Bank (우리은행)</p>
+                <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Số tài khoản:</strong> <span style={{ color: '#3B82F6', fontWeight: 800 }}>1002-123-456789</span></p>
+                <p style={{ fontSize: '0.85rem', margin: '2px 0' }}><strong>Chủ tài khoản:</strong> K-MART CO., LTD</p>
+              </div>
+
               <button
-                className="btn-outline"
+                className="btn-primary"
                 onClick={handleClose}
-                style={{ marginTop: 28 }}
+                style={{ width: '100%', padding: '14px 0' }}
               >
-                Tiếp tục mua sắm
+                Hoàn tất & Tiếp tục mua sắm
               </button>
             </div>
           ) : product ? (

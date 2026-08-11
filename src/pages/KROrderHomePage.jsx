@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Search, QrCode, CreditCard, Menu, X
+  Search, Menu, X
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import OrderDrawer from '../components/OrderDrawer';
@@ -156,86 +156,6 @@ export default function KROrderHomePage() {
           </div>
         </section>
 
-        {/* Hướng dẫn Thanh toán VietQR & Tỷ giá Hàn - Việt */}
-        <section id="payment" style={{ padding: '70px 0', background: '#FFF' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '2px', color: 'var(--purple-primary)', textTransform: 'uppercase' }}>
-                BẢNG TỶ GIÁ & THANH TOÁN
-              </span>
-              <h2 style={{ fontSize: '2.4rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', marginTop: '6px' }}>
-                Thanh Toán Linh Hoạt & Tỷ Giá Hôm Nay
-              </h2>
-            </div>
-
-            {/* Khối Tỷ giá Won Hàn / VNĐ */}
-            <div style={{
-              backgroundColor: 'var(--purple-light)', borderRadius: '16px', padding: '24px 30px',
-              marginBottom: '35px', border: '1px solid rgba(122, 75, 158, 0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px'
-            }}>
-              <div>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--purple-primary)' }}>
-                  🇰🇷 TỶ GIÁ QUY ĐỔI THỜI GIAN THỰC
-                </span>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-dark)', marginTop: '4px' }}>
-                  1 Won (₩) = <span style={{ color: 'var(--purple-primary)', fontSize: '1.6rem' }}>{krwRate} VNĐ (đ)</span>
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  * Giá sản phẩm trên website được tự động cập nhật chính xác theo tỷ giá này.
-                </p>
-              </div>
-              <div style={{ display: 'flex', gap: '15px' }}>
-                <div style={{ background: '#FFF', padding: '12px 20px', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>10.000 Won (₩)</span>
-                  <strong style={{ fontSize: '1.1rem', color: 'var(--purple-primary)' }}>{(10000 * krwRate).toLocaleString('vi-VN')} đ</strong>
-                </div>
-                <div style={{ background: '#FFF', padding: '12px 20px', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>50.000 Won (₩)</span>
-                  <strong style={{ fontSize: '1.1rem', color: 'var(--purple-primary)' }}>{(50000 * krwRate).toLocaleString('vi-VN')} đ</strong>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
-              {/* Thẻ Ngân Hàng Việt Nam */}
-              <div style={{ border: '2px solid var(--purple-primary)', borderRadius: '16px', padding: '30px', background: '#FDFBFF' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                  <QrCode size={32} color="var(--purple-primary)" />
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-dark)' }}>
-                    Chuyển Khoản Ngân Hàng Việt Nam (VietQR)
-                  </h3>
-                </div>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '20px' }}>
-                  Quét mã QR chuyển khoản bằng ứng dụng ngân hàng Việt Nam (MBBank, Vietcombank, Techcombank...). Tự động khớp lệnh tức thì.
-                </p>
-                <div style={{ background: '#FFF', padding: '15px', borderRadius: '10px', border: '1px solid #eee' }}>
-                  <p style={{ fontSize: '0.85rem', margin: '4px 0' }}><strong>Ngân hàng:</strong> MB Bank</p>
-                  <p style={{ fontSize: '0.85rem', margin: '4px 0' }}><strong>Số tài khoản:</strong> 0988 888 888</p>
-                  <p style={{ fontSize: '0.85rem', margin: '4px 0' }}><strong>Chủ tài khoản:</strong> K MART VIET HAN</p>
-                </div>
-              </div>
-
-              {/* Thẻ Ngân Hàng Hàn Quốc */}
-              <div style={{ border: '2px solid #3B82F6', borderRadius: '16px', padding: '30px', background: '#F4F8FF' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                  <CreditCard size={32} color="#3B82F6" />
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-dark)' }}>
-                    Chuyển Khoản Ngân Hàng Hàn Quốc (Won)
-                  </h3>
-                </div>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '20px' }}>
-                  Dành cho người Việt đang làm việc và sinh sống tại Hàn Quốc. Chuyển khoản trực tiếp qua tài khoản ngân hàng Hàn Quốc.
-                </p>
-                <div style={{ background: '#FFF', padding: '15px', borderRadius: '10px', border: '1px solid #eee' }}>
-                  <p style={{ fontSize: '0.85rem', margin: '4px 0' }}><strong>Ngân hàng Hàn:</strong> Woori Bank (우리은행)</p>
-                  <p style={{ fontSize: '0.85rem', margin: '4px 0' }}><strong>Số tài khoản:</strong> 1002-123-456789</p>
-                  <p style={{ fontSize: '0.85rem', margin: '4px 0' }}><strong>Tên tài khoản:</strong> K-MART CO., LTD</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       <Footer />
