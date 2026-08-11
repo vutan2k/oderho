@@ -47,31 +47,40 @@ export default function OrdersPage() {
     setTimeout(() => setCopiedCode(''), 2500);
   };
 
-  // Các bước trong Tiến trình 5 bước
+  // Các bước tiến trình thực tế
   const steps = [
     { key: 'pending', title: 'Chờ cọc' },
-    { key: 'quoted', title: 'Đã nhận cọc' },
+    { key: 'quoted', title: 'Đã báo giá' },
+    { key: 'deposit_paid', title: 'Đã cọc 50%' },
     { key: 'purchased', title: 'Đã mua tại Hàn' },
-    { key: 'transit', title: 'Đang về VN' },
-    { key: 'completed', title: 'Đã giao thành công' }
+    { key: 'in_kr_warehouse', title: 'Kho Seoul' },
+    { key: 'transit', title: 'Bay về VN' },
+    { key: 'in_vn_warehouse', title: 'Kho VN' },
+    { key: 'delivering', title: 'Đang giao' },
+    { key: 'completed', title: 'Đã giao' }
   ];
 
   const getStepIndex = (status) => {
     switch (status) {
       case 'pending': return 0;
       case 'quoted': return 1;
-      case 'purchased': return 2;
-      case 'transit': return 3;
-      case 'completed': return 4;
+      case 'deposit_paid': return 2;
+      case 'purchased': return 3;
+      case 'in_kr_warehouse': return 4;
+      case 'transit': return 5;
+      case 'in_vn_warehouse': return 6;
+      case 'delivering': return 7;
+      case 'completed': return 8;
       default: return 0;
     }
   };
 
   const statusTabs = [
     { id: 'all', label: 'Tất cả đơn' },
-    { id: 'pending', label: 'Chờ báo giá' },
+    { id: 'pending', label: 'Chờ báo giá / Cọc' },
     { id: 'quoted', label: 'Đã báo giá' },
-    { id: 'paid', label: 'Đã cọc' },
+    { id: 'deposit_paid', label: 'Đã cọc' },
+    { id: 'purchased', label: 'Đã mua Hàn' },
     { id: 'transit', label: 'Đang bay Air' },
     { id: 'completed', label: 'Hoàn thành' }
   ];
