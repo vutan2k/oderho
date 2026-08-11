@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { User, Lock, Save, Mail } from 'lucide-react';
+import CascadingAddressSelector from '../components/CascadingAddressSelector';
 
 export default function UserProfilePage() {
   const { currentUser, registerUser } = useContext(AppContext);
@@ -127,15 +128,11 @@ export default function UserProfilePage() {
               </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '24px' }}>
-              <label className="form-label">Địa chỉ nhận hàng mặc định tại Việt Nam *</label>
-              <textarea
-                className="input"
-                rows={3}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành Phố..."
-                required
+            <div style={{ marginBottom: '24px' }}>
+              <CascadingAddressSelector
+                initialAddress={currentUser?.address || address}
+                onChange={(addrInfo) => setAddress(addrInfo.fullAddress)}
+                required={true}
               />
             </div>
 

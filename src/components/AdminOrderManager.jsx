@@ -2,6 +2,7 @@ import React, { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { ORDER_STATUSES, getStatusConfig } from '../data/orderStatuses';
+import CascadingAddressSelector from './CascadingAddressSelector';
 import {
   Search, Edit3,
   Truck, CheckCircle, PackageCheck, AlertCircle, Printer,
@@ -618,13 +619,11 @@ export default function AdminOrderManager() {
                       />
                     </div>
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Địa Chỉ Nhận Hàng Chuyện Phát</label>
-                    <input
-                      type="text"
-                      value={orderForm.customerAddress}
-                      onChange={(e) => setOrderForm({ ...orderForm, customerAddress: e.target.value })}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #D1D5DB', fontSize: '0.88rem' }}
+                  <div style={{ marginTop: '12px' }}>
+                    <CascadingAddressSelector
+                      initialAddress={orderForm.customerAddress}
+                      onChange={(addrInfo) => setOrderForm(prev => ({ ...prev, customerAddress: addrInfo.fullAddress }))}
+                      required={false}
                     />
                   </div>
                 </div>

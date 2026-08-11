@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { CheckCircle, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import CascadingAddressSelector from './CascadingAddressSelector';
 
 export default function OrderDrawer({ product, onClose }) {
   const { currentUser, createOrder, rates } = useContext(AppContext);
@@ -236,17 +237,12 @@ export default function OrderDrawer({ product, onClose }) {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Địa chỉ giao hàng *</label>
-                  <textarea
-                    className="input"
-                    placeholder="Số nhà, đường, phường, quận, tỉnh/thành phố"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    rows={3}
-                    required
-                  />
-                </div>
+                {/* Select địa chỉ phân cấp 4 tầng Quốc gia -> Tỉnh/TP -> Quận/Huyện -> Phường/Xã */}
+                <CascadingAddressSelector
+                  initialAddress={currentUser?.address || address}
+                  onChange={(addrInfo) => setAddress(addrInfo.fullAddress)}
+                  required={true}
+                />
 
                 <div className="form-group">
                   <label className="form-label">Ghi chú (tùy chọn)</label>
