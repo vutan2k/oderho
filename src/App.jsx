@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 const KROrderHomePage = lazy(() => import('./pages/KROrderHomePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
@@ -27,6 +28,7 @@ export default function App() {
                 <Route path="/" element={<KROrderHomePage />} />
                 <Route path="/login" element={<><Navbar /><LoginPage /></>} />
                 <Route path="/orders" element={<><Navbar /><OrdersPage /></>} />
+                <Route path="/profile" element={<><Navbar /><UserProfilePage /></>} />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                 <Route path="*" element={<NotFoundPage />} />

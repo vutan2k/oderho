@@ -2,10 +2,7 @@ import {
   collection,
   doc,
   setDoc,
-  addDoc,
   updateDoc,
-  getDoc,
-  getDocs,
   onSnapshot,
   query,
   where,
@@ -18,16 +15,25 @@ import { db } from '../firebase';
 // Collection References
 const ORDERS_COLLECTION = 'orders';
 const USERS_COLLECTION = 'users';
-const PRODUCTS_COLLECTION = 'products';
 const SYSTEM_CONFIG_COLLECTION = 'system_config';
 const RATES_DOC = 'rates';
 
 /**
- * 1. Subscribe to Realtime Orders
+ * 1. Subscribe to Realtime Orders (Global or User filtered)
  */
-export const subscribeToOrders = (onUpdate, onError) => {
+export const subscribeToOrders = (onUpdate, onError, userEmail) => {
   try {
-    const q = query(collection(db, ORDERS_COLLECTION), orderBy('createdAt', 'desc'));
+    let q;
+    if (userEmail) {
+      q = query(
+        collection(db, ORDERS_COLLECTION),
+        where('userEmail', '==', userEmail),
+        orderBy('createdAt', 'desc')
+      );
+    } else {
+      q = query(collection(db, ORDERS_COLLECTION), orderBy('createdAt', 'desc'));
+    }
+
     return onSnapshot(q, (snapshot) => {
       const orders = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,

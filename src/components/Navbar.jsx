@@ -68,10 +68,13 @@ export default function Navbar({ logoSrc }) {
                 <Package size={16} />
                 <span>Đơn hàng của tôi</span>
               </Link>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-secondary)', padding: '0 4px' }}>
-                <User size={15} />
+              <Link
+                to="/profile"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'none', padding: '0 4px' }}
+              >
+                <User size={15} color="var(--purple-primary)" />
                 <span style={{ fontWeight: 600, color: 'var(--text)' }}>{currentUser.name || currentUser.email}</span>
-              </div>
+              </Link>
               <button
                 onClick={() => {
                   logoutUser();

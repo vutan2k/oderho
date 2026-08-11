@@ -2,14 +2,15 @@ import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { 
-  Package, Clock, CheckCircle2, Truck, ArrowLeft, ShoppingBag, 
-  Copy, Check, MapPin, Phone, User, Calendar
+  Package, ArrowLeft, ShoppingBag, 
+  Copy, Check
 } from 'lucide-react';
 
 export default function OrdersPage() {
   const { currentUser, orders, rates } = useContext(AppContext);
   const navigate = useNavigate();
   const [copiedCode, setCopiedCode] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
 
   if (!currentUser) {
     return (
@@ -32,6 +33,11 @@ export default function OrdersPage() {
       (o.userEmail && o.userEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
       (o.customerPhone && currentUser.phone && o.customerPhone === currentUser.phone)
   );
+
+  const filteredOrders = userOrders.filter((order) => {
+    if (activeTab === 'all') return true;
+    return order.status === activeTab;
+  });
 
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
@@ -61,11 +67,20 @@ export default function OrdersPage() {
     }
   };
 
+  const statusTabs = [
+    { id: 'all', label: 'Tất cả đơn' },
+    { id: 'pending', label: 'Chờ báo giá' },
+    { id: 'quoted', label: 'Đã báo giá' },
+    { id: 'paid', label: 'Đã cọc' },
+    { id: 'transit', label: 'Đang bay Air' },
+    { id: 'completed', label: 'Hoàn thành' }
+  ];
+
   return (
     <div className="container" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
       
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div>
           <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--purple-primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600, marginBottom: '8px' }}>
             <ArrowLeft size={16} /> Quay lại trang chủ
@@ -77,10 +92,33 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {userOrders.length === 0 ? (
+      {/* Filter Tabs */}
+      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '28px', paddingBottom: '4px' }}>
+        {statusTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '20px',
+              border: activeTab === tab.id ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
+              backgroundColor: activeTab === tab.id ? 'var(--purple-primary)' : '#FFF',
+              color: activeTab === tab.id ? '#FFF' : '#374151',
+              fontWeight: activeTab === tab.id ? 700 : 500,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {filteredOrders.length === 0 ? (
         <div style={{ backgroundColor: '#FFF', border: '1px dashed #D1D5DB', borderRadius: '16px', padding: '60px 20px', textAlign: 'center' }}>
           <ShoppingBag size={48} style={{ color: 'var(--purple-primary)', marginBottom: '12px' }} />
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px' }}>Bạn chưa có đơn hàng nào</h3>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px' }}>Chưa tìm thấy đơn hàng nào</h3>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '20px' }}>Hãy chọn mua các sản phẩm Mỹ phẩm & Thực phẩm chức năng Hàn Quốc chất lượng!</p>
           <button className="btn-gold" onClick={() => navigate('/')}>
             Khám phá sản phẩm ngay
@@ -88,7 +126,7 @@ export default function OrdersPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {userOrders.map((order) => {
+          {filteredOrders.map((order) => {
             const currentStepIdx = getStepIndex(order.status);
             const krwRate = rates?.KRW?.rate || 19.5;
             const estimatedVnd = Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1));
