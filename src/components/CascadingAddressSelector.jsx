@@ -103,7 +103,7 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
         fullAddress
       });
     }
-  }, [selectedProvinceCode, selectedProvinceName, selectedSubDivisionCode, selectedSubDivisionName, streetAddress]);
+  }, [selectedProvinceCode, selectedProvinceName, selectedSubDivisionCode, selectedSubDivisionName, streetAddress, onChange]);
 
   // Handlers
   const handleProvinceSelect = (e) => {

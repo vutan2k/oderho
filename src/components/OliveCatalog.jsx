@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
 
@@ -93,7 +93,6 @@ export default function OliveCatalog({ onSelectProduct }) {
         }}>
           {filteredProducts.map((product, pIdx) => {
             const calculatedVnd = (product.foreignPrice || 0) * krwRate;
-            const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
             const detailUrl = `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${product.goodsNo || 'A000000261415'}`;
 
             return (
