@@ -6,7 +6,7 @@
 
 import { scrapeProductMetadata } from './productScraperService';
 
-// Target Olive Young Best Seller Goods Pool for periodic auto-discovery
+// Target Olive Young Best Seller Goods Pool for periodic auto-discovery (Unlimited Dynamic Pool)
 const OLIVE_YOUNG_DISCOVERY_POOL = [
   { goodsNo: 'A000000261415', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000261415' },
   { goodsNo: 'A000000185934', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000185934' },
@@ -16,10 +16,17 @@ const OLIVE_YOUNG_DISCOVERY_POOL = [
   { goodsNo: 'A000000192301', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000192301' },
   { goodsNo: 'A000000128120', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000128120' },
   { goodsNo: 'A000000180234', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000180234' },
-  { goodsNo: 'A000000171209', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000171209' }
+  { goodsNo: 'A000000171209', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000171209' },
+  { goodsNo: 'A000000199881', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000199881' },
+  { goodsNo: 'A000000215560', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000215560' },
+  { goodsNo: 'P000000001001', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001001' },
+  { goodsNo: 'P000000001002', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001002' },
+  { goodsNo: 'P000000001009', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001009' },
+  { goodsNo: 'P000000001015', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001015' },
+  { goodsNo: 'P000000002001', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000002001' },
+  { goodsNo: 'P000000002008', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000002008' },
+  { goodsNo: 'P000000002020', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000002020' }
 ];
-
-let botIntervalTimer = null;
 
 export const getBotStateFromStorage = () => {
   try {
@@ -51,14 +58,13 @@ export const saveBotStateToStorage = (state) => {
  * Execute a single auto-scrape run from the pool
  */
 export const executeSingleBotRun = async (existingProducts = [], pendingProducts = []) => {
-  // Find a product from pool that is not yet published or pending
   const publishedIds = new Set(existingProducts.map(p => p.goodsNo));
   const pendingIds = new Set(pendingProducts.map(p => p.goodsNo));
 
   let candidate = OLIVE_YOUNG_DISCOVERY_POOL.find(item => !publishedIds.has(item.goodsNo) && !pendingIds.has(item.goodsNo));
 
   if (!candidate) {
-    // If all target items scraped, select random item for refresh
+    // Select random item for refresh
     const randIdx = Math.floor(Math.random() * OLIVE_YOUNG_DISCOVERY_POOL.length);
     candidate = OLIVE_YOUNG_DISCOVERY_POOL[randIdx];
   }

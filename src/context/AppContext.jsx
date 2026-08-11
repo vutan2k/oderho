@@ -122,28 +122,31 @@ export const AppProvider = ({ children }) => {
   const [products, setProducts] = useState(() => {
     try {
       const savedCustom = localStorage.getItem('tavy_custom_products');
+      const seen = new Set();
+      const combined = [];
+
       if (savedCustom) {
         const parsed = JSON.parse(savedCustom);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const seen = new Set();
-          const combined = [];
-          // Ưu tiên sản phẩm đã lưu/cào mới lên đầu
+        if (Array.isArray(parsed)) {
+          // Ưu tiên nạp các sản phẩm đã cào/lưu trong localStorage
           parsed.forEach(p => {
             if (p && p.goodsNo && !seen.has(p.goodsNo)) {
               seen.add(p.goodsNo);
               combined.push(p);
             }
           });
-          // Bổ sung các sản phẩm mẫu nếu chưa có
-          OLIVE_YOUNG_CATALOG.forEach(p => {
-            if (p && p.goodsNo && !seen.has(p.goodsNo)) {
-              seen.add(p.goodsNo);
-              combined.push(p);
-            }
-          });
-          return combined;
         }
       }
+
+      // Luôn bổ sung tất cả sản phẩm mẫu Olive Young nếu chưa có
+      OLIVE_YOUNG_CATALOG.forEach(p => {
+        if (p && p.goodsNo && !seen.has(p.goodsNo)) {
+          seen.add(p.goodsNo);
+          combined.push(p);
+        }
+      });
+
+      return combined.length > 0 ? combined : OLIVE_YOUNG_CATALOG;
     } catch (e) {
       console.warn("Lỗi đọc tavy_custom_products:", e);
     }
