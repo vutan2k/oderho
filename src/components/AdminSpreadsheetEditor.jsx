@@ -164,14 +164,14 @@ export default function AdminSpreadsheetEditor() {
   return (
     <div style={{ backgroundColor: '#FFF', borderRadius: '16px', border: '1px solid #E5E7EB', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
       
-      {/* Ô Nhập Quick Link Sản Phẩm Cho Agent Cào Auto */}
+      {/* Ô Nhập Quick Link Sản Phẩm Cho Agent Cào Auto Mắt & Tay */}
       <div style={{ backgroundColor: '#FEF3C7', border: '1.5px solid #F59E0B', borderRadius: '14px', padding: '18px 20px', marginBottom: '24px' }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#B45309', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Sparkles size={20} />
-          Ô DÁN LINK HÀN QUỐC (AGENT CÀO DỮ LIỆU BỐC TÁCH NGUYÊN BẢN v2.0)
+          AGENT BROWSER VISION ("MẮT & TAY" - CUỘN & CLICK CÀO DỮ LIỆU CHÍNH XÁC 100%)
         </h3>
         <p style={{ fontSize: '0.83rem', color: '#92400E', margin: '0 0 12px 0' }}>
-          Dán bất kỳ đường dẫn Olive Young, Naver, Coupang... Agent v2.0 sẽ tự động trích xuất Tên, Thương hiệu, Giá Won ₩, Ảnh HD và Đánh giá sao.
+          Agent được trang bị "Mắt & Tay" để tự mở trình duyệt, cuộn trang, click chuyển Tab và trích xuất đúng 100% Ảnh HD, Tên, Thương hiệu và Giá Won ₩ từ Olive Young / Naver / Coupang.
         </p>
 
         <form onSubmit={handleAutoScrapeProductLink} style={{ display: 'flex', gap: '10px' }}>
@@ -181,7 +181,7 @@ export default function AdminSpreadsheetEditor() {
               type="url"
               className="input"
               style={{ width: '100%', paddingLeft: '36px', backgroundColor: '#FFF' }}
-              placeholder="https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000185934"
+              placeholder="Dán link sản phẩm Olive Young / Hàn Quốc vào đây..."
               value={quickLink}
               onChange={(e) => setQuickLink(e.target.value)}
             />
@@ -193,7 +193,7 @@ export default function AdminSpreadsheetEditor() {
             style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
           >
             {loadingScrape ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-            <span>{loadingScrape ? 'AGENT ĐANG CÀO BỐC TÁCH...' : 'KÍCH HOẠT AGENT CÀO LINK'}</span>
+            <span>{loadingScrape ? 'AGENT ĐANG BẮT ĐẦU CÀO...' : 'KÍCH HOẠT AGENT BROWSER VISION'}</span>
           </button>
         </form>
 

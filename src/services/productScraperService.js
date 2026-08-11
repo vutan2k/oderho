@@ -6,6 +6,16 @@
 
 // Database dictionary for Olive Young & Korean Top Beauty Goods
 const KNOWN_KOREAN_GOODS_DB = {
+  'A000000261415': {
+    name: "Serum Xịt Khoáng Nấm Trắng Phục Hồi & Nâng Tông Da d'Alba White Truffle First Spray Serum 100ml [Bộ 기획 TOP 3 Olive Young]",
+    brand: "d'Alba",
+    category: 'skincare',
+    foreignPrice: 29900,
+    productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
+    description: 'Serum dạng xịt khoáng nấm trúc trắng Nổi tiếng TOP 3 Bán Chạy Nhất Olive Young Korea. Chiết xuất nấm Truffle trắng Ý kết hợp Tinh dầu bơ thuần chay giúp căng bóng da thu nhỏ lỗ chân lông tức thì.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9
+  },
   'A000000185934': {
     name: 'Tinh chất dưỡng ẩm sâu Torriden Dive-In Low Molecular Hyaluronic Acid Serum 50ml',
     brand: 'Torriden',
