@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { LogIn, UserPlus, ShieldAlert } from 'lucide-react';
+import { LogIn, UserPlus, ShieldAlert, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const { loginUser, registerUser, loginWithGoogleAuth } = useContext(AppContext);
@@ -40,26 +40,36 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 64px)',
+      minHeight: 'calc(100vh - 120px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'var(--bg-subtle)',
+      backgroundColor: 'var(--bg-ivory)',
       padding: '40px 20px',
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '420px',
-        background: 'var(--bg)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border)',
+        maxWidth: '440px',
+        backgroundColor: '#FFFFFF',
+        borderRadius: '20px',
+        border: '1px solid var(--border-color)',
         boxShadow: 'var(--shadow-md)',
-        padding: '32px 28px',
+        padding: '40px 32px',
       }}>
+        {/* Title Header */}
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '2px', color: 'var(--purple-primary)', textTransform: 'uppercase' }}>
+            K-MART VIỆT HÀN
+          </span>
+          <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400, marginTop: '4px' }}>
+            {isLoginTab ? 'Đăng Nhập Tài Khoản' : 'Đăng Ký Tài Khoản'}
+          </h2>
+        </div>
+
         {/* Tab switcher */}
         <div style={{
           display: 'flex',
-          borderBottom: '1px solid var(--border)',
+          borderBottom: '1px solid var(--border-color)',
           marginBottom: '24px',
         }}>
           <button
@@ -67,13 +77,15 @@ export default function LoginPage() {
             onClick={() => { setIsLoginTab(true); setError(''); }}
             style={{
               flex: 1,
-              padding: '10px',
+              padding: '12px',
               background: 'none',
               border: 'none',
-              borderBottom: isLoginTab ? '2px solid var(--accent)' : '2px solid transparent',
-              color: isLoginTab ? 'var(--accent)' : 'var(--text-secondary)',
-              fontWeight: 700,
-              fontSize: '0.95rem',
+              borderBottom: isLoginTab ? '2px solid var(--purple-primary)' : '2px solid transparent',
+              color: isLoginTab ? 'var(--purple-primary)' : 'var(--text-muted)',
+              fontWeight: isLoginTab ? 700 : 500,
+              fontSize: '0.85rem',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -81,20 +93,22 @@ export default function LoginPage() {
               gap: '6px',
             }}
           >
-            <LogIn size={16} /> Đăng nhập
+            <LogIn size={15} /> Đăng nhập
           </button>
           <button
             type="button"
             onClick={() => { setIsLoginTab(false); setError(''); }}
             style={{
               flex: 1,
-              padding: '10px',
+              padding: '12px',
               background: 'none',
               border: 'none',
-              borderBottom: !isLoginTab ? '2px solid var(--accent)' : '2px solid transparent',
-              color: !isLoginTab ? 'var(--accent)' : 'var(--text-secondary)',
-              fontWeight: 700,
-              fontSize: '0.95rem',
+              borderBottom: !isLoginTab ? '2px solid var(--purple-primary)' : '2px solid transparent',
+              color: !isLoginTab ? 'var(--purple-primary)' : 'var(--text-muted)',
+              fontWeight: !isLoginTab ? 700 : 500,
+              fontSize: '0.85rem',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -102,19 +116,19 @@ export default function LoginPage() {
               gap: '6px',
             }}
           >
-            <UserPlus size={16} /> Đăng ký
+            <UserPlus size={15} /> Đăng ký
           </button>
         </div>
 
         {error && (
           <div style={{
-            background: '#fff0f0',
-            border: '1px solid #ffcdd2',
-            color: '#c62828',
-            borderRadius: 'var(--radius-sm)',
-            padding: '10px 14px',
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FCA5A5',
+            color: '#991B1B',
+            borderRadius: '10px',
+            padding: '12px 14px',
             fontSize: '0.85rem',
-            marginBottom: '16px',
+            marginBottom: '20px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -126,60 +140,87 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           {!isLoginTab && (
-            <div className="form-group">
-              <label className="form-label">Họ và tên</label>
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-dark)', marginBottom: '6px' }}>
+                Họ và tên
+              </label>
               <input
                 type="text"
-                className="input"
                 placeholder="Nguyễn Văn A"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  fontSize: '0.9rem',
+                  outline: 'none'
+                }}
               />
             </div>
           )}
 
-          <div className="form-group">
-            <label className="form-label">Địa chỉ Email</label>
+          <div style={{ marginBottom: '18px' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-dark)', marginBottom: '6px' }}>
+              Địa chỉ Email
+            </label>
             <input
               type="email"
-              className="input"
               placeholder="example@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                border: '1px solid var(--border-color)',
+                fontSize: '0.9rem',
+                outline: 'none'
+              }}
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Mật khẩu</label>
+          <div style={{ marginBottom: '22px' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-dark)', marginBottom: '6px' }}>
+              Mật khẩu
+            </label>
             <input
               type="password"
-              className="input"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                border: '1px solid var(--border-color)',
+                fontSize: '0.9rem',
+                outline: 'none'
+              }}
             />
           </div>
 
           <button
             type="submit"
-            className="btn-primary"
-            style={{ width: '100%', padding: '12px', marginTop: '10px' }}
+            className="btn-gold"
+            style={{ width: '100%', padding: '13px 0', justifyContent: 'center', fontSize: '0.85rem', borderRadius: '10px' }}
           >
-            {isLoginTab ? 'Đăng nhập ngay' : 'Tạo tài khoản mới'}
+            {isLoginTab ? 'ĐĂNG NHẬP NGAY' : 'TẠO TÀI KHOẢN MỚI'}
           </button>
 
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            margin: '20px 0 16px 0'
+            margin: '22px 0 18px 0'
           }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>HOẶC</span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: 600 }}>HOẶC</span>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
           </div>
 
           <button
@@ -192,19 +233,20 @@ export default function LoginPage() {
             }}
             style={{
               width: '100%',
-              padding: '10px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid #dadce0',
-              backgroundColor: '#fff',
-              color: '#3c4043',
-              fontSize: '0.88rem',
+              padding: '12px',
+              borderRadius: '10px',
+              border: '1px solid var(--border-color)',
+              backgroundColor: '#FFF',
+              color: 'var(--text-dark)',
+              fontSize: '0.85rem',
               fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '10px',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'all 0.2s ease'
             }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18">
@@ -213,21 +255,29 @@ export default function LoginPage() {
               <path fill="#FBBC05" d="M3.87 10.8c-.19-.53-.3-1.1-.3-1.8s.11-1.27.3-1.8L.97 4.96C.35 6.18 0 7.55 0 9s.35 2.82.97 4.04l2.9-2.24z"/>
               <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.45 2.02.97 4.96l2.9 2.24C4.59 5.05 6.62 3.58 9 3.58z"/>
             </svg>
-            <span>Đăng nhập nhanh với Google</span>
+            <span>Đăng nhập nhanh bằng Google</span>
           </button>
         </form>
 
-        <div style={{
-          marginTop: '20px',
-          paddingTop: '16px',
-          borderTop: '1px solid var(--border)',
-          fontSize: '0.8rem',
-          color: 'var(--text-secondary)',
-          textAlign: 'center',
-        }}>
-          💡 <strong>Tài khoản dùng thử:</strong><br />
-          Email: <code>lan@gmail.com</code> | Mật khẩu: <code>123</code>
+        <div style={{ marginTop: '24px', textAlign: 'center' }}>
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <ArrowLeft size={16} /> Quay về Trang chủ
+          </button>
         </div>
+
       </div>
     </div>
   );

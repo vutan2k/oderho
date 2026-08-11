@@ -86,97 +86,27 @@ export default function KROrderHomePage() {
                 <li><a href="#health">THỰC PHẨM CHỨC NĂNG</a></li>
                 <li><a href="#pharmacy">HIỆU THUỐC HÀN</a></li>
                 <li><a href="#payment">THANH TOÁN QR</a></li>
+                {currentUser ? (
+                  <>
+                    <li><Link to="/orders" style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>ĐƠN CỦA TÔI</Link></li>
+                    <li><button onClick={() => logoutUser()} style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600, letterSpacing: '1px' }}>ĐĂNG XUẤT</button></li>
+                  </>
+                ) : (
+                  <li><Link to="/login">ĐĂNG NHẬP</Link></li>
+                )}
               </ul>
             </nav>
 
-            {/* Action Icons & User Auth Controls */}
-            <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Action Icons */}
+            <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <a href="#products" className="icon-btn" aria-label="Tìm kiếm" title="Tìm kiếm">
                 <Search size={18} />
               </a>
               <a href="#payment" className="icon-btn" aria-label="Thanh toán VietQR" title="Thanh toán VietQR">
                 <QrCode size={18} />
               </a>
-
-              {/* Phân biệt khi đã Đăng nhập và chưa Đăng nhập */}
-              {currentUser ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Link
-                    to="/orders"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '6px 14px',
-                      borderRadius: '20px',
-                      backgroundColor: 'rgba(122, 75, 158, 0.1)',
-                      color: 'var(--purple-primary)',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      textDecoration: 'none'
-                    }}
-                  >
-                    <Package size={15} />
-                    <span>Đơn của tôi</span>
-                  </Link>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-dark)' }}>
-                    {currentUser.photoURL ? (
-                      <img src={currentUser.photoURL} alt="" style={{ width: '26px', height: '26px', borderRadius: '50%' }} />
-                    ) : (
-                      <User size={16} color="var(--purple-primary)" />
-                    )}
-                    <span>{currentUser.name || currentUser.email.split('@')[0]}</span>
-                  </div>
-
-                  <button
-                    onClick={() => logoutUser()}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#9CA3AF',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      padding: '4px'
-                    }}
-                    title="Đăng xuất"
-                  >
-                    <LogOut size={16} />
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Link
-                    to="/login"
-                    className="btn-gold"
-                    style={{
-                      padding: '8px 16px',
-                      fontSize: '0.82rem',
-                      borderRadius: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <LogIn size={15} />
-                    <span>Đăng nhập / Đăng ký</span>
-                  </Link>
-                </div>
-              )}
-
-              {/* Lối vào Admin */}
-              <Link
-                to="/admin/login"
-                style={{
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  color: '#9CA3AF',
-                  textDecoration: 'none',
-                  paddingLeft: '8px',
-                  borderLeft: '1px solid #E5E7EB'
-                }}
-              >
-                Admin
+              <Link to="/admin/login" className="icon-btn" aria-label="Admin" title="Cổng Admin" style={{ opacity: 0.5, fontSize: '0.75rem', fontWeight: 600 }}>
+                ADMIN
               </Link>
             </div>
           </div>
