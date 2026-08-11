@@ -12,11 +12,10 @@ export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
-        <Navbar />
         <Routes>
           <Route path="/" element={<KROrderHomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/login" element={<><Navbar /><LoginPage /></>} />
+          <Route path="/orders" element={<><Navbar /><OrdersPage /></>} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         </Routes>
