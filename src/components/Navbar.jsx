@@ -58,6 +58,13 @@ export default function Navbar({ logoSrc }) {
 
         {/* User Navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Link
+            to="/admin/login"
+            className="btn-ghost"
+            style={{ fontSize: '0.8rem', color: 'var(--purple-primary)', fontWeight: 700 }}
+          >
+            Quản trị Admin
+          </Link>
           {currentUser ? (
             <>
               <Link

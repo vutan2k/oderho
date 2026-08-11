@@ -319,6 +319,41 @@ export const AppProvider = ({ children }) => {
     );
   };
 
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    return localStorage.getItem('kmart_admin_auth') === 'true';
+  });
+
+  const loginAdmin = (password) => {
+    if (password === 'admin123456') {
+      setIsAdminAuthenticated(true);
+      localStorage.setItem('kmart_admin_auth', 'true');
+      return { success: true };
+    }
+    return { success: false, message: 'Mật khẩu quản trị không chính xác.' };
+  };
+
+  const logoutAdmin = () => {
+    setIsAdminAuthenticated(false);
+    localStorage.removeItem('kmart_admin_auth');
+  };
+
+  const updateOrderTracking = (orderId, { status, trackingCode, note }) => {
+    setOrders((prev) =>
+      prev.map((order) => {
+        if (order.id === orderId) {
+          return {
+            ...order,
+            status: status || order.status,
+            trackingCode: trackingCode !== undefined ? trackingCode : order.trackingCode,
+            adminNote: note !== undefined ? note : order.adminNote,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return order;
+      })
+    );
+  };
+
   const updateOrderStatus = (orderId, status) => {
     setOrders((prev) =>
       prev.map((order) => (order.id === orderId ? { ...order, status } : order))
@@ -355,6 +390,9 @@ export const AppProvider = ({ children }) => {
         orders,
         rates,
         currentUser,
+        isAdminAuthenticated,
+        loginAdmin,
+        logoutAdmin,
         registerUser,
         loginUser,
         loginWithGoogleAuth,
@@ -363,6 +401,7 @@ export const AppProvider = ({ children }) => {
         updateRates,
         updateOrderQuote,
         updateOrderStatus,
+        updateOrderTracking,
         confirmPayment,
         resetAllData,
         oliveYoungCatalog: OLIVE_YOUNG_CATALOG,
