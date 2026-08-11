@@ -49,67 +49,58 @@ export const OLIVE_YOUNG_CATALOG = [
     options: 'Tone 03 Linen - 15g x 2'
   },
   {
-    goodsNo: 'A000000192301',
-    name: 'Bảng phấn mắt 16 ô Wakemake Soft Blurring Eye Palette',
-    brand: 'Wakemake',
-    category: 'makeup',
-    foreignPrice: 34000,
-    productImage: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80',
-    options: 'Màu 02 Lively Blurring'
+    goodsNo: 'P000000001001',
+    name: 'Cao Hắc Sâm Hàn Quốc Cao Cấp CheongKwanJang Everytime Extract',
+    brand: 'CheongKwanJang (KGC)',
+    category: 'health',
+    foreignPrice: 98000,
+    productImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80',
+    options: 'Hộp 30 gói x 10ml'
   },
   {
-    goodsNo: 'A000000168341',
-    name: 'Kem ủ dưỡng tóc hư tổn nặng Unove Deep Damage Treatment EX',
-    brand: 'Unove',
-    category: 'haircare',
-    foreignPrice: 25000,
-    productImage: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?auto=format&fit=crop&w=400&q=80',
-    options: 'Tuýp lớn 320ml'
+    goodsNo: 'P000000001002',
+    name: 'Viên Uống Collagen Thủy Phân Orthomol Beauty Hàn Quốc',
+    brand: 'Orthomol',
+    category: 'health',
+    foreignPrice: 65000,
+    productImage: 'https://images.unsplash.com/photo-1550572017-edd951aa8f72?auto=format&fit=crop&w=400&q=80',
+    options: 'Hộp 30 chai liquid'
   },
   {
-    goodsNo: 'A000000140231',
-    name: 'Dầu dưỡng tóc phục hồi Mise En Scene Perfect Serum Original',
-    brand: 'Mise En Scene',
-    category: 'haircare',
-    foreignPrice: 15000,
-    productImage: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=400&q=80',
-    options: 'Chai 80ml'
+    goodsNo: 'P000000001003',
+    name: 'Nước Hồng Sâm Linh Chi KGC JungKwanJang Tonic Gold',
+    brand: 'JungKwanJang',
+    category: 'health',
+    foreignPrice: 85000,
+    productImage: 'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=400&q=80',
+    options: 'Hộp 30 gói x 50ml'
   },
   {
-    goodsNo: 'A000000139102',
-    name: 'Xịt dưỡng tóc chắc khỏe Aromatica Rosemary Root Enhancer',
-    brand: 'Aromatica',
-    category: 'haircare',
-    foreignPrice: 16000,
-    productImage: 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=400&q=80',
-    options: 'Chai xịt 100ml'
+    goodsNo: 'P000000002001',
+    name: 'Dung Dịch Xịt Mũi Trị Xoang Dị Ứng Hàn Quốc Nazal / Hanmi',
+    brand: 'Hanmi Pharmacy',
+    category: 'pharmacy',
+    foreignPrice: 12000,
+    productImage: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&w=400&q=80',
+    options: 'Chai xịt 30ml'
   },
   {
-    goodsNo: 'A000000120231',
-    name: 'Kem dưỡng ẩm dịu lành Illiyoon Ceramide Ato Concentrate Cream',
-    brand: 'Illiyoon',
-    category: 'bodycare',
-    foreignPrice: 20000,
-    productImage: 'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=400&q=80',
-    options: 'Tuýp 200ml'
+    goodsNo: 'P000000002002',
+    name: 'Miếng Dán Trị Đau Nhức Xương Khớp Hồng Sâm Hàn Quốc Himena',
+    brand: 'Himena Korea',
+    category: 'pharmacy',
+    foreignPrice: 8500,
+    productImage: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?auto=format&fit=crop&w=400&q=80',
+    options: 'Gói 20 miếng dán'
   },
   {
-    goodsNo: 'A000000148102',
-    name: 'Sữa tắm hương nước hoa Kundal Pure Natural Body Wash',
-    brand: 'Kundal',
-    category: 'bodycare',
-    foreignPrice: 13000,
-    productImage: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=400&q=80',
-    options: 'Hương Baby Powder - 500ml'
-  },
-  {
-    goodsNo: 'A000000109230',
-    name: 'Kem dưỡng da tay cổ điển Kamill Hand & Nail Cream Classic',
-    brand: 'Kamill',
-    category: 'bodycare',
-    foreignPrice: 6900,
-    productImage: 'https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&w=400&q=80',
-    options: 'Tuýp 100ml'
+    goodsNo: 'P000000002003',
+    name: 'Men Vi Sinh Bổ Sung Lợi Khuẩn Đường Ruột LACTO-FIT Gold Hàn Quốc',
+    brand: 'Chong Kun Dang',
+    category: 'pharmacy',
+    foreignPrice: 19500,
+    productImage: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=400&q=80',
+    options: 'Hộp 50 gói bột'
   }
 ];
 
