@@ -6,7 +6,7 @@ import CascadingAddressSelector from './CascadingAddressSelector';
 import {
   Search, Edit3,
   Truck, CheckCircle, PackageCheck, AlertCircle, Printer,
-  Download, ShieldCheck, ChevronRight, X,
+  Download, ShieldCheck, X,
   Phone, MapPin, CheckCircle2, Trash2
 } from 'lucide-react';
 
@@ -144,8 +144,8 @@ export default function AdminOrderManager() {
     setActiveModalOrder(null);
   };
 
-  // Quick 1-Click Stepper Advance
-  const handleQuickNextStatus = (order) => {
+  // Quick 1-Click Stepper Advance (Reserved for fast stepper button)
+  const _handleQuickNextStatus = (order) => {
     const allStatuses = Object.keys(ORDER_STATUSES).filter(k => k !== 'cancelled');
     const currentIndex = allStatuses.indexOf(order.status);
     if (currentIndex >= 0 && currentIndex < allStatuses.length - 1) {

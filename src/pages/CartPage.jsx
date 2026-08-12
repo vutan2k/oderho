@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { Helmet } from 'react-helmet-async';
 import paymentService from '../services/paymentService';
-import { Trash2, Plus, Minus, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Trash2, Plus, Minus, CheckCircle } from 'lucide-react';
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 import Footer from '../components/Footer';
 import confetti from 'canvas-confetti';

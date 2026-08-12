@@ -75,6 +75,13 @@ export const loginWithGoogle = async () => {
       return { success: false, message: 'Bạn đã đóng cửa sổ đăng nhập Google trước khi hoàn tất.' };
     }
 
+    if (error.code === 'auth/configuration-not-found') {
+      return { 
+        success: false, 
+        message: 'Firebase Authentication chưa được kích hoạt cho dự án tavy-oderho. Vui lòng mở Firebase Console > Authentication > bấm "Get Started" và BẬT nhà cung cấp Google.' 
+      };
+    }
+
     if (error.code === 'auth/unauthorized-domain') {
       return { 
         success: false, 

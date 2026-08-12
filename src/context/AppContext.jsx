@@ -245,7 +245,7 @@ export const AppProvider = ({ children }) => {
       clearTimeout(initialTimer);
       clearInterval(intervalTimer);
     };
-  }, [botIsRunning, products]);
+  }, [botIsRunning, products, pendingProducts]);
 
   const toggleBot = (enabled) => {
     setBotIsRunning(enabled);
@@ -271,7 +271,9 @@ export const AppProvider = ({ children }) => {
       const updated = [cleanProduct, ...filtered];
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-      } catch (e) {}
+      } catch (err) {
+        console.warn("Storage save error:", err);
+      }
       return updated;
     });
 
@@ -305,7 +307,9 @@ export const AppProvider = ({ children }) => {
       const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-      } catch (e) {}
+      } catch (err) {
+        console.warn("Storage update error:", err);
+      }
       return updated;
     });
   };
@@ -315,7 +319,9 @@ export const AppProvider = ({ children }) => {
       const updated = prev.filter(p => p.goodsNo !== goodsNo);
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-      } catch (e) {}
+      } catch (err) {
+        console.warn("Storage delete error:", err);
+      }
       return updated;
     });
 
