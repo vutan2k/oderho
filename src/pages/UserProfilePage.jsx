@@ -1,11 +1,13 @@
 import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
-import { User, Lock, Save, Mail } from 'lucide-react';
+import { User, Lock, Save, Mail, LogIn, ArrowLeft } from 'lucide-react';
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 
 export default function UserProfilePage() {
   const { currentUser, updateUserProfile } = useContext(AppContext);
+  const navigate = useNavigate();
   const showToast = useToast();
 
   const [name, setName] = useState(currentUser?.name || '');
@@ -39,8 +41,89 @@ export default function UserProfilePage() {
 
   if (!currentUser) {
     return (
-      <div style={{ padding: '80px 20px', textAlign: 'center', minHeight: '60vh' }}>
-        <h2>Vui lòng đăng nhập để xem thông tin cá nhân</h2>
+      <div style={{
+        minHeight: '70vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FDFBF7',
+        padding: '40px 20px',
+      }}>
+        <div style={{
+          maxWidth: '460px',
+          width: '100%',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '24px',
+          padding: '40px 32px',
+          textAlign: 'center',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
+          border: '1px solid #E5E7EB',
+        }}>
+          <div style={{
+            width: '68px',
+            height: '68px',
+            backgroundColor: '#F3E8FF',
+            borderRadius: '50%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--purple-primary)',
+            marginBottom: '20px'
+          }}>
+            <User size={36} />
+          </div>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontFamily: 'var(--font-serif)',
+            color: 'var(--text-dark)',
+            marginBottom: '10px'
+          }}>
+            Yêu cầu Đăng nhập
+          </h2>
+          <p style={{
+            fontSize: '0.9rem',
+            color: 'var(--text-muted)',
+            lineHeight: '1.6',
+            marginBottom: '28px'
+          }}>
+            Vui lòng đăng nhập tài khoản để xem và cập nhật hồ sơ cá nhân, địa chỉ giao hàng của bạn.
+          </p>
+
+          <button
+            onClick={() => navigate('/login')}
+            className="btn-gold"
+            style={{
+              width: '100%',
+              padding: '14px 0',
+              justifyContent: 'center',
+              fontSize: '0.9rem',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '16px'
+            }}
+          >
+            <LogIn size={18} /> ĐĂNG NHẬP NGAY
+          </button>
+
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <ArrowLeft size={16} /> Quay về Trang chủ
+          </button>
+        </div>
       </div>
     );
   }
