@@ -130,7 +130,7 @@ export default function AdminDashboardPage() {
       </header>
 
       {/* Main Container */}
-      <div className="container" style={{ marginTop: '24px' }}>
+      <div style={{ marginTop: '24px', paddingLeft: '24px', paddingRight: '24px' }}>
 
         {/* Main Section Navigation Tabs */}
         <div style={{ display: 'flex', gap: '14px', marginBottom: '24px' }}>

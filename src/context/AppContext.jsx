@@ -10,7 +10,8 @@ import {
   updateRatesInDB,
   saveUserProfileInDB,
   saveProductToDB,
-  deleteProductFromDB
+  deleteProductFromDB,
+  deleteOrderFromDB
 } from '../services/dbService';
 
 export const AppContext = createContext();
@@ -483,7 +484,7 @@ export const AppProvider = ({ children }) => {
   });
 
   const loginAdmin = (password) => {
-    const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123456';
+    const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'Vvtan2606@';
     if (password === adminPass) {
       setIsAdminAuthenticated(true);
       localStorage.setItem('kmart_admin_auth', 'true');
@@ -527,6 +528,11 @@ export const AppProvider = ({ children }) => {
     setOrders((prev) =>
       prev.map((order) => (order.id === orderId ? { ...order, status } : order))
     );
+  };
+
+  const deleteOrder = (orderId) => {
+    setOrders((prev) => prev.filter((order) => order.id !== orderId));
+    deleteOrderFromDB(orderId).catch((err) => console.warn('Firestore delete order failed:', err));
   };
 
   const confirmPayment = (orderId, amountPaid) => {
@@ -578,6 +584,7 @@ export const AppProvider = ({ children }) => {
         updateOrderQuote,
         updateOrderStatus,
         updateOrderTracking,
+        deleteOrder,
         confirmPayment,
         resetAllData,
         products,

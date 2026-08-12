@@ -1,6 +1,8 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import { Helmet } from 'react-helmet-async';
+import paymentService from '../services/paymentService';
 import { Trash2, Plus, Minus, ArrowLeft, CheckCircle } from 'lucide-react';
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 import Footer from '../components/Footer';
@@ -56,7 +58,20 @@ export default function CartPage() {
 
     setSuccess(true);
   };
-
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    try {
+      const session = await paymentService.createCheckoutSession(cart);
+      // Navigate to the checkout URL returned by the service
+      if (session && session.url) {
+        navigate(session.url);
+      } else {
+        console.error('Invalid checkout session:', session);
+      }
+    } catch (error) {
+      console.error('Checkout failed:', error);
+    }
+  };
   if (success) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F9F6FA' }}>
@@ -80,15 +95,11 @@ export default function CartPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F9F6FA' }}>
       
-      {/* Header đơn giản */}
-      <header style={{ backgroundColor: '#FFF', padding: '16px 0', borderBottom: '1px solid var(--border-color)' }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', textDecoration: 'none', fontWeight: 600 }}>
-            <ArrowLeft size={18} /> Tiếp tục mua sắm
-          </Link>
-
-        </div>
-      </header>
+      <Helmet>
+        <title>Giỏ Hàng - TAVY Korea</title>
+        <meta name="description" content="Xem và quản lý giỏ hàng của bạn trên TAVY Korea. Thanh toán nhanh chóng và an toàn." />
+      </Helmet>
+      {/* Navbar chung sẽ được hiển thị từ App.jsx nên không cần header đơn giản riêng ở đây */}
 
       <main className="container" style={{ flex: 1, padding: '40px 24px' }}>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.4rem', color: 'var(--purple-dark)', marginBottom: '30px' }}>Giỏ Hàng Của Bạn</h1>
@@ -105,7 +116,7 @@ export default function CartPage() {
             <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
               {cart.map((item, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: '20px', padding: '20px 0', borderBottom: idx < cart.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
-                  <img src={item.productImage} alt={item.name} style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px' }} />
+                  <img src={item.productImage} alt={item.name} loading="lazy" style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px' }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
@@ -175,6 +186,9 @@ export default function CartPage() {
 
                 <button type="submit" className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem' }}>
                   Gửi Yêu Cầu Đặt Hộ
+                </button>
+                <button type="button" className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '12px' }} onClick={handleCheckout}>
+                  Thanh toán
                 </button>
               </form>
             </div>

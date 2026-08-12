@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ToastProvider } from './components/Toast';
+import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -22,7 +23,8 @@ export default function App() {
     <ErrorBoundary>
       <AppProvider>
         <ToastProvider>
-          <BrowserRouter>
+          <HelmetProvider>
+            <BrowserRouter>
             <ScrollToTop />
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
@@ -37,6 +39,7 @@ export default function App() {
               </Routes>
             </Suspense>
           </BrowserRouter>
+          </HelmetProvider>
         </ToastProvider>
       </AppProvider>
     </ErrorBoundary>
