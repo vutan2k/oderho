@@ -46,14 +46,8 @@ export const loginWithGoogle = async () => {
       }
     };
   } catch (error) {
-    console.warn("Firebase Google login fallback:", error);
-    const mockUser = {
-      uid: 'google-user-' + Date.now(),
-      name: 'Nguyễn Văn A (Google)',
-      email: 'user.google@gmail.com',
-      photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'
-    };
-    return { success: true, user: mockUser };
+    console.error("Firebase Google login error:", error);
+    return { success: false, message: error.message };
   }
 };
 
