@@ -37,11 +37,11 @@ export default function Navbar({ logoSrc }) {
           </span>
         </Link>
 
-        {/* User Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
-          {/* Giỏ hàng (ShoppingCart) */}
+        {/* User Navigation: 4 biểu tượng chính */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* 1. Giỏ hàng */}
           <Link id="cart-icon-header" to="/cart" className="icon-btn" style={{ position: 'relative', transition: 'transform 0.2s ease', color: 'var(--text-dark)' }} aria-label="Giỏ hàng" title="Giỏ hàng">
-            <ShoppingCart size={26} />
+            <ShoppingCart size={24} />
             {cart && cart.length > 0 && (
               <span style={{
                 position: 'absolute', top: '-8px', right: '-12px',
@@ -55,33 +55,33 @@ export default function Navbar({ logoSrc }) {
             )}
           </Link>
 
+          {/* 2. Đơn hàng của tôi */}
+          <Link to="/orders" className="icon-btn" aria-label="Đơn hàng của tôi" title="Đơn hàng của tôi" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+            <Package size={24} />
+          </Link>
+
+          {/* 3. Hồ sơ cá nhân */}
+          <Link to="/profile" className="icon-btn" aria-label="Hồ sơ cá nhân" title="Hồ sơ cá nhân" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+            <User size={24} />
+          </Link>
+
+          {/* 4. Đăng nhập / Đăng xuất */}
           {currentUser ? (
-            <>
-              {/* Đơn hàng (Package) */}
-              <Link to="/orders" className="icon-btn" aria-label="Đơn hàng" title="Đơn hàng của tôi" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
-                <Package size={26} />
-              </Link>
-              {/* Tài khoản (User) */}
-              <Link to="/profile" className="icon-btn" aria-label="Tài khoản" title="Tài khoản" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
-                <User size={26} />
-              </Link>
-              {/* Đăng xuất (LogOut) */}
-              <button
-                onClick={() => {
-                  logoutUser();
-                  navigate('/');
-                }}
-                className="icon-btn"
-                aria-label="Đăng xuất"
-                title="Đăng xuất"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dark)', padding: 0 }}
-              >
-                <LogOut size={26} />
-              </button>
-            </>
+            <button
+              onClick={() => {
+                logoutUser();
+                navigate('/');
+              }}
+              className="icon-btn"
+              aria-label="Đăng xuất"
+              title="Đăng xuất"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dark)', padding: 0 }}
+            >
+              <LogOut size={24} />
+            </button>
           ) : (
-            <Link to="/login" className="icon-btn" aria-label="Đăng nhập" title="Đăng nhập" style={{ color: 'var(--text-dark)' }}>
-              <User size={26} />
+            <Link to="/login" className="icon-btn" aria-label="Đăng nhập" title="Đăng nhập" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+              <LogIn size={24} />
             </Link>
           )}
         </div>

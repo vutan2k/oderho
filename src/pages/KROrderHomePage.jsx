@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Search, Menu, X, ShoppingCart, User, LogOut, Package
+  Search, Menu, X, ShoppingCart, User, LogOut, Package, LogIn
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import ProductDetailModal from '../components/ProductDetailModal';
@@ -95,6 +95,7 @@ export default function KROrderHomePage() {
                 <Search size={26} />
               </a>
 
+              {/* 1. Giỏ hàng */}
               <Link id="cart-icon-header" to="/cart" className="icon-btn" style={{ position: 'relative', transition: 'transform 0.2s ease', color: 'var(--text-dark)' }} aria-label="Giỏ hàng" title="Giỏ hàng">
                 <ShoppingCart size={26} />
                 {cart && cart.length > 0 && (
@@ -110,21 +111,24 @@ export default function KROrderHomePage() {
                 )}
               </Link>
 
+              {/* 2. Đơn hàng của tôi */}
+              <Link to="/orders" className="icon-btn" aria-label="Đơn của tôi" title="Đơn hàng của tôi" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+                <Package size={26} />
+              </Link>
+
+              {/* 3. Hồ sơ cá nhân */}
+              <Link to="/profile" className="icon-btn" aria-label="Hồ sơ cá nhân" title="Hồ sơ cá nhân" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+                <User size={26} />
+              </Link>
+
+              {/* 4. Đăng nhập / Đăng xuất */}
               {currentUser ? (
-                <>
-                  <Link to="/orders" className="icon-btn" aria-label="Đơn của tôi" title="Đơn của tôi" style={{ color: 'var(--text-dark)' }}>
-                    <Package size={26} />
-                  </Link>
-                  <Link to="/profile" className="icon-btn" aria-label="Tài khoản" title="Tài khoản" style={{ color: 'var(--text-dark)' }}>
-                    <User size={26} />
-                  </Link>
-                  <button onClick={() => logoutUser()} className="icon-btn" aria-label="Đăng xuất" title="Đăng xuất" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dark)', padding: 0 }}>
-                    <LogOut size={26} />
-                  </button>
-                </>
+                <button onClick={() => logoutUser()} className="icon-btn" aria-label="Đăng xuất" title="Đăng xuất" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dark)', padding: 0 }}>
+                  <LogOut size={26} />
+                </button>
               ) : (
-                <Link to="/login" className="icon-btn" aria-label="Đăng nhập" title="Đăng nhập" style={{ color: 'var(--text-dark)' }}>
-                  <User size={26} />
+                <Link to="/login" className="icon-btn" aria-label="Đăng nhập" title="Đăng nhập" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+                  <LogIn size={26} />
                 </Link>
               )}
               <button
@@ -151,11 +155,11 @@ export default function KROrderHomePage() {
               <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'skincare')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>MỸ PHẨM</a></li>
               <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'health')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>THỰC PHẨM CHỨC NĂNG</a></li>
               <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'pharmacy')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>HIỆU THUỐC HÀN</a></li>
+              <li><Link to="/cart" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>GIỎ HÀNG</Link></li>
+              <li><Link to="/orders" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>ĐƠN CỦA TÔI</Link></li>
+              <li><Link to="/profile" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>HỒ SƠ CÁ NHÂN</Link></li>
               {currentUser ? (
-                <>
-                  <li><Link to="/orders" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>ĐƠN CỦA TÔI</Link></li>
-                  <li><button onClick={() => { logoutUser(); setMobileMenuOpen(false); }} style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>ĐĂNG XUẤT</button></li>
-                </>
+                <li><button onClick={() => { logoutUser(); setMobileMenuOpen(false); }} style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>ĐĂNG XUẤT</button></li>
               ) : (
                 <li><Link to="/login" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>ĐĂNG NHẬP</Link></li>
               )}
