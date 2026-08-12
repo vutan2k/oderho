@@ -12,7 +12,9 @@ export default function AdminDashboardPage() {
     logoutAdmin, 
     orders, 
     rates, 
-    updateRates
+    updateRates,
+    publishToWeb,
+    revertFromWeb
   } = useContext(AppContext);
   const navigate = useNavigate();
   const showToast = useToast();
@@ -57,6 +59,39 @@ export default function AdminDashboardPage() {
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            
+            {/* Action Buttons for Draft/Publish */}
+            <div style={{ display: 'flex', gap: '8px', marginRight: '16px', borderRight: '1px solid rgba(255,255,255,0.2)', paddingRight: '16px' }}>
+              <button 
+                onClick={() => {
+                  if (window.confirm('Khôi phục lại dữ liệu gốc (bản backup gần nhất đang chạy trên Website)? Các chỉnh sửa nháp sẽ bị xóa.')) {
+                    revertFromWeb();
+                    if (showToast) showToast('Đã khôi phục dữ liệu gần nhất!', 'info');
+                  }
+                }}
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.1)', color: '#E5E7EB', border: '1px solid rgba(255,255,255,0.3)',
+                  padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                Khôi phục lần đăng nhập gần nhất
+              </button>
+              <button 
+                onClick={() => {
+                  if (window.confirm('Bạn có chắc chắn muốn đẩy tất cả dữ liệu kho này lên Website cho khách hàng xem?')) {
+                    publishToWeb();
+                    if (showToast) showToast('Đã đồng bộ lên Website thành công!', 'success');
+                  }
+                }}
+                style={{
+                  backgroundColor: '#10B981', color: '#FFF', border: 'none',
+                  padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                Đồng bộ lên Website
+              </button>
+            </div>
+
             {/* Tỷ giá quick update in header */}
             <form onSubmit={handleUpdateRate} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '8px' }}>
               <span style={{ fontSize: '0.78rem', color: '#D1D5DB', fontWeight: 600 }}>Tỷ Giá ₩:</span>

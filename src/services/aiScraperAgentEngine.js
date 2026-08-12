@@ -6,7 +6,7 @@
  * Strategy 3: Automatic Storage & Catalog Sync
  */
 
-import { scrapeProductDetails } from './productScraperService';
+import { scrapeProductMetadata } from './productScraperService';
 
 /**
  * Execute AI Agent Product Scrape Task
@@ -22,11 +22,12 @@ export async function runAIScraperAgent(url) {
     console.log(`🤖 AI Scraper Agent đang xử lý đường dẫn: ${url}...`);
 
     // Step 1: Run Multi-Proxy / Schema Parser
-    const product = await scrapeProductDetails(url);
+    const res = await scrapeProductMetadata(url);
 
-    if (!product || !product.name) {
-      return { success: false, error: 'Không thể trích xuất dữ liệu từ đường dẫn' };
+    if (!res || !res.success || !res.product) {
+      return { success: false, error: res?.error || 'Không thể trích xuất dữ liệu từ đường dẫn' };
     }
+    const product = res.product;
 
     // Step 2: AI Classification & Title Enhancement
     const lowerName = (product.name || '').toLowerCase();

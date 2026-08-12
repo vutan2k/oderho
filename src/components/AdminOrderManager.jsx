@@ -28,17 +28,23 @@ export default function AdminOrderManager() {
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0);
   const formatWon = (n) => `₩${(n || 0).toLocaleString('vi-VN')}`;
 
+  const getOrderProductName = (o) => o.items ? `[${o.items.length} món] ` + o.items.map(i => i.name).join(' + ') : (o.productName || '');
+  const getOrderForeignPrice = (o) => o.items ? o.items.reduce((sum, i) => sum + (i.foreignPrice * i.qty), 0) : (o.foreignPrice || 0);
+  const getOrderQty = (o) => o.items ? o.items.reduce((sum, i) => sum + i.qty, 0) : (o.qty || 1);
+  const getOrderImage = (o) => o.items && o.items.length > 0 ? o.items[0].productImage : (o.productImage || '');
+
   // Filtered orders
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
       const matchStatus = filterStatus === 'all' || o.status === filterStatus;
       const term = searchTerm.toLowerCase().trim();
+      const oName = getOrderProductName(o);
       const matchSearch =
         !term ||
         (o.id && o.id.toLowerCase().includes(term)) ||
         (o.customerName && o.customerName.toLowerCase().includes(term)) ||
         (o.customerPhone && o.customerPhone.includes(term)) ||
-        (o.productName && o.productName.toLowerCase().includes(term)) ||
+        (oName.toLowerCase().includes(term)) ||
         (o.trackingCode && o.trackingCode.toLowerCase().includes(term));
       return matchStatus && matchSearch;
     });
@@ -81,7 +87,9 @@ export default function AdminOrderManager() {
 
   // Open Edit / Báo giá / Invoice Modal
   const handleOpenEditModal = (order, print = false) => {
-    const baseVnd = Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1));
+    const fPrice = getOrderForeignPrice(order);
+    const qty = getOrderQty(order);
+    const baseVnd = Math.round(fPrice * krwRate * qty);
     const taxVnd = order.quote?.taxWebVnd || Math.round(baseVnd * 0.05);
     const serviceVnd = order.quote?.serviceFeeVnd || Math.round(baseVnd * 0.05);
     const shipFeeVnd = order.quote?.shippingWeightFeeVnd || 90000;
@@ -91,9 +99,9 @@ export default function AdminOrderManager() {
       customerName: order.customerName || '',
       customerPhone: order.customerPhone || '',
       customerAddress: order.customerAddress || '',
-      productName: order.productName || '',
-      foreignPrice: order.foreignPrice || 0,
-      qty: order.qty || 1,
+      productName: getOrderProductName(order),
+      foreignPrice: fPrice,
+      qty: qty,
       trackingCode: order.trackingCode || '',
       status: order.status || 'pending',
       adminNote: order.adminNote || 'Hàng sẵn có tại Korea Store, chuẩn bị đóng gói vận chuyển Air.',
@@ -153,8 +161,11 @@ export default function AdminOrderManager() {
     const header = "MÃ ĐƠN HÀNG,TÊN KHÁCH HÀNG,SỐ ĐIỆN THOẠI,ĐỊA CHỈ GIAO,SẢN PHẨM,GIÁ WON,SL,TỔNG TIỀN VNĐ,TRẠNG THÁI,MÃ VẬN ĐƠN AIR\n";
     const rows = filteredOrders.map(o => {
       const st = getStatusConfig(o.status).label;
-      const total = o.quote ? o.quote.totalVnd : Math.round((o.foreignPrice || 0) * krwRate * (o.qty || 1));
-      return `"${o.id}","${o.customerName || ''}","${o.customerPhone || ''}","${(o.customerAddress || '').replace(/"/g, '""')}","${(o.productName || '').replace(/"/g, '""')}",${o.foreignPrice || 0},${o.qty || 1},${total},"${st}","${o.trackingCode || ''}"`;
+      const fPrice = getOrderForeignPrice(o);
+      const qty = getOrderQty(o);
+      const oName = getOrderProductName(o);
+      const total = o.quote ? o.quote.totalVnd : Math.round(fPrice * krwRate * qty);
+      return `"${o.id}","${o.customerName || ''}","${o.customerPhone || ''}","${(o.customerAddress || '').replace(/"/g, '""')}","${(oName || '').replace(/"/g, '""')}",${fPrice || 0},${qty || 1},${total},"${st}","${o.trackingCode || ''}"`;
     }).join('\n');
 
     const blob = new Blob(["\uFEFF" + header + rows], { type: 'text/csv;charset=utf-8;' });
@@ -376,10 +387,10 @@ export default function AdminOrderManager() {
                       {/* Sản phẩm */}
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>
-                          {order.productName || 'Sản phẩm mua hộ Hàn Quốc'}
+                          {getOrderProductName(order) || 'Sản phẩm mua hộ Hàn Quốc'}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--purple-primary)', fontWeight: 600, marginTop: '4px' }}>
-                          Giá Won: {formatWon(order.foreignPrice)} | Số lượng: x{order.qty || 1}
+                          Giá Won: {formatWon(getOrderForeignPrice(order))} | Số lượng: x{getOrderQty(order)}
                         </div>
                       </td>
 

@@ -8,7 +8,9 @@ import {
   confirmOrderPaymentInDB,
   subscribeToRates,
   updateRatesInDB,
-  saveUserProfileInDB
+  saveUserProfileInDB,
+  saveProductToDB,
+  deleteProductFromDB
 } from '../services/dbService';
 
 export const AppContext = createContext();
@@ -122,36 +124,46 @@ export const AppProvider = ({ children }) => {
   const [products, setProducts] = useState(() => {
     try {
       const savedCustom = localStorage.getItem('tavy_custom_products');
-      const seen = new Set();
-      const combined = [];
-
       if (savedCustom) {
         const parsed = JSON.parse(savedCustom);
-        if (Array.isArray(parsed)) {
-          // Ưu tiên nạp các sản phẩm đã cào/lưu trong localStorage
-          parsed.forEach(p => {
-            if (p && p.goodsNo && !seen.has(p.goodsNo)) {
-              seen.add(p.goodsNo);
-              combined.push(p);
-            }
-          });
-        }
+        if (Array.isArray(parsed)) return parsed;
       }
-
-      // Luôn bổ sung tất cả sản phẩm mẫu Olive Young nếu chưa có
-      OLIVE_YOUNG_CATALOG.forEach(p => {
-        if (p && p.goodsNo && !seen.has(p.goodsNo)) {
-          seen.add(p.goodsNo);
-          combined.push(p);
-        }
-      });
-
-      return combined.length > 0 ? combined : OLIVE_YOUNG_CATALOG;
+      return OLIVE_YOUNG_CATALOG;
     } catch (e) {
       console.warn("Lỗi đọc tavy_custom_products:", e);
     }
     return OLIVE_YOUNG_CATALOG;
   });
+
+  const [publishedProducts, setPublishedProducts] = useState(() => {
+    try {
+      const savedPublished = localStorage.getItem('tavy_published_products');
+      if (savedPublished) {
+        const parsed = JSON.parse(savedPublished);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      // Khởi tạo fallback nếu chưa publish lần nào
+      const savedCustom = localStorage.getItem('tavy_custom_products');
+      if (savedCustom) {
+        const parsed = JSON.parse(savedCustom);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return OLIVE_YOUNG_CATALOG;
+    } catch (e) {
+      console.warn("Lỗi đọc tavy_published_products:", e);
+    }
+    return OLIVE_YOUNG_CATALOG;
+  });
+
+  const publishToWeb = () => {
+    setPublishedProducts([...products]);
+    localStorage.setItem('tavy_published_products', JSON.stringify(products));
+  };
+
+  const revertFromWeb = () => {
+    setProducts([...publishedProducts]);
+    localStorage.setItem('tavy_custom_products', JSON.stringify(publishedProducts));
+  };
 
   // 🤖 AUTO SCRAPER BOT STATE & PENDING APPROVAL QUEUE
   const [botIsRunning, setBotIsRunning] = useState(() => {
@@ -162,6 +174,37 @@ export const AppProvider = ({ children }) => {
     const saved = localStorage.getItem('tavy_pending_products');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // 🛒 CART STATE
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('tavy_cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('tavy_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (product, qty = 1) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.goodsNo === product.goodsNo);
+      if (existing) {
+        return prev.map(item => item.goodsNo === product.goodsNo ? { ...item, qty: item.qty + qty } : item);
+      }
+      return [...prev, { ...product, qty }];
+    });
+  };
+
+  const removeFromCart = (goodsNo) => {
+    setCart(prev => prev.filter(item => item.goodsNo !== goodsNo));
+  };
+
+  const updateCartQty = (goodsNo, qty) => {
+    if (qty <= 0) return removeFromCart(goodsNo);
+    setCart(prev => prev.map(item => item.goodsNo === goodsNo ? { ...item, qty } : item));
+  };
+
+  const clearCart = () => setCart([]);
 
   // 💾 BẮT BUỘC: Lưu danh sách sản phẩm vào localStorage khi có thay đổi (Chống mất khi F5 reload)
   useEffect(() => {
@@ -230,6 +273,9 @@ export const AppProvider = ({ children }) => {
       } catch (e) {}
       return updated;
     });
+
+    // Sync lên Firestore (fire & forget, không block UI)
+    saveProductToDB(cleanProduct).catch(err => console.warn('Firestore sync product failed:', err));
   };
 
   const approveSelectedPendingProducts = (goodsNoArray = []) => {
@@ -271,6 +317,9 @@ export const AppProvider = ({ children }) => {
       } catch (e) {}
       return updated;
     });
+
+    // Xóa khỏi Firestore (fire & forget)
+    deleteProductFromDB(goodsNo).catch(err => console.warn('Firestore delete product failed:', err));
   };
 
   useEffect(() => {
@@ -333,6 +382,16 @@ export const AppProvider = ({ children }) => {
     return { success: true };
   };
 
+  const updateUserProfile = (updatedFields) => {
+    if (!currentUser) return { success: false, message: 'Chưa đăng nhập' };
+    const updatedUser = { ...currentUser, ...updatedFields };
+    setCurrentUser(updatedUser);
+    setUsers(prev => prev.map(u => u.email.toLowerCase() === updatedUser.email.toLowerCase() ? updatedUser : u));
+    saveUserProfileInDB(updatedUser);
+    return { success: true };
+  };
+
+
   const loginUser = (email, password) => {
     const found = users.find(
       (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
@@ -369,6 +428,7 @@ export const AppProvider = ({ children }) => {
       createdAt: new Date().toISOString(),
       status: 'pending',
       quote: null,
+      items: [], // Sẽ chứa mảng các món hàng
       ...orderData,
     };
     createOrderInDB(newOrder);
@@ -500,10 +560,16 @@ export const AppProvider = ({ children }) => {
         orders,
         rates,
         currentUser,
+        cart,
+        addToCart,
+        removeFromCart,
+        updateCartQty,
+        clearCart,
         isAdminAuthenticated,
         loginAdmin,
         logoutAdmin,
         registerUser,
+        updateUserProfile,
         loginUser,
         loginWithGoogleAuth,
         logoutUser,
@@ -526,7 +592,9 @@ export const AppProvider = ({ children }) => {
         approveSelectedPendingProducts,
         approveAllPendingProducts,
         rejectPendingProduct,
-        oliveYoungCatalog: products || OLIVE_YOUNG_CATALOG,
+        publishToWeb,
+        revertFromWeb,
+        oliveYoungCatalog: publishedProducts || OLIVE_YOUNG_CATALOG,
       }}
     >
       {children}

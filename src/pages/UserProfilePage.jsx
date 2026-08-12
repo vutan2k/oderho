@@ -5,7 +5,7 @@ import { User, Lock, Save, Mail } from 'lucide-react';
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 
 export default function UserProfilePage() {
-  const { currentUser, registerUser } = useContext(AppContext);
+  const { currentUser, updateUserProfile } = useContext(AppContext);
   const showToast = useToast();
 
   const [name, setName] = useState(currentUser?.name || '');
@@ -21,18 +21,20 @@ export default function UserProfilePage() {
       return;
     }
 
-    const updatedUser = {
-      ...currentUser,
+    const res = updateUserProfile({
       name,
       phone,
       address,
       ...(newPassword ? { password: newPassword } : {})
-    };
+    });
 
-    registerUser(updatedUser.name, updatedUser.email, updatedUser.password);
-    if (showToast) showToast('Cập nhật hồ sơ cá nhân thành công!', 'success');
-    setNewPassword('');
-    setConfirmPassword('');
+    if (res.success) {
+      if (showToast) showToast('Cập nhật hồ sơ cá nhân thành công!', 'success');
+      setNewPassword('');
+      setConfirmPassword('');
+    } else {
+      if (showToast) showToast(res.message || 'Lỗi cập nhật hồ sơ', 'error');
+    }
   };
 
   if (!currentUser) {

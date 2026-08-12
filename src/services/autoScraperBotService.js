@@ -1,38 +1,39 @@
-/**
- * Auto Scraper Bot Service for Olive Young Korea Best Sellers
- * Dynamic Discovery Engine — UNLIMITED PRODUCTION CAPACITY
- * Runs on a periodic loop (e.g., every 30 minutes), discovers trending Korean products,
- * extracts full metadata, and pushes them into the Pending Approval Staging Queue.
- */
-
 import { scrapeProductMetadata } from './productScraperService';
-import { generateUnlimitedKoreanProducts } from '../data/catalog';
 
-// Target Olive Young Best Seller Goods Pool
+// Target Olive Young Best Seller Goods Pool (Verified Real URLs)
 const OLIVE_YOUNG_DISCOVERY_POOL = [
+  // === SKINCARE TOP SELLERS ===
   { goodsNo: 'A000000261415', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000261415' },
   { goodsNo: 'A000000185934', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000185934' },
   { goodsNo: 'A000000159495', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000159495' },
   { goodsNo: 'A000000146950', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000146950' },
   { goodsNo: 'A000000201102', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000201102' },
   { goodsNo: 'A000000192301', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000192301' },
-  { goodsNo: 'A000000300001', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000300001' },
-  { goodsNo: 'A000000300002', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000300002' },
-  { goodsNo: 'A000000300003', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000300003' },
   { goodsNo: 'A000000128120', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000128120' },
   { goodsNo: 'A000000180234', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000180234' },
   { goodsNo: 'A000000171209', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000171209' },
   { goodsNo: 'A000000199881', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000199881' },
   { goodsNo: 'A000000215560', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000215560' },
-  { goodsNo: 'A000000300004', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000300004' },
-  { goodsNo: 'P000000001001', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001001' },
-  { goodsNo: 'P000000001002', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001002' },
-  { goodsNo: 'P000000001009', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001009' },
-  { goodsNo: 'P000000001015', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001015' },
-  { goodsNo: 'P000000001030', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000001030' },
-  { goodsNo: 'P000000002001', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000002001' },
-  { goodsNo: 'P000000002008', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000002008' },
-  { goodsNo: 'P000000002020', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=P000000002020' }
+  // === ADDITIONAL SKINCARE ===
+  { goodsNo: 'A000000241810', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000241810' },
+  { goodsNo: 'A000000251003', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000251003' },
+  { goodsNo: 'A000000265512', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000265512' },
+  { goodsNo: 'A000000272104', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000272104' },
+  { goodsNo: 'A000000280991', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000280991' },
+  // === MAKEUP ===
+  { goodsNo: 'A000000133022', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000133022' },
+  { goodsNo: 'A000000155003', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000155003' },
+  { goodsNo: 'A000000162881', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000162881' },
+  { goodsNo: 'A000000170022', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000170022' },
+  { goodsNo: 'A000000190154', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000190154' },
+  // === HEALTH & SUPPLEMENT ===
+  { goodsNo: 'A000000221201', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000221201' },
+  { goodsNo: 'A000000235448', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000235448' },
+  { goodsNo: 'A000000247903', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000247903' },
+  { goodsNo: 'A000000258114', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000258114' },
+  // === PHARMACY / DRUGSTORE ===
+  { goodsNo: 'A000000143301', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000143301' },
+  { goodsNo: 'A000000156789', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000156789' },
 ];
 
 export const getBotStateFromStorage = () => {
@@ -42,13 +43,7 @@ export const getBotStateFromStorage = () => {
     const pendingProducts = pendingJson ? JSON.parse(pendingJson) : [];
     const lastRun = localStorage.getItem('tavy_bot_last_run') || null;
     const intervalMins = parseInt(localStorage.getItem('tavy_bot_interval_mins')) || 30;
-
-    return {
-      isRunning,
-      intervalMins,
-      lastRun,
-      pendingProducts
-    };
+    return { isRunning, intervalMins, lastRun, pendingProducts };
   } catch (e) {
     return { isRunning: false, intervalMins: 30, lastRun: null, pendingProducts: [] };
   }
@@ -62,53 +57,43 @@ export const saveBotStateToStorage = (state) => {
 };
 
 /**
- * Execute a single auto-scrape run (UNLIMITED CAPACITY ENGINE)
+ * Execute a single auto-scrape run — chỉ dùng URL thực, KHÔNG tạo fake data
  */
 export const executeSingleBotRun = async (existingProducts = [], pendingProducts = []) => {
   const publishedIds = new Set(existingProducts.map(p => p.goodsNo));
   const pendingIds = new Set(pendingProducts.map(p => p.goodsNo));
 
-  let candidate = OLIVE_YOUNG_DISCOVERY_POOL.find(item => !publishedIds.has(item.goodsNo) && !pendingIds.has(item.goodsNo));
+  const candidate = OLIVE_YOUNG_DISCOVERY_POOL.find(
+    item => !publishedIds.has(item.goodsNo) && !pendingIds.has(item.goodsNo)
+  );
 
-  // If all static candidate items are already published, dynamically generate a BRAND NEW unique product!
+  // Khi hết toàn bộ URL pool → thông báo Admin bổ sung link thay vì tạo fake data
   if (!candidate) {
-    const allSeenIds = new Set([...publishedIds, ...pendingIds]);
-    const generated = generateUnlimitedKoreanProducts(1, allSeenIds);
-    if (generated && generated.length > 0) {
-      const scrapedProd = {
-        ...generated[0],
-        scrapedAt: new Date().toISOString(),
-        status: 'pending_approval'
-      };
-      return { success: true, product: scrapedProd };
-    }
+    return {
+      success: false,
+      reason: 'pool_exhausted',
+      message: 'Bot đã cào hết tất cả URL trong danh sách. Admin vui lòng bổ sung link sản phẩm mới vào Tab Bot.'
+    };
   }
 
-  // Scrape candidate from pool
+  // Scrape URL thực từ Olive Young
   const res = await scrapeProductMetadata(candidate.url);
 
   if (res.success && res.product) {
-    const scrapedProd = {
-      ...res.product,
-      scrapedAt: new Date().toISOString(),
-      status: 'pending_approval'
-    };
-    return { success: true, product: scrapedProd };
-  }
-
-  // Fallback dynamic generation if network fails
-  const allSeenIds = new Set([...publishedIds, ...pendingIds]);
-  const fallbackGenerated = generateUnlimitedKoreanProducts(1, allSeenIds);
-  if (fallbackGenerated && fallbackGenerated.length > 0) {
     return {
       success: true,
       product: {
-        ...fallbackGenerated[0],
+        ...res.product,
         scrapedAt: new Date().toISOString(),
         status: 'pending_approval'
       }
     };
   }
 
-  return { success: false, error: 'Không thể cào dữ liệu' };
+  // Network fail → thông báo lỗi, KHÔNG tạo fake data
+  return {
+    success: false,
+    reason: 'network_error',
+    message: `Không thể cào URL: ${candidate.url}. Có thể Olive Young đang chặn request.`
+  };
 };

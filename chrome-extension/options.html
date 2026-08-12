@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: 0 auto; }
+    h2 { color: #6D28D9; }
+    label { font-weight: bold; display: block; margin-bottom: 8px; }
+    input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    button { padding: 10px 15px; background: #10B981; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+    button:hover { background: #059669; }
+    .help { font-size: 13px; color: #555; background: #F3F4F6; padding: 10px; border-radius: 5px; margin-bottom: 20px; line-height: 1.5; }
+    #status { color: #10B981; font-weight: bold; margin-top: 10px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h2>Cài đặt Tavy AI Scraper</h2>
+  <div class="help">
+    Để Bot có thể dùng AI đọc thông tin sản phẩm chuẩn xác nhất, bạn cần cung cấp 1 mã API Key miễn phí từ Google Gemini.<br><br>
+    👉 <a href="https://aistudio.google.com/app/apikey" target="_blank">Bấm vào đây để lấy API Key miễn phí</a>
+  </div>
+  <label for="apiKey">Nhập Gemini API Key của bạn:</label>
+  <input type="text" id="apiKey" placeholder="AIzaSy...">
+  <button id="saveBtn">Lưu Cài Đặt</button>
+  <div id="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>

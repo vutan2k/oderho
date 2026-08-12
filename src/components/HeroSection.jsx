@@ -10,12 +10,7 @@ export default function HeroSection() {
       overflow: 'hidden'
     }}>
       <div className="container">
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1.1fr',
-          gap: '40px',
-          alignItems: 'center'
-        }}>
+        <div className="hero-grid">
           {/* Hero Content */}
           <div className="animate-fade-up">
             <span style={{
@@ -30,7 +25,7 @@ export default function HeroSection() {
               CHUYÊN MỸ PHẨM & THỰC PHẨM CHỨC NĂNG HÀN QUỐC
             </span>
 
-            <h1 style={{
+            <h1 className="hero-title" style={{
               fontSize: '3.2rem',
               lineHeight: '1.2',
               fontWeight: 400,
@@ -42,7 +37,7 @@ export default function HeroSection() {
               <span className="font-serif-italic" style={{ color: 'var(--purple-primary)' }}>Giá Tốt Cho Người Việt</span>
             </h1>
 
-            <p style={{
+            <p className="hero-desc" style={{
               fontSize: '1rem',
               color: '#333333',
               maxWidth: '500px',
@@ -54,20 +49,14 @@ export default function HeroSection() {
             </p>
 
             <div style={{ marginBottom: '40px', display: 'flex', gap: '15px' }}>
-              <a href="#products" className="btn-gold">
+              <a href="#products" className="btn-gold" style={{ display: 'inline-flex' }}>
                 <span>XEM DANH MỤC SẢN PHẨM</span>
                 <ArrowRight size={16} />
               </a>
             </div>
 
             {/* 3 Cam kết */}
-            <div style={{
-              display: 'flex',
-              gap: '25px',
-              paddingTop: '20px',
-              borderTop: '1px solid rgba(122, 75, 158, 0.25)',
-              flexWrap: 'wrap'
-            }}>
+            <div className="commitments-flex">
               {[
                 { icon: <ShieldCheck size={18} />, label: '100% CHÍNH HÃNG HÀN' },
                 { icon: <Pill size={18} />, label: 'CHUẨN HIỆU THUỐC HÀN' },

@@ -14,29 +14,36 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
   const formatKrw = (n) => new Intl.NumberFormat('ko-KR').format(n) + ' ₩';
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.65)',
-      backdropFilter: 'blur(5px)',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
-    }}>
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '24px',
-        maxWidth: '960px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        position: 'relative',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+    <div 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(5px)',
+        zIndex: 9999,
         display: 'flex',
-        flexDirection: 'column'
-      }}>
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}
+    >
+      <div 
+        className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '24px',
+          maxWidth: '960px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          position: 'relative',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
         {/* Nút Đóng Modal */}
         <button
           onClick={onClose}
@@ -126,7 +133,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               {/* Thương hiệu & Đánh giá */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', paddingRight: '45px' }}>
                 <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '1px', textTransform: 'uppercase' }}>
                   {product.brand}
                 </span>
@@ -201,9 +208,9 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
             {/* Nút Bấm Đặt Mua: Đã Bỏ Chữ "Đặt Mua Ngay Sản Phẩm Này", Chỉ Hiển Thị Số Tiền Việt Nam */}
             <div style={{ paddingTop: '20px', borderTop: '1px solid #F3F4F6' }}>
               <button
-                onClick={() => {
+                onClick={(e) => {
                   onClose();
-                  onOrderNow(product);
+                  onOrderNow(product, e);
                 }}
                 className="btn-gold"
                 style={{
@@ -220,11 +227,8 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                 }}
               >
                 <ShoppingBag size={22} />
-                <span style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '0.5px' }}>
-                  {formatVnd(calculatedVnd)}
-                </span>
-                <span style={{ fontSize: '0.85rem', opacity: 0.85, fontWeight: 600 }}>
-                  ({formatKrw(product.foreignPrice)})
+                <span style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '0.5px' }}>
+                  THÊM VÀO GIỎ ({formatVnd(calculatedVnd)})
                 </span>
               </button>
             </div>

@@ -15,6 +15,7 @@ const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/" element={<KROrderHomePage />} />
+                <Route path="/cart" element={<><Navbar /><CartPage /></>} />
                 <Route path="/login" element={<><Navbar /><LoginPage /></>} />
                 <Route path="/orders" element={<><Navbar /><OrdersPage /></>} />
                 <Route path="/profile" element={<><Navbar /><UserProfilePage /></>} />

@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Tavy Order - Olive Young Scraper",
+  "version": "2.0",
+  "description": "Cào dữ liệu sản phẩm Olive Young và gửi về Admin. (Bản chuẩn Bypass CSP)",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.oliveyoung.co.kr/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.oliveyoung.co.kr/*"],
+      "js": ["content.js"]
+    }
+  ]
+}

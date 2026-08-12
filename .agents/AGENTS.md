@@ -25,3 +25,5 @@ tools:
 ---
 ```
 3. Đăng ký thông tin Agent mới vào danh sách tại file này (`.agents/AGENTS.md`) và tạo link tương tự tại `.antigravity/rules.md`.
+
+- **Giao tiếp bằng tiếng Việt**: Tất cả phản hồi của agent phải bằng tiếng Việt trừ khi người dùng yêu cầu ngôn ngữ khác.

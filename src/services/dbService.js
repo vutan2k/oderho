@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   setDoc,
+  deleteDoc,
   updateDoc,
   onSnapshot,
   query,
@@ -16,6 +17,7 @@ import { db } from '../firebase';
 const ORDERS_COLLECTION = 'orders';
 const USERS_COLLECTION = 'users';
 const SYSTEM_CONFIG_COLLECTION = 'system_config';
+const PRODUCTS_COLLECTION = 'products';
 const RATES_DOC = 'rates';
 
 /**
@@ -183,6 +185,61 @@ export const saveUserProfileInDB = async (userData) => {
     return { success: true };
   } catch (err) {
     console.warn("Firestore saveUserProfile error:", err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * 8. Subscribe to Realtime Products (published catalog)
+ */
+export const subscribeToProducts = (onUpdate) => {
+  try {
+    const q = query(collection(db, PRODUCTS_COLLECTION), orderBy('createdAt', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+      const products = snapshot.docs.map(docSnap => ({
+        goodsNo: docSnap.id,
+        ...docSnap.data()
+      }));
+      onUpdate(products);
+    }, (err) => {
+      console.warn("Firestore products listener fallback:", err);
+    });
+  } catch (err) {
+    console.warn("Firestore subscribeToProducts error:", err);
+    return () => {};
+  }
+};
+
+/**
+ * 9. Save / Upsert a single product to Firestore
+ */
+export const saveProductToDB = async (product) => {
+  try {
+    const goodsNo = product.goodsNo || `SP-${Date.now()}`;
+    const docRef = doc(db, PRODUCTS_COLLECTION, goodsNo);
+    await setDoc(docRef, {
+      ...product,
+      goodsNo,
+      updatedAt: serverTimestamp(),
+      createdAt: product.createdAt || serverTimestamp()
+    }, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.warn("Firestore saveProduct error:", err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * 10. Delete a product from Firestore
+ */
+export const deleteProductFromDB = async (goodsNo) => {
+  try {
+    const docRef = doc(db, PRODUCTS_COLLECTION, goodsNo);
+    await deleteDoc(docRef);
+    return { success: true };
+  } catch (err) {
+    console.warn("Firestore deleteProduct error:", err);
     return { success: false, error: err };
   }
 };
