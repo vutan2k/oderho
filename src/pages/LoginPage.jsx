@@ -227,9 +227,12 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={async () => {
+              setError('');
               const res = await loginWithGoogleAuth();
               if (res.success) {
                 navigate('/');
+              } else if (res.message) {
+                setError(res.message);
               }
             }}
             style={{
