@@ -4,22 +4,37 @@ import { AppContext } from '../context/AppContext';
 import { LogIn, UserPlus, ShieldAlert, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
-  const { loginUser, loginWithGoogleAuth } = useContext(AppContext);
+  const { loginUser, registerUser, loginWithGoogleAuth } = useContext(AppContext);
   const navigate = useNavigate();
 
+  const [isLoginTab, setIsLoginTab] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
 
-    const res = loginUser(email, password);
-    if (res.success) {
-      navigate('/');
+    if (isLoginTab) {
+      const res = loginUser(email, password);
+      if (res.success) {
+        navigate('/');
+      } else {
+        setError(res.message);
+      }
     } else {
-      setError(res.message);
+      if (!name.trim()) {
+        setError('Vui lòng nhập họ và tên.');
+        return;
+      }
+      const res = registerUser(name, email, password);
+      if (res.success) {
+        navigate('/');
+      } else {
+        setError(res.message);
+      }
     }
   };
 
@@ -48,11 +63,63 @@ export default function LoginPage() {
             KOREA
           </div>
           <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400, marginTop: '4px' }}>
-            Đăng Nhập Tài Khoản
+            {isLoginTab ? 'Đăng Nhập Tài Khoản' : 'Đăng Ký Tài Khoản'}
           </h2>
         </div>
 
-        {/* Đăng ký đã được khóa/gỡ bỏ theo yêu cầu, chỉ hiển thị form đăng nhập */}
+        {/* Tab switcher */}
+        <div style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--border-color)',
+          marginBottom: '24px',
+        }}>
+          <button
+            type="button"
+            onClick={() => { setIsLoginTab(true); setError(''); }}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: 'none',
+              border: 'none',
+              borderBottom: isLoginTab ? '2px solid var(--purple-primary)' : '2px solid transparent',
+              color: isLoginTab ? 'var(--purple-primary)' : 'var(--text-muted)',
+              fontWeight: isLoginTab ? 700 : 500,
+              fontSize: '0.85rem',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+          >
+            <LogIn size={15} /> Đăng nhập
+          </button>
+          <button
+            type="button"
+            onClick={() => { setIsLoginTab(false); setError(''); }}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: 'none',
+              border: 'none',
+              borderBottom: !isLoginTab ? '2px solid var(--purple-primary)' : '2px solid transparent',
+              color: !isLoginTab ? 'var(--purple-primary)' : 'var(--text-muted)',
+              fontWeight: !isLoginTab ? 700 : 500,
+              fontSize: '0.85rem',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+          >
+            <UserPlus size={15} /> Đăng ký
+          </button>
+        </div>
 
         {error && (
           <div style={{
@@ -73,7 +140,28 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit}>
-
+          {!isLoginTab && (
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-dark)', marginBottom: '6px' }}>
+                Họ và tên
+              </label>
+              <input
+                type="text"
+                placeholder="Nguyễn Văn A"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  fontSize: '0.9rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          )}
 
           <div style={{ marginBottom: '18px' }}>
             <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-dark)', marginBottom: '6px' }}>
@@ -122,7 +210,7 @@ export default function LoginPage() {
             className="btn-gold"
             style={{ width: '100%', padding: '13px 0', justifyContent: 'center', fontSize: '0.85rem', borderRadius: '10px' }}
           >
-            ĐĂNG NHẬP NGAY
+            {isLoginTab ? 'ĐĂNG NHẬP NGAY' : 'TẠO TÀI KHOẢN MỚI'}
           </button>
 
           <div style={{
