@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { User, LogOut, Package, LogIn, ShoppingCart } from 'lucide-react';
 
-export default function Navbar({ logoSrc }) {
+export default function Navbar() {
   const { currentUser, logoutUser, cart } = useContext(AppContext);
   const navigate = useNavigate();
 

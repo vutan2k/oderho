@@ -4,7 +4,7 @@ import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import AdminProductManager from '../components/AdminProductManager';
 import AdminOrderManager from '../components/AdminOrderManager';
-import { LogOut, RefreshCw, FileSpreadsheet, ShoppingBag } from 'lucide-react';
+import { LogOut, RefreshCw, FileSpreadsheet, ShoppingBag, Check } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { 
@@ -102,8 +102,8 @@ export default function AdminDashboardPage() {
                 onChange={(e) => setKrwRateInput(e.target.value)}
                 style={{ width: '60px', padding: '2px 6px', borderRadius: '4px', border: 'none', fontSize: '0.82rem', fontWeight: 700, textAlign: 'center' }}
               />
-              <button type="submit" style={{ background: 'none', border: 'none', color: '#F59E0B', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Lưu tỷ giá">
-                <RefreshCw size={14} />
+              <button type="submit" style={{ background: 'none', border: 'none', color: rateUpdatedMsg ? '#10B981' : '#F59E0B', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Lưu tỷ giá">
+                {rateUpdatedMsg ? <Check size={14} /> : <RefreshCw size={14} />}
               </button>
             </form>
 

@@ -11,7 +11,6 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
   const calculatedVnd = product.foreignPrice * krwRate;
 
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
-  const formatKrw = (n) => new Intl.NumberFormat('ko-KR').format(n) + ' ₩';
 
   return (
     <div 

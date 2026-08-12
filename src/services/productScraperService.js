@@ -236,7 +236,7 @@ export const scrapeProductMetadata = async (url) => {
             };
           }
         } catch (e) {
-          // JSON-LD parse fail, continue to OG tags
+          console.warn("JSON-LD parse fail, continuing to OG tags:", e);
         }
       }
 
@@ -284,7 +284,7 @@ export const scrapeProductMetadata = async (url) => {
         };
       }
     } catch (err) {
-      // proxy failed, try next
+      console.warn("Proxy request failed, trying next proxy:", err);
     }
   }
 

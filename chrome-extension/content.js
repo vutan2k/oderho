@@ -1,7 +1,7 @@
 // content.js - Chạy trên trang Olive Young
 // Nhiệm vụ: Gom toàn bộ chữ và hình ảnh trên trang đưa cho AI đọc
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
   if (request.action === "SCRAPE_PRODUCT") {
     try {
       // Báo hiệu đang xử lý

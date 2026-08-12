@@ -390,7 +390,6 @@ export const OLIVE_YOUNG_CATALOG = [
  */
 export function generateUnlimitedKoreanProducts(count = 10, existingGoodsNos = new Set()) {
   const KOREAN_BRANDS = ['Sulwhasoo', 'Laneige', 'Innisfree', 'COSRX', 'Numbuzin', 'Wakemake', 'Espoir', 'Hince', 'Manyo', 'Banila Co', 'Illiyoon', 'Mediheal', 'Dr.Jart+'];
-  const CATEGORIES = ['skincare', 'makeup', 'health', 'pharmacy'];
   const IMAGES = [
     'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
     'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80',

@@ -25,6 +25,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
+export { onAuthStateChanged };
 
 // Đặt thêm tham số lựa chọn tài khoản Google
 googleProvider.setCustomParameters({
@@ -67,6 +68,7 @@ export const loginWithGoogle = async () => {
         await signInWithRedirect(auth, googleProvider);
         return { success: false, message: 'Đang chuyển hướng sang trang đăng nhập Google...' };
       } catch (redirectErr) {
+        console.warn("Redirect fallback failed:", redirectErr);
         return { success: false, message: 'Cửa sổ bật lên bị chặn. Vui lòng cho phép popup trên trình duyệt!' };
       }
     }

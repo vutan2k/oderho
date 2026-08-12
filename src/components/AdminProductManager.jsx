@@ -3,8 +3,8 @@ import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { scrapeProductMetadata } from '../services/productScraperService';
 import {
-  Plus, Trash2, Save, Search, Edit3, X, Image as ImageIcon, Box,
-  Play, Square, Globe, Check, Link as LinkIcon
+  Plus, Trash2, X, Box,
+  Play, Square, Globe, Check
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -16,10 +16,9 @@ const CATEGORIES = [
 
 export default function AdminProductManager() {
   const {
-    products, addProduct, updateProduct, deleteProduct, rates,
+    products, addProduct, updateProduct, deleteProduct,
     botIsRunning, toggleBot, pendingProducts,
-    approvePendingProduct, approveSelectedPendingProducts, approveAllPendingProducts, rejectPendingProduct,
-    publishToWeb, revertFromWeb
+    approvePendingProduct, approveSelectedPendingProducts, approveAllPendingProducts, rejectPendingProduct
   } = useContext(AppContext);
   const showToast = useToast();
 
@@ -43,9 +42,6 @@ export default function AdminProductManager() {
   const [loadingScrape, setLoadingScrape] = useState(false);
   const [loadingBotInstant, setLoadingBotInstant] = useState(false);
   const [scrapedPreview, setScrapedPreview] = useState(null);
-
-  const krwRate = rates?.KRW?.rate || 19.5;
-  const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
   // ----------------------------------------------------
   // INVENTORY LOGIC
@@ -193,7 +189,9 @@ export default function AdminProductManager() {
         });
         setActiveTab('bot');
         window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (e) {}
+      } catch (err) {
+        console.warn("Lỗi giải mã autoFill url param:", err);
+      }
     }
   }, []);
 
