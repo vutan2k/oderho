@@ -112,6 +112,30 @@ const KNOWN_KOREAN_GOODS_DB = {
     description: 'Mặt nạ dưỡng da quốc dân Mediheal TOP 1 Olive Young 15 năm liên tiếp.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
+  },
+  'A000000221201': {
+    name: 'Viên uống vitamin tổng hợp Hàn Quốc Olive Young Care Plus',
+    nameKr: '올리브영 케어플러스 멀티비타민',
+    brand: 'Olive Young Care Plus',
+    brandKr: '올리브영 케어플러스',
+    category: 'health',
+    foreignPrice: 22000,
+    productImage: '/product-images/mediheal-mask-10plus1.png',
+    description: 'Thực phẩm chức năng bổ sung vitamin từ Hàn Quốc. Admin cần kiểm tra ảnh nếu dùng cho sản phẩm thực tế.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.8
+  },
+  'A000000259615': {
+    name: 'Dầu gội Aurara X The Wish Hair Market 460g / Dầu xả 200ml',
+    nameKr: '오로라 X 더 위시 헤어 마켓 (샴푸 460g / 트리트먼트 200ml)',
+    brand: 'Orara',
+    brandKr: '오로라',
+    category: 'haircare',
+    foreignPrice: 27000,
+    productImage: '/product-images/orara-hair-market.png',
+    description: 'Bộ chăm sóc tóc Orara X The Wish Hair Market từ Olive Young Korea, gồm dầu gội 460g hoặc dầu xả 200ml.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 5
   }
 };
 
@@ -211,9 +235,8 @@ export const scrapeProductMetadata = async (url) => {
       const cleanNameKr = cleanKoreanTitle(title);
       const price = parseKoreanPrice(content) || parseKoreanPrice(JSON.stringify(data)) || 22000;
 
-      // Extract image URL from markdown
       const imageMatch = content.match(/!\[.*?\]\((https:\/\/[^\s)]+)\)/);
-      const productImage = imageMatch ? imageMatch[1] : 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
+      const productImage = imageMatch ? imageMatch[1] : '';
 
       // Extract brand if available
       let brand = 'Olive Young Korea';
@@ -224,7 +247,7 @@ export const scrapeProductMetadata = async (url) => {
         brand = brandKr;
       }
 
-      if (cleanNameKr) {
+      if (cleanNameKr && productImage) {
         return {
           success: true,
           product: {
@@ -289,9 +312,11 @@ export const scrapeProductMetadata = async (url) => {
             if (Array.isArray(obj.image)) parsedImages = obj.image;
             else if (typeof obj.image === 'string') parsedImages = [obj.image];
 
-            const image = parsedImages[0] || 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
+            const image = parsedImages[0] || '';
             const price = parseFloat(obj.offers?.price) || parseKoreanPrice(html) || 22000;
             const cleanName = cleanKoreanTitle(rawName);
+
+            if (!image) continue;
 
             return {
               success: true,
@@ -325,7 +350,7 @@ export const scrapeProductMetadata = async (url) => {
       const ogDesc = html.match(/property=["']og:description["'][^>]*content=["']([^"']+)["']/i)?.[1];
       const price = parseKoreanPrice(html) || 22000;
 
-      if (ogTitle) {
+      if (ogTitle && ogImage) {
         const cleanName = cleanKoreanTitle(ogTitle);
         let brand = 'Olive Young Korea';
         let brandKr = '올리브영';
@@ -345,7 +370,7 @@ export const scrapeProductMetadata = async (url) => {
             brandKr,
             category: guessCategory(cleanName),
             foreignPrice: price,
-            productImage: ogImage || 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
+            productImage: ogImage,
             description: ogDesc ? cleanKoreanTitle(ogDesc) : 'Sản phẩm chính hãng từ Hàn Quốc.',
             origin: 'Store Olive Young Seoul, Hàn Quốc',
             rating: 4.9,
@@ -359,23 +384,9 @@ export const scrapeProductMetadata = async (url) => {
     }
   }
 
-  // 4. Fallback default
   return {
-    success: true,
-    product: {
-      goodsNo: generatedId,
-      name: `Sản Phẩm Hàn Quốc (${generatedId})`,
-      nameKr: `한국 상품 (${generatedId})`,
-      brand: 'Korea Brand',
-      brandKr: '한국 브랜드',
-      category: 'skincare',
-      foreignPrice: 22000,
-      productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-      description: 'Sản phẩm cào từ link Hàn Quốc. Vui lòng chỉnh sửa thông tin thủ công.',
-      origin: 'Store Olive Young Seoul, Hàn Quốc',
-      rating: 4.9,
-      productUrl: cleanUrl,
-      reviewsCount: 100
-    }
+    success: false,
+    needsManualCapture: true,
+    error: 'Olive Young đã chặn lấy dữ liệu tự động từ server. Hãy mở trang sản phẩm và dùng Chrome Extension TAVY để lấy ảnh/tên thật, hoặc nhập ảnh và thông tin thủ công.'
   };
 };

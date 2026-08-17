@@ -13,17 +13,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
 
       try {
-        const prompt = `Trích xuất dữ liệu sản phẩm từ văn bản sau thành chuẩn JSON chứa các khoá: 
-- name: Tên sản phẩm đã dịch sang tiếng Việt, bỏ các chữ [Khuyến mãi].
-- nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc trên trang web.
-- price: Giá bán bằng Won (chỉ lấy số, ví dụ 15000).
-- brand: Tên Thương hiệu tiếng Anh hoặc Việt.
-- brandKr: Tên Thương hiệu bằng tiếng Hàn gốc.
-- category: Phân loại sản phẩm (chọn 1 trong: skincare, makeup, health, pharmacy, haircare, bodycare).
-- description: Mô tả công dụng sản phẩm (dịch tiếng Việt).
-- usage: Hướng dẫn sử dụng nếu có (dịch tiếng Việt).
-Nếu không tìm thấy, hãy đoán hoặc để chuỗi rỗng.
-CHỈ TRẢ VỀ CHUỖI JSON HỢP LỆ, KHÔNG KÈM BẤT KỲ VĂN BẢN HAY MARKDOWN NÀO KHÁC (không có \`\`\`json).
+        const prompt = `Trích xuất dữ liệu sản phẩm Olive Young từ DOM thật sau thành JSON hợp lệ.
+Yêu cầu bắt buộc:
+- name: Tên sản phẩm đã dịch sang tiếng Việt, bỏ chữ khuyến mãi.
+- nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc.
+- price: Giá bán bằng Won, chỉ lấy số.
+- brand: Tên thương hiệu tiếng Anh hoặc Việt.
+- brandKr: Tên thương hiệu tiếng Hàn gốc.
+- category: Chọn 1 trong: skincare, makeup, health, pharmacy, haircare, bodycare.
+- description: Mô tả công dụng sản phẩm bằng tiếng Việt.
+- usage: Hướng dẫn sử dụng nếu có.
+Không bịa thông tin nếu DOM không có. Nếu thiếu trường, để chuỗi rỗng hoặc 0.
+CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG MARKDOWN.
+
+URL: ${rawData.url}
+TITLE: ${rawData.title || ''}
+BRAND_TEXT: ${rawData.brandText || ''}
+PRICE_TEXT: ${rawData.priceText || ''}
+IMAGE_URL: ${rawData.image || ''}
 
 VĂN BẢN TRANG WEB:
 ${rawData.fullText}`;
@@ -50,7 +57,7 @@ ${rawData.fullText}`;
           name: aiData.name || 'Tên sản phẩm',
           nameKr: aiData.nameKr || '',
           price: parseInt(aiData.price) || 0,
-          image: rawData.image,
+          image: rawData.image || '',
           brand: aiData.brand || 'Korea Brand',
           brandKr: aiData.brandKr || '',
           url: rawData.url,

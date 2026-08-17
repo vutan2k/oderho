@@ -2,10 +2,8 @@ import { setTier, test } from '../framework/runner.js';
 import {
   assert,
   assertEquals,
-  assertGreaterThan,
 } from '../framework/assert.js';
 import { scrapeProductMetadata } from '../../src/services/productScraperService.js';
-import { executeSingleBotRun } from '../../src/services/autoScraperBotService.js';
 
 setTier('Tier 2: Boundary & Corner Cases');
 
@@ -16,9 +14,9 @@ test('[F10-B1] All 3 proxies failure recovery WAF fallback', async () => {
 
   try {
     const res = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=UNKNOWN999');
-    assertEquals(res.success, true, 'Scraper returns WAF fallback product when all proxies fail');
-    assertEquals(res.product.brand, 'Korea Brand', 'WAF fallback brand matches default');
-    assert(res.product.name.includes('Sản Phẩm Hàn Quốc'), 'WAF fallback product name formatted');
+    assertEquals(res.success, false, 'Scraper rejects fake fallback when all proxies fail');
+    assertEquals(res.needsManualCapture, true, 'Scraper asks for manual DOM capture');
+    assert(res.error.includes('Extension'), 'Error guides admin to use Extension');
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -37,8 +35,8 @@ test('[F10-B2] Malformed OpenGraph HTML response parsing', async () => {
 
   try {
     const res = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A111');
-    assertEquals(res.success, true, 'Scraper handles empty og:title gracefully with fallback model');
-    assertGreaterThan(res.product.foreignPrice, 0, 'Foreign price falls back to default positive number');
+    assertEquals(res.success, false, 'Scraper rejects malformed OpenGraph instead of creating fake product');
+    assertEquals(res.needsManualCapture, true, 'Malformed OpenGraph asks for manual capture');
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -50,8 +48,8 @@ test('[F10-B3] 404 HTTP URL scraping failure handling', async () => {
 
   try {
     const res = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/404page');
-    assertEquals(res.success, true, '404 URL scraping recovers with safe fallback product payload');
-    assertEquals(res.product.category, 'skincare', 'Fallback category defaults to skincare');
+    assertEquals(res.success, false, '404 URL scraping refuses fake fallback payload');
+    assertEquals(res.needsManualCapture, true, '404 failure asks for manual capture');
   } finally {
     globalThis.fetch = originalFetch;
   }

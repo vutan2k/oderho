@@ -42,9 +42,10 @@ test('[F12-3] content.js DOM extractor selectors & text truncation', () => {
 
   const contentCode = fs.readFileSync(contentPath, 'utf-8');
   assertContains(contentCode, 'SCRAPE_PRODUCT', 'Listens for SCRAPE_PRODUCT action');
-  assertContains(contentCode, '#mainImg', 'Queries mainImg element');
+  assertContains(contentCode, 'pickProductImage', 'Uses real product image picker');
+  assertContains(contentCode, 'document.images', 'Scans page images from DOM');
   assertContains(contentCode, 'og:image', 'Queries og:image meta tag fallback');
-  assertContains(contentCode, '15000', 'Truncates text to 15000 chars');
+  assertContains(contentCode, '20000', 'Truncates text to 20000 chars');
 });
 
 test('[F12-4] Base64 payload encoding & decoding roundtrip', () => {
