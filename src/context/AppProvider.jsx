@@ -14,7 +14,7 @@ import {
   deleteProductFromDB,
   deleteOrderFromDB,
 } from '../services/dbService';
-import { auth, db, loginWithGoogle, logoutGoogle } from '../firebase';
+import { auth, db, loginWithGoogle, logoutGoogle, checkGoogleRedirectResult } from '../firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -100,6 +100,21 @@ export const AppProvider = ({ children }) => {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  // Handle Google Redirect Result
+  useEffect(() => {
+    const handleRedirect = async () => {
+      try {
+        const res = await checkGoogleRedirectResult();
+        if (res && res.success) {
+          // Logged in successfully via redirect
+        }
+      } catch (err) {
+        console.error('Redirect result handle error:', err);
+      }
+    };
+    handleRedirect();
   }, []);
 
   // ----- Existing Application State (orders, rates, products, cart, bot, etc.) -----

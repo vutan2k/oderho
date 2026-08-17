@@ -30,7 +30,7 @@ export default function LoginPage() {
           setError('Vui lòng nhập họ và tên.');
           return;
         }
-        const res = await registerUser(name, email, password);
+        const res = await registerUser(email, password, name);
         if (res.success) {
           navigate('/');
         } else {
