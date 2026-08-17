@@ -35,8 +35,10 @@ const defaultRates = {
 // Loại bỏ sản phẩm fake cũ (fallback trước đây) khỏi localStorage — chỉ giữ dữ liệu thật
 const isFakeProduct = (p) => {
   if (!p || typeof p !== 'object') return true;
+  const img = String(p.productImage || '');
   const name = String(p.name || '');
   const brand = String(p.brand || '');
+  if (img.includes('unsplash.com')) return true; // Tự động loại bỏ ảnh mẫu Unsplash cũ
   if (name.startsWith('Sản Phẩm Hàn Quốc')) return true;
   if (name.startsWith('S<')) return true;
   if (brand === 'Korea Brand') return true;

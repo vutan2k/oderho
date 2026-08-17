@@ -36,10 +36,11 @@ const KNOWN_KOREAN_GOODS_DB = {
     brandKr: '조선미녀',
     category: 'skincare',
     foreignPrice: 24000,
-    productImage: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80',
-    description: 'Kem dưỡng đông y Hàn Quốc chiết xuất nhân sâm, nước gạo nếp.',
-    origin: 'Store Olive Young Seoul, Hàn Quốc',
-    rating: 4.8
+    productImage: 'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0018/A00000018593501ko.jpg',
+    origin: 'Store Olive Young Korea',
+    description: 'Sản phẩm chính hãng nội địa Hàn Quốc.',
+    rating: 4.9,
+    reviewsCount: 320
   },
   'A000000128120': {
     name: 'Son tint lì bóng Romand Juicy Lasting Tint',
@@ -48,10 +49,11 @@ const KNOWN_KOREAN_GOODS_DB = {
     brandKr: '롬앤',
     category: 'makeup',
     foreignPrice: 9900,
-    productImage: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80',
-    description: 'Son tint bóng bám màu siêu lâu nổi tiếng của Romand.',
-    origin: 'Store Olive Young Myeongdong, Hàn Quốc',
-    rating: 4.7
+    productImage: 'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/A00000022341401ko.jpg',
+    origin: 'Store Olive Young Korea',
+    description: 'Son tint bóng lâu trôi nội địa Hàn Quốc.',
+    rating: 4.9,
+    reviewsCount: 1520
   },
   'A000000180234': {
     name: 'Phấn nước Clio Kill Cover Mesh Glow Cushion SPF50+ PA++++',
@@ -60,10 +62,11 @@ const KNOWN_KOREAN_GOODS_DB = {
     brandKr: '클리오',
     category: 'makeup',
     foreignPrice: 32000,
-    productImage: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=80',
-    description: 'Cushion dạng lưới che phủ hoàn hảo căng bóng chuẩn Hàn.',
+    productImage: 'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0019/A00000019882201ko.jpg',
+    description: 'Sữa tắm giảm mụn lưng hiệu quả.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
-    rating: 4.9
+    rating: 4.8,
+    reviewsCount: 880
   },
   'A000000223414': {
     name: 'Gói mặt nạ thiết yếu Mediheal 10+1 (Teatree / Madecassoside / Watermide)',

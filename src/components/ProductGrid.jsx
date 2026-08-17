@@ -31,7 +31,7 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
       }}>
         {currentProducts.map((product, pIdx) => {
           const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
-          const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
+          const defaultImg = 'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/A00000022341401ko.jpg';
 
         return (
           <div
