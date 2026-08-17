@@ -316,16 +316,17 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateUserProfile = async (updates) => {
-    if (!authUser) return { success: false, error: new Error('Not authenticated') };
+    if (!authUser) return { success: false, error: new Error('Not authenticated'), message: 'Chưa đăng nhập' };
     const profileRef = doc(db, 'users', authUser.uid);
     try {
-      await updateDoc(profileRef, updates);
+      await setDoc(profileRef, { ...updates, email: authUser.email }, { merge: true });
       const snap = await getDoc(profileRef);
-      setProfile(snap.data());
-      return { success: true, profile: snap.data() };
+      const data = snap.data();
+      setProfile(data);
+      return { success: true, profile: data };
     } catch (error) {
       console.error('Update profile error:', error);
-      return { success: false, error };
+      return { success: false, error, message: error.message || 'Lỗi cập nhật hồ sơ' };
     }
   };
 

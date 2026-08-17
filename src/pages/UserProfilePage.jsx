@@ -8,7 +8,7 @@ import {
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 
 export default function UserProfilePage() {
-  const { currentUser, updateUserProfile, logoutUser, orders, rates } = useContext(AppContext);
+  const { currentUser, updateUserProfile, changePassword, logoutUser, orders, rates } = useContext(AppContext);
   const showToast = useToast();
   const navigate = useNavigate();
 
@@ -33,7 +33,7 @@ export default function UserProfilePage() {
     }
   }, [currentUser]);
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
 
     if (!name.trim()) {
@@ -52,7 +52,7 @@ export default function UserProfilePage() {
       return;
     }
 
-    const res = updateUserProfile({
+    const res = await updateUserProfile({
       name,
       phone,
       address
@@ -65,7 +65,7 @@ export default function UserProfilePage() {
     }
   };
 
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
 
     if (!currentPassword) {
@@ -85,9 +85,7 @@ export default function UserProfilePage() {
       return;
     }
 
-    const res = updateUserProfile({
-      password: newPassword
-    });
+    const res = changePassword ? await changePassword(currentPassword, newPassword) : await updateUserProfile({ password: newPassword });
 
     if (res.success) {
       if (showToast) showToast('Đổi mật khẩu thành công!', 'success');
