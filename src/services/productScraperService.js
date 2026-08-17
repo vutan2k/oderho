@@ -108,7 +108,7 @@ const KNOWN_KOREAN_GOODS_DB = {
     brandKr: '메디힐',
     category: 'skincare',
     foreignPrice: 10000,
-    productImage: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80',
+    productImage: '/product-images/mediheal-mask-10plus1.png',
     description: 'Mặt nạ dưỡng da quốc dân Mediheal TOP 1 Olive Young 15 năm liên tiếp.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
