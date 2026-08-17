@@ -109,24 +109,90 @@ export async function runAIScraperAgent(url) {
     }
 
     // 2. Jina AI Reader đọc nội dung thật (vượt WAF Olive Young)
+    //    Fallback: trực tiếp → CORS proxy → Jina API key (nếu có) — browser bị CORS chặn
     let markdown = '';
-    try {
+    const jinaTarget = `https://r.jina.ai/${cleanUrl}`;
+    const fetchWithTimeout = async (u, opts = {}) => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const jinaRes = await fetch(`https://r.jina.ai/${cleanUrl}`, {
-        signal: controller.signal,
-        headers: { 'Accept': 'text/markdown', 'X-Return-Format': 'markdown' }
-      });
-      clearTimeout(timeout);
-      if (jinaRes.ok) markdown = await jinaRes.text();
-    } catch (e) {
-      console.warn('Jina fetch error:', e);
+      const t = setTimeout(() => controller.abort(), 15000);
+      try {
+        return await fetch(u, { ...opts, signal: controller.signal });
+      } finally {
+        clearTimeout(t);
+      }
+    };
+    const jinaOpts = { headers: { 'Accept': 'text/markdown', 'X-Return-Format': 'markdown' } };
+    const jinaKey = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_JINA_API_KEY || '') : '';
+
+    // a) Firebase Cloud Function proxy (server-side, không CORS — tin cậy nhất)
+    try {
+      const fnUrl = `https://scrapejina-r5ncp5gdvq-uc.a.run.app?url=${encodeURIComponent(cleanUrl)}`;
+      const r = await fetchWithTimeout(fnUrl, { headers: { 'Accept': 'application/json' } });
+      if (r.ok) {
+        const j = await r.json();
+        if (j.success && j.content && j.content.length > 300) markdown = j.content;
+      }
+    } catch { /* chưa deploy function */ }
+
+    // b) Jina trực tiếp
+    if (!markdown || markdown.length < 300) {
+      try {
+        const r = await fetchWithTimeout(jinaTarget, jinaOpts);
+        if (r.ok) markdown = await r.text();
+      } catch { /* CORS hoặc lỗi mạng */ }
+    }
+
+    // c) Nếu chưa có → thử qua CORS proxies (cho phép browser)
+    if (!markdown || markdown.length < 300) {
+      const proxies = [
+        u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+        u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`
+      ];
+      for (const proxy of proxies) {
+        try {
+          const r = await fetchWithTimeout(proxy(jinaTarget), { headers: { 'Accept': 'text/markdown' } });
+          if (r.ok) {
+            const txt = await r.text();
+            if (txt && !/error code: 522|<html/i.test(txt) && txt.length > 300) {
+              markdown = txt;
+              break;
+            }
+          }
+        } catch { /* proxy hỏng */ }
+      }
+    }
+
+    // d) Cuối: nếu có Jina API key (bỏ rate limit)
+    if ((!markdown || markdown.length < 300) && jinaKey) {
+      try {
+        const r = await fetchWithTimeout(jinaTarget, {
+          headers: { 'Accept': 'text/markdown', 'Authorization': `Bearer ${jinaKey}` }
+        });
+        if (r.ok) markdown = await r.text();
+      } catch { /* không có key */ }
+    }
+
+    // e) Nếu có Chrome Extension TAVY: mở tab Olive Young + content script lấy DOM thật (không CORS)
+    if ((!markdown || markdown.length < 300) && typeof chrome !== 'undefined' && chrome.tabs) {
+      try {
+        markdown = await new Promise((resolve) => {
+          chrome.tabs.create({ url: cleanUrl, active: false }, (tab) => {
+            setTimeout(() => {
+              chrome.tabs.sendMessage(tab.id, { action: 'SCRAPE_PRODUCT' }, () => {
+                setTimeout(() => { resolve(''); }, 2500); // content script xử lý qua background
+              });
+            }, 3500);
+          });
+          setTimeout(() => resolve(''), 10000);
+        });
+      } catch { /* không có extension */ }
     }
     if (!markdown || markdown.length < 300) {
       return {
         success: false,
         needsManualCapture: true,
-        error: 'Olive Young chặn bóc tách. Hãy mở trang sản phẩm và dùng Chrome Extension TAVY (đã cài) để lấy ảnh/tên thật, hoặc nhập thủ công.'
+        error: 'Không đọc được nội dung Olive Young (có thể Jina bị giới hạn tốc độ 20 link/phút, hoặc link không tồn tại trên Olive Young). Thử lại sau 1 phút, hoặc dùng Chrome Extension TAVY để cào từ trang đang mở.'
       };
     }
 
@@ -136,7 +202,7 @@ export async function runAIScraperAgent(url) {
       return {
         success: false,
         needsManualCapture: true,
-        error: 'AI không trích xuất được dữ liệu chính xác từ link này. Dùng Chrome Extension hoặc nhập thủ công.'
+        error: 'AI không trích xuất được dữ liệu chính xác từ link này (có thể trang không phải sản phẩm Olive Young, hoặc Gemini API key hết hạn/thiếu). Kiểm tra API key trong Extension, hoặc dùng Chrome Extension TAVY để cào từ trang đang mở.'
       };
     }
 
