@@ -235,8 +235,15 @@ export default function AdminProductManager() {
       
       {/* ================= TOP SCRAPER BANNER ================= */}
       <div style={styles.topBanner}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E40AF', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Globe size={18} /> Bóc Tách Dữ Liệu Sản Phẩm Từ Link (Olive Young Korea)
+        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E40AF', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Globe size={18} /> Bóc Tách Dữ Liệu Sản Phẩm Từ Link (Olive Young Korea)
+          </div>
+          {/* Tool Status Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E', boxShadow: '0 0 8px #22C55E', display: 'inline-block' }}></span>
+            <span style={{ color: '#1E40AF', fontWeight: 600 }}>TAVY Extension v3.3: Sẵn Sàng (Sử dụng AI & DOM Fallback)</span>
+          </div>
         </div>
         <form onSubmit={handleScrape} style={{ display: 'flex', gap: '10px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
