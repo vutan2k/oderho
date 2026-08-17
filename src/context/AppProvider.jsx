@@ -167,15 +167,14 @@ export const AppProvider = ({ children }) => {
 
   const [products, setProducts] = useState(() => {
     try {
-      const savedCustom = localStorage.getItem('tavy_custom_products');
-      if (savedCustom) {
-        const parsed = JSON.parse(savedCustom);
-        if (Array.isArray(parsed)) {
-          const clean = sanitizeProducts(parsed);
-          if (clean.length !== parsed.length) {
-            localStorage.setItem('tavy_custom_products', JSON.stringify(clean));
+      const storedVer = localStorage.getItem('tavy_catalog_ver');
+      if (storedVer === CURRENT_CATALOG_VER) {
+        const savedCustom = localStorage.getItem('tavy_custom_products');
+        if (savedCustom) {
+          const parsed = JSON.parse(savedCustom);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return sanitizeProducts(parsed);
           }
-          return clean;
         }
       }
     } catch (e) {
@@ -186,26 +185,14 @@ export const AppProvider = ({ children }) => {
 
   const [publishedProducts, setPublishedProducts] = useState(() => {
     try {
-      const savedPublished = localStorage.getItem('tavy_published_products');
-      if (savedPublished) {
-        const parsed = JSON.parse(savedPublished);
-        if (Array.isArray(parsed)) {
-          const clean = sanitizeProducts(parsed);
-          if (clean.length !== parsed.length) {
-            localStorage.setItem('tavy_published_products', JSON.stringify(clean));
+      const storedVer = localStorage.getItem('tavy_catalog_ver');
+      if (storedVer === CURRENT_CATALOG_VER) {
+        const savedPublished = localStorage.getItem('tavy_published_products');
+        if (savedPublished) {
+          const parsed = JSON.parse(savedPublished);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return sanitizeProducts(parsed);
           }
-          return clean;
-        }
-      }
-      const savedCustom = localStorage.getItem('tavy_custom_products');
-      if (savedCustom) {
-        const parsed = JSON.parse(savedCustom);
-        if (Array.isArray(parsed)) {
-          const clean = sanitizeProducts(parsed);
-          if (clean.length !== parsed.length) {
-            localStorage.setItem('tavy_custom_products', JSON.stringify(clean));
-          }
-          return clean;
         }
       }
     } catch (e) {
@@ -220,6 +207,15 @@ export const AppProvider = ({ children }) => {
       if (Array.isArray(realtimeProducts) && realtimeProducts.length > 0) {
         const clean = sanitizeProducts(realtimeProducts);
         if (clean.length > 0) {
+          // Kiểm tra nếu dữ liệu trên Firestore còn dính link ảnh sai cũ -> Tự động ghi đè bản mới 100%
+          const hasBrokenImage = clean.some(p => p.goodsNo === 'A000000261415' && p.productImage && p.productImage.includes('A00000022341401ko.jpg'));
+          if (hasBrokenImage) {
+            OLIVE_YOUNG_CATALOG.forEach(item => {
+              saveProductToDB({ ...item, isPublished: true, status: 'published' });
+            });
+            return;
+          }
+
           const inventory = clean.filter(p => p.status !== 'pending');
           const published = clean.filter(p => p.isPublished !== false && p.status !== 'pending');
           setProducts(inventory.length > 0 ? inventory : clean);
