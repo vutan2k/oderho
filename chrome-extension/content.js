@@ -24,6 +24,11 @@ const pickProductImages = () => {
   return uniqueUrls;
 };
 
+const pickProductImage = () => {
+  const images = pickProductImages();
+  return images[0] || document.querySelector('meta[property="og:image"]')?.content || '';
+};
+
 // Thu thập bình luận thực tế từ DOM Olive Young
 const extractReviewsFromDOM = () => {
   const reviewNodes = Array.from(document.querySelectorAll('.gReviewList > li, .review_list > li, [class*=review_item]') || []);
