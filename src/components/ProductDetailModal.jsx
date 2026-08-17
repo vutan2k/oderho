@@ -173,7 +173,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
               {/* KHU VỰC CHÍNH: BỘ SƯU TẬP LƯỚI ÁNH ĐÁNH GIÁ THỰC TẾ TỪ KHÁCH HÀNG */}
               <div style={{ background: '#FAF5FF', padding: '14px', borderRadius: '16px', border: '1px solid #E9D5FF' }}>
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--purple-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Sparkles size={16} /> 📸 Bộ Sưu Tập Ảnh Đánh Giá Thực Tế Khách Hàng ({images.length}+ Ảnh HD)
+                  <Sparkles size={16} /> 📸 Đánh giá ({images.length})
                 </div>
 
                 {/* Lưới Ảnh Thực Tế 3 Cột Sắc Nét */}
