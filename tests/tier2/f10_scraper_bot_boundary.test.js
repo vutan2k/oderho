@@ -15,8 +15,7 @@ test('[F10-B1] All 3 proxies failure recovery WAF fallback', async () => {
   try {
     const res = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=UNKNOWN999');
     assertEquals(res.success, false, 'Scraper rejects fake fallback when all proxies fail');
-    assertEquals(res.needsManualCapture, true, 'Scraper asks for manual DOM capture');
-    assert(res.error.includes('Extension'), 'Error guides admin to use Extension');
+    assertEquals(res.needsAI, true, 'Scraper delegates to AI engine (không bịa dữ liệu)');
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -36,7 +35,7 @@ test('[F10-B2] Malformed OpenGraph HTML response parsing', async () => {
   try {
     const res = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A111');
     assertEquals(res.success, false, 'Scraper rejects malformed OpenGraph instead of creating fake product');
-    assertEquals(res.needsManualCapture, true, 'Malformed OpenGraph asks for manual capture');
+    assertEquals(res.needsAI, true, 'Malformed OpenGraph delegates to AI engine');
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -49,7 +48,7 @@ test('[F10-B3] 404 HTTP URL scraping failure handling', async () => {
   try {
     const res = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/404page');
     assertEquals(res.success, false, '404 URL scraping refuses fake fallback payload');
-    assertEquals(res.needsManualCapture, true, '404 failure asks for manual capture');
+    assertEquals(res.needsAI, true, '404 failure delegates to AI engine');
   } finally {
     globalThis.fetch = originalFetch;
   }
