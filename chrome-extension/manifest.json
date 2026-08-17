@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Tavy Order - Olive Young Scraper (v3.6)",
-  "version": "3.6",
-  "description": "Cào dữ liệu sản phẩm Olive Young + Album Ảnh & Ảnh Đánh Giá Khách Hàng (v3.6 Focus)",
+  "name": "tavy-toolcaowed",
+  "version": "3.8",
+  "description": "Tiện ích cào dữ liệu sản phẩm & album ảnh thực tế HD tavy-toolcaowed",
   "permissions": [
     "activeTab",
     "scripting",
