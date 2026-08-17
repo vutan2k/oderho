@@ -263,6 +263,8 @@ export const saveProductToDB = async (product) => {
       rating: Number(product.rating) || 4.9,
       reviewsCount: Number(product.reviewsCount) || 120,
       productUrl: String(product.productUrl || ''),
+      isPublished: product.isPublished !== false,
+      status: String(product.status || 'published'),
       updatedAt: serverTimestamp()
     };
 

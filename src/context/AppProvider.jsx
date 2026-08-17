@@ -360,7 +360,9 @@ export const AppProvider = ({ children }) => {
     if (!product) return;
     const cleanProduct = {
       ...product,
-      goodsNo: product.goodsNo || `SP-${Date.now()}`
+      goodsNo: product.goodsNo || `SP-${Date.now()}`,
+      isPublished: true,
+      status: 'published'
     };
 
     setProducts(prev => {
@@ -368,6 +370,15 @@ export const AppProvider = ({ children }) => {
       const updated = [cleanProduct, ...filtered];
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    setPublishedProducts(prev => {
+      const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
+      const updated = [cleanProduct, ...filtered];
+      try {
+        localStorage.setItem('tavy_published_products', JSON.stringify(updated));
       } catch {}
       return updated;
     });
