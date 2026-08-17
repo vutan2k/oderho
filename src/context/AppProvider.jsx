@@ -217,12 +217,87 @@ export const AppProvider = ({ children }) => {
     return res;
   };
 
-  // ----- Bot & Cart State (unchanged) -----
+  // ----- Bot & Cart State -----
   const [botIsRunning, setBotIsRunning] = useState(() => localStorage.getItem('tavy_bot_is_running') === 'true');
   const [pendingProducts, setPendingProducts] = useState(() => {
     const saved = localStorage.getItem('tavy_pending_products');
     return saved ? JSON.parse(saved) : [];
   });
+
+  const toggleBot = (enabled) => {
+    setBotIsRunning(enabled);
+    localStorage.setItem('tavy_bot_is_running', enabled ? 'true' : 'false');
+  };
+
+  const addProduct = (product) => {
+    if (!product) return;
+    const cleanProduct = {
+      ...product,
+      goodsNo: product.goodsNo || `SP-${Date.now()}`
+    };
+
+    setProducts(prev => {
+      const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
+      const updated = [cleanProduct, ...filtered];
+      try {
+        localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    saveProductToDB(cleanProduct).catch(err => console.warn('Firestore sync product failed:', err));
+  };
+
+  const updateProduct = (goodsNo, updates) => {
+    setProducts(prev => {
+      const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
+      try {
+        localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const deleteProduct = (goodsNo) => {
+    setProducts(prev => {
+      const updated = prev.filter(p => p.goodsNo !== goodsNo);
+      try {
+        localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    deleteProductFromDB(goodsNo).catch(err => console.warn('Firestore delete product failed:', err));
+  };
+
+  const approvePendingProduct = (goodsNo) => {
+    const target = pendingProducts.find(p => p.goodsNo === goodsNo);
+    if (target) {
+      addProduct(target);
+      setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+    }
+  };
+
+  const approveSelectedPendingProducts = (goodsNoArray = []) => {
+    if (!goodsNoArray || goodsNoArray.length === 0) return;
+    const selectedSet = new Set(goodsNoArray);
+    const targets = pendingProducts.filter(p => selectedSet.has(p.goodsNo));
+    
+    targets.forEach(item => {
+      addProduct(item);
+    });
+
+    setPendingProducts(prev => prev.filter(p => !selectedSet.has(p.goodsNo)));
+  };
+
+  const approveAllPendingProducts = () => {
+    pendingProducts.forEach(p => addProduct(p));
+    setPendingProducts([]);
+  };
+
+  const rejectPendingProduct = (goodsNo) => {
+    setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+  };
   const [cart, setCart] = useState(() => {
     try {
       const savedCart = localStorage.getItem('tavy_cart');
@@ -365,14 +440,22 @@ export const AppProvider = ({ children }) => {
     setRates,
     products,
     setProducts,
+    addProduct,
+    updateProduct,
+    deleteProduct,
     publishedProducts,
     oliveYoungCatalog: publishedProducts,
     publishToWeb,
     revertFromWeb,
     botIsRunning,
     setBotIsRunning,
+    toggleBot,
     pendingProducts,
     setPendingProducts,
+    approvePendingProduct,
+    approveSelectedPendingProducts,
+    approveAllPendingProducts,
+    rejectPendingProduct,
     cart,
     addToCart,
     removeFromCart,
