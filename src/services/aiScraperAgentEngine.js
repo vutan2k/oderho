@@ -43,7 +43,7 @@ ${markdown.slice(0, 15000)}`;
 
   try {
     // Fallback model chain — phòng khi model quá tải (high demand / 429 / 503)
-    const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
+    const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
     let data = null;
     for (const model of MODELS) {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
