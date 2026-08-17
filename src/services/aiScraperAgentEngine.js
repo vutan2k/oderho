@@ -7,9 +7,6 @@
 
 import { lookupKnownGoods } from './productScraperService';
 
-const GEMINI_MODEL = 'gemini-3.5-flash-lite';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
 /** Lấy API key từ env (build) hoặc localStorage (admin nhập) */
 const getGeminiKey = () => {
   const envKey = typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY;
@@ -45,14 +42,26 @@ Nội dung:
 ${markdown.slice(0, 15000)}`;
 
   try {
-    const res = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Fallback model chain — phòng khi model quá tải (high demand / 429 / 503)
+    const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
+    let data = null;
+    for (const model of MODELS) {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const d = await res.json();
+      if (res.ok && d.candidates && d.candidates.length > 0) { data = d; break; }
+      const errMsg = d.error?.message || '';
+      if (errMsg.includes('high demand') || errMsg.includes('429') || errMsg.includes('503') || res.status === 429 || res.status === 503) {
+        continue;
+      }
+      data = d;
+      break;
+    }
+    if (!data || !data.candidates || !data.candidates[0]) return null;
+    const text = data.candidates[0].content.parts[0].text || '';
     const cleaned = text.replace(/```json|```/g, '').trim();
     const start = cleaned.indexOf('{');
     const end = cleaned.lastIndexOf('}');
