@@ -4,14 +4,14 @@ import { useToast } from '../components/Toast';
 import { ORDER_STATUSES, getStatusConfig } from '../data/orderStatuses';
 import CascadingAddressSelector from './CascadingAddressSelector';
 import {
-  Search, Edit3,
+  Search, Edit3, Trash2,
   Truck, CheckCircle, PackageCheck, AlertCircle, Printer,
   Download, ShieldCheck, ChevronRight, X,
   Phone, MapPin, CheckCircle2
 } from 'lucide-react';
 
 export default function AdminOrderManager() {
-  const { orders, rates, updateOrderStatus, updateOrderQuote, updateOrderTracking } = useContext(AppContext);
+  const { orders, rates, updateOrderStatus, updateOrderQuote, updateOrderTracking, deleteOrder } = useContext(AppContext);
   const showToast = useToast();
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -515,6 +515,34 @@ export default function AdminOrderManager() {
                             }}
                           >
                             <Printer size={13} />
+                          </button>
+
+                          <button
+                            onClick={async () => {
+                              if (window.confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng ${order.id}? Hành động này không thể hoàn tác.`)) {
+                                try {
+                                  await deleteOrder(order.id);
+                                  if (showToast) showToast(`Đã xóa đơn hàng ${order.id} thành công!`, 'success');
+                                } catch (e) {
+                                  if (showToast) showToast('Không thể xóa đơn hàng: ' + e.message, 'error');
+                                }
+                              }
+                            }}
+                            title="Xóa đơn hàng"
+                            style={{
+                              backgroundColor: '#FEE2E2',
+                              color: '#DC2626',
+                              border: '1px solid #FCA5A5',
+                              padding: '6px 10px',
+                              borderRadius: '8px',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </td>

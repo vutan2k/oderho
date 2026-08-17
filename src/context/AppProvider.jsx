@@ -12,6 +12,7 @@ import {
   saveUserProfileInDB,
   saveProductToDB,
   deleteProductFromDB,
+  deleteOrderFromDB,
 } from '../services/dbService';
 import { auth, db, loginWithGoogle, logoutGoogle } from '../firebase';
 import {
@@ -107,6 +108,23 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : initialMockOrders;
   });
 
+  // Realtime Orders Subscription
+  useEffect(() => {
+    let emailFilter = null;
+    if (authUser && !isAdminAuthenticated) {
+      emailFilter = authUser.email;
+    }
+    const unsubscribe = subscribeToOrders(
+      (updatedOrders) => {
+        setOrders(updatedOrders);
+        localStorage.setItem('beauty_orders', JSON.stringify(updatedOrders));
+      },
+      (err) => console.warn('Firestore orders sync:', err),
+      emailFilter
+    );
+    return () => unsubscribe();
+  }, [authUser, isAdminAuthenticated]);
+
   const [rates, setRates] = useState(() => {
     const saved = localStorage.getItem('beauty_rates');
     return saved ? JSON.parse(saved) : defaultRates;
@@ -151,6 +169,30 @@ export const AppProvider = ({ children }) => {
   const revertFromWeb = () => {
     setProducts([...publishedProducts]);
     localStorage.setItem('tavy_custom_products', JSON.stringify(publishedProducts));
+  };
+
+  const createOrder = async (orderData) => {
+    const payload = {
+      ...orderData,
+      userEmail: authUser?.email || 'guest@tavy.vn',
+      createdAt: new Date().toISOString(),
+    };
+    const res = await createOrderInDB(payload);
+    if (!res.success) {
+      const newOrder = { id: `ORD-${Math.floor(100000 + Math.random() * 900000)}`, ...payload };
+      const updated = [newOrder, ...orders];
+      setOrders(updated);
+      localStorage.setItem('beauty_orders', JSON.stringify(updated));
+    }
+    return res;
+  };
+
+  const deleteOrder = async (orderId) => {
+    const res = await deleteOrderFromDB(orderId);
+    const updated = orders.filter(o => o.id !== orderId);
+    setOrders(updated);
+    localStorage.setItem('beauty_orders', JSON.stringify(updated));
+    return res;
   };
 
   // ----- Bot & Cart State (unchanged) -----
@@ -285,6 +327,7 @@ export const AppProvider = ({ children }) => {
     products,
     setProducts,
     publishedProducts,
+    oliveYoungCatalog: publishedProducts,
     publishToWeb,
     revertFromWeb,
     botIsRunning,
@@ -293,6 +336,8 @@ export const AppProvider = ({ children }) => {
     setPendingProducts,
     cart,
     addToCart,
+    createOrder,
+    deleteOrder,
     // DB service functions (exposed for other components)
     subscribeToOrders,
     createOrderInDB,
@@ -304,6 +349,7 @@ export const AppProvider = ({ children }) => {
     saveUserProfileInDB,
     saveProductToDB,
     deleteProductFromDB,
+    deleteOrderFromDB,
   };
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

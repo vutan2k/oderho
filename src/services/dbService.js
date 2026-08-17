@@ -119,6 +119,20 @@ export const updateOrderStatusInDB = async (orderId, updates) => {
 };
 
 /**
+ * 4b. Delete Order (Admin)
+ */
+export const deleteOrderFromDB = async (orderId) => {
+  try {
+    const docRef = doc(db, ORDERS_COLLECTION, orderId);
+    await deleteDoc(docRef);
+    return { success: true };
+  } catch (err) {
+    console.warn("Firestore deleteOrder error:", err);
+    return { success: false, error: err };
+  }
+};
+
+/**
  * 5. Confirm Order Payment
  */
 export const confirmOrderPaymentInDB = async (orderId, amountPaid) => {
