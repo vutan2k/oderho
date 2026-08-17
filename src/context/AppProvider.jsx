@@ -10,6 +10,7 @@ import {
   subscribeToRates,
   updateRatesInDB,
   saveUserProfileInDB,
+  subscribeToProducts,
   saveProductToDB,
   deleteProductFromDB,
   deleteOrderFromDB,
@@ -213,9 +214,36 @@ export const AppProvider = ({ children }) => {
     return OLIVE_YOUNG_CATALOG;
   });
 
-  const publishToWeb = () => {
+  // ----- Realtime Firestore Products Sync -----
+  useEffect(() => {
+    const unsubscribe = subscribeToProducts((realtimeProducts) => {
+      if (Array.isArray(realtimeProducts) && realtimeProducts.length > 0) {
+        const clean = sanitizeProducts(realtimeProducts);
+        if (clean.length > 0) {
+          setProducts(clean);
+          setPublishedProducts(clean);
+          localStorage.setItem('tavy_published_products', JSON.stringify(clean));
+          localStorage.setItem('tavy_custom_products', JSON.stringify(clean));
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const publishToWeb = async () => {
     setPublishedProducts([...products]);
     localStorage.setItem('tavy_published_products', JSON.stringify(products));
+
+    // Đồng bộ thời gian thực 100% sản phẩm lên Firebase Firestore
+    try {
+      for (const item of products) {
+        if (item && item.goodsNo) {
+          await saveProductToDB(item);
+        }
+      }
+    } catch (err) {
+      console.warn('Lỗi đồng bộ sản phẩm lên Firestore:', err);
+    }
   };
 
   const revertFromWeb = () => {
@@ -350,13 +378,24 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateProduct = (goodsNo, updates) => {
+    let targetUpdated = null;
     setProducts(prev => {
-      const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
+      const updated = prev.map(p => {
+        if (p.goodsNo === goodsNo) {
+          targetUpdated = { ...p, ...updates };
+          return targetUpdated;
+        }
+        return p;
+      });
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
       } catch {}
       return updated;
     });
+
+    if (targetUpdated) {
+      saveProductToDB(targetUpdated).catch(err => console.warn('Firestore sync update product failed:', err));
+    }
   };
 
   const deleteProduct = (goodsNo) => {
