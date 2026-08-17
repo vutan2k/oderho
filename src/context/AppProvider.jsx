@@ -91,7 +91,7 @@ export const AppProvider = ({ children }) => {
         if (snap.exists()) {
           setProfile(snap.data());
         } else {
-          const newProfile = { name: user.displayName || '', email: user.email, phone: '', addressBook: [] };
+          const newProfile = { name: user.displayName || '', email: user.email, phone: '', address: '', addressBook: [] };
           await setDoc(profileRef, newProfile);
           setProfile(newProfile);
         }
@@ -116,6 +116,13 @@ export const AppProvider = ({ children }) => {
     };
     handleRedirect();
   }, []);
+
+  const currentUser = authUser ? {
+    uid: authUser.uid,
+    email: authUser.email,
+    photoURL: authUser.photoURL || '',
+    ...profile
+  } : null;
 
   // ----- Existing Application State (orders, rates, products, cart, bot, etc.) -----
   const [orders, setOrders] = useState(() => {
@@ -340,6 +347,7 @@ export const AppProvider = ({ children }) => {
     // Auth related
     authUser,
     profile,
+    currentUser,
     registerUser,
     loginUser,
     loginWithGoogleAuth,
