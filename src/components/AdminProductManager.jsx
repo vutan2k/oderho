@@ -17,7 +17,7 @@ const CATEGORIES = [
 
 export default function AdminProductManager() {
   const {
-    products, addProduct, updateProduct, deleteProduct,
+    products, addProduct, updateProduct, deleteProduct, deleteAllProducts,
     pendingProducts, addPendingProduct, updatePendingProduct,
     approvePendingProduct, approveSelectedPendingProducts, approveAllPendingProducts, rejectPendingProduct
   } = useContext(AppContext);
@@ -296,6 +296,20 @@ export default function AdminProductManager() {
               <div style={{ display: 'flex', gap: '10px' }}>
                 {selectedProducts.length > 0 && (
                   <button onClick={handleDeleteSelected} style={styles.btnDanger}><Trash2 size={16}/> Xóa {selectedProducts.length} mục</button>
+                )}
+                {products.length > 0 && (
+                  <button 
+                    onClick={() => {
+                      if (window.confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn XÓA TẤT CẢ ${products.length} sản phẩm trong kho không?`)) {
+                        deleteAllProducts();
+                        setSelectedProducts([]);
+                        if (showToast) showToast('Đã xóa sạch toàn bộ kho sản phẩm!', 'success');
+                      }
+                    }} 
+                    style={{ ...styles.btnDanger, backgroundColor: '#991B1B' }}
+                  >
+                    <Trash2 size={16}/> Xóa Tất Cả Kho ({products.length})
+                  </button>
                 )}
                 <button onClick={handleAddNew} style={styles.btnPrimary}><Plus size={16}/> Thêm mới</button>
               </div>

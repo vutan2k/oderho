@@ -430,6 +430,23 @@ export const AppProvider = ({ children }) => {
     deleteProductFromDB(goodsNo).catch(err => console.warn('Firestore delete product failed:', err));
   };
 
+  const deleteAllProducts = async () => {
+    const listToDelete = [...products];
+    setProducts([]);
+    setPublishedProducts([]);
+    try {
+      localStorage.setItem('tavy_published_products', JSON.stringify([]));
+      localStorage.setItem('tavy_custom_products', JSON.stringify([]));
+    } catch (e) {
+      console.warn('Lỗi xóa localStorage:', e);
+    }
+    for (const item of listToDelete) {
+      if (item && item.goodsNo) {
+        deleteProductFromDB(item.goodsNo).catch(() => {});
+      }
+    }
+  };
+
   const approvePendingProduct = (goodsNo) => {
     const target = pendingProducts.find(p => p.goodsNo === goodsNo);
     if (target) {
@@ -603,6 +620,7 @@ export const AppProvider = ({ children }) => {
     addProduct,
     updateProduct,
     deleteProduct,
+    deleteAllProducts,
     publishedProducts,
     oliveYoungCatalog: publishedProducts,
     publishToWeb,
