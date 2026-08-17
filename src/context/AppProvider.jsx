@@ -418,13 +418,27 @@ export const AppProvider = ({ children }) => {
   };
 
   const deleteProduct = (goodsNo) => {
-    setProducts(prev => {
-      const updated = prev.filter(p => p.goodsNo !== goodsNo);
-      try {
-        localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
+    setProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+    setPublishedProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+
+    try {
+      const savedPub = localStorage.getItem('tavy_published_products');
+      if (savedPub) {
+        const parsed = JSON.parse(savedPub);
+        if (Array.isArray(parsed)) {
+          localStorage.setItem('tavy_published_products', JSON.stringify(parsed.filter(p => p.goodsNo !== goodsNo)));
+        }
+      }
+      const savedCust = localStorage.getItem('tavy_custom_products');
+      if (savedCust) {
+        const parsed = JSON.parse(savedCust);
+        if (Array.isArray(parsed)) {
+          localStorage.setItem('tavy_custom_products', JSON.stringify(parsed.filter(p => p.goodsNo !== goodsNo)));
+        }
+      }
+    } catch (e) {
+      console.warn('Lỗi cập nhật localStorage khi xóa sản phẩm:', e);
+    }
 
     deleteProductFromDB(goodsNo).catch(err => console.warn('Firestore delete product failed:', err));
   };
