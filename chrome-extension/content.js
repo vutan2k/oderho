@@ -51,6 +51,8 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
           alert("Lỗi AI: " + response.error);
         } else if (response && response.success === false) {
           alert("Bạn chưa cài đặt API Key! Vui lòng bấm vào icon Extension > Cài đặt API Key.");
+        } else if (response && response.success) {
+          alert("✅ Đã quét sản phẩm thành công! Chuyển đến trang Admin để duyệt...");
         }
       });
     } catch (error) {

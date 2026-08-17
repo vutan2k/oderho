@@ -189,10 +189,20 @@ export async function runAIScraperAgent(url) {
       } catch { /* không có extension */ }
     }
     if (!markdown || markdown.length < 300) {
+      // Dùng trình duyệt như người bình thường: mở tab Olive Young thật để extension quét DOM
+      let openedTab = false;
+      if (typeof chrome !== 'undefined' && chrome.tabs && typeof chrome.tabs.create === 'function') {
+        try {
+          chrome.tabs.create({ url: cleanUrl, active: true }, () => { openedTab = true; });
+        } catch { /* không phải môi trường extension */ }
+      }
       return {
         success: false,
         needsManualCapture: true,
-        error: 'Không đọc được nội dung Olive Young (có thể Jina bị giới hạn tốc độ 20 link/phút, hoặc link không tồn tại trên Olive Young). Thử lại sau 1 phút, hoặc dùng Chrome Extension TAVY để cào từ trang đang mở.'
+        openProductPage: true,
+        error: openedTab
+          ? `Đã mở trang sản phẩm trong tab mới. Bấm icon TAVY trên thanh công cụ để AI quét dữ liệu từ trang (không cần server ảo).`
+          : 'Không đọc được nội dung Olive Young qua server ảo. Hãy mở link sản phẩm trong Chrome và dùng extension TAVY để AI quét, hoặc nhập thủ công.'
       };
     }
 

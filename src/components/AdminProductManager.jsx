@@ -41,6 +41,7 @@ export default function AdminProductManager() {
   // --- Scraper State ---
   const [quickLink, setQuickLink] = useState('');
   const [loadingScrape, setLoadingScrape] = useState(false);
+  const [scrapeError, setScrapeError] = useState(null);
 
   // ----------------------------------------------------
   // INVENTORY LOGIC
@@ -161,6 +162,7 @@ export default function AdminProductManager() {
     e.preventDefault();
     if (!quickLink.trim()) return;
     setLoadingScrape(true);
+    setScrapeError(null);
     if (showToast) showToast('🤖 AI đang bóc tách dữ liệu từ link...', 'info');
     const res = await runAIScraperAgent(quickLink.trim());
     setLoadingScrape(false);
@@ -170,8 +172,13 @@ export default function AdminProductManager() {
       setActiveTab('pending');
       if (showToast) showToast(`🤖 AI đã bóc tách: "${res.product.name}"! Đã chuyển vào Hàng Chờ Duyệt.`, 'success');
     } else {
+      setScrapeError({ message: res.error, url: quickLink.trim(), openPage: !!res.openProductPage });
       if (showToast) showToast(`Lỗi bóc tách: ${res.error}`, 'error');
     }
+  };
+
+  const handleOpenProductPage = () => {
+    if (scrapeError?.url) window.open(scrapeError.url, '_blank');
   };
 
   // Chrome Extension Receive
@@ -247,6 +254,16 @@ export default function AdminProductManager() {
             {loadingScrape ? 'Đang bóc...' : 'Bóc Tách & Đẩy Vào Chờ Duyệt'}
           </button>
         </form>
+        {scrapeError && (
+          <div style={{ marginTop: '12px', padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.85rem', color: '#991B1B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+            <span>⚠️ {scrapeError.message}</span>
+            {scrapeError.openPage && (
+              <button onClick={handleOpenProductPage} style={{ ...styles.btnPrimary, background: '#2563EB', padding: '6px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                Mở Trang Sản Phẩm
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ================= TABS NAVIGATION ================= */}

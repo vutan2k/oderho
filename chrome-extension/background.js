@@ -69,8 +69,17 @@ ${rawData.fullText}`;
         const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));
         const adminUrl = `https://tavy-oderho.web.app/admin/dashboard?autoFill=${encodedData}`;
 
-        // Mở Tab Admin
-        chrome.tabs.create({ url: adminUrl });
+        // Mở Tab Admin (ẩn) — đóng tab Olive Young sau khi gửi
+        chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
+          // Đóng tab Olive Young nguồn
+          if (sender && sender.tab && sender.tab.id) {
+            try { chrome.tabs.remove(sender.tab.id); } catch {}
+          }
+          // Focus tab admin sau 1.5s
+          setTimeout(() => {
+            if (adminTab && adminTab.id) chrome.tabs.update(adminTab.id, { active: true });
+          }, 1500);
+        });
 
         sendResponse({ success: true });
       } catch (err) {
