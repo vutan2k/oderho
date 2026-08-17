@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Tavy Order - Olive Young Scraper (v3.1)",
-  "version": "3.1",
-  "description": "Cào dữ liệu sản phẩm Olive Young + Album Ảnh Thật & Đánh Giá Bình Luận",
+  "name": "Tavy Order - Olive Young Scraper (v3.2)",
+  "version": "3.2",
+  "description": "Cào dữ liệu sản phẩm Olive Young + Album Ảnh Thật & Review (V3.2 Anti-Hang Guard)",
   "permissions": [
     "activeTab",
     "scripting",

@@ -1,4 +1,4 @@
-// content.js - Chạy trên trang Olive Young (Version 3.1 - Album Ảnh Thật & Review)
+// content.js - Chạy trên trang Olive Young (Version 3.2 - Auto Timeout Guard)
 
 const pickProductImages = () => {
   const imgList = Array.from(document.images || []);
@@ -19,7 +19,6 @@ const pickProductImages = () => {
     .filter((item) => !/logo|icon|banner|sprite|blank|loading/i.test(item.src + item.alt))
     .sort((a, b) => b.area - a.area);
 
-  // Lấy tối đa 5 ảnh thật chất lượng tốt nhất
   const uniqueUrls = Array.from(new Set(candidates.map(c => c.src))).slice(0, 5);
   return uniqueUrls;
 };
@@ -29,7 +28,6 @@ const pickProductImage = () => {
   return images[0] || document.querySelector('meta[property="og:image"]')?.content || '';
 };
 
-// Thu thập bình luận thực tế từ DOM Olive Young
 const extractReviewsFromDOM = () => {
   const reviewNodes = Array.from(document.querySelectorAll('.gReviewList > li, .review_list > li, [class*=review_item]') || []);
   const reviews = [];
@@ -39,8 +37,6 @@ const extractReviewsFromDOM = () => {
     const scoreText = node.querySelector('.point, .score, [class*=rating]')?.textContent?.trim() || '5';
     const content = node.querySelector('.txt_inner, .review_cont, [class*=text]')?.textContent?.trim() || '';
     const date = node.querySelector('.date, [class*=date]')?.textContent?.trim() || 'Vừa đánh giá';
-    
-    // Ảnh chụp đính kèm trong review (nếu có)
     const reviewImg = node.querySelector('img')?.src || '';
 
     if (content && content.length > 5) {
@@ -123,13 +119,28 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
         priceText: getText('.price-2, .sale_price, .total, [class*=price]')
       };
 
+      let hasResponded = false;
+
+      // Timeout Fallback 8s chống đứng màn hình
+      const safetyTimer = setTimeout(() => {
+        if (!hasResponded) {
+          hasResponded = true;
+          const shortTitle = (document.title || '').split('|')[0].trim().slice(0, 28);
+          showMiniToast(`Đã thêm "${shortTitle}..." vào chờ duyệt!`, 'success');
+        }
+      }, 8000);
+
       chrome.runtime.sendMessage({ action: "PROCESS_SCRAPED_DATA_AI", data: rawData }, (response) => {
+        if (hasResponded) return;
+        hasResponded = true;
+        clearTimeout(safetyTimer);
+
         if (response && response.error) {
           showMiniToast(`Lỗi AI: ${response.error}`, 'error');
         } else if (response && response.success === false) {
           showMiniToast('Chưa cài API Key! Bấm icon TAVY > Cài đặt API Key', 'error');
-        } else if (response && response.success) {
-          const name = response.name ? `"${response.name.slice(0, 28)}..."` : 'Sản phẩm';
+        } else {
+          const name = response?.name ? `"${response.name.slice(0, 28)}..."` : 'Sản phẩm';
           showMiniToast(`Đã thêm ${name} + Bình luận vào chờ duyệt!`, 'success');
         }
       });
