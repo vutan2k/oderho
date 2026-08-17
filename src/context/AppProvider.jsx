@@ -32,6 +32,22 @@ const defaultRates = {
   serviceFeePercent: 5,
 };
 
+// Loại bỏ sản phẩm fake cũ (fallback trước đây) khỏi localStorage — chỉ giữ dữ liệu thật
+const isFakeProduct = (p) => {
+  if (!p || typeof p !== 'object') return true;
+  const name = String(p.name || '');
+  const brand = String(p.brand || '');
+  if (name.startsWith('Sản Phẩm Hàn Quốc')) return true;
+  if (name.startsWith('S<')) return true;
+  if (brand === 'Korea Brand') return true;
+  return false;
+};
+
+const sanitizeProducts = (arr) => {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(p => !isFakeProduct(p));
+};
+
 // Mock data for demo purposes (orders, users, products)
 const initialMockOrders = [
   {
@@ -151,7 +167,13 @@ export const AppProvider = ({ children }) => {
       const savedCustom = localStorage.getItem('tavy_custom_products');
       if (savedCustom) {
         const parsed = JSON.parse(savedCustom);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          const clean = sanitizeProducts(parsed);
+          if (clean.length !== parsed.length) {
+            localStorage.setItem('tavy_custom_products', JSON.stringify(clean));
+          }
+          return clean;
+        }
       }
     } catch (e) {
       console.warn('Error reading tavy_custom_products:', e);
@@ -164,12 +186,24 @@ export const AppProvider = ({ children }) => {
       const savedPublished = localStorage.getItem('tavy_published_products');
       if (savedPublished) {
         const parsed = JSON.parse(savedPublished);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          const clean = sanitizeProducts(parsed);
+          if (clean.length !== parsed.length) {
+            localStorage.setItem('tavy_published_products', JSON.stringify(clean));
+          }
+          return clean;
+        }
       }
       const savedCustom = localStorage.getItem('tavy_custom_products');
       if (savedCustom) {
         const parsed = JSON.parse(savedCustom);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          const clean = sanitizeProducts(parsed);
+          if (clean.length !== parsed.length) {
+            localStorage.setItem('tavy_custom_products', JSON.stringify(clean));
+          }
+          return clean;
+        }
       }
     } catch (e) {
       console.warn('Error reading tavy_published_products:', e);
@@ -213,8 +247,17 @@ export const AppProvider = ({ children }) => {
 
   // ----- Pending Products State -----
   const [pendingProducts, setPendingProducts] = useState(() => {
-    const saved = localStorage.getItem('tavy_pending_products');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('tavy_pending_products');
+      const parsed = saved ? JSON.parse(saved) : [];
+      const clean = sanitizeProducts(parsed);
+      if (clean.length !== parsed.length) {
+        localStorage.setItem('tavy_pending_products', JSON.stringify(clean));
+      }
+      return clean;
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
