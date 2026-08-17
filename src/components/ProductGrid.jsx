@@ -31,7 +31,7 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
       }}>
         {currentProducts.map((product, pIdx) => {
           const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
-          const defaultImg = 'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/A00000022341401ko.jpg';
+          const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80';
 
         return (
           <div
@@ -57,7 +57,10 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
                 src={product.productImage || defaultImg}
                 alt={product.name || 'Sản phẩm Hàn Quốc'}
                 loading="lazy"
-                onError={(e) => { e.target.src = defaultImg; }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = defaultImg;
+                }}
                 style={{
                   position: 'absolute',
                   top: 0, left: 0,

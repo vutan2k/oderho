@@ -165,16 +165,21 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : defaultRates;
   });
 
+  const CURRENT_CATALOG_VER = 'v5.0_unsplash_fix';
+
   const [products, setProducts] = useState(() => {
     try {
       const storedVer = localStorage.getItem('tavy_catalog_ver');
-      if (storedVer === CURRENT_CATALOG_VER) {
-        const savedCustom = localStorage.getItem('tavy_custom_products');
-        if (savedCustom) {
-          const parsed = JSON.parse(savedCustom);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return sanitizeProducts(parsed);
-          }
+      if (storedVer !== CURRENT_CATALOG_VER) {
+        localStorage.removeItem('tavy_published_products');
+        localStorage.removeItem('tavy_custom_products');
+        localStorage.setItem('tavy_catalog_ver', CURRENT_CATALOG_VER);
+      }
+      const savedCustom = localStorage.getItem('tavy_custom_products');
+      if (savedCustom) {
+        const parsed = JSON.parse(savedCustom);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return sanitizeProducts(parsed);
         }
       }
     } catch (e) {
@@ -207,8 +212,8 @@ export const AppProvider = ({ children }) => {
       if (Array.isArray(realtimeProducts) && realtimeProducts.length > 0) {
         const clean = sanitizeProducts(realtimeProducts);
         if (clean.length > 0) {
-          // Kiểm tra nếu dữ liệu trên Firestore còn dính link ảnh sai cũ -> Tự động ghi đè bản mới 100%
-          const hasBrokenImage = clean.some(p => p.goodsNo === 'A000000261415' && p.productImage && p.productImage.includes('A00000022341401ko.jpg'));
+          // Kiểm tra nếu dữ liệu trên Firestore còn dính link ảnh oliveyoung bị 403 -> Tự động ghi đè bản mới 100%
+          const hasBrokenImage = clean.some(p => p.productImage && p.productImage.includes('oliveyoung.co.kr'));
           if (hasBrokenImage) {
             OLIVE_YOUNG_CATALOG.forEach(item => {
               saveProductToDB({ ...item, isPublished: true, status: 'published' });
