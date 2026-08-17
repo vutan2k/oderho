@@ -323,7 +323,6 @@ export default function AdminProductManager() {
                         </td>
                         <td style={styles.td}>
                           <div>{prod.brand}</div>
-                          {prod.brandKr && <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{prod.brandKr}</div>}
                         </td>
                         <td style={styles.td}>
                           <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
@@ -393,7 +392,6 @@ export default function AdminProductManager() {
                         </td>
                         <td style={styles.td}>
                           <div>{prod.brand}</div>
-                          {prod.brandKr && <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{prod.brandKr}</div>}
                         </td>
                         <td style={styles.td}>
                           <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
@@ -446,18 +444,14 @@ export default function AdminProductManager() {
               <button onClick={() => setEditModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20}/></button>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Mã sản phẩm</label>
                 <input value={editForm.goodsNo || ''} onChange={e => handleEditChange('goodsNo', e.target.value)} style={{ ...styles.input, width: '100%' }} />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Thương hiệu (Việt)</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Thương hiệu (Brand)</label>
                 <input value={editForm.brand || ''} onChange={e => handleEditChange('brand', e.target.value)} style={{ ...styles.input, width: '100%' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Thương hiệu (Tiếng Hàn)</label>
-                <input value={editForm.brandKr || ''} onChange={e => handleEditChange('brandKr', e.target.value)} style={{ ...styles.input, width: '100%' }} />
               </div>
             </div>
 

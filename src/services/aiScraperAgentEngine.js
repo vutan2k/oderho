@@ -28,8 +28,7 @@ Trích xuất JSON CHÍNH XÁC, TUYỆT ĐỐI KHÔNG bịa dữ liệu. Nếu k
 {
   "name": "tên sản phẩm tiếng Việt đầy đủ (dịch từ tên Hàn)",
   "nameKr": "tên tiếng Hàn chính xác (từ Title)",
-  "brand": "thương hiệu tiếng Việt",
-  "brandKr": "thương hiệu tiếng Hàn",
+  "brand": "thương hiệu tiếng Anh hoặc Việt (ví dụ: Mediheal, COSRX, Round Lab)",
   "category": "skincare|makeup|haircare|bodycare|health|pharmacy",
   "price": 27000,
   "image": "URL ảnh sản phẩm chính (bắt đầu bằng https://image.oliveyoung.co.kr, KHÔNG phải logo/menu/icon/quà tặng)",

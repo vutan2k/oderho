@@ -18,12 +18,11 @@ Yêu cầu bắt buộc:
 - name: Tên sản phẩm đã dịch sang tiếng Việt, bỏ chữ khuyến mãi.
 - nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc. BẮT BUỘC lấy từ TITLE (phần trước "| 올리브영"), KHÔNG để trống.
 - price: Giá bán bằng Won, chỉ lấy số.
-- brand: Tên thương hiệu tiếng Anh hoặc Việt.
-- brandKr: Tên thương hiệu tiếng Hàn gốc. BẮT BUỘC, nếu title có "[브랜드명 ...]" thì lấy phần trong ngoặc, KHÔNG để trống.
+- brand: Tên thương hiệu bằng tiếng Anh hoặc Việt (ví dụ: Mediheal, COSRX, Round Lab).
 - category: Chọn 1 trong: skincare, makeup, health, pharmacy, haircare, bodycare.
 - description: Mô tả công dụng sản phẩm bằng tiếng Việt.
 - usage: Hướng dẫn sử dụng nếu có.
-nameKr và brandKr LUÔN PHẢI CÓ GIÁ TRỊ TIẾNG HÀN — không bao giờ để chuỗi rỗng.
+nameKr LUÔN PHẢI CÓ GIÁ TRỊ TIẾNG HÀN — không bao giờ để chuỗi rỗng.
 CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG MARKDOWN.
 
 URL: ${rawData.url}
@@ -68,7 +67,7 @@ ${rawData.fullText}`;
         // Trích brand Hàn từ title dạng "[메디힐 에센셜 ...]"
         const title = (rawData.title || '').split('|')[0].trim();
         const bracketBrand = title.match(/^\[([^\]]{2,20})\]/);
-        const brandKrFallback = bracketBrand ? bracketBrand[1].trim() : title;
+        const brandFallback = bracketBrand ? bracketBrand[1].trim() : title;
 
         const productData = {
           name: aiData.name || 'Tên sản phẩm',
@@ -76,9 +75,7 @@ ${rawData.fullText}`;
           nameKr: aiData.nameKr || title,
           price: parseInt(aiData.price) || 0,
           image: rawData.image || '',
-          brand: aiData.brand || 'Korea Brand',
-          // brandKr: ưu tiên AI, fallback BRAND_TEXT, fallback từ [brand] đầu title
-          brandKr: aiData.brandKr || rawData.brandText || brandKrFallback,
+          brand: aiData.brand || brandFallback,
           url: rawData.url,
           category: aiData.category || 'skincare',
           description: aiData.description || 'Sản phẩm chính hãng Hàn Quốc.',
