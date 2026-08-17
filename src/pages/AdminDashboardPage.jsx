@@ -34,8 +34,6 @@ export default function AdminDashboardPage() {
     publishToWeb,
     revertFromWeb,
     products,
-    botIsRunning,
-    toggleBot,
     pendingProducts
   } = useContext(AppContext);
   const navigate = useNavigate();
@@ -369,9 +367,9 @@ export default function AdminDashboardPage() {
           {/* Quick Info Status on Header */}
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#FFF', padding: '8px 16px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
-              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: botIsRunning ? '#10B981' : '#9CA3AF' }} />
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: (pendingProducts?.length || 0) > 0 ? '#F59E0B' : '#9CA3AF' }} />
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-dark)' }}>
-                Scraper Bot: {botIsRunning ? 'Đang chạy' : 'Đang tắt'}
+                Hàng chờ duyệt: {pendingProducts?.length || 0}
               </span>
             </div>
           </div>
@@ -430,51 +428,19 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* BOT CONTROL & PENDING QUEUE */}
+            {/* MANUAL SCRAPER GUIDE & PENDING QUEUE */}
             <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContext: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                 <div style={{ flex: 1, minWidth: '240px' }}>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)' }}>🤖 Điều khiển Scraper Bot tự động</h4>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)' }}>📦 Sản phẩm chờ duyệt</h4>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Tự động tìm kiếm & cào các sản phẩm Hot Olive Young Hàn Quốc về hàng đợi phê duyệt.
+                    Sản phẩm bóc từ link Olive Young sẽ vào hàng chờ. Admin kiểm tra ảnh & thông tin trước khi Duyệt lên Web.
                   </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: botIsRunning ? '#10B981' : '#EF4444' }}>
-                    {botIsRunning ? 'BOT ĐANG HOẠT ĐỘNG' : 'BOT ĐANG TẮT'}
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: (pendingProducts?.length || 0) > 0 ? '#D97706' : '#6B7280' }}>
+                    {(pendingProducts?.length || 0) > 0 ? `${pendingProducts.length} SẢN PHẨM ĐANG CHỜ` : 'KHÔNG CÓ HÀNG CHỜ'}
                   </span>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={() => { toggleBot(true); if (showToast) showToast('Đã kích hoạt Bot tự động!', 'info'); }}
-                      style={{
-                        backgroundColor: botIsRunning ? '#10B981' : '#E5E7EB',
-                        color: botIsRunning ? '#FFF' : '#374151',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Bật Bot
-                    </button>
-                    <button
-                      onClick={() => { toggleBot(false); if (showToast) showToast('Đã dừng Bot tự động!', 'info'); }}
-                      style={{
-                        backgroundColor: !botIsRunning ? '#EF4444' : '#E5E7EB',
-                        color: !botIsRunning ? '#FFF' : '#374151',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Tắt Bot
-                    </button>
-                  </div>
                 </div>
               </div>
               
