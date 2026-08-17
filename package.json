@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "test": "node tests/run_all_tests.js",
     "self-check": "oxlint && vite build",
     "preview": "vite preview"
   },

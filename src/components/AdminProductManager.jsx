@@ -43,6 +43,7 @@ export default function AdminProductManager() {
   const [loadingBotInstant, setLoadingBotInstant] = useState(false);
   const [scrapedPreview, setScrapedPreview] = useState(null);
 
+
   // ----------------------------------------------------
   // INVENTORY LOGIC
   // ----------------------------------------------------
@@ -189,9 +190,7 @@ export default function AdminProductManager() {
         });
         setActiveTab('bot');
         window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (err) {
-        console.warn("Lỗi giải mã autoFill url param:", err);
-      }
+      } catch {}
     }
   }, []);
 

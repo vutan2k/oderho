@@ -44,8 +44,7 @@ export const getBotStateFromStorage = () => {
     const lastRun = localStorage.getItem('tavy_bot_last_run') || null;
     const intervalMins = parseInt(localStorage.getItem('tavy_bot_interval_mins')) || 30;
     return { isRunning, intervalMins, lastRun, pendingProducts };
-  } catch (err) {
-    console.warn("Lỗi đọc trạng thái AutoBot từ storage:", err);
+  } catch (e) {
     return { isRunning: false, intervalMins: 30, lastRun: null, pendingProducts: [] };
   }
 };

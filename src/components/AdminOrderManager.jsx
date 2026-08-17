@@ -6,12 +6,12 @@ import CascadingAddressSelector from './CascadingAddressSelector';
 import {
   Search, Edit3,
   Truck, CheckCircle, PackageCheck, AlertCircle, Printer,
-  Download, ShieldCheck, X,
-  Phone, MapPin, CheckCircle2, Trash2
+  Download, ShieldCheck, ChevronRight, X,
+  Phone, MapPin, CheckCircle2
 } from 'lucide-react';
 
 export default function AdminOrderManager() {
-  const { orders, rates, updateOrderStatus, updateOrderQuote, updateOrderTracking, deleteOrder } = useContext(AppContext);
+  const { orders, rates, updateOrderStatus, updateOrderQuote, updateOrderTracking } = useContext(AppContext);
   const showToast = useToast();
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -116,6 +116,23 @@ export default function AdminOrderManager() {
 
   const handleSaveOrderChanges = () => {
     if (!activeModalOrder) return;
+
+    if (!orderForm.customerName || !orderForm.customerName.trim()) {
+      if (showToast) showToast('Vui lòng nhập họ và tên khách hàng!', 'error');
+      return;
+    }
+
+    const phoneRegex = /^0[3|5|7|8|9][0-9]{8}$/;
+    if (!phoneRegex.test(orderForm.customerPhone)) {
+      if (showToast) showToast('Số điện thoại không hợp lệ. Vui lòng nhập SĐT gồm 10 chữ số bắt đầu bằng 03, 05, 07, 08, 09.', 'error');
+      return;
+    }
+
+    if (!orderForm.customerAddress || orderForm.customerAddress.trim() === "" || orderForm.customerAddress.includes("Chưa chọn")) {
+      if (showToast) showToast('Vui lòng chọn địa chỉ nhận hàng đầy đủ.', 'error');
+      return;
+    }
+
     const totalCalc =
       Number(orderForm.rawVnd) +
       Number(orderForm.taxWebVnd) +
@@ -127,7 +144,10 @@ export default function AdminOrderManager() {
     updateOrderTracking(activeModalOrder.id, {
       status: orderForm.status,
       trackingCode: orderForm.trackingCode,
-      note: orderForm.adminNote
+      note: orderForm.adminNote,
+      customerName: orderForm.customerName.trim(),
+      customerPhone: orderForm.customerPhone,
+      customerAddress: orderForm.customerAddress
     });
 
     // Save Quote
@@ -144,8 +164,8 @@ export default function AdminOrderManager() {
     setActiveModalOrder(null);
   };
 
-  // Quick 1-Click Stepper Advance (Reserved for fast stepper button)
-  const _handleQuickNextStatus = (order) => {
+  // Quick 1-Click Stepper Advance
+  const handleQuickNextStatus = (order) => {
     const allStatuses = Object.keys(ORDER_STATUSES).filter(k => k !== 'cancelled');
     const currentIndex = allStatuses.indexOf(order.status);
     if (currentIndex >= 0 && currentIndex < allStatuses.length - 1) {
@@ -183,9 +203,9 @@ export default function AdminOrderManager() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         {[
           { title: 'TỔNG ĐƠN HÀNG', count: orders.length, color: 'var(--purple-primary)', bg: '#F5F3FF', icon: ShieldCheck },
-          { title: 'ĐÃ ĐẶT HÀNG / CHỜ CỌC', count: orders.filter((o) => o.status === 'pending').length, color: '#3B82F6', bg: '#EFF6FF', icon: AlertCircle },
-          { title: 'ĐÃ CỌC / CHẤP NHẬN', count: orders.filter((o) => ['deposit_paid', 'accepted'].includes(o.status)).length, color: '#D97706', bg: '#FEF3C7', icon: CheckCircle },
-          { title: 'ĐANG XỬ LÝ & VẬN CHUYỂN', count: orders.filter((o) => ['purchasing', 'customs_kr', 'customs_vn', 'delivering'].includes(o.status)).length, color: '#0891B2', bg: '#CFFAFE', icon: Truck },
+          { title: 'CHỜ BÁO GIÁ / CỌC', count: orders.filter((o) => o.status === 'pending').length, color: '#D97706', bg: '#FEF3C7', icon: AlertCircle },
+          { title: 'ĐÃ CỌC / ĐÃ MUA HÀN', count: orders.filter((o) => ['quoted', 'deposit_paid', 'purchased', 'in_kr_warehouse'].includes(o.status)).length, color: '#2563EB', bg: '#DBEAFE', icon: CheckCircle },
+          { title: 'ĐANG VẬN CHUYỂN AIR', count: orders.filter((o) => ['transit', 'in_vn_warehouse', 'delivering'].includes(o.status)).length, color: '#0891B2', bg: '#CFFAFE', icon: Truck },
           { title: 'HOÀN THÀNH', count: orders.filter((o) => o.status === 'completed').length, color: '#059669', bg: '#D1FAE5', icon: PackageCheck }
         ].map((kpi, idx) => {
           const IconComp = kpi.icon;
@@ -207,7 +227,7 @@ export default function AdminOrderManager() {
       <div style={{ backgroundColor: '#FFF', padding: '20px', borderRadius: '16px', border: '1px solid #E5E7EB', marginBottom: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
         
         {/* Status Filter Tabs */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '12px', marginBottom: '16px', borderBottom: '1px solid #F3F4F6' }}>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '16px', borderBottom: '1px solid #F3F4F6' }}>
           <button
             onClick={() => setFilterStatus('all')}
             style={{
@@ -310,8 +330,8 @@ export default function AdminOrderManager() {
       </div>
 
       {/* 📋 MAIN ORDERS TABLE */}
-      <div style={{ backgroundColor: '#FFF', borderRadius: '16px', border: '1px solid #E5E7EB', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-        <div>
+      <div style={{ backgroundColor: '#FFF', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+        <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
             <thead>
               <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '2px solid #E5E7EB', color: '#4B5563', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -386,26 +406,11 @@ export default function AdminOrderManager() {
 
                       {/* Sản phẩm */}
                       <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          {getOrderImage(order) ? (
-                            <img 
-                              src={getOrderImage(order)} 
-                              alt="product" 
-                              style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #E5E7EB' }} 
-                            />
-                          ) : (
-                            <div style={{ width: '42px', height: '42px', borderRadius: '6px', backgroundColor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: '0.7rem', fontWeight: 700 }}>
-                              No Pic
-                            </div>
-                          )}
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#111827', lineHeight: 1.3, maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                              {getOrderProductName(order) || 'Sản phẩm mua hộ Hàn Quốc'}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--purple-primary)', fontWeight: 600, marginTop: '4px' }}>
-                              Giá Won: {formatWon(getOrderForeignPrice(order))} | Số lượng: x{getOrderQty(order)}
-                            </div>
-                          </div>
+                        <div style={{ fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>
+                          {getOrderProductName(order) || 'Sản phẩm mua hộ Hàn Quốc'}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--purple-primary)', fontWeight: 600, marginTop: '4px' }}>
+                          Giá Won: {formatWon(getOrderForeignPrice(order))} | Số lượng: x{getOrderQty(order)}
                         </div>
                       </td>
 
@@ -414,24 +419,8 @@ export default function AdminOrderManager() {
                         <div style={{ fontWeight: 800, color: '#111827', fontSize: '0.98rem' }}>
                           {formatVnd(totalVndVal)}
                         </div>
-                        <div style={{ fontSize: '0.75rem', marginTop: '2px' }}>
-                          {order.status === 'pending' ? (
-                            <span style={{ color: '#D97706', fontWeight: 600 }}>
-                              Cọc 70%: {formatVnd(Math.round(totalVndVal * 0.7))}
-                            </span>
-                          ) : order.status === 'deposit_paid' ? (
-                            <span style={{ color: '#059669', fontWeight: 700, backgroundColor: '#D1FAE5', padding: '2px 6px', borderRadius: '4px' }}>
-                              Đã cọc thành công
-                            </span>
-                          ) : order.status === 'completed' ? (
-                            <span style={{ color: '#10B981', fontWeight: 700, backgroundColor: '#E0F2FE', padding: '2px 6px', borderRadius: '4px' }}>
-                              Đã tất toán 100%
-                            </span>
-                          ) : (
-                            <span style={{ color: '#6B7280', fontWeight: 500 }}>
-                              Cọc 70%: {formatVnd(Math.round(totalVndVal * 0.7))}
-                            </span>
-                          )}
+                        <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600, marginTop: '2px' }}>
+                          {order.quote ? `Cọc 50%: ${formatVnd(Math.round(totalVndVal * 0.5))}` : 'Chờ báo giá'}
                         </div>
                       </td>
 
@@ -457,6 +446,14 @@ export default function AdminOrderManager() {
                               <option key={k} value={k}>{ORDER_STATUSES[k].label}</option>
                             ))}
                           </select>
+
+                          <button
+                            onClick={() => handleQuickNextStatus(order)}
+                            title="Chuyển nhanh sang bước tiếp theo"
+                            style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: '0.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 600 }}
+                          >
+                            <span>Bước tiếp</span> <ChevronRight size={12} />
+                          </button>
                         </div>
                       </td>
 
@@ -518,30 +515,6 @@ export default function AdminOrderManager() {
                             }}
                           >
                             <Printer size={13} />
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Bạn có chắc chắn muốn XÓA ĐƠN HÀNG ${order.id} này? Hành động này không thể hoàn tác.`)) {
-                                deleteOrder(order.id);
-                                if (showToast) showToast(`Đã xóa đơn hàng ${order.id} thành công!`, 'success');
-                              }
-                            }}
-                            title="Xóa Đơn Hàng"
-                            style={{
-                              backgroundColor: '#FEE2E2',
-                              color: '#EF4444',
-                              border: '1px solid #FCA5A5',
-                              padding: '6px 10px',
-                              borderRadius: '8px',
-                              fontSize: '0.78rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center'
-                            }}
-                          >
-                            <Trash2 size={13} />
                           </button>
                         </div>
                       </td>
@@ -672,7 +645,7 @@ export default function AdminOrderManager() {
                       <input
                         type="text"
                         value={orderForm.customerPhone}
-                        onChange={(e) => setOrderForm({ ...orderForm, customerPhone: e.target.value })}
+                        onChange={(e) => setOrderForm({ ...orderForm, customerPhone: e.target.value.replace(/[^0-9]/g, '') })}
                         style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #D1D5DB', fontSize: '0.88rem' }}
                       />
                     </div>

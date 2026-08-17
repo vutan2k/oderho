@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ShoppingBag, Star, Sparkles, Globe } from 'lucide-react';
 
 export default function ProductDetailModal({ product, krwRate, onClose, onOrderNow }) {
@@ -6,9 +6,14 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
   const [selectedImg, setSelectedImg] = useState(images[0] || '');
   const [activeTab, setActiveTab] = useState('description');
 
+  useEffect(() => {
+    const imgs = product?.images && product.images.length > 0 ? product.images : (product?.productImage ? [product.productImage] : []);
+    setSelectedImg(imgs[0] || '');
+  }, [product]);
+
   if (!product) return null;
 
-  const calculatedVnd = product.foreignPrice * krwRate;
+  const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
 
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
@@ -208,8 +213,8 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
             <div style={{ paddingTop: '20px', borderTop: '1px solid #F3F4F6' }}>
               <button
                 onClick={(e) => {
-                  onClose();
-                  onOrderNow(product, e);
+                  if (onOrderNow) onOrderNow(product, e);
+                  if (onClose) onClose();
                 }}
                 className="btn-gold"
                 style={{

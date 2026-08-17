@@ -13,28 +13,32 @@ export default function LoginPage() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (isLoginTab) {
-      const res = loginUser(email, password);
-      if (res.success) {
-        navigate('/');
+    try {
+      if (isLoginTab) {
+        const res = await loginUser(email, password);
+        if (res.success) {
+          navigate('/');
+        } else {
+          setError(res.message);
+        }
       } else {
-        setError(res.message);
+        if (!name.trim()) {
+          setError('Vui lòng nhập họ và tên.');
+          return;
+        }
+        const res = await registerUser(name, email, password);
+        if (res.success) {
+          navigate('/');
+        } else {
+          setError(res.message);
+        }
       }
-    } else {
-      if (!name.trim()) {
-        setError('Vui lòng nhập họ và tên.');
-        return;
-      }
-      const res = registerUser(name, email, password);
-      if (res.success) {
-        navigate('/');
-      } else {
-        setError(res.message);
-      }
+    } catch (err) {
+      setError('Đã có lỗi xảy ra. Vui lòng thử lại.');
     }
   };
 

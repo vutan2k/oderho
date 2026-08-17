@@ -31,30 +31,94 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
     return () => { isMounted = false; };
   }, []);
 
-  // 2. Parse initialAddress CHỈ NẾU là địa chỉ thực sự của người dùng (tuyệt đối KHÔNG tự điền Tỉnh/TP vào ô Số nhà)
-  useEffect(() => {
-    if (initialAddress && typeof initialAddress === 'string' && !isInitialParsedRef.current) {
-      isInitialParsedRef.current = true;
-      const parts = initialAddress.split(',').map(s => s.trim()).filter(Boolean);
-      // Tìm phần tử không chứa từ khóa Tỉnh/Thành phố/Quận/Huyện/Xã/Phường
-      const actualStreet = parts.find(p => 
-        !p.startsWith('Tỉnh') && 
-        !p.startsWith('Thành phố') && 
-        !p.startsWith('Quận') && 
-        !p.startsWith('Huyện') && 
-        !p.startsWith('Phường') && 
-        !p.startsWith('Xã') && 
-        !p.includes('Việt Nam')
-      );
+  const isSubParsedRef = useRef(false);
 
-      // Nếu chỉ có tên Tỉnh/TP thì để trống hoàn toàn
-      if (actualStreet) {
-        setStreetAddress(actualStreet);
-      } else {
-        setStreetAddress('');
+  // 2. Parse initialAddress to pre-select Province, District/SubDivision, and Street
+  useEffect(() => {
+    if (!initialAddress || typeof initialAddress !== 'string' || provinces.length === 0) return;
+    if (isInitialParsedRef.current) return;
+
+    const parts = initialAddress.split(',').map(s => s.trim()).filter(Boolean);
+    if (parts.length === 0) return;
+
+    const cleanProv = (s) => s.toLowerCase().replace(/^(tỉnh|thành phố|tp\.)\s+/i, '').trim();
+
+    let matchedP = null;
+
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const part = parts[i];
+      const normPart = cleanProv(part);
+      if (!normPart) continue;
+
+      const p = provinces.find(prov => {
+        const normP = cleanProv(prov.name);
+        return prov.name.toLowerCase() === part.toLowerCase() ||
+               normP === normPart ||
+               (normPart.length > 2 && normP.includes(normPart)) ||
+               (normP.length > 2 && normPart.includes(normP));
+      });
+
+      if (p) {
+        matchedP = p;
+        break;
       }
     }
-  }, [initialAddress]);
+
+    if (matchedP) {
+      setSelectedProvinceCode(String(matchedP.code));
+      setSelectedProvinceName(matchedP.name);
+    }
+  }, [initialAddress, provinces]);
+
+  // 2b. Parse SubDivision once subDivisions load for selectedProvince
+  useEffect(() => {
+    if (!initialAddress || typeof initialAddress !== 'string' || subDivisions.length === 0) return;
+
+    const parts = initialAddress.split(',').map(s => s.trim()).filter(Boolean);
+    if (parts.length === 0) return;
+
+    const cleanDist = (s) => s.toLowerCase().replace(/^(quận|huyện|thị xã|phường|xã|tp\.|thành phố)\s+/i, '').trim();
+    const cleanProv = (s) => s.toLowerCase().replace(/^(tỉnh|thành phố|tp\.)\s+/i, '').trim();
+
+    let matchedSub = null;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const normPart = cleanDist(part);
+      if (!normPart) continue;
+
+      const s = subDivisions.find(sub => {
+        const normS = cleanDist(sub.name);
+        return sub.name.toLowerCase() === part.toLowerCase() ||
+               normS === normPart ||
+               (normPart.length >= 1 && normS === normPart);
+      });
+
+      if (s) {
+        matchedSub = s;
+        break;
+      }
+    }
+
+    if (matchedSub) {
+      setSelectedSubDivisionCode(String(matchedSub.code));
+      setSelectedSubDivisionName(matchedSub.name);
+      isSubParsedRef.current = true;
+    }
+
+    if (!isInitialParsedRef.current) {
+      isInitialParsedRef.current = true;
+      const streetParts = parts.filter((part) => {
+        const normPart = cleanDist(part);
+        const normProvPart = cleanProv(part);
+        const matchesProv = selectedProvinceName && cleanProv(selectedProvinceName) === normProvPart;
+        const matchesSub = matchedSub && cleanDist(matchedSub.name) === normPart;
+        const isGenericKeyword = !part || part.includes('Việt Nam');
+        return !matchesProv && !matchesSub && !isGenericKeyword;
+      });
+      setStreetAddress(streetParts.join(', '));
+    }
+  }, [initialAddress, subDivisions, selectedProvinceName]);
 
   // 3. Fetch 2nd Level (Xã / Phường / Quận / Huyện) when Province changes
   useEffect(() => {

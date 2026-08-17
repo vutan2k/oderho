@@ -5,75 +5,84 @@
 export const ORDER_STATUSES = {
   pending: {
     id: 'pending',
-    label: 'Đã đặt hàng (Chờ báo giá)',
-    shortLabel: 'Đã đặt hàng',
-    color: '#3B82F6',
-    bgColor: '#EFF6FF',
-    borderColor: '#60A5FA',
-    stepIndex: 0
-  },
-  deposit_paid: {
-    id: 'deposit_paid',
-    label: 'Đã cọc (70% hoặc 100% tổng build)',
-    shortLabel: 'Đã cọc',
+    label: 'Chờ báo giá / Chờ cọc',
+    shortLabel: 'Chờ cọc',
     color: '#D97706',
     bgColor: '#FEF3C7',
     borderColor: '#F59E0B',
+    stepIndex: 0
+  },
+  quoted: {
+    id: 'quoted',
+    label: 'Đã báo giá (Chờ duyệt)',
+    shortLabel: 'Đã báo giá',
+    color: '#2563EB',
+    bgColor: '#DBEAFE',
+    borderColor: '#3B82F6',
     stepIndex: 1
   },
-  accepted: {
-    id: 'accepted',
-    label: 'Chấp nhận đơn',
-    shortLabel: 'Chấp nhận đơn',
+  deposit_paid: {
+    id: 'deposit_paid',
+    label: 'Đã cọc 50%',
+    shortLabel: 'Đã cọc',
     color: '#4F46E5',
     bgColor: '#EEF2FF',
     borderColor: '#6366F1',
     stepIndex: 2
   },
-  purchasing: {
-    id: 'purchasing',
-    label: 'Mua hộ và đóng gói',
-    shortLabel: 'Mua hộ & Đóng gói',
+  purchased: {
+    id: 'purchased',
+    label: 'Đã mua tại Hàn Quốc',
+    shortLabel: 'Đã mua Hàn',
     color: '#7C3AED',
     bgColor: '#F3E8FF',
     borderColor: '#8B5CF6',
     stepIndex: 3
   },
-  customs_kr: {
-    id: 'customs_kr',
-    label: 'Thông quan Korea',
-    shortLabel: 'Thông quan KR',
+  in_kr_warehouse: {
+    id: 'in_kr_warehouse',
+    label: 'Đã về kho Seoul (Hàn Quốc)',
+    shortLabel: 'Kho Seoul',
     color: '#DB2777',
     bgColor: '#FCE7F3',
     borderColor: '#EC4899',
     stepIndex: 4
   },
-  customs_vn: {
-    id: 'customs_vn',
-    label: 'Thông quan Việt Nam',
-    shortLabel: 'Thông quan VN',
+  transit: {
+    id: 'transit',
+    label: 'Đang bay về Việt Nam (Air Cargo)',
+    shortLabel: 'Đang về VN',
     color: '#0891B2',
     bgColor: '#CFFAFE',
     borderColor: '#06B6D4',
     stepIndex: 5
   },
+  in_vn_warehouse: {
+    id: 'in_vn_warehouse',
+    label: 'Đã thông quan & về kho Việt Nam',
+    shortLabel: 'Kho VN',
+    color: '#0D9488',
+    bgColor: '#CCFBF1',
+    borderColor: '#14B8A6',
+    stepIndex: 6
+  },
   delivering: {
     id: 'delivering',
-    label: 'Giao hàng đến khách',
-    shortLabel: 'Giao hàng',
+    label: 'Đang giao hàng tận nơi',
+    shortLabel: 'Đang giao',
     color: '#EA580C',
     bgColor: '#FFEDD5',
     borderColor: '#F97316',
-    stepIndex: 6
+    stepIndex: 7
   },
   completed: {
     id: 'completed',
-    label: 'Hoàn thành',
-    shortLabel: 'Hoàn thành',
+    label: 'Giao hàng thành công & Tất toán',
+    shortLabel: 'Đã giao',
     color: '#059669',
     bgColor: '#D1FAE5',
     borderColor: '#10B981',
-    stepIndex: 7
+    stepIndex: 8
   },
   cancelled: {
     id: 'cancelled',
@@ -89,8 +98,8 @@ export const ORDER_STATUSES = {
 export const getStatusConfig = (statusKey) => {
   return ORDER_STATUSES[statusKey] || {
     id: statusKey || 'pending',
-    label: statusKey || 'Đã đặt hàng',
-    shortLabel: statusKey || 'Đã đặt hàng',
+    label: statusKey || 'Chờ cọc',
+    shortLabel: statusKey || 'Chờ cọc',
     color: '#4B5563',
     bgColor: '#F3F4F6',
     borderColor: '#9CA3AF',

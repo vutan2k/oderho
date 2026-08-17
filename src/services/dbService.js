@@ -230,7 +230,9 @@ export const saveProductToDB = async (product) => {
   }
 };
 
-// 10. Delete a product from Firestore
+/**
+ * 10. Delete a product from Firestore
+ */
 export const deleteProductFromDB = async (goodsNo) => {
   try {
     const docRef = doc(db, PRODUCTS_COLLECTION, goodsNo);
@@ -241,18 +243,3 @@ export const deleteProductFromDB = async (goodsNo) => {
     return { success: false, error: err };
   }
 };
-
-/**
- * 11. Delete an order from Firestore
- */
-export const deleteOrderFromDB = async (orderId) => {
-  try {
-    const docRef = doc(db, ORDERS_COLLECTION, orderId);
-    await deleteDoc(docRef);
-    return { success: true };
-  } catch (err) {
-    console.warn("Firestore deleteOrder error:", err);
-    return { success: false, error: err };
-  }
-};
-

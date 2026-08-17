@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 40;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [products]);
 
   const formatVnd = (num) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
@@ -26,7 +30,7 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
         gap: '28px'
       }}>
         {currentProducts.map((product, pIdx) => {
-          const calculatedVnd = (product.foreignPrice || 0) * krwRate;
+          const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
           const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
 
         return (

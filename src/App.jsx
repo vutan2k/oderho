@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { AppProvider } from './context/AppProvider';
 import { ToastProvider } from './components/Toast';
 import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
