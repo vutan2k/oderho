@@ -169,6 +169,15 @@ export const AppProvider = ({ children }) => {
 
   const [products, setProducts] = useState(() => {
     try {
+      const isCleared = localStorage.getItem('tavy_catalog_cleared');
+      if (isCleared === 'true') {
+        const savedCustom = localStorage.getItem('tavy_custom_products');
+        if (savedCustom) {
+          const parsed = JSON.parse(savedCustom);
+          if (Array.isArray(parsed)) return sanitizeProducts(parsed);
+        }
+        return [];
+      }
       const storedVer = localStorage.getItem('tavy_catalog_ver');
       if (storedVer !== CURRENT_CATALOG_VER) {
         localStorage.removeItem('tavy_published_products');
@@ -190,6 +199,15 @@ export const AppProvider = ({ children }) => {
 
   const [publishedProducts, setPublishedProducts] = useState(() => {
     try {
+      const isCleared = localStorage.getItem('tavy_catalog_cleared');
+      if (isCleared === 'true') {
+        const savedPublished = localStorage.getItem('tavy_published_products');
+        if (savedPublished) {
+          const parsed = JSON.parse(savedPublished);
+          if (Array.isArray(parsed)) return sanitizeProducts(parsed);
+        }
+        return [];
+      }
       const storedVer = localStorage.getItem('tavy_catalog_ver');
       if (storedVer === CURRENT_CATALOG_VER) {
         const savedPublished = localStorage.getItem('tavy_published_products');
@@ -446,6 +464,7 @@ export const AppProvider = ({ children }) => {
     setProducts([]);
     setPublishedProducts([]);
     try {
+      localStorage.setItem('tavy_catalog_cleared', 'true');
       localStorage.setItem('tavy_published_products', JSON.stringify([]));
       localStorage.setItem('tavy_custom_products', JSON.stringify([]));
     } catch (e) {
