@@ -28,10 +28,54 @@ const pickProductImage = () => {
 
 const getText = (selector) => document.querySelector(selector)?.textContent?.trim() || '';
 
+// Toast góc nhỏ trên bên phải (không che màn hình, không chặn thao tác)
+const showMiniToast = (text, type = 'info') => {
+  document.getElementById('tavy-mini-toast')?.remove();
+  const bg = type === 'success' ? '#059669' : type === 'error' ? '#DC2626' : '#1E293B';
+  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '🤖';
+  const html = `
+    <div id="tavy-mini-toast" style="
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 9999999;
+      background: ${bg};
+      color: #FFFFFF;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 340px;
+      line-height: 1.4;
+      animation: tavySlideIn 0.25s ease-out;
+      pointer-events: none;
+    ">
+      <span>${icon}</span>
+      <span>${text}</span>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', html);
+  if (type !== 'info') {
+    setTimeout(() => {
+      const el = document.getElementById('tavy-mini-toast');
+      if (el) {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.3s';
+        setTimeout(() => el.remove(), 300);
+      }
+    }, 3500);
+  }
+};
+
 chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
   if (request.action === "SCRAPE_PRODUCT") {
     try {
-      document.body.insertAdjacentHTML('beforeend', '<div id="tavy-loading" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#2563EB;color:#fff;padding:22px;z-index:999999;border-radius:10px;font-size:18px;font-weight:bold;box-shadow:0 4px 20px rgba(0,0,0,0.3);">Đang lấy ảnh và dữ liệu thật từ trang Olive Young...</div>');
+      showMiniToast('AI đang quét dữ liệu trang...', 'info');
 
       let fullText = document.body.innerText || '';
       if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
@@ -46,18 +90,17 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
       };
 
       chrome.runtime.sendMessage({ action: "PROCESS_SCRAPED_DATA_AI", data: rawData }, (response) => {
-        document.getElementById('tavy-loading')?.remove();
         if (response && response.error) {
-          alert("Lỗi AI: " + response.error);
+          showMiniToast(`Lỗi AI: ${response.error}`, 'error');
         } else if (response && response.success === false) {
-          alert("Bạn chưa cài đặt API Key! Vui lòng bấm vào icon Extension > Cài đặt API Key.");
+          showMiniToast('Chưa cài API Key! Bấm icon TAVY > Cài đặt API Key', 'error');
         } else if (response && response.success) {
-          alert("✅ Đã quét sản phẩm thành công! Chuyển đến trang Admin để duyệt...");
+          const name = response.name ? `"${response.name.slice(0, 30)}..."` : 'Sản phẩm';
+          showMiniToast(`Đã thêm ${name} vào chờ duyệt!`, 'success');
         }
       });
     } catch (error) {
-      document.getElementById('tavy-loading')?.remove();
-      alert("Lỗi cào dữ liệu DOM: " + error.message);
+      showMiniToast(`Lỗi quét DOM: ${error.message}`, 'error');
     }
   }
 });

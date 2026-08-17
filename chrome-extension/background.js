@@ -85,19 +85,18 @@ ${rawData.fullText}`;
         const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));
         const adminUrl = `https://tavy-oderho.web.app/admin/dashboard?autoFill=${encodedData}`;
 
-        // Mở Tab Admin (ẩn) — đóng tab Olive Young sau khi gửi
+        // Mở Tab Admin chạy ngầm (active: false) để AppProvider nhận autoFill lưu vào chờ duyệt
         chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
-          // Đóng tab Olive Young nguồn
-          if (sender && sender.tab && sender.tab.id) {
-            try { chrome.tabs.remove(sender.tab.id); } catch {}
-          }
-          // Focus tab admin sau 1.5s
+          // Tự đóng tab admin ngầm sau 2.5s (khi AppProvider đã đọc và lưu xong)
           setTimeout(() => {
-            if (adminTab && adminTab.id) chrome.tabs.update(adminTab.id, { active: true });
-          }, 1500);
+            if (adminTab && adminTab.id) {
+              try { chrome.tabs.remove(adminTab.id); } catch {}
+            }
+          }, 2500);
         });
 
-        sendResponse({ success: true });
+        // Phản hồi ngay cho tab Olive Young để hiện toast thành công góc phải
+        sendResponse({ success: true, name: productData.name });
       } catch (err) {
         console.error("Lỗi AI Service Worker:", err);
         sendResponse({ success: false, error: err.message });
