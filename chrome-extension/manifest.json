@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Tavy Order - Olive Young Scraper (v3.3)",
-  "version": "3.3",
-  "description": "Cào dữ liệu sản phẩm Olive Young + Status Indicator 🟢/🔴 (V3.3 Ready)",
+  "name": "Tavy Order - Olive Young Scraper (v3.4)",
+  "version": "3.4",
+  "description": "Cào dữ liệu sản phẩm Olive Young + Precise Product Image Picker (v3.4 Fix)",
   "permissions": [
     "activeTab",
     "scripting",

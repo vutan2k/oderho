@@ -1,26 +1,59 @@
-// content.js - Chạy trên trang Olive Young (Version 3.2 - Auto Timeout Guard)
+// content.js - Chạy trên trang Olive Young (Version 3.4 - Precise Product Image Picker)
 
 const pickProductImages = () => {
-  const imgList = Array.from(document.images || []);
-  const candidates = imgList
-    .map((img) => {
-      const src = img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
-      const rect = img.getBoundingClientRect();
-      return {
-        src,
-        width: img.naturalWidth || rect.width || 0,
-        height: img.naturalHeight || rect.height || 0,
-        area: (img.naturalWidth || rect.width || 0) * (img.naturalHeight || rect.height || 0),
-        top: rect.top,
-        alt: img.alt || ''
-      };
-    })
-    .filter((item) => item.src && item.width >= 200 && item.height >= 200)
-    .filter((item) => !/logo|icon|banner|sprite|blank|loading/i.test(item.src + item.alt))
-    .sort((a, b) => b.area - a.area);
+  const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/);
+  const goodsNo = goodsNoMatch ? goodsNoMatch[1] : '';
 
-  const uniqueUrls = Array.from(new Set(candidates.map(c => c.src))).slice(0, 5);
-  return uniqueUrls;
+  // 1. Ưu tiên số 1: Meta Tag og:image (Olive Young luôn gán ảnh chuẩn sản phẩm ở đây)
+  const ogImage = document.querySelector('meta[property="og:image"]')?.content || '';
+
+  // 2. Ưu tiên số 2: Các selector DOM ảnh sản phẩm chính của Olive Young
+  const mainImgEl = document.querySelector('#mainImg, #goodsImg, .prd_thumb img, .goods_thumb img, [id*=mainImg], .prd_img img');
+  const mainImgSrc = mainImgEl?.currentSrc || mainImgEl?.src || mainImgEl?.getAttribute('data-src') || '';
+
+  // 3. Quét danh sách ảnh trong trang
+  const imgList = Array.from(document.images || []);
+  const candidateUrls = [];
+
+  // Nếu có ogImage và không phải banner -> đưa vào đầu danh sách
+  if (ogImage && !/banner|display|event|gift|coupon|attached|Logo|Icon|gdasEditor/i.test(ogImage)) {
+    candidateUrls.push(ogImage);
+  }
+
+  if (mainImgSrc && !/banner|display|event|gift|coupon|attached|Logo|Icon|gdasEditor/i.test(mainImgSrc)) {
+    candidateUrls.push(mainImgSrc);
+  }
+
+  imgList.forEach((img) => {
+    const src = img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
+    const rect = img.getBoundingClientRect();
+    const width = img.naturalWidth || rect.width || 0;
+    const height = img.naturalHeight || rect.height || 0;
+    const alt = img.alt || '';
+
+    if (!src || width < 180 || height < 180) return;
+
+    // Loại bỏ tuyệt đối ảnh banner quảng cáo, logo, icon, quà tặng sự kiện
+    if (/banner|display|event|gift|coupon|attached|Logo|Icon|gdasEditor|sprite|blank|loading/i.test(src + alt)) {
+      return;
+    }
+
+    // Ưu tiên cao hơn nếu URL chứa 'thumbnails' hoặc chứa mã sản phẩm (goodsNo)
+    const isThumbnail = /thumbnails/i.test(src);
+    const isMatchGoodsNo = goodsNo && src.includes(goodsNo);
+
+    if (isThumbnail || isMatchGoodsNo || (width >= 300 && height >= 300)) {
+      candidateUrls.push(src);
+    }
+  });
+
+  // Lọc trùng và làm sạch URL
+  const uniqueUrls = Array.from(new Set(candidateUrls)).map(url => {
+    // Chuẩn hóa URL bỏ ngoặc kép hoặc ký tự thừa nếu có
+    return url.replace(/["')\]]/g, '').trim();
+  }).filter(url => url.startsWith('http'));
+
+  return uniqueUrls.length > 0 ? uniqueUrls.slice(0, 5) : [ogImage || mainImgSrc || ''];
 };
 
 const pickProductImage = () => {
@@ -102,7 +135,7 @@ const showMiniToast = (text, type = 'info') => {
 chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
   if (request.action === "SCRAPE_PRODUCT") {
     try {
-      showMiniToast('AI đang quét dữ liệu & bình luận thật...', 'info');
+      showMiniToast('AI đang quét dữ liệu & ảnh thật sản phẩm...', 'info');
 
       let fullText = document.body.innerText || '';
       if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
@@ -121,7 +154,6 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
 
       let hasResponded = false;
 
-      // Timeout Fallback 8s chống đứng màn hình
       const safetyTimer = setTimeout(() => {
         if (!hasResponded) {
           hasResponded = true;
@@ -141,7 +173,7 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
           showMiniToast('Chưa cài API Key! Bấm icon TAVY > Cài đặt API Key', 'error');
         } else {
           const name = response?.name ? `"${response.name.slice(0, 28)}..."` : 'Sản phẩm';
-          showMiniToast(`Đã thêm ${name} + Bình luận vào chờ duyệt!`, 'success');
+          showMiniToast(`Đã thêm ${name} + Ảnh thật vào chờ duyệt!`, 'success');
         }
       });
     } catch (error) {
