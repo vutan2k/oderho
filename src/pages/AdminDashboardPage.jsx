@@ -151,26 +151,12 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F9FAFB' }}>
+    <div className="admin-container">
       
       {/* LEFT SIDEBAR */}
-      <aside 
-        style={{
-          width: '260px',
-          backgroundColor: '#1F2937',
-          color: '#F3F4F6',
-          position: 'fixed',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 100,
-          boxShadow: '2px 0 8px rgba(0, 0, 0, 0.15)'
-        }}
-      >
+      <aside className="admin-sidebar">
         {/* Sidebar Header / Brand */}
-        <div style={{ padding: '24px 20px', borderBottom: '1px solid #374151', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="admin-sidebar-header-wrap" style={{ padding: '24px 20px', borderBottom: '1px solid #374151', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <img src="/tavy-logo.png" alt="TAVY Logo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
             <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFF', letterSpacing: '1px' }}>TAVY KOREA</span>
@@ -183,7 +169,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Sidebar Navigation */}
-        <nav style={{ flex: 1, padding: '20px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <nav className="admin-nav">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -191,23 +177,7 @@ export default function AdminDashboardPage() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  width: '100%',
-                  padding: '14px 20px',
-                  backgroundColor: isActive ? '#111827' : 'transparent',
-                  color: isActive ? '#FFF' : '#D1D5DB',
-                  border: 'none',
-                  borderLeft: isActive ? '4px solid var(--purple-primary)' : '4px solid transparent',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  fontSize: '0.92rem',
-                  fontWeight: isActive ? 700 : 500,
-                  transition: 'all 0.2s ease',
-                  position: 'relative'
-                }}
+                className={`admin-nav-btn ${isActive ? 'active' : ''}`}
               >
                 <Icon size={18} style={{ color: isActive ? 'var(--purple-primary)' : '#9CA3AF' }} />
                 <span style={{ flex: 1 }}>{item.label}</span>
@@ -229,7 +199,7 @@ export default function AdminDashboardPage() {
         </nav>
 
         {/* Sidebar Footer */}
-        <div style={{ padding: '20px', borderTop: '1px solid #374151' }}>
+        <div className="admin-sidebar-footer-wrap" style={{ padding: '20px', borderTop: '1px solid #374151' }}>
           <button
             onClick={() => { logoutAdmin(); navigate('/admin/login'); }}
             style={{
@@ -258,7 +228,7 @@ export default function AdminDashboardPage() {
       </aside>
 
       {/* RIGHT MAIN PANEL */}
-      <main style={{ flex: 1, marginLeft: '260px', padding: '40px', minWidth: 0 }}>
+      <main className="admin-main">
         
         {/* Tab Header Banner */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>

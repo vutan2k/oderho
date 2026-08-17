@@ -110,7 +110,7 @@ export default function CartPage() {
             <Link to="/" className="btn-primary">Khám phá sản phẩm</Link>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '40px', alignItems: 'start' }} className="hero-grid">
+          <div className="cart-layout">
             
             {/* Cột trái: Danh sách item */}
             <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>

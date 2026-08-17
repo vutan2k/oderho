@@ -750,4 +750,121 @@ textarea.input {
   background: var(--purple-light, #F9F5FC);
 }
 
+/* Responsive Layouts for Cart and Admin Portal */
+.cart-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 40px;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .cart-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.admin-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #F9FAFB;
+  flex-direction: row;
+}
+
+.admin-sidebar {
+  width: 260px;
+  background-color: #1F2937;
+  color: #F3F4F6;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.admin-main {
+  flex: 1;
+  margin-left: 260px;
+  padding: 40px;
+  min-width: 0;
+}
+
+.admin-nav {
+  flex: 1;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 20px;
+  background-color: transparent;
+  color: #D1D5DB;
+  border: none;
+  border-left: 4px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.admin-nav-btn.active {
+  background-color: #111827;
+  color: #FFF;
+  border-left: 4px solid var(--purple-primary);
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    bottom: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  .admin-sidebar-header-wrap {
+    padding: 16px 20px !important;
+    border-bottom: 1px solid #374151;
+  }
+  .admin-sidebar-footer-wrap {
+    padding: 12px 20px !important;
+  }
+  .admin-main {
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+  .admin-nav {
+    flex-direction: row !important;
+    overflow-x: auto;
+    padding: 10px 16px !important;
+    background-color: #111827;
+  }
+  .admin-nav-btn {
+    width: auto !important;
+    padding: 10px 16px !important;
+    border-left: none !important;
+    border-bottom: 3px solid transparent !important;
+  }
+  .admin-nav-btn.active {
+    background-color: transparent !important;
+    border-bottom: 3px solid var(--purple-primary) !important;
+  }
+}
+
 
