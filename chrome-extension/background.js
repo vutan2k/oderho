@@ -16,14 +16,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const prompt = `Trích xuất dữ liệu sản phẩm Olive Young từ DOM thật sau thành JSON hợp lệ.
 Yêu cầu bắt buộc:
 - name: Tên sản phẩm đã dịch sang tiếng Việt, bỏ chữ khuyến mãi.
-- nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc.
+- nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc. BẮT BUỘC lấy từ TITLE (phần trước "| 올리브영"), KHÔNG để trống.
 - price: Giá bán bằng Won, chỉ lấy số.
 - brand: Tên thương hiệu tiếng Anh hoặc Việt.
-- brandKr: Tên thương hiệu tiếng Hàn gốc.
+- brandKr: Tên thương hiệu tiếng Hàn gốc. BẮT BUỘC, nếu title có "[브랜드명 ...]" thì lấy phần trong ngoặc, KHÔNG để trống.
 - category: Chọn 1 trong: skincare, makeup, health, pharmacy, haircare, bodycare.
 - description: Mô tả công dụng sản phẩm bằng tiếng Việt.
 - usage: Hướng dẫn sử dụng nếu có.
-Không bịa thông tin nếu DOM không có. Nếu thiếu trường, để chuỗi rỗng hoặc 0.
+nameKr và brandKr LUÔN PHẢI CÓ GIÁ TRỊ TIẾNG HÀN — không bao giờ để chuỗi rỗng.
 CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG MARKDOWN.
 
 URL: ${rawData.url}
@@ -53,13 +53,20 @@ ${rawData.fullText}`;
         
         const aiData = JSON.parse(aiResultText);
 
+        // Trích brand Hàn từ title dạng "[메디힐 에센셜 ...]"
+        const title = (rawData.title || '').split('|')[0].trim();
+        const bracketBrand = title.match(/^\[([^\]]{2,20})\]/);
+        const brandKrFallback = bracketBrand ? bracketBrand[1].trim() : title;
+
         const productData = {
           name: aiData.name || 'Tên sản phẩm',
-          nameKr: aiData.nameKr || '',
+          // nameKr: ưu tiên AI, fallback từ TITLE (luôn là tên Hàn gốc, phần trước "| 올리브영")
+          nameKr: aiData.nameKr || title,
           price: parseInt(aiData.price) || 0,
           image: rawData.image || '',
           brand: aiData.brand || 'Korea Brand',
-          brandKr: aiData.brandKr || '',
+          // brandKr: ưu tiên AI, fallback BRAND_TEXT, fallback từ [brand] đầu title
+          brandKr: aiData.brandKr || rawData.brandText || brandKrFallback,
           url: rawData.url,
           category: aiData.category || 'skincare',
           description: aiData.description || 'Sản phẩm chính hãng Hàn Quốc.',
