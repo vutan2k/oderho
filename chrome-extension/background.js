@@ -56,30 +56,40 @@ ${rawData.fullText}`;
           data = d;
           break;
         }
-        if (!data || !data.candidates || !data.candidates[0]) throw new Error('Tất cả model Gemini đều quá tải, thử lại sau ít phút.');
-        
-        let aiResultText = data.candidates[0].content.parts[0].text;
-        // Clean markdown backticks just in case
-        aiResultText = aiResultText.replace(/```json/g, '').replace(/```/g, '').trim();
-        
-        const aiData = JSON.parse(aiResultText);
+        let aiData = {};
+        if (data && data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+          try {
+            let aiResultText = data.candidates[0].content.parts[0].text;
+            aiResultText = aiResultText.replace(/```json/g, '').replace(/```/g, '').trim();
+            aiData = JSON.parse(aiResultText);
+          } catch (e) {
+            console.warn("Parse AI JSON thất bại, chuyển sang fallback DOM:", e);
+          }
+        }
 
-        // Trích brand Hàn từ title dạng "[메디힐 에센셜 ...]"
+        // Nếu AI bận hoặc parse thất bại -> trích xuất fallback từ DOM thật
         const title = (rawData.title || '').split('|')[0].trim();
         const bracketBrand = title.match(/^\[([^\]]{2,20})\]/);
-        const brandFallback = bracketBrand ? bracketBrand[1].trim() : title;
+        const brandFallback = bracketBrand ? bracketBrand[1].trim() : (rawData.brandText || 'Korea Brand');
+        
+        // Trích xuất giá từ text (ví dụ "28,900원" -> 28900)
+        let domPrice = 0;
+        if (rawData.priceText) {
+          const numMatch = rawData.priceText.replace(/,/g, '').match(/\d+/);
+          if (numMatch) domPrice = parseInt(numMatch[0]);
+        }
 
         const productData = {
-          name: aiData.name || 'Tên sản phẩm',
+          name: aiData.name || title || 'Sản phẩm Olive Young',
           // nameKr: ưu tiên AI, fallback từ TITLE (luôn là tên Hàn gốc, phần trước "| 올리브영")
           nameKr: aiData.nameKr || title,
-          price: parseInt(aiData.price) || 0,
+          price: parseInt(aiData.price) || domPrice || 0,
           image: rawData.image || '',
           brand: aiData.brand || brandFallback,
           url: rawData.url,
           category: aiData.category || 'skincare',
-          description: aiData.description || 'Sản phẩm chính hãng Hàn Quốc.',
-          usage: aiData.usage || 'Xem chi tiết trên bao bì.'
+          description: aiData.description || 'Sản phẩm chính hãng nội địa Hàn Quốc.',
+          usage: aiData.usage || 'Xem chi tiết trên bao bì sản phẩm.'
         };
 
         const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));
