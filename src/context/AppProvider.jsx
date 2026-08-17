@@ -225,6 +225,11 @@ export const AppProvider = ({ children }) => {
           localStorage.setItem('tavy_published_products', JSON.stringify(clean));
           localStorage.setItem('tavy_custom_products', JSON.stringify(clean));
         }
+      } else {
+        // Tự động đẩy catalog gốc 100% sang Firestore nếu Firestore trống
+        OLIVE_YOUNG_CATALOG.forEach(item => {
+          saveProductToDB(item);
+        });
       }
     });
     return () => unsubscribe();
@@ -392,6 +397,14 @@ export const AppProvider = ({ children }) => {
       });
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    setPublishedProducts(prev => {
+      const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
+      try {
+        localStorage.setItem('tavy_published_products', JSON.stringify(updated));
       } catch {}
       return updated;
     });

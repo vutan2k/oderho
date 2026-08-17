@@ -213,15 +213,23 @@ export const saveUserProfileInDB = async (userData) => {
  */
 export const subscribeToProducts = (onUpdate) => {
   try {
-    const q = query(collection(db, PRODUCTS_COLLECTION), orderBy('createdAt', 'desc'));
-    return onSnapshot(q, (snapshot) => {
+    const colRef = collection(db, PRODUCTS_COLLECTION);
+    return onSnapshot(colRef, (snapshot) => {
       const products = snapshot.docs.map(docSnap => ({
         goodsNo: docSnap.id,
         ...docSnap.data()
       }));
+
+      // Sắp xếp in-memory theo thời gian cập nhật mới nhất
+      products.sort((a, b) => {
+        const timeA = a.updatedAt?.seconds || (a.createdAt?.seconds) || (new Date(a.scrapedAt || 0).getTime()) || 0;
+        const timeB = b.updatedAt?.seconds || (b.createdAt?.seconds) || (new Date(b.scrapedAt || 0).getTime()) || 0;
+        return timeB - timeA;
+      });
+
       onUpdate(products);
     }, (err) => {
-      console.warn("Firestore products listener fallback:", err);
+      console.warn("Firestore products listener error:", err);
     });
   } catch (err) {
     console.warn("Firestore subscribeToProducts error:", err);
@@ -234,14 +242,31 @@ export const subscribeToProducts = (onUpdate) => {
  */
 export const saveProductToDB = async (product) => {
   try {
+    if (!product || typeof product !== 'object') return { success: false };
     const goodsNo = product.goodsNo || `SP-${Date.now()}`;
-    const docRef = doc(db, PRODUCTS_COLLECTION, goodsNo);
-    await setDoc(docRef, {
-      ...product,
-      goodsNo,
-      updatedAt: serverTimestamp(),
-      createdAt: product.createdAt || serverTimestamp()
-    }, { merge: true });
+    const docRef = doc(db, PRODUCTS_COLLECTION, String(goodsNo));
+
+    const cleanPayload = {
+      goodsNo: String(goodsNo),
+      name: String(product.name || ''),
+      nameKr: String(product.nameKr || product.name || ''),
+      brand: String(product.brand || 'Korea Brand'),
+      brandKr: String(product.brandKr || product.brand || ''),
+      category: String(product.category || 'skincare'),
+      foreignPrice: Number(product.foreignPrice) || 0,
+      productImage: String(product.productImage || ''),
+      images: Array.isArray(product.images) ? product.images.map(String) : [String(product.productImage || '')],
+      photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String) : [],
+      description: String(product.description || ''),
+      usage: String(product.usage || ''),
+      origin: String(product.origin || 'Store Olive Young Korea'),
+      rating: Number(product.rating) || 4.9,
+      reviewsCount: Number(product.reviewsCount) || 120,
+      productUrl: String(product.productUrl || ''),
+      updatedAt: serverTimestamp()
+    };
+
+    await setDoc(docRef, cleanPayload, { merge: true });
     return { success: true };
   } catch (err) {
     console.warn("Firestore saveProduct error:", err);
