@@ -212,15 +212,6 @@ export const AppProvider = ({ children }) => {
       if (Array.isArray(realtimeProducts) && realtimeProducts.length > 0) {
         const clean = sanitizeProducts(realtimeProducts);
         if (clean.length > 0) {
-          // Kiểm tra nếu dữ liệu trên Firestore còn dính link ảnh oliveyoung bị 403 -> Tự động ghi đè bản mới 100%
-          const hasBrokenImage = clean.some(p => p.productImage && p.productImage.includes('oliveyoung.co.kr'));
-          if (hasBrokenImage) {
-            OLIVE_YOUNG_CATALOG.forEach(item => {
-              saveProductToDB({ ...item, isPublished: true, status: 'published' });
-            });
-            return;
-          }
-
           const inventory = clean.filter(p => p.status !== 'pending');
           const published = clean.filter(p => p.isPublished !== false && p.status !== 'pending');
           setProducts(inventory.length > 0 ? inventory : clean);
@@ -228,11 +219,6 @@ export const AppProvider = ({ children }) => {
           localStorage.setItem('tavy_published_products', JSON.stringify(published));
           localStorage.setItem('tavy_custom_products', JSON.stringify(inventory));
         }
-      } else {
-        // Tự động đẩy catalog gốc 100% sang Firestore nếu Firestore trống
-        OLIVE_YOUNG_CATALOG.forEach(item => {
-          saveProductToDB({ ...item, isPublished: true, status: 'published' });
-        });
       }
     });
     return () => unsubscribe();
