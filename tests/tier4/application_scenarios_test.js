@@ -443,7 +443,7 @@ test('[SCENARIO-8] Complete E2E System Build & Self-Check Automated Verification
   systemCheckResults.ratesValid = requiredCurrencies.length === 3;
 
   // Step 7: Scraper candidate check
-  const scraperRes = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000128120');
+  const scraperRes = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000223414');
   if (scraperRes.success && scraperRes.product) {
     systemCheckResults.scraperValid = true;
   }

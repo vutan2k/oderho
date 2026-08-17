@@ -1,7 +1,7 @@
 import React, { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
-import { scrapeProductMetadata } from '../services/productScraperService';
+import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
 import {
   Plus, Trash2, X, Globe, Check, Edit3, Link2
 } from 'lucide-react';
@@ -161,14 +161,14 @@ export default function AdminProductManager() {
     e.preventDefault();
     if (!quickLink.trim()) return;
     setLoadingScrape(true);
-    if (showToast) showToast('Đang bóc tách dữ liệu từ link...', 'info');
-    const res = await scrapeProductMetadata(quickLink.trim());
+    if (showToast) showToast('🤖 AI đang bóc tách dữ liệu từ link...', 'info');
+    const res = await runAIScraperAgent(quickLink.trim());
     setLoadingScrape(false);
     if (res.success && res.product) {
       addPendingProduct(res.product);
       setQuickLink('');
       setActiveTab('pending');
-      if (showToast) showToast(`Đã bóc tách: "${res.product.name}"! Đã chuyển vào Hàng Chờ Duyệt.`, 'success');
+      if (showToast) showToast(`🤖 AI đã bóc tách: "${res.product.name}"! Đã chuyển vào Hàng Chờ Duyệt.`, 'success');
     } else {
       if (showToast) showToast(`Lỗi bóc tách: ${res.error}`, 'error');
     }

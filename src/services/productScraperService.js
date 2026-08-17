@@ -6,50 +6,14 @@
 
 const KNOWN_KOREAN_GOODS_DB = {
   'A000000261415': {
-    name: 'Tinh chất Cà Chua Xanh Se Khít Lỗ Chân Lông & Nâng Cơ Sungboon Editor Green Tomato Pore Lifting Ampoule Serum 30ml [Bộ 기획 TOP 3 Olive Young]',
-    nameKr: '성분에디터 그린토마토 모공앰플 30ml 기획',
-    brand: 'Sungboon Editor',
-    brandKr: '성분에디터',
+    name: 'Kem dưỡng phục hồi hàng rào siêu dưỡng ẩm Layerlab Panthenol Intensive Cream Plus 60ml',
+    nameKr: '[초고보습 장벽크림] 레이어랩 판테놀 인텐시브 크림 플러스 60ml',
+    brand: 'Layerlab',
+    brandKr: '레이어랩',
     category: 'skincare',
-    foreignPrice: 24900,
-    productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-    description: 'Serum Cà Chua Xanh se khít lỗ chân lông quốc dân nổi tiếng TOP 3 Olive Young Korea. Chiết xuất Cà chua xanh chứa Tomatidine độc quyền kết hợp PHA, Volufiline & Hyaluronic Acid.',
-    origin: 'Store Olive Young Seoul, Hàn Quốc',
-    rating: 4.9
-  },
-  'A000000185934': {
-    name: 'Tinh chất dưỡng ẩm sâu Torriden Dive-In Low Molecular Hyaluronic Acid Serum 50ml',
-    nameKr: '토리든 다이브인 저분자 히알루론산 세럼 50ml',
-    brand: 'Torriden',
-    brandKr: '토리든',
-    category: 'skincare',
-    foreignPrice: 18000,
-    productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
-    description: 'Serum cấp nước đa tầng quốc dân Hàn Quốc TOP 1 Olive Young 3 năm liên tiếp.',
-    origin: 'Store Olive Young Seoul, Hàn Quốc',
-    rating: 4.9
-  },
-  'A000000159495': {
-    name: 'Nước hoa hồng làm dịu da Anua Heartleaf 77% Soothing Toner 250ml',
-    nameKr: '아누아 어성초 77% 수딩 토너 250ml',
-    brand: 'Anua',
-    brandKr: '아누아',
-    category: 'skincare',
-    foreignPrice: 28000,
-    productImage: 'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80',
-    description: 'Toner chứa 77% chiết xuất lá rau diếp cá thu hoạch tại Hàn Quốc.',
-    origin: 'Store Olive Young Seoul, Hàn Quốc',
-    rating: 4.8
-  },
-  'A000000146950': {
-    name: 'Tinh chất rau má phục hồi da Madagascar Centella Ampoule 100ml',
-    nameKr: '스킨1004 마다가스카르 센텔라 앰플 100ml',
-    brand: 'Skin1004',
-    brandKr: '스킨1004',
-    category: 'skincare',
-    foreignPrice: 22000,
-    productImage: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80',
-    description: '100% chiết xuất rau má tinh khiết từ Madagascar.',
+    foreignPrice: 32500,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/item/2026/04/02/cd5_03103749.png?RS=100x0&QT=100&SF=webp&sharpen=1x0.5',
+    description: 'Kem dưỡng phục hồi hàng rào da siêu dưỡng ẩm Layerlab Panthenol Intensive Cream Plus 60ml — bán chạy Olive Young Korea.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
   },
@@ -113,27 +77,15 @@ const KNOWN_KOREAN_GOODS_DB = {
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
   },
-  'A000000221201': {
-    name: 'Viên uống vitamin tổng hợp Hàn Quốc Olive Young Care Plus',
-    nameKr: '올리브영 케어플러스 멀티비타민',
-    brand: 'Olive Young Care Plus',
-    brandKr: '올리브영 케어플러스',
-    category: 'health',
-    foreignPrice: 22000,
-    productImage: '/product-images/mediheal-mask-10plus1.png',
-    description: 'Thực phẩm chức năng bổ sung vitamin từ Hàn Quốc. Admin cần kiểm tra ảnh nếu dùng cho sản phẩm thực tế.',
-    origin: 'Store Olive Young Seoul, Hàn Quốc',
-    rating: 4.8
-  },
   'A000000259615': {
-    name: 'Dầu gội Aurara X The Wish Hair Market 460g / Dầu xả 200ml',
-    nameKr: '오로라 X 더 위시 헤어 마켓 (샴푸 460g / 트리트먼트 200ml)',
+    name: 'Bộ chăm sóc tóc Orara X The Wish Hair Market (Dầu gội 460g / Dầu xả 200ml)',
+    nameKr: '오라라 X 더위시 헤어마켓 (샴푸 460g / 트리트먼트 200ml)',
     brand: 'Orara',
-    brandKr: '오로라',
+    brandKr: '오라라',
     category: 'haircare',
     foreignPrice: 27000,
-    productImage: '/product-images/orara-hair-market.png',
-    description: 'Bộ chăm sóc tóc Orara X The Wish Hair Market từ Olive Young Korea, gồm dầu gội 460g hoặc dầu xả 200ml.',
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025961514ko.png?l=ko&QT=100&SF=webp&sharpen=1x0.5',
+    description: 'Bộ chăm sóc tóc Orara X The Wish Hair Market từ Olive Young Korea, gồm dầu gội 460g hoặc dầu xả 200ml. Giá gốc 34.000₩, giảm còn 27.000₩.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 5
   }

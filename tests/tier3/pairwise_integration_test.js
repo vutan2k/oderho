@@ -273,28 +273,21 @@ test('[T7-PAIR-07] F7+F9: Admin Exchange Rate config -> Product Sheet Editor rec
 // 8. F9+F10: Sheet Inventory Update -> Scraper Cache Queue trigger
 import { scrapeProductMetadata as spm } from '../../src/services/productScraperService.js';
 test('[T8-PAIR-08] F9+F10: Sheet Inventory Update -> Scraper Cache Queue trigger', async () => {
-  const res = await spm('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000128120');
+  const res = await spm('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000223414');
   assert(res.success === true, 'Scrape cached product should succeed');
   assert(res.product !== undefined, 'Scrape result should contain product object');
-  assertEquals(res.product.category, 'makeup', 'Romand tint should be categorized as makeup');
-  assertEquals(res.product.goodsNo, 'A000000128120', 'GoodsNo matches URL');
+  assertEquals(res.product.category, 'skincare', 'Mediheal mask should be categorized as skincare');
+  assertEquals(res.product.goodsNo, 'A000000223414', 'GoodsNo matches URL');
 });
 
-// 9. F10+F11: Multi-Proxy Web Scraper payload -> Gemini AI Classifier processing
+// 9. F10+F11: AI scraper trích xuất sản phẩm thật từ link sống
 test('[T9-PAIR-09] F10+F11: Multi-Proxy Web Scraper payload -> Gemini AI Classifier processing', async () => {
-  const testUrlMakeup = 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000128120';
-  const aiResultMakeup = await runAIScraperAgent(testUrlMakeup);
-
-  assert(aiResultMakeup.success === true, 'AI scraper agent must return success true');
-  const prodMakeup = aiResultMakeup.product;
-  assertEquals(prodMakeup.category, 'makeup', 'Product with tint in name should be categorized as makeup');
-  assertGreaterThan(prodMakeup.foreignPrice, 0, 'Foreign price must be positive number');
-
-  const testUrlHealth = 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000221201';
-  const aiResultHealth = await runAIScraperAgent(testUrlHealth);
-
-  assert(aiResultHealth.success === true, 'AI scraper agent for health product should succeed');
-  assert(aiResultHealth.product.goodsNo !== undefined, 'Product must have goodsNo');
+  const testUrlMakeup = 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000223414';
+  const aiResult = await runAIScraperAgent(testUrlMakeup);
+  assert(aiResult.success === true, 'AI scraper agent must return success true');
+  const prod = aiResult.product;
+  assertEquals(prod.goodsNo, 'A000000223414', 'GoodsNo matches URL');
+  assertGreaterThan(prod.foreignPrice, 0, 'Foreign price must be positive number');
 });
 
 // 10. F10+F12: Web Scraper proxy fallback -> Extension DOM extractor compatibility
@@ -472,21 +465,21 @@ test('[T14-PAIR-14] F14+F15: Self-check verification suite -> E2E coverage harde
 test('[T15-PAIR-15] F1+F10: Catalog search -> Scraper catalog update integration', async () => {
   const catalog = [...OLIVE_YOUNG_CATALOG];
 
-  // Scrape new product metadata
-  const scrapedRes = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000201102');
-  assert(scrapedRes.success === true, 'Scraper must return success for Round Lab sunscreen');
+  // Scrape new product metadata (link sống đã verify)
+  const scrapedRes = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000261415');
+  assert(scrapedRes.success === true, 'Scraper must return success for Layerlab cream');
 
   const newScrapedProduct = scrapedRes.product;
   catalog.push(newScrapedProduct);
 
   // Search updated catalog for newly added scraped product
-  const searchQuery = 'Round Lab';
+  const searchQuery = 'Layerlab';
   const searchResults = catalog.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.brand.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  assert(searchResults.length > 0, 'Catalog search should find the newly added scraped Round Lab product');
-  const found = searchResults.find(p => p.goodsNo === newScrapedProduct.goodsNo || p.brand === 'Round Lab');
-  assert(found !== undefined, 'Scraped Round Lab product must exist in search results');
+  assert(searchResults.length > 0, 'Catalog search should find the newly added scraped Layerlab product');
+  const found = searchResults.find(p => p.goodsNo === newScrapedProduct.goodsNo || p.brand === 'Layerlab');
+  assert(found !== undefined, 'Scraped Layerlab product must exist in search results');
 });

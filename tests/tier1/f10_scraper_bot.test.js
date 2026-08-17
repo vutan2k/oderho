@@ -15,7 +15,7 @@ test('[F10-1] Olive Young OpenGraph metadata scraping cache lookup', async () =>
   assert(result.success, 'Scrape result should be successful');
   assert(result.product !== undefined, 'Product object must exist');
   assertEquals(result.product.goodsNo, 'A000000261415', 'GoodsNo must match A000000261415');
-  assertEquals(result.product.brand, 'Sungboon Editor', 'Brand should be Sungboon Editor');
+  assertEquals(result.product.brand, 'Layerlab', 'Brand should be Layerlab');
 });
 
 test('[F10-2] Allorigins proxy URL endpoint construction & fallback', () => {
@@ -70,8 +70,8 @@ test('[F10-5] 30-min auto-crawler bot queue processing & execution run', async (
   assertEquals(state.isRunning, true, 'Bot should be running');
 
   // Test single scrape execution using productScraperService
-  const targetUrl = 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000185934';
+  const targetUrl = 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000223414';
   const scrapeRes = await scrapeProductMetadata(targetUrl);
   assert(scrapeRes.success, 'Scrape execution for bot queue candidate succeeds');
-  assertEquals(scrapeRes.product.brand, 'Torriden', 'Bot candidate product brand matches Torriden');
+  assertEquals(scrapeRes.product.brand, 'Mediheal', 'Bot candidate product brand matches Mediheal');
 });
