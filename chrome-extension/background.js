@@ -77,20 +77,25 @@ ${rawData.fullText}`;
           if (numMatch) domPrice = parseInt(numMatch[0]);
         }
 
+        // Tập trung hình ảnh: Kết hợp Album sản phẩm + Ảnh đánh giá từ khách hàng
+        const allCombinedImages = Array.from(new Set([
+          ...(rawData.images || [rawData.image || '']),
+          ...(rawData.photoReviews || [])
+        ])).filter(url => url && url.startsWith('http'));
+
         const productData = {
           name: aiData.name || title || 'Sản phẩm Olive Young',
           nameKr: aiData.nameKr || title,
           price: parseInt(aiData.price) || domPrice || 0,
-          image: rawData.image || '',
-          images: rawData.images || [rawData.image || ''],
+          image: rawData.image || allCombinedImages[0] || '',
+          images: allCombinedImages.length > 0 ? allCombinedImages : [rawData.image || ''],
           brand: aiData.brand || brandFallback,
           url: rawData.url,
           category: aiData.category || 'skincare',
           description: aiData.description || 'Sản phẩm chính hãng nội địa Hàn Quốc.',
           usage: aiData.usage || 'Xem chi tiết trên bao bì sản phẩm.',
           rating: aiData.rating || 4.9,
-          reviewsCount: aiData.reviewsCount || (rawData.reviews ? rawData.reviews.length : 120),
-          reviews: rawData.reviews || []
+          reviewsCount: aiData.reviewsCount || 150
         };
 
         const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));

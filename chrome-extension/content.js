@@ -1,5 +1,6 @@
-// content.js - Chạy trên trang Olive Young (Version 3.5 - 100 Reviews + Review Photos)
+// content.js - Chạy trên trang Olive Young (Version 3.6 - Visual Product & Photo Reviews Focus)
 
+// Thu thập Album Ảnh Sản Phẩm chính
 const pickProductImages = () => {
   const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/);
   const goodsNo = goodsNoMatch ? goodsNoMatch[1] : '';
@@ -35,7 +36,7 @@ const pickProductImages = () => {
     const isThumbnail = /thumbnails/i.test(src);
     const isMatchGoodsNo = goodsNo && src.includes(goodsNo);
 
-    if (isThumbnail || isMatchGoodsNo || (width >= 300 && height >= 300)) {
+    if (isThumbnail || isMatchGoodsNo || (width >= 280 && height >= 280)) {
       candidateUrls.push(src);
     }
   });
@@ -44,7 +45,7 @@ const pickProductImages = () => {
     return url.replace(/["')\]]/g, '').trim();
   }).filter(url => url.startsWith('http'));
 
-  return uniqueUrls.length > 0 ? uniqueUrls.slice(0, 5) : [ogImage || mainImgSrc || ''];
+  return uniqueUrls.length > 0 ? uniqueUrls.slice(0, 10) : [ogImage || mainImgSrc || ''];
 };
 
 const pickProductImage = () => {
@@ -52,37 +53,22 @@ const pickProductImage = () => {
   return images[0] || document.querySelector('meta[property="og:image"]')?.content || '';
 };
 
-// Thu thập tối đa 100 Đánh Giá + Ảnh thực tế từ người mua trên Olive Young
-const extractReviewsFromDOM = () => {
-  const reviewNodes = Array.from(document.querySelectorAll('.gReviewList > li, .review_list > li, [class*=review_item], #gdasList > li, .review_cont') || []);
-  const reviews = [];
+// Thu thập toàn bộ Thư Viện Ảnh Chụp Thật từ Khách Hàng trên Olive Young
+const extractPhotoReviewsFromDOM = () => {
+  const reviewImgNodes = Array.from(document.querySelectorAll('.gReviewList img, .review_list img, #gdasList img, [class*=review] img, .thumbs img') || []);
+  const photoUrls = [];
 
-  reviewNodes.slice(0, 100).forEach((node, i) => {
-    const user = node.querySelector('.user_id, .id, [class*=user], .name')?.textContent?.trim() || `Khách hàng Hàn Quốc ${i + 1}`;
-    const scoreText = node.querySelector('.point, .score, [class*=rating], .point_box')?.textContent?.trim() || '5';
-    const content = node.querySelector('.txt_inner, .review_cont, [class*=text], .review_text')?.textContent?.trim() || '';
-    const date = node.querySelector('.date, [class*=date]')?.textContent?.trim() || 'Vừa đánh giá';
+  reviewImgNodes.forEach((img) => {
+    const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
+    if (!src || !src.startsWith('http')) return;
     
-    // Thu thập tất cả ảnh đính kèm trong review
-    const imgNodes = Array.from(node.querySelectorAll('img') || []);
-    const reviewImages = imgNodes
-      .map(img => img.currentSrc || img.src || img.getAttribute('data-src') || '')
-      .filter(src => src && src.startsWith('http') && !/icon|logo|avatar|star|thumb_default/i.test(src));
-
-    if (content && content.length > 3) {
-      reviews.push({
-        id: `rev-${Date.now()}-${i}`,
-        user,
-        rating: parseInt(scoreText) || 5,
-        content,
-        date,
-        images: reviewImages,
-        image: reviewImages[0] || ''
-      });
+    // Loại bỏ icon, avatar, logo, star
+    if (!/icon|logo|avatar|star|thumb_default|blank|loading/i.test(src)) {
+      photoUrls.push(src.replace(/["')\]]/g, '').trim());
     }
   });
 
-  return reviews;
+  return Array.from(new Set(photoUrls)).slice(0, 30);
 };
 
 const getText = (selector) => document.querySelector(selector)?.textContent?.trim() || '';
@@ -90,7 +76,7 @@ const getText = (selector) => document.querySelector(selector)?.textContent?.tri
 const showMiniToast = (text, type = 'info') => {
   document.getElementById('tavy-mini-toast')?.remove();
   const bg = type === 'success' ? '#059669' : type === 'error' ? '#DC2626' : '#1E293B';
-  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '🤖';
+  const icon = type === 'success' ? '📸' : type === 'error' ? '❌' : '🤖';
   const html = `
     <div id="tavy-mini-toast" style="
       position: fixed;
@@ -133,17 +119,19 @@ const showMiniToast = (text, type = 'info') => {
 chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
   if (request.action === "SCRAPE_PRODUCT") {
     try {
-      showMiniToast('AI đang quét dữ liệu & 100+ bình luận thật...', 'info');
+      showMiniToast('Đang cào Album Ảnh Sản Phẩm & Ảnh Thực Tế...', 'info');
 
       let fullText = document.body.innerText || '';
-      if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
+      if (fullText.length > 15000) fullText = fullText.substring(0, 15000);
 
-      const images = pickProductImages();
+      const productImages = pickProductImages();
+      const photoReviews = extractPhotoReviewsFromDOM();
+
       const rawData = {
         fullText,
-        image: images[0] || '',
-        images: images,
-        reviews: extractReviewsFromDOM(),
+        image: productImages[0] || '',
+        images: productImages.length > 0 ? productImages : [pickProductImage()],
+        photoReviews: photoReviews,
         url: window.location.href,
         title: document.title,
         brandText: getText('.prd_brand, .brand, .brand_name, [class*=brand]'),
@@ -171,7 +159,7 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
           showMiniToast('Chưa cài API Key! Bấm icon TAVY > Cài đặt API Key', 'error');
         } else {
           const name = response?.name ? `"${response.name.slice(0, 28)}..."` : 'Sản phẩm';
-          showMiniToast(`Đã thêm ${name} + Đánh giá vào chờ duyệt!`, 'success');
+          showMiniToast(`Đã thêm ${name} + Album Ảnh vào chờ duyệt!`, 'success');
         }
       });
     } catch (error) {
