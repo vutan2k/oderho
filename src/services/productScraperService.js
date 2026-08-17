@@ -100,6 +100,18 @@ const KNOWN_KOREAN_GOODS_DB = {
     description: 'Cushion dạng lưới che phủ hoàn hảo căng bóng chuẩn Hàn.',
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
+  },
+  'A000000223414': {
+    name: 'Gói mặt nạ thiết yếu Mediheal 10+1 (Teatree / Madecassoside / Watermide)',
+    nameKr: '메디힐 마스크팩 10+1 기획 (티트리/마데카소사이드/워터마이드)',
+    brand: 'Mediheal',
+    brandKr: '메디힐',
+    category: 'skincare',
+    foreignPrice: 10000,
+    productImage: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80',
+    description: 'Mặt nạ dưỡng da quốc dân Mediheal TOP 1 Olive Young 15 năm liên tiếp.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9
   }
 };
 

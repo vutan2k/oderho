@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { OLIVE_YOUNG_CATALOG } from '../data/catalog';
 import { AppContext } from './AppContext';
 import {
@@ -14,7 +14,7 @@ import {
   deleteProductFromDB,
   deleteOrderFromDB,
 } from '../services/dbService';
-import { auth, db, loginWithGoogle, logoutGoogle, checkGoogleRedirectResult } from '../firebase';
+import { auth, db, loginWithGoogle, checkGoogleRedirectResult } from '../firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -23,7 +23,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const defaultRates = {
   USD: { code: 'USD', name: 'Đô la Mỹ', symbol: '$', rate: 25500, shippingFee: 230000 },
@@ -50,12 +50,6 @@ const initialMockOrders = [
     createdAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString(),
     quote: null,
   },
-  // Additional mock orders can be added here
-];
-
-const initialMockUsers = [
-  { name: 'Nguyễn Thị Lan', email: 'lan@gmail.com', phone: '0912345678', address: '123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh' },
-  { name: 'Trần Minh Anh', email: 'anh@gmail.com', phone: '0987654321', address: '456 Phố Huế, Hai Bà Trưng, Hà Nội' },
 ];
 
 export const AppProvider = ({ children }) => {
@@ -217,16 +211,32 @@ export const AppProvider = ({ children }) => {
     return res;
   };
 
-  // ----- Bot & Cart State -----
-  const [botIsRunning, setBotIsRunning] = useState(() => localStorage.getItem('tavy_bot_is_running') === 'true');
+  // ----- Pending Products State -----
   const [pendingProducts, setPendingProducts] = useState(() => {
     const saved = localStorage.getItem('tavy_pending_products');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const toggleBot = (enabled) => {
-    setBotIsRunning(enabled);
-    localStorage.setItem('tavy_bot_is_running', enabled ? 'true' : 'false');
+  useEffect(() => {
+    try {
+      localStorage.setItem('tavy_pending_products', JSON.stringify(pendingProducts));
+    } catch {}
+  }, [pendingProducts]);
+
+  const addPendingProduct = (product) => {
+    if (!product) return;
+    const cleanProduct = {
+      ...product,
+      goodsNo: product.goodsNo || `SP-${Date.now()}`
+    };
+    setPendingProducts(prev => {
+      const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
+      return [cleanProduct, ...filtered];
+    });
+  };
+
+  const updatePendingProduct = (goodsNo, updates) => {
+    setPendingProducts(prev => prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p));
   };
 
   const addProduct = (product) => {
@@ -241,7 +251,7 @@ export const AppProvider = ({ children }) => {
       const updated = [cleanProduct, ...filtered];
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-      } catch (e) {}
+      } catch {}
       return updated;
     });
 
@@ -253,7 +263,7 @@ export const AppProvider = ({ children }) => {
       const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-      } catch (e) {}
+      } catch {}
       return updated;
     });
   };
@@ -263,7 +273,7 @@ export const AppProvider = ({ children }) => {
       const updated = prev.filter(p => p.goodsNo !== goodsNo);
       try {
         localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
-      } catch (e) {}
+      } catch {}
       return updated;
     });
 
@@ -447,11 +457,10 @@ export const AppProvider = ({ children }) => {
     oliveYoungCatalog: publishedProducts,
     publishToWeb,
     revertFromWeb,
-    botIsRunning,
-    setBotIsRunning,
-    toggleBot,
     pendingProducts,
     setPendingProducts,
+    addPendingProduct,
+    updatePendingProduct,
     approvePendingProduct,
     approveSelectedPendingProducts,
     approveAllPendingProducts,
