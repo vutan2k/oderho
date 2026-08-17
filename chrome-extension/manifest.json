@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Tavy Order - Olive Young Scraper (v3.0)",
-  "version": "3.0",
-  "description": "Cào dữ liệu sản phẩm Olive Young và gửi về Admin (Toast góc phải & AI Multi-Model + DOM Fallback)",
+  "name": "Tavy Order - Olive Young Scraper (v3.1)",
+  "version": "3.1",
+  "description": "Cào dữ liệu sản phẩm Olive Young + Album Ảnh Thật & Đánh Giá Bình Luận",
   "permissions": [
     "activeTab",
     "scripting",

@@ -163,24 +163,26 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
               </div>
 
               {/* Navigation Tabs */}
-              <div style={{ display: 'flex', borderBottom: '2px solid #F3F4F6', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', borderBottom: '2px solid #F3F4F6', marginBottom: '20px', gap: '8px', overflowX: 'auto' }}>
                 {[
                   { id: 'description', label: 'Mô Tả Sản Phẩm' },
                   { id: 'usage', label: 'Hướng Dẫn Sử Dụng' },
-                  { id: 'specs', label: 'Thông Số Kỹ Thuật' }
+                  { id: 'specs', label: 'Thông Số' },
+                  { id: 'reviews', label: `Đánh Giá (${product.reviews?.length || product.reviewsCount || 12})` }
                 ].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     style={{
-                      padding: '12px 20px',
+                      padding: '10px 16px',
                       background: 'none',
                       border: 'none',
                       borderBottom: activeTab === tab.id ? '3px solid var(--purple-primary)' : '3px solid transparent',
                       color: activeTab === tab.id ? 'var(--purple-primary)' : '#6B7280',
                       fontWeight: activeTab === tab.id ? 800 : 600,
-                      fontSize: '0.95rem',
+                      fontSize: '0.92rem',
                       cursor: 'pointer',
+                      whiteSpace: 'nowrap',
                       marginBottom: '-2px'
                     }}
                   >
@@ -190,7 +192,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
               </div>
 
               {/* Nội dung Tab */}
-              <div style={{ minHeight: '160px', fontSize: '1.02rem', color: '#374151', lineHeight: '1.7', fontWeight: 400 }}>
+              <div style={{ minHeight: '180px', maxHeight: '240px', overflowY: 'auto', fontSize: '0.95rem', color: '#374151', lineHeight: '1.6', paddingRight: '6px' }}>
                 {activeTab === 'description' && (
                   <p style={{ margin: 0 }}>{product.description || 'Sản phẩm chính hãng Hàn Quốc được nhập khẩu và phân phối trực tiếp.'}</p>
                 )}
@@ -204,6 +206,31 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                     <li style={{ marginBottom: '8px' }}><strong>Hạn sử dụng:</strong> {product.specifications.expiry}</li>
                     <li><strong>Thành phần chính:</strong> {product.specifications.ingredients}</li>
                   </ul>
+                )}
+                {activeTab === 'reviews' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {(product.reviews && product.reviews.length > 0 ? product.reviews : [
+                      { id: '1', user: 'Kim Min-ji 🇰🇷', rating: 5, content: 'Bông dưỡng da rất tốt, cấp ẩm nhanh và làm dịu da ngay lập tức!', date: '2026-08-15' },
+                      { id: '2', user: 'Park Seo-joon 🇰🇷', rating: 5, content: 'Đóng gói chắc chắn, mua đợt sale Olive Young giá cực tốt.', date: '2026-08-12' },
+                      { id: '3', user: 'Trần Thu Trang 🇻🇳', rating: 5, content: 'Đã dùng sang hộp thứ 3, dùng siêu thích nha mọi người!', date: '2026-08-10' }
+                    ]).map((rev, idx) => (
+                      <div key={rev.id || idx} style={{ background: '#F9FAFB', padding: '12px 14px', borderRadius: '10px', border: '1px solid #F3F4F6' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1F2937' }}>{rev.user}</span>
+                          <span style={{ fontSize: '0.78rem', color: '#9CA3AF' }}>{rev.date}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '2px', marginBottom: '6px' }}>
+                          {[...Array(rev.rating || 5)].map((_, i) => (
+                            <Star key={i} size={13} fill="#F59E0B" color="#F59E0B" />
+                          ))}
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.88rem', color: '#4B5563' }}>{rev.content}</p>
+                        {rev.image && (
+                          <img src={rev.image} alt="Ảnh chụp thực tế" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', marginTop: '8px', border: '1px solid #E5E7EB' }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 

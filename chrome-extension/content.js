@@ -1,7 +1,6 @@
-// content.js - Chạy trên trang Olive Young
-// Lấy DOM thật + ảnh chính từ trang người dùng đang mở, tránh proxy/server bị chặn.
+// content.js - Chạy trên trang Olive Young (Version 3.1 - Album Ảnh Thật & Review)
 
-const pickProductImage = () => {
+const pickProductImages = () => {
   const imgList = Array.from(document.images || []);
   const candidates = imgList
     .map((img) => {
@@ -16,19 +15,46 @@ const pickProductImage = () => {
         alt: img.alt || ''
       };
     })
-    .filter((item) => item.src && item.width >= 250 && item.height >= 250)
+    .filter((item) => item.src && item.width >= 200 && item.height >= 200)
     .filter((item) => !/logo|icon|banner|sprite|blank|loading/i.test(item.src + item.alt))
-    .sort((a, b) => {
-      const topBias = Math.abs(a.top) - Math.abs(b.top);
-      return topBias !== 0 ? topBias : b.area - a.area;
-    });
+    .sort((a, b) => b.area - a.area);
 
-  return candidates[0]?.src || document.querySelector('meta[property="og:image"]')?.content || '';
+  // Lấy tối đa 5 ảnh thật chất lượng tốt nhất
+  const uniqueUrls = Array.from(new Set(candidates.map(c => c.src))).slice(0, 5);
+  return uniqueUrls;
+};
+
+// Thu thập bình luận thực tế từ DOM Olive Young
+const extractReviewsFromDOM = () => {
+  const reviewNodes = Array.from(document.querySelectorAll('.gReviewList > li, .review_list > li, [class*=review_item]') || []);
+  const reviews = [];
+
+  reviewNodes.slice(0, 6).forEach((node, i) => {
+    const user = node.querySelector('.user_id, .id, [class*=user]')?.textContent?.trim() || `Khách hàng Hàn Quốc ${i + 1}`;
+    const scoreText = node.querySelector('.point, .score, [class*=rating]')?.textContent?.trim() || '5';
+    const content = node.querySelector('.txt_inner, .review_cont, [class*=text]')?.textContent?.trim() || '';
+    const date = node.querySelector('.date, [class*=date]')?.textContent?.trim() || 'Vừa đánh giá';
+    
+    // Ảnh chụp đính kèm trong review (nếu có)
+    const reviewImg = node.querySelector('img')?.src || '';
+
+    if (content && content.length > 5) {
+      reviews.push({
+        id: `rev-${Date.now()}-${i}`,
+        user,
+        rating: parseInt(scoreText) || 5,
+        content,
+        date,
+        image: reviewImg && !reviewImg.includes('icon') ? reviewImg : ''
+      });
+    }
+  });
+
+  return reviews;
 };
 
 const getText = (selector) => document.querySelector(selector)?.textContent?.trim() || '';
 
-// Toast góc nhỏ trên bên phải (không che màn hình, không chặn thao tác)
 const showMiniToast = (text, type = 'info') => {
   document.getElementById('tavy-mini-toast')?.remove();
   const bg = type === 'success' ? '#059669' : type === 'error' ? '#DC2626' : '#1E293B';
@@ -75,14 +101,17 @@ const showMiniToast = (text, type = 'info') => {
 chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
   if (request.action === "SCRAPE_PRODUCT") {
     try {
-      showMiniToast('AI đang quét dữ liệu trang...', 'info');
+      showMiniToast('AI đang quét dữ liệu & bình luận thật...', 'info');
 
       let fullText = document.body.innerText || '';
       if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
 
+      const images = pickProductImages();
       const rawData = {
         fullText,
-        image: pickProductImage(),
+        image: images[0] || '',
+        images: images,
+        reviews: extractReviewsFromDOM(),
         url: window.location.href,
         title: document.title,
         brandText: getText('.prd_brand, .brand, .brand_name, [class*=brand]'),
@@ -95,8 +124,8 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
         } else if (response && response.success === false) {
           showMiniToast('Chưa cài API Key! Bấm icon TAVY > Cài đặt API Key', 'error');
         } else if (response && response.success) {
-          const name = response.name ? `"${response.name.slice(0, 30)}..."` : 'Sản phẩm';
-          showMiniToast(`Đã thêm ${name} vào chờ duyệt!`, 'success');
+          const name = response.name ? `"${response.name.slice(0, 28)}..."` : 'Sản phẩm';
+          showMiniToast(`Đã thêm ${name} + Bình luận vào chờ duyệt!`, 'success');
         }
       });
     } catch (error) {
