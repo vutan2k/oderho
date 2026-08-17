@@ -15,8 +15,14 @@ import {
   RefreshCw, 
   FileText,
   TrendingUp,
-  Download
+  Download,
+  CreditCard,
+  CheckCircle,
+  XCircle,
+  Eye
 } from 'lucide-react';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function AdminDashboardPage() {
   const { 
@@ -35,7 +41,8 @@ export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const showToast = useToast();
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'orders' | 'products' | 'settings'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'orders' | 'products' | 'payments' | 'settings'
+  const [proofModal, setProofModal] = useState(null);
   const [krwRateInput, setKrwRateInput] = useState(rates?.KRW?.rate || 19.5);
   const [usdRateInput, setUsdRateInput] = useState(rates?.USD?.rate || 25500);
   const [serviceFeeInput, setServiceFeeInput] = useState(rates?.serviceFeePercent || 5);
@@ -224,12 +231,41 @@ export default function AdminDashboardPage() {
     if (showToast) showToast('Đã xuất báo cáo CSV thành công!', 'success');
   };
 
+  const unpaidOrders = orders.filter(o => o.paymentStatus === 'unpaid' || o.status === 'on_hold');
   const navItems = [
     { id: 'overview', label: 'Tổng quan', icon: BarChart3 },
     { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag, count: orders.length },
+    { id: 'payments', label: 'Thanh toán', icon: CreditCard, count: unpaidOrders.length },
     { id: 'products', label: 'Sản phẩm', icon: FileSpreadsheet },
     { id: 'settings', label: 'Cấu hình', icon: Settings },
   ];
+
+  const handleConfirmPayment = async (orderId) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        paymentStatus: 'paid',
+        status: 'paid',
+        paidAt: new Date().toISOString(),
+        updatedAt: serverTimestamp(),
+      });
+      showToast('✅ Đã xác nhận thanh toán đơn ' + orderId, 'success');
+    } catch (err) {
+      showToast('❌ Lỗi: ' + err.message, 'error');
+    }
+  };
+
+  const handleRejectPayment = async (orderId) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        paymentStatus: 'failed',
+        status: 'on_hold',
+        updatedAt: serverTimestamp(),
+      });
+      showToast('⚠️ Đã từ chối thanh toán đơn ' + orderId, 'warning');
+    } catch (err) {
+      showToast('❌ Lỗi: ' + err.message, 'error');
+    }
+  };
 
   return (
     <div className="admin-container">
@@ -318,12 +354,14 @@ export default function AdminDashboardPage() {
               {activeTab === 'overview' && 'Tổng quan hệ thống'}
               {activeTab === 'orders' && 'Quản lý đơn hàng'}
               {activeTab === 'products' && 'Quản lý sản phẩm'}
+              {activeTab === 'payments' && 'Quản lý thanh toán'}
               {activeTab === 'settings' && 'Cấu hình hệ thống'}
             </h2>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '4px' }}>
               {activeTab === 'overview' && 'Xem hiệu suất bán hàng, đơn hàng mới & điều khiển bot tự động.'}
               {activeTab === 'orders' && 'Xem trạng thái, cập nhật mã vận đơn & báo giá khách hàng.'}
               {activeTab === 'products' && 'Quản lý danh sách sản phẩm hiển thị trên website.'}
+              {activeTab === 'payments' && 'Xem trạng thái thanh toán, xác nhận chuyển khoản & quản lý đơn chờ.'}
               {activeTab === 'settings' && 'Cài đặt tỷ giá hối đoái nước ngoại & đồng bộ hóa dữ liệu.'}
             </p>
           </div>
@@ -712,6 +750,110 @@ export default function AdminDashboardPage() {
         {/* TAB 3: PRODUCTS */}
         {activeTab === 'products' && (
           <AdminProductManager />
+        )}
+
+        {/* TAB: PAYMENTS */}
+        {activeTab === 'payments' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Summary cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div style={{ background: '#FFF', padding: '20px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#F59E0B' }}>{orders.filter(o => o.paymentStatus === 'unpaid').length}</div>
+                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Chờ thanh toán</div>
+              </div>
+              <div style={{ background: '#FFF', padding: '20px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#10B981' }}>{orders.filter(o => o.paymentStatus === 'paid').length}</div>
+                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Đã thanh toán</div>
+              </div>
+              <div style={{ background: '#FFF', padding: '20px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#EF4444' }}>{orders.filter(o => o.status === 'on_hold').length}</div>
+                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Tạm dừng (on_hold)</div>
+              </div>
+            </div>
+
+            {/* Orders table */}
+            <div style={{ background: '#FFF', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1a1a2e', margin: 0 }}>Danh sách đơn cần xử lý</h3>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                  <thead>
+                    <tr style={{ background: '#F9FAFB' }}>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Mã đơn</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Khách hàng</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Ngân hàng</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Thời hạn</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Trạng thái</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Bằng chứng</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center', color: '#6b7280', fontWeight: 600 }}>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.filter(o => o.paymentMethod).sort((a, b) => {
+                      const order = { unpaid: 0, on_hold: 1, paid: 2, failed: 3 };
+                      return (order[a.paymentStatus] || 0) - (order[b.paymentStatus] || 0);
+                    }).map(o => {
+                      const isExpired = o.paymentDue && new Date(o.paymentDue) < new Date();
+                      const statusColor = o.paymentStatus === 'paid' ? '#10B981' : o.status === 'on_hold' ? '#EF4444' : isExpired ? '#F59E0B' : '#3B82F6';
+                      const statusText = o.paymentStatus === 'paid' ? 'Đã TT' : o.status === 'on_hold' ? 'Tạm dừng' : isExpired ? 'Quá hạn' : 'Chờ TT';
+                      return (
+                        <tr key={o.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                          <td style={{ padding: '12px 16px', fontWeight: 600 }}>{o.id}</td>
+                          <td style={{ padding: '12px 16px' }}>{o.customerName || 'N/A'}</td>
+                          <td style={{ padding: '12px 16px' }}>{o.bankName || '-'}</td>
+                          <td style={{ padding: '12px 16px', fontSize: '0.82rem', color: isExpired ? '#EF4444' : '#374151' }}>
+                            {o.paymentDue ? new Date(o.paymentDue).toLocaleString('vi-VN') : '-'}
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 600, background: statusColor + '18', color: statusColor }}>{statusText}</span>
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            {o.paymentProofUrl ? (
+                              <button onClick={() => setProofModal(o.paymentProofUrl)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: '#3B82F6' }}>
+                                <Eye size={14} /> Xem
+                              </button>
+                            ) : (
+                              <span style={{ color: '#9ca3af', fontSize: '0.82rem' }}>Chưa có</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                            {o.paymentStatus !== 'paid' && (
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                <button onClick={() => handleConfirmPayment(o.id)} title="Xác nhận đã nhận tiền" style={{ background: '#10B981', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
+                                  <CheckCircle size={14} /> Xác nhận
+                                </button>
+                                <button onClick={() => handleRejectPayment(o.id)} title="Từ chối / Tạm dừng" style={{ background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
+                                  <XCircle size={14} /> Từ chối
+                                </button>
+                              </div>
+                            )}
+                            {o.paymentStatus === 'paid' && (
+                              <span style={{ color: '#10B981', fontWeight: 600, fontSize: '0.82rem' }}>✓ Hoàn tất</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {orders.filter(o => o.paymentMethod).length === 0 && (
+                      <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>Chưa có đơn nào có thông tin thanh toán</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Proof modal */}
+            {proofModal && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setProofModal(null)}>
+                <div style={{ background: '#FFF', borderRadius: '16px', padding: '24px', maxWidth: '520px', maxHeight: '80vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
+                  <h3 style={{ marginBottom: '16px', fontSize: '1.1rem', fontWeight: 700 }}>Bằng chứng chuyển khoản</h3>
+                  <img src={proofModal} alt="Payment proof" style={{ width: '100%', borderRadius: '8px' }} />
+                  <button onClick={() => setProofModal(null)} className="btn-outline" style={{ marginTop: '16px', width: '100%' }}>Đóng</button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* TAB 4: SETTINGS */}

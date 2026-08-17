@@ -66,6 +66,11 @@ export const createOrderInDB = async (orderData) => {
       ...orderData,
       id: orderId,
       status: orderData.status || 'pending',
+      paymentStatus: 'unpaid',
+      paymentMethod: orderData.paymentMethod || null,
+      bankAccount: orderData.bankAccount || null,
+      bankName: orderData.bankName || null,
+      paymentDue: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };

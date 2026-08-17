@@ -33,20 +33,28 @@ export default function CartPage() {
   const subTotalKrw = cart.reduce((sum, item) => sum + (item.foreignPrice * item.qty), 0);
   const subTotalVnd = subTotalKrw * krwRate;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (cart.length === 0) return;
+
+    const country = 'KRW';
+    const bankInfo = country === 'KRW'
+      ? { bankName: '우라은행', accountNumber: '1002959863658' }
+      : { bankName: 'MBbank', accountNumber: '34966778899' };
 
     const orderData = {
       customerName: name,
       customerPhone: phone,
       customerAddress: address,
       customerNote: note,
-      country: 'KRW',
-      items: cart, // Lưu toàn bộ giỏ hàng
+      country,
+      items: cart,
+      paymentMethod: country === 'KRW' ? 'bank_kr' : 'bank_vn',
+      bankAccount: bankInfo.accountNumber,
+      bankName: bankInfo.bankName,
     };
 
-    createOrder(orderData);
+    const res = await createOrder(orderData);
     clearCart();
     
     confetti({
@@ -56,7 +64,9 @@ export default function CartPage() {
       colors: ['#7A4B9E', '#FFD1DC', '#F4EAD3'],
     });
 
-    setSuccess(true);
+    // Navigate tới trang thanh toán
+    const newOrderId = res?.id || orderData.id || 'unknown';
+    navigate(`/payment/${newOrderId}`);
   };
   const handleCheckout = async () => {
     if (cart.length === 0) return;

@@ -17,6 +17,7 @@ const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const CartPage = lazy(() => import('./pages/CartPage'));
+const PaymentPage = lazy(() => import('./pages/PaymentPage'));
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
                 <Route path="/login" element={<><Navbar /><LoginPage /></>} />
                 <Route path="/orders" element={<><Navbar /><OrdersPage /></>} />
                 <Route path="/profile" element={<><Navbar /><UserProfilePage /></>} />
+                <Route path="/payment/:orderId" element={<><Navbar /><PaymentPage /></>} />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                 <Route path="*" element={<NotFoundPage />} />
