@@ -220,15 +220,17 @@ export const AppProvider = ({ children }) => {
       if (Array.isArray(realtimeProducts) && realtimeProducts.length > 0) {
         const clean = sanitizeProducts(realtimeProducts);
         if (clean.length > 0) {
-          setProducts(clean);
-          setPublishedProducts(clean);
-          localStorage.setItem('tavy_published_products', JSON.stringify(clean));
-          localStorage.setItem('tavy_custom_products', JSON.stringify(clean));
+          const inventory = clean.filter(p => p.status !== 'pending');
+          const published = clean.filter(p => p.isPublished !== false && p.status !== 'pending');
+          setProducts(inventory.length > 0 ? inventory : clean);
+          setPublishedProducts(published.length > 0 ? published : clean);
+          localStorage.setItem('tavy_published_products', JSON.stringify(published));
+          localStorage.setItem('tavy_custom_products', JSON.stringify(inventory));
         }
       } else {
         // Tự động đẩy catalog gốc 100% sang Firestore nếu Firestore trống
         OLIVE_YOUNG_CATALOG.forEach(item => {
-          saveProductToDB(item);
+          saveProductToDB({ ...item, isPublished: true, status: 'published' });
         });
       }
     });
@@ -236,12 +238,13 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   const publishToWeb = async () => {
-    setPublishedProducts([...products]);
-    localStorage.setItem('tavy_published_products', JSON.stringify(products));
+    const publishedList = products.map(p => ({ ...p, isPublished: true, status: 'published' }));
+    setPublishedProducts(publishedList);
+    localStorage.setItem('tavy_published_products', JSON.stringify(publishedList));
 
-    // Đồng bộ thời gian thực 100% sản phẩm lên Firebase Firestore
+    // Đồng bộ thời gian thực 100% sản phẩm chính thức lên Firebase Firestore
     try {
-      for (const item of products) {
+      for (const item of publishedList) {
         if (item && item.goodsNo) {
           await saveProductToDB(item);
         }
