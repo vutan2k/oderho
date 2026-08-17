@@ -247,6 +247,21 @@ export const AppProvider = ({ children }) => {
     });
   };
 
+  const removeFromCart = (goodsNo) => {
+    setCart((prev) => prev.filter((item) => (item.goodsNo || item.id) !== goodsNo));
+  };
+
+  const updateCartQty = (goodsNo, qty) => {
+    if (qty <= 0) return removeFromCart(goodsNo);
+    setCart((prev) =>
+      prev.map((item) => ((item.goodsNo || item.id) === goodsNo ? { ...item, qty } : item))
+    );
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
   // ----- Authentication Helper Functions -----
   const registerUser = async (email, password, name) => {
     try {
@@ -351,6 +366,9 @@ export const AppProvider = ({ children }) => {
     setPendingProducts,
     cart,
     addToCart,
+    removeFromCart,
+    updateCartQty,
+    clearCart,
     createOrder,
     deleteOrder,
     // DB service functions (exposed for other components)
