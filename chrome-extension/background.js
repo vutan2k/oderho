@@ -34,7 +34,7 @@ IMAGE_URL: ${rawData.image || ''}
 VĂN BẢN TRANG WEB:
 ${rawData.fullText}`;
 
-        // Danh sách model fallback — phòng khi model bị quá tải (high demand / 429 / 503)
+        // Danh sách model fallback — bất kỳ lỗi nào cũng thử model kế tiếp (overloaded / high demand / 429 / 503)
         const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
         let data = null;
         for (const model of MODELS) {
@@ -47,14 +47,9 @@ ${rawData.fullText}`;
             })
           });
           const d = await res.json();
-          // Thành công nếu có candidates; lỗi high-demand/429/503 thì thử model khác
+          // Thành công nếu có candidates; bất kỳ lỗi nào cũng thử model kế
           if (res.ok && d.candidates && d.candidates.length > 0) { data = d; break; }
-          const errMsg = d.error?.message || '';
-          if (errMsg.includes('high demand') || errMsg.includes('429') || errMsg.includes('503') || res.status === 429 || res.status === 503) {
-            continue;
-          }
-          data = d;
-          break;
+          continue;
         }
         let aiData = {};
         if (data && data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {

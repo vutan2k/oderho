@@ -41,7 +41,7 @@ Nội dung:
 ${markdown.slice(0, 15000)}`;
 
   try {
-    // Fallback model chain — phòng khi model quá tải (high demand / 429 / 503)
+    // Fallback model chain — bất kỳ lỗi nào cũng thử model kế tiếp
     const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
     let data = null;
     for (const model of MODELS) {
@@ -51,13 +51,10 @@ ${markdown.slice(0, 15000)}`;
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       });
       const d = await res.json();
+      // Thành công nếu có candidates; bất kỳ lỗi nào cũng thử model kế
       if (res.ok && d.candidates && d.candidates.length > 0) { data = d; break; }
-      const errMsg = d.error?.message || '';
-      if (errMsg.includes('high demand') || errMsg.includes('429') || errMsg.includes('503') || res.status === 429 || res.status === 503) {
-        continue;
-      }
-      data = d;
-      break;
+      // res.ok=false (429, 503, overloaded, quota...), hoặc d.error -> tiếp tục
+      continue;
     }
     if (!data || !data.candidates || !data.candidates[0]) return null;
     const text = data.candidates[0].content.parts[0].text || '';
