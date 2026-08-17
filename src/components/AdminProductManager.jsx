@@ -482,13 +482,39 @@ export default function AdminProductManager() {
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Giá Won (₩)</label>
                 <input type="number" value={editForm.foreignPrice || 0} onChange={e => handleEditChange('foreignPrice', e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                <div style={{ fontSize: '0.78rem', color: '#059669', marginTop: '4px', fontWeight: 600 }}>
+                  ≈ {((editForm.foreignPrice || 0) * 19.5).toLocaleString('vi-VN')} VNĐ
+                </div>
               </div>
             </div>
             
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Ảnh sản phẩm (URL)</label>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Ảnh đại diện sản phẩm (URL)</label>
               <input value={editForm.productImage || ''} onChange={e => handleEditChange('productImage', e.target.value)} style={{ ...styles.input, width: '100%' }} />
             </div>
+
+            {/* ALBUM ẢNH SẢN PHẨM & ẢNH ĐÁNH GIÁ (HIỂN THỊ ĐỦ NHƯ TRANG WEB) */}
+            {((editForm.images && editForm.images.length > 0) || (editForm.photoReviews && editForm.photoReviews.length > 0)) && (
+              <div style={{ marginBottom: '16px', background: '#F9FAFB', padding: '12px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151', marginBottom: '8px' }}>
+                  📸 Bộ sưu tập ảnh hiển thị trên Website ({((editForm.images || []).length + (editForm.photoReviews || []).length)} ảnh)
+                </div>
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
+                  {(editForm.images || []).map((imgUrl, i) => (
+                    <div key={`album-${i}`} style={{ position: 'relative', width: '56px', height: '56px', borderRadius: '6px', overflow: 'hidden', border: '2px solid #2563EB', flexShrink: 0 }}>
+                      <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, bg: 'rgba(0,0,0,0.6)', color: '#FFF', fontSize: '0.65rem', textAlign: 'center', fontWeight: 700, background: 'rgba(37,99,235,0.85)' }}>Album</span>
+                    </div>
+                  ))}
+                  {(editForm.photoReviews || []).map((rvUrl, j) => (
+                    <div key={`rv-${j}`} style={{ position: 'relative', width: '56px', height: '56px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #D1D5DB', flexShrink: 0 }}>
+                      <img src={rvUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, color: '#FFF', fontSize: '0.65rem', textAlign: 'center', fontWeight: 700, background: 'rgba(5,150,105,0.85)' }}>Review</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Mô tả sản phẩm</label>

@@ -171,32 +171,41 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
               </p>
 
               {/* KHU VỰC CHÍNH: BỘ SƯU TẬP LƯỚI ÁNH ĐÁNH GIÁ THỰC TẾ TỪ KHÁCH HÀNG */}
-              <div style={{ background: '#FAF5FF', padding: '14px', borderRadius: '16px', border: '1px solid #E9D5FF' }}>
-                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--purple-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Sparkles size={16} /> 📸 Đánh giá ({images.length})
-                </div>
+              {(() => {
+                const reviewPhotos = Array.from(new Set([
+                  ...(product?.photoReviews || []),
+                  ...images
+                ])).map(getHighResUrl).filter(Boolean);
 
-                {/* Lưới Ảnh Thực Tế 3 Cột Sắc Nét */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '230px', overflowY: 'auto', paddingRight: '4px' }}>
-                  {images.map((img, idx) => (
-                    <div 
-                      key={idx}
-                      onClick={() => setZoomImg(img)}
-                      style={{
-                        aspectRatio: '1 / 1',
-                        borderRadius: '10px',
-                        overflow: 'hidden',
-                        border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
-                        cursor: 'pointer',
-                        backgroundColor: '#FFF',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
-                      }}
-                    >
-                      <img src={img} alt={`Review photo ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                return (
+                  <div style={{ background: '#FAF5FF', padding: '14px', borderRadius: '16px', border: '1px solid #E9D5FF' }}>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--purple-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Sparkles size={16} /> 📸 Đánh giá ({reviewPhotos.length})
                     </div>
-                  ))}
-                </div>
-              </div>
+
+                    {/* Lưới Ảnh Thực Tế 3 Cột Sắc Nét */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '230px', overflowY: 'auto', paddingRight: '4px' }}>
+                      {reviewPhotos.map((img, idx) => (
+                        <div 
+                          key={idx}
+                          onClick={() => setZoomImg(img)}
+                          style={{
+                            aspectRatio: '1 / 1',
+                            borderRadius: '10px',
+                            overflow: 'hidden',
+                            border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
+                            cursor: 'pointer',
+                            backgroundColor: '#FFF',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+                          }}
+                        >
+                          <img src={img} alt={`Review photo ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Nút Thêm Vào Giỏ Hàng */}

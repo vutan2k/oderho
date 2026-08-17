@@ -1,13 +1,39 @@
-// background.js - Service Worker v3.2 (Timeout Guard & Resilient Processing)
+// background.js - Service Worker v3.9 (Robust Brand & Korean Price Parsing)
+
+const cleanTitle = (rawTitle) => {
+  if (!rawTitle) return '';
+  return rawTitle.replace(/\[[^\]]+\]/g, '').trim();
+};
+
+const extractCleanBrand = (rawData, aiBrand) => {
+  if (aiBrand && !/\[|\/|기획|단독|세일|특가|미백|TXA/i.test(aiBrand)) return aiBrand;
+  const rawBrand = rawData.brandText || '';
+  if (rawBrand && !/\[|\/|기획|단독|세일|특가|미백|TXA/i.test(rawBrand)) return rawBrand.trim();
+  
+  const titleWithoutBrackets = cleanTitle(rawData.title || '');
+  const titleWords = titleWithoutBrackets.split(/\s+/);
+  if (titleWords.length > 0 && titleWords[0].length >= 2) {
+    return titleWords[0].trim();
+  }
+  return 'Korea Brand';
+};
+
+const parseDomPrice = (priceStr) => {
+  if (!priceStr) return 0;
+  const cleanDigits = priceStr.replace(/[^0-9]/g, '');
+  if (cleanDigits) {
+    const val = parseInt(cleanDigits, 10);
+    if (val > 100) return val;
+  }
+  return 0;
+};
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "PROCESS_SCRAPED_DATA_AI") {
     const rawData = request.data;
 
-    // Async IIFE để xử lý an toàn 100%
     (async () => {
       try {
-        // Lấy API Key từ Storage qua Promise
         const result = await new Promise(resolve => chrome.storage.local.get(['geminiApiKey'], resolve));
         const apiKey = result?.geminiApiKey;
 
@@ -16,10 +42,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (apiKey) {
           const prompt = `Trích xuất dữ liệu sản phẩm Olive Young từ DOM thật sau thành JSON hợp lệ.
 Yêu cầu bắt buộc:
-- name: Tên sản phẩm đã dịch sang tiếng Việt, bỏ chữ khuyến mãi.
+- name: Tên sản phẩm đã dịch sang tiếng Việt, giữ chính xác tên sản phẩm, bỏ chữ khuyến mãi.
 - nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc. BẮT BUỘC lấy từ TITLE (phần trước "| 올리브영"), KHÔNG để trống.
-- price: Giá bán bằng Won, chỉ lấy số.
-- brand: Tên thương hiệu bằng tiếng Anh hoặc Việt (ví dụ: Mediheal, COSRX, Round Lab).
+- price: Giá bán thực tế bằng Won (KRW) (ví dụ 21000, 26800, chỉ trả về chữ số nguyên dương, KHÔNG dùng dấu chấm hay chia nhỏ).
+- brand: Tên thương hiệu thật sản phẩm (ví dụ: Celimax, Layerlab, Romand, Mediheal). Bỏ các tag như [잡티미백/TXA], [단독기획].
 - category: Chọn 1 trong: skincare, makeup, health, pharmacy, haircare, bodycare.
 - description: Mô tả công dụng sản phẩm bằng tiếng Việt.
 - usage: Hướng dẫn sử dụng nếu có.
@@ -39,7 +65,6 @@ ${rawData.fullText}`;
           
           for (const model of MODELS) {
             try {
-              // AbortController chống treo fetch quá 4 giây
               const controller = new AbortController();
               const timer = setTimeout(() => controller.abort(), 4000);
 
@@ -57,7 +82,7 @@ ${rawData.fullText}`;
                 let aiResultText = d.candidates[0].content.parts[0].text;
                 aiResultText = aiResultText.replace(/```json/g, '').replace(/```/g, '').trim();
                 aiData = JSON.parse(aiResultText);
-                break; // Thành công -> thoát vòng lặp
+                break;
               }
             } catch (e) {
               console.warn(`Model ${model} thất bại hoặc timeout (4s), thử model tiếp...`, e);
@@ -67,41 +92,50 @@ ${rawData.fullText}`;
         }
 
         // BÓC TÁCH FALLBACK TỪ DOM THẬT KHI AI THẤT BẠI/TIMEOUT/THIẾU KEY
-        const title = (rawData.title || '').split('|')[0].trim();
-        const bracketBrand = title.match(/^\[([^\]]{2,20})\]/);
-        const brandFallback = bracketBrand ? bracketBrand[1].trim() : (rawData.brandText || 'Korea Brand');
+        const titleRaw = (rawData.title || '').split('|')[0].trim();
+        const titleClean = cleanTitle(titleRaw);
+        const brandFallback = extractCleanBrand(rawData, aiData.brand);
+
+        const domPrice = parseDomPrice(rawData.priceText);
+        let parsedAiPrice = parseInt(aiData.price, 10) || 0;
         
-        let domPrice = 0;
-        if (rawData.priceText) {
-          const numMatch = rawData.priceText.replace(/,/g, '').match(/\d+/);
-          if (numMatch) domPrice = parseInt(numMatch[0]);
+        // Nếu aiData.price bị chia nhỏ kiểu 21 hay 26 (do dấu chấm), lấy domPrice
+        if (parsedAiPrice < 100 && domPrice > 100) {
+          parsedAiPrice = domPrice;
         }
 
+        const finalPrice = parsedAiPrice > 0 ? parsedAiPrice : (domPrice || 0);
+
         // Tập trung hình ảnh: Kết hợp Album sản phẩm + Ảnh đánh giá từ khách hàng
+        const productImages = rawData.images || (rawData.image ? [rawData.image] : []);
+        const photoReviews = rawData.photoReviews || [];
+
         const allCombinedImages = Array.from(new Set([
-          ...(rawData.images || [rawData.image || '']),
-          ...(rawData.photoReviews || [])
+          ...productImages,
+          ...photoReviews
         ])).filter(url => url && url.startsWith('http'));
 
         const productData = {
-          name: aiData.name || title || 'Sản phẩm Olive Young',
-          nameKr: aiData.nameKr || title,
-          price: parseInt(aiData.price) || domPrice || 0,
-          image: rawData.image || allCombinedImages[0] || '',
-          images: allCombinedImages.length > 0 ? allCombinedImages : [rawData.image || ''],
-          brand: aiData.brand || brandFallback,
+          name: aiData.name || titleClean || titleRaw || 'Sản phẩm Olive Young',
+          nameKr: aiData.nameKr || titleRaw,
+          foreignPrice: finalPrice,
+          price: finalPrice,
+          productImage: rawData.image || productImages[0] || allCombinedImages[0] || '',
+          images: productImages.length > 0 ? productImages : (rawData.image ? [rawData.image] : []),
+          photoReviews: photoReviews,
+          brand: brandFallback,
+          brandKr: aiData.brandKr || brandFallback,
           url: rawData.url,
           category: aiData.category || 'skincare',
-          description: aiData.description || 'Sản phẩm chính hãng nội địa Hàn Quốc.',
+          description: aiData.description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${titleRaw}`,
           usage: aiData.usage || 'Xem chi tiết trên bao bì sản phẩm.',
           rating: aiData.rating || 4.9,
-          reviewsCount: aiData.reviewsCount || 150
+          reviewsCount: photoReviews.length || aiData.reviewsCount || 150
         };
 
         const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));
         const adminUrl = `https://tavyorder.web.app/admin/dashboard?autoFill=${encodedData}`;
 
-        // Mở Tab Admin chạy ngầm để lưu vào hàng chờ
         chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
           setTimeout(() => {
             if (adminTab && adminTab.id) {
@@ -110,7 +144,6 @@ ${rawData.fullText}`;
           }, 3500);
         });
 
-        // Phản hồi lập tức về content.js
         sendResponse({ success: true, name: productData.name });
 
       } catch (err) {
@@ -119,6 +152,6 @@ ${rawData.fullText}`;
       }
     })();
 
-    return true; // Giữ kết nối async
+    return true;
   }
 });

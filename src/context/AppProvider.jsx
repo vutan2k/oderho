@@ -309,13 +309,17 @@ export const AppProvider = ({ children }) => {
           const goodsNoMatch = (decoded.url || '').match(/goodsNo=([A-Za-z0-9_]+)/);
           const extractedGoodsNo = goodsNoMatch ? goodsNoMatch[1] : `SP-OY-${Date.now()}`;
 
+          const rawPriceStr = String(decoded.foreignPrice || decoded.price || '0');
+          const parsedPrice = parseInt(rawPriceStr.replace(/[^0-9]/g, ''), 10) || 0;
+
           const newPendingItem = {
             goodsNo: extractedGoodsNo,
             name: decoded.name || 'Sản phẩm Olive Young',
             nameKr: decoded.nameKr || '',
-            foreignPrice: parseFloat(decoded.price) || 0,
+            foreignPrice: parsedPrice,
             productImage: decoded.image || (decoded.images && decoded.images[0]) || '',
             images: decoded.images || [decoded.image || ''],
+            photoReviews: decoded.photoReviews || [],
             brand: decoded.brand || 'Korea Brand',
             brandKr: decoded.brandKr || '',
             category: decoded.category || 'skincare',
@@ -324,8 +328,7 @@ export const AppProvider = ({ children }) => {
             description: decoded.description || 'Sản phẩm chính hãng nội địa Hàn Quốc.',
             usage: decoded.usage || 'Xem chi tiết trên bao bì.',
             rating: decoded.rating || 4.9,
-            reviewsCount: decoded.reviewsCount || (decoded.reviews ? decoded.reviews.length : 120),
-            reviews: decoded.reviews || [],
+            reviewsCount: (decoded.photoReviews && decoded.photoReviews.length) || decoded.reviewsCount || 120,
             productUrl: decoded.url || '',
             scrapedAt: new Date().toISOString()
           };
