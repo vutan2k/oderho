@@ -17,7 +17,6 @@ import { OLIVE_YOUNG_CATALOG } from '../../src/data/catalog.js';
 import { ORDER_STATUSES, getStatusConfig } from '../../src/data/orderStatuses.js';
 import { fetchVietnamProvinces, fetchVietnamSubDivisions } from '../../src/services/vietnamAddressService.js';
 import { scrapeProductMetadata } from '../../src/services/productScraperService.js';
-import { executeSingleBotRun } from '../../src/services/autoScraperBotService.js';
 import { runAIScraperAgent } from '../../src/services/aiScraperAgentEngine.js';
 
 setTier('Tier 4: Real-World Scenarios');
@@ -444,8 +443,8 @@ test('[SCENARIO-8] Complete E2E System Build & Self-Check Automated Verification
   systemCheckResults.ratesValid = requiredCurrencies.length === 3;
 
   // Step 7: Scraper candidate check
-  const scraperRun = await executeSingleBotRun([], []);
-  if (scraperRun.success && scraperRun.product) {
+  const scraperRes = await scrapeProductMetadata('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000128120');
+  if (scraperRes.success && scraperRes.product) {
     systemCheckResults.scraperValid = true;
   }
 

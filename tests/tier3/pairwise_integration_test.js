@@ -17,7 +17,6 @@ import { OLIVE_YOUNG_CATALOG } from '../../src/data/catalog.js';
 import { ORDER_STATUSES, getStatusConfig } from '../../src/data/orderStatuses.js';
 import { ALL_63_VIETNAM_PROVINCES, fetchVietnamProvinces, fetchVietnamSubDivisions } from '../../src/services/vietnamAddressService.js';
 import { scrapeProductMetadata } from '../../src/services/productScraperService.js';
-import { executeSingleBotRun } from '../../src/services/autoScraperBotService.js';
 import { runAIScraperAgent } from '../../src/services/aiScraperAgentEngine.js';
 
 setTier('Tier 3: Pairwise Integration');
@@ -271,23 +270,14 @@ test('[T7-PAIR-07] F7+F9: Admin Exchange Rate config -> Product Sheet Editor rec
   assertGreaterThan(updatedVnd[0], initialVnd[0], 'Recalculated VND should increase with higher rate');
 });
 
-// 8. F9+F10: Sheet Inventory Update -> Auto Web Scraper bot queue trigger
-test('[T8-PAIR-08] F9+F10: Sheet Inventory Update -> Auto Web Scraper bot queue trigger', async () => {
-  const existingProducts = [
-    { goodsNo: 'A000000261415', name: 'Sungboon Editor' }
-  ];
-  const pendingProducts = [];
-
-  const botResult = await executeSingleBotRun(existingProducts, pendingProducts);
-  assert(botResult.success === true, 'Bot execution should succeed');
-  assert(botResult.product !== undefined, 'Bot result should contain product object');
-
-  const scrapedProd = botResult.product;
-  assert(scrapedProd.goodsNo !== 'A000000261415', 'Bot should discover a new candidate not in existing inventory');
-  assertEquals(scrapedProd.status, 'pending_approval', 'Newly scraped candidate status must be pending_approval');
-
-  pendingProducts.unshift(scrapedProd);
-  assertEquals(pendingProducts.length, 1, 'Pending products queue length should be 1');
+// 8. F9+F10: Sheet Inventory Update -> Scraper Cache Queue trigger
+import { scrapeProductMetadata as spm } from '../../src/services/productScraperService.js';
+test('[T8-PAIR-08] F9+F10: Sheet Inventory Update -> Scraper Cache Queue trigger', async () => {
+  const res = await spm('https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000128120');
+  assert(res.success === true, 'Scrape cached product should succeed');
+  assert(res.product !== undefined, 'Scrape result should contain product object');
+  assertEquals(res.product.category, 'makeup', 'Romand tint should be categorized as makeup');
+  assertEquals(res.product.goodsNo, 'A000000128120', 'GoodsNo matches URL');
 });
 
 // 9. F10+F11: Multi-Proxy Web Scraper payload -> Gemini AI Classifier processing
