@@ -122,7 +122,7 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
       showMiniToast('Đang cào Album Ảnh Sản Phẩm & Ảnh Thực Tế...', 'info');
 
       let fullText = document.body.innerText || '';
-      if (fullText.length > 15000) fullText = fullText.substring(0, 15000);
+      if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
 
       const productImages = pickProductImages();
       const photoReviews = extractPhotoReviewsFromDOM();
