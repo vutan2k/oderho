@@ -266,6 +266,52 @@ export const AppProvider = ({ children }) => {
     } catch {}
   }, [pendingProducts]);
 
+  // Global autoFill listener - Tự động nhận dữ liệu từ Extension bất kỳ ở trang nào
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const autoFill = params.get('autoFill');
+      if (autoFill) {
+        const decodedStr = decodeURIComponent(atob(autoFill));
+        const decoded = JSON.parse(decodedStr);
+        if (decoded && (decoded.name || decoded.nameKr)) {
+          // Trích xuất goodsNo từ URL nếu có
+          const goodsNoMatch = (decoded.url || '').match(/goodsNo=([A-Za-z0-9_]+)/);
+          const extractedGoodsNo = goodsNoMatch ? goodsNoMatch[1] : `SP-OY-${Date.now()}`;
+
+          const newPendingItem = {
+            goodsNo: extractedGoodsNo,
+            name: decoded.name || 'Sản phẩm Olive Young',
+            nameKr: decoded.nameKr || '',
+            foreignPrice: parseFloat(decoded.price) || 0,
+            productImage: decoded.image || (decoded.images && decoded.images[0]) || '',
+            images: decoded.images || [decoded.image || ''],
+            brand: decoded.brand || 'Korea Brand',
+            brandKr: decoded.brandKr || '',
+            category: decoded.category || 'skincare',
+            options: decoded.options || '1 Hộp',
+            origin: 'Store Olive Young Korea',
+            description: decoded.description || 'Sản phẩm chính hãng nội địa Hàn Quốc.',
+            usage: decoded.usage || 'Xem chi tiết trên bao bì.',
+            rating: decoded.rating || 4.9,
+            reviewsCount: decoded.reviewsCount || (decoded.reviews ? decoded.reviews.length : 120),
+            reviews: decoded.reviews || [],
+            productUrl: decoded.url || '',
+            scrapedAt: new Date().toISOString()
+          };
+
+          addPendingProduct(newPendingItem);
+
+          // Xóa query autoFill khỏi URL để làm sạch thanh địa chỉ
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+        }
+      }
+    } catch (e) {
+      console.warn("Global autoFill listener error:", e);
+    }
+  }, []);
+
   const addPendingProduct = (product) => {
     if (!product) return;
     const cleanProduct = {

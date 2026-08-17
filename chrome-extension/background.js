@@ -102,7 +102,7 @@ ${rawData.fullText}`;
             if (adminTab && adminTab.id) {
               try { chrome.tabs.remove(adminTab.id); } catch {}
             }
-          }, 2500);
+          }, 3500);
         });
 
         // Phản hồi lập tức về content.js
