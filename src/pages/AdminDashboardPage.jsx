@@ -13,7 +13,9 @@ import {
   DollarSign, 
   Tag, 
   RefreshCw, 
-  FileText 
+  FileText,
+  TrendingUp,
+  Download
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -142,6 +144,85 @@ export default function AdminDashboardPage() {
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 5);
+
+  const monthlyStats = React.useMemo(() => {
+    const stats = {};
+    orders.forEach(order => {
+      if (order.status === 'cancelled') return;
+      
+      const date = new Date(order.createdAt);
+      if (isNaN(date.getTime())) return;
+      
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      const key = `${month.toString().padStart(2, '0')}/${year}`;
+      
+      const rateInfo = rates[order.country] || rates.KRW;
+      const value = order.quote 
+        ? order.quote.totalVnd 
+        : Math.round((order.foreignPrice || 0) * (rateInfo?.rate || 19.5) * (order.qty || 1));
+      
+      if (!stats[key]) {
+        stats[key] = { key, month, year, total: 0, received: 0, orderCount: 0 };
+      }
+      
+      stats[key].total += value;
+      if (order.status === 'paid' || order.status === 'completed') {
+        stats[key].received += value;
+      }
+      stats[key].orderCount += 1;
+    });
+
+    return Object.values(stats).sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      return a.month - b.month;
+    });
+  }, [orders, rates]);
+
+  const maxVal = React.useMemo(() => {
+    const vals = monthlyStats.map(s => s.total);
+    return vals.length > 0 ? Math.max(...vals, 1000000) : 1000000;
+  }, [monthlyStats]);
+
+  const handleExportCSV = () => {
+    const headers = ['Mã Đơn', 'Khách Hàng', 'Email', 'Ngày Đặt', 'Trạng Thái', 'Tổng Tiền (VND)'];
+    const rows = orders.map(order => {
+      const rateInfo = rates[order.country] || rates.KRW;
+      const value = order.quote 
+        ? order.quote.totalVnd 
+        : Math.round((order.foreignPrice || 0) * (rateInfo?.rate || 19.5) * (order.qty || 1));
+      
+      const dateStr = new Date(order.createdAt).toLocaleDateString('vi-VN');
+      
+      let statusStr = order.status;
+      if (order.status === 'pending') statusStr = 'Chờ xử lý';
+      else if (order.status === 'quoted') statusStr = 'Đã báo giá';
+      else if (order.status === 'paid') statusStr = 'Đã thanh toán';
+      else if (order.status === 'completed') statusStr = 'Hoàn thành';
+      else if (order.status === 'cancelled') statusStr = 'Đã hủy';
+
+      return [
+        order.id,
+        order.customerName || 'Khách',
+        order.userEmail || '',
+        dateStr,
+        statusStr,
+        value
+      ];
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Bao_cao_doanh_thu_TAVY_KOREA_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    if (showToast) showToast('Đã xuất báo cáo CSV thành công!', 'success');
+  };
 
   const navItems = [
     { id: 'overview', label: 'Tổng quan', icon: BarChart3 },
@@ -378,6 +459,135 @@ export default function AdminDashboardPage() {
                   Đến trang quản lý sản phẩm để duyệt
                 </button>
               </div>
+            </div>
+
+            {/* REVENUE STATISTICS CHART (U01) */}
+            <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <TrendingUp size={18} style={{ color: 'var(--purple-primary)' }} />
+                    Báo cáo & Thống kê doanh thu theo tháng
+                  </h4>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Biểu đồ doanh thu thực nhận (đã thanh toán/hoàn thành) vs tổng doanh thu dự kiến.
+                  </p>
+                </div>
+                <button
+                  onClick={handleExportCSV}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: 'var(--purple-primary)',
+                    color: '#FFF',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
+                  onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+                >
+                  <Download size={16} />
+                  Xuất báo cáo CSV
+                </button>
+              </div>
+
+              {monthlyStats.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)', fontSize: '0.9rem' }}>
+                  Chưa có dữ liệu thống kê doanh thu.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+                  <div style={{ width: '100%', overflowX: 'auto' }}>
+                    <div style={{ minWidth: '500px', padding: '10px 0' }}>
+                      <svg viewBox="0 0 600 240" style={{ width: '100%', height: 'auto', display: 'block' }}>
+                        {/* Grid lines */}
+                        {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                          const y = 20 + ratio * 160;
+                          const val = Math.round(maxVal * (1 - ratio));
+                          return (
+                            <g key={idx}>
+                              <line x1="50" y1={y} x2="560" y2={y} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
+                              <text x="40" y={y + 4} fill="#9CA3AF" fontSize="9" textAnchor="end" fontWeight="500">
+                                {val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : `${val.toLocaleString('vi-VN')}₫`}
+                              </text>
+                            </g>
+                          );
+                        })}
+
+                        {/* Bars for each month */}
+                        {monthlyStats.map((stat, idx) => {
+                          const barWidth = 32;
+                          const groupGap = 70;
+                          const startX = 75 + idx * groupGap;
+                          
+                          const totalHeight = (stat.total / maxVal) * 160;
+                          const receivedHeight = (stat.received / maxVal) * 160;
+                          
+                          const totalY = 180 - totalHeight;
+                          const receivedY = 180 - receivedHeight;
+
+                          return (
+                            <g key={stat.key}>
+                              <rect x={startX - 10} y="15" width={barWidth * 2 + 10} height="175" fill="transparent" />
+                              
+                              {/* Total Bar */}
+                              <rect
+                                x={startX}
+                                y={totalY}
+                                width={barWidth}
+                                height={totalHeight}
+                                fill="#E9D5FF"
+                                rx="4"
+                              />
+                              
+                              {/* Received Bar */}
+                              <rect
+                                x={startX + 6}
+                                y={receivedY}
+                                width={barWidth - 12}
+                                height={receivedHeight}
+                                fill="var(--purple-primary)"
+                                rx="3"
+                              />
+
+                              {/* Month Label */}
+                              <text x={startX + barWidth / 2} y="200" fill="#4B5563" fontSize="10" fontWeight="600" textAnchor="middle">
+                                {stat.key}
+                              </text>
+
+                              {/* Value Label above */}
+                              <text x={startX + barWidth / 2} y={totalY - 5} fill="#7C3AED" fontSize="8" fontWeight="700" textAnchor="middle">
+                                {stat.total >= 1000000 ? `${(stat.total / 1000000).toFixed(1)}M` : `${Math.round(stat.total/1000)}k`}
+                              </text>
+                            </g>
+                          );
+                        })}
+                        
+                        {/* X-axis */}
+                        <line x1="50" y1="180" x2="560" y2="180" stroke="#9CA3AF" strokeWidth="1" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center', padding: '10px 0', borderTop: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '12px', height: '12px', backgroundColor: '#E9D5FF', borderRadius: '3px' }} />
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Doanh thu dự kiến</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--purple-primary)', borderRadius: '3px' }} />
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Doanh thu thực tế (đã nhận)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* RECENT ORDERS TABLE */}
