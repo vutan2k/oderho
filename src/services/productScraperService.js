@@ -164,6 +164,41 @@ export const scrapeProductMetadata = async (url) => {
     };
   }
 
+  // Không có trong cache → báo AI cần xử lý (KHÔNG chạy proxy chain cũ chậm 20-30s)
+  return { success: false, needsAI: true };
+};
+
+/**
+ * Chỉ tra cache (KHÔNG chạy proxy/Jina) — dùng cho AI engine để tránh chờ proxy chain cũ.
+ * @param {string} url
+ * @returns {Promise<{success: boolean, product?: object}>} Nhanh, không network.
+ */
+export const lookupKnownGoods = async (url) => {
+  if (!url || !url.trim()) return { success: false };
+  const goodsNoMatch = url.trim().match(/goodsNo=([A-Z0-9]+)/i);
+  const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : null;
+  if (!goodsNo || !KNOWN_KOREAN_GOODS_DB[goodsNo]) return { success: false };
+  const known = KNOWN_KOREAN_GOODS_DB[goodsNo];
+  return {
+    success: true,
+    product: {
+      goodsNo,
+      name: known.name,
+      nameKr: known.nameKr || known.name,
+      brand: known.brand,
+      brandKr: known.brandKr || known.brand,
+      category: known.category,
+      foreignPrice: known.foreignPrice,
+      productImage: known.productImage,
+      description: known.description,
+      origin: known.origin,
+      rating: known.rating,
+      productUrl: url.trim(),
+      reviewsCount: 280
+    }
+  };
+};
+
   // 2. High Tech: Jina AI Reader API (Bypass WAF + Extracts clean markdown & JSON)
   try {
     const jinaUrl = `https://r.jina.ai/${cleanUrl}`;

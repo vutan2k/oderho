@@ -5,7 +5,7 @@
  * KHÔNG tạo dữ liệu fake khi bị chặn.
  */
 
-import { scrapeProductMetadata } from './productScraperService';
+import { lookupKnownGoods } from './productScraperService';
 
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -102,8 +102,8 @@ export async function runAIScraperAgent(url) {
     const cleanUrl = url.trim();
     console.log(`🤖 AI Scraper Agent đang xử lý đường dẫn: ${cleanUrl}...`);
 
-    // 1. Cache đã verify trước
-    const cached = await scrapeProductMetadata(cleanUrl);
+    // 1. Cache đã verify trước (chỉ tra cache, KHÔNG chạy proxy chain cũ)
+    const cached = await lookupKnownGoods(cleanUrl);
     if (cached.success && cached.product) {
       return { success: true, product: cached.product };
     }
