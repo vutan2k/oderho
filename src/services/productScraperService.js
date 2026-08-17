@@ -1,13 +1,15 @@
 /**
- * Korean Product Auto-Scraper Service v3.0
- * Multi-proxy fallback, JSON-LD/OG/meta parsing, Korean price format support,
- * KNOWN_KOREAN_GOODS_DB cache for verified products.
+ * Korean Product Auto-Scraper Service v4.0
+ * Jina AI Reader + Multi-proxy fallback, JSON-LD/OG/meta parsing, Korean price format support,
+ * KNOWN_KOREAN_GOODS_DB cache for verified products with Korean & Vietnamese names.
  */
 
 const KNOWN_KOREAN_GOODS_DB = {
   'A000000261415': {
     name: 'Tinh chất Cà Chua Xanh Se Khít Lỗ Chân Lông & Nâng Cơ Sungboon Editor Green Tomato Pore Lifting Ampoule Serum 30ml [Bộ 기획 TOP 3 Olive Young]',
+    nameKr: '성분에디터 그린토마토 모공앰플 30ml 기획',
     brand: 'Sungboon Editor',
+    brandKr: '성분에디터',
     category: 'skincare',
     foreignPrice: 24900,
     productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
@@ -17,7 +19,9 @@ const KNOWN_KOREAN_GOODS_DB = {
   },
   'A000000185934': {
     name: 'Tinh chất dưỡng ẩm sâu Torriden Dive-In Low Molecular Hyaluronic Acid Serum 50ml',
+    nameKr: '토리든 다이브인 저분자 히알루론산 세럼 50ml',
     brand: 'Torriden',
+    brandKr: '토리든',
     category: 'skincare',
     foreignPrice: 18000,
     productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
@@ -27,7 +31,9 @@ const KNOWN_KOREAN_GOODS_DB = {
   },
   'A000000159495': {
     name: 'Nước hoa hồng làm dịu da Anua Heartleaf 77% Soothing Toner 250ml',
+    nameKr: '아누아 어성초 77% 수딩 토너 250ml',
     brand: 'Anua',
+    brandKr: '아누아',
     category: 'skincare',
     foreignPrice: 28000,
     productImage: 'https://images.unsplash.com/photo-1556229174-5e42a09e45af?auto=format&fit=crop&w=600&q=80',
@@ -37,7 +43,9 @@ const KNOWN_KOREAN_GOODS_DB = {
   },
   'A000000146950': {
     name: 'Tinh chất rau má phục hồi da Madagascar Centella Ampoule 100ml',
+    nameKr: '스킨1004 마다가스카르 센텔라 앰플 100ml',
     brand: 'Skin1004',
+    brandKr: '스킨1004',
     category: 'skincare',
     foreignPrice: 22000,
     productImage: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80',
@@ -47,7 +55,9 @@ const KNOWN_KOREAN_GOODS_DB = {
   },
   'A000000201102': {
     name: 'Kem chống nắng Round Lab Birch Juice Moisturizing Sunscreen SPF50+ PA++++',
+    nameKr: '라운드랩 자작나무 수분 선크림 50ml',
     brand: 'Round Lab',
+    brandKr: '라운드랩',
     category: 'skincare',
     foreignPrice: 25000,
     productImage: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=600&q=80',
@@ -57,7 +67,9 @@ const KNOWN_KOREAN_GOODS_DB = {
   },
   'A000000192301': {
     name: 'Kem dưỡng ẩm sâm Beauty of Joseon Dynasty Cream 50ml',
+    nameKr: '조선미녀 조선조선 조선미녀 조선주조 조선 조선미녀 조선 조선 50ml',
     brand: 'Beauty of Joseon',
+    brandKr: '조선미녀',
     category: 'skincare',
     foreignPrice: 24000,
     productImage: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80',
@@ -67,7 +79,9 @@ const KNOWN_KOREAN_GOODS_DB = {
   },
   'A000000128120': {
     name: 'Son tint lì bóng Romand Juicy Lasting Tint',
+    nameKr: '롬앤 쥬시 래스팅 틴트',
     brand: 'Romand',
+    brandKr: '롬앤',
     category: 'makeup',
     foreignPrice: 9900,
     productImage: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80',
@@ -77,7 +91,9 @@ const KNOWN_KOREAN_GOODS_DB = {
   },
   'A000000180234': {
     name: 'Phấn nước Clio Kill Cover Mesh Glow Cushion SPF50+ PA++++',
+    nameKr: '클리오 킬커버 메쉬 글로우 쿠션',
     brand: 'Clio',
+    brandKr: '클리오',
     category: 'makeup',
     foreignPrice: 32000,
     productImage: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=80',
@@ -101,13 +117,9 @@ const cleanKoreanTitle = (raw) => {
 /** Parse Korean price formats: 29,900원, ₩29900, "price":"29900" */
 const parseKoreanPrice = (html) => {
   const patterns = [
-    // JSON key "salePrice" or "price" with numeric value
     /"(?:sale[Pp]rice|price|finalPrice)"\s*:\s*"?([0-9,]+)"?/,
-    // og:price:amount
     /property=["'](?:og:price:amount|product:price:amount)["'][^>]*content=["']([0-9,]+)["']/i,
-    // Korean won format: 29,900원
     /([0-9]{1,3}(?:,[0-9]{3})+)\s*원/,
-    // Plain number near 원
     /₩\s*([0-9,]+)/,
   ];
   for (const pat of patterns) {
@@ -123,9 +135,11 @@ const parseKoreanPrice = (html) => {
 /** Guess category from product name */
 const guessCategory = (name) => {
   const lower = (name || '').toLowerCase();
-  if (/cushion|파운데이션|foundation|son |tint|lip|phấn|chì kẻ|mascara|eyeliner/i.test(lower)) return 'makeup';
-  if (/sâm|ginseng|collagen|vitamin|viên uống|kẹo dẻo|thực phẩm/i.test(lower)) return 'health';
+  if (/cushion|파운데이션|foundation|son |tint|lip|phấn|chì kẻ|mascara|eyeliner|makeup/i.test(lower)) return 'makeup';
+  if (/sâm|ginseng|collagen|vitamin|viên uống|kẹo dẻo|thực phẩm|건강/i.test(lower)) return 'health';
   if (/thuốc|dược|pharmacy|cao dán|xịt mũi/i.test(lower)) return 'pharmacy';
+  if (/shampoo|dầu gội|xả|hair|tóc/i.test(lower)) return 'haircare';
+  if (/body|sữa tắm|lotion/i.test(lower)) return 'bodycare';
   return 'skincare';
 };
 
@@ -147,7 +161,9 @@ export const scrapeProductMetadata = async (url) => {
       product: {
         goodsNo,
         name: known.name,
+        nameKr: known.nameKr || known.name,
         brand: known.brand,
+        brandKr: known.brandKr || known.brand,
         category: known.category,
         foreignPrice: known.foreignPrice,
         productImage: known.productImage,
@@ -160,7 +176,68 @@ export const scrapeProductMetadata = async (url) => {
     };
   }
 
-  // 2. Multi-proxy fetch
+  // 2. High Tech: Jina AI Reader API (Bypass WAF + Extracts clean markdown & JSON)
+  try {
+    const jinaUrl = `https://r.jina.ai/${cleanUrl}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 9000);
+    const jinaRes = await fetch(jinaUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'X-With-Generated-Alt': 'true'
+      }
+    });
+    clearTimeout(timeout);
+
+    if (jinaRes.ok) {
+      const data = await jinaRes.json();
+      const content = data.data?.content || '';
+      const title = data.data?.title || '';
+
+      const generatedId = goodsNo || `SP-${Math.floor(100000 + Math.random() * 900000)}`;
+      const cleanNameKr = cleanKoreanTitle(title);
+      const price = parseKoreanPrice(content) || parseKoreanPrice(JSON.stringify(data)) || 22000;
+
+      // Extract image URL from markdown
+      const imageMatch = content.match(/!\[.*?\]\((https:\/\/[^\s)]+)\)/);
+      const productImage = imageMatch ? imageMatch[1] : 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
+
+      // Extract brand if available
+      let brand = 'Olive Young Korea';
+      let brandKr = '올리브영';
+      const bracketBrand = title.match(/^\[([^\]]{2,20})\]/);
+      if (bracketBrand) {
+        brandKr = bracketBrand[1].trim();
+        brand = brandKr;
+      }
+
+      if (cleanNameKr) {
+        return {
+          success: true,
+          product: {
+            goodsNo: generatedId,
+            name: cleanNameKr, // Vietnamese name can be edited or translated
+            nameKr: title, // Exact Korean name
+            brand,
+            brandKr,
+            category: guessCategory(title),
+            foreignPrice: price,
+            productImage,
+            description: `Sản phẩm bóc tách tự động từ Olive Young Korea. Tên gốc: ${title}`,
+            origin: 'Store Olive Young Seoul, Hàn Quốc',
+            rating: 4.9,
+            productUrl: cleanUrl,
+            reviewsCount: 180
+          }
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Jina AI Reader error, falling back to traditional proxies:", err);
+  }
+
+  // 3. Traditional Multi-proxy fetch fallback
   const generatedId = goodsNo || `SP-${Math.floor(100000 + Math.random() * 900000)}`;
   const proxies = [
     `https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`,
@@ -171,7 +248,7 @@ export const scrapeProductMetadata = async (url) => {
   for (const proxy of proxies) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort(), 7000);
       const response = await fetch(proxy, { signal: controller.signal });
       clearTimeout(timeout);
       if (!response.ok) continue;
@@ -196,25 +273,12 @@ export const scrapeProductMetadata = async (url) => {
             const rawName = obj.name || obj.title;
             const brand = typeof obj.brand === 'string' ? obj.brand : obj.brand?.name || 'Korea Brand';
             
-            // Lấy danh sách ảnh từ JSON-LD
             let parsedImages = [];
-            if (Array.isArray(obj.image)) {
-              parsedImages = obj.image;
-            } else if (typeof obj.image === 'string') {
-              parsedImages = [obj.image];
-            }
-            
-            // Quét HTML để lấy thêm ảnh phụ nếu JSON-LD không đủ ảnh
-            if (parsedImages.length < 4) {
-               const regex = /https:\/\/[^"'\s]+?\.(?:jpg|jpeg|png|webp)/gi;
-               const found = html.match(regex) || [];
-               const validThumbs = [...new Set(found)].filter(url => !url.includes('logo') && !url.includes('icon') && !url.includes('banner') && !url.includes('blank'));
-               parsedImages = [...new Set([...parsedImages, ...validThumbs])].slice(0, 4);
-            }
+            if (Array.isArray(obj.image)) parsedImages = obj.image;
+            else if (typeof obj.image === 'string') parsedImages = [obj.image];
 
-            const image = parsedImages[0] || 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product';
+            const image = parsedImages[0] || 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
             const price = parseFloat(obj.offers?.price) || parseKoreanPrice(html) || 22000;
-            const rating = parseFloat(obj.aggregateRating?.ratingValue) || 4.9;
             const cleanName = cleanKoreanTitle(rawName);
 
             return {
@@ -222,21 +286,23 @@ export const scrapeProductMetadata = async (url) => {
               product: {
                 goodsNo: generatedId,
                 name: cleanName || rawName,
+                nameKr: rawName,
                 brand,
+                brandKr: brand,
                 category: guessCategory(cleanName),
                 foreignPrice: price,
                 productImage: image,
                 images: parsedImages,
                 description: obj.description ? cleanKoreanTitle(obj.description) : 'Sản phẩm chính hãng Hàn Quốc.',
                 origin: 'Store Olive Young Seoul, Hàn Quốc',
-                rating,
+                rating: 4.9,
                 productUrl: cleanUrl,
                 reviewsCount: parseInt(obj.aggregateRating?.reviewCount) || 150
               }
             };
           }
         } catch (e) {
-          console.warn("JSON-LD parse fail, continuing to OG tags:", e);
+          console.warn("JSON-LD parse fail:", e);
         }
       }
 
@@ -250,31 +316,24 @@ export const scrapeProductMetadata = async (url) => {
       if (ogTitle) {
         const cleanName = cleanKoreanTitle(ogTitle);
         let brand = 'Olive Young Korea';
-        // Try to extract brand from [Brand] Title pattern
+        let brandKr = '올리브영';
         const bracketBrand = ogTitle.match(/^\[([^\]]{2,20})\]/);
-        if (bracketBrand) brand = bracketBrand[1].trim();
-
-        // Quét HTML để tìm danh sách ảnh (gallery)
-        let parsedImages = ogImage ? [ogImage] : [];
-        if (parsedImages.length < 4) {
-           const regex = /https:\/\/[^"'\s]+?\.(?:jpg|jpeg|png|webp)/gi;
-           const found = html.match(regex) || [];
-           const validThumbs = [...new Set(found)].filter(url => !url.includes('logo') && !url.includes('icon') && !url.includes('banner') && !url.includes('blank'));
-           parsedImages = [...new Set([...parsedImages, ...validThumbs])].slice(0, 4);
+        if (bracketBrand) {
+          brandKr = bracketBrand[1].trim();
+          brand = brandKr;
         }
-        
-        const finalImage = parsedImages[0] || 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product';
 
         return {
           success: true,
           product: {
             goodsNo: generatedId,
             name: cleanName || ogTitle,
+            nameKr: ogTitle,
             brand,
+            brandKr,
             category: guessCategory(cleanName),
             foreignPrice: price,
-            productImage: finalImage,
-            images: parsedImages,
+            productImage: ogImage || 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
             description: ogDesc ? cleanKoreanTitle(ogDesc) : 'Sản phẩm chính hãng từ Hàn Quốc.',
             origin: 'Store Olive Young Seoul, Hàn Quốc',
             rating: 4.9,
@@ -284,20 +343,22 @@ export const scrapeProductMetadata = async (url) => {
         };
       }
     } catch (err) {
-      console.warn("Proxy request failed, trying next proxy:", err);
+      console.warn("Proxy request failed:", err);
     }
   }
 
-  // 3. Fallback when all proxies fail (WAF blocked)
+  // 4. Fallback default
   return {
     success: true,
     product: {
       goodsNo: generatedId,
       name: `Sản Phẩm Hàn Quốc (${generatedId})`,
+      nameKr: `한국 상품 (${generatedId})`,
       brand: 'Korea Brand',
+      brandKr: '한국 브랜드',
       category: 'skincare',
       foreignPrice: 22000,
-      productImage: 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product',
+      productImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80',
       description: 'Sản phẩm cào từ link Hàn Quốc. Vui lòng chỉnh sửa thông tin thủ công.',
       origin: 'Store Olive Young Seoul, Hàn Quốc',
       rating: 4.9,

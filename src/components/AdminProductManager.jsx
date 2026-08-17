@@ -12,6 +12,8 @@ const CATEGORIES = [
   { value: 'makeup', label: 'Mỹ phẩm trang điểm' },
   { value: 'health', label: 'Thực phẩm chức năng' },
   { value: 'pharmacy', label: 'Thuốc / Dược phẩm' },
+  { value: 'haircare', label: 'Chăm sóc tóc' },
+  { value: 'bodycare', label: 'Chăm sóc cơ thể' },
 ];
 
 export default function AdminProductManager() {
@@ -53,7 +55,9 @@ export default function AdminProductManager() {
       const term = searchTerm.toLowerCase();
       const matchSearch = !term ||
         (p.name || '').toLowerCase().includes(term) ||
+        (p.nameKr || '').toLowerCase().includes(term) ||
         (p.brand || '').toLowerCase().includes(term) ||
+        (p.brandKr || '').toLowerCase().includes(term) ||
         (p.goodsNo || '').toLowerCase().includes(term);
       return matchCat && matchSearch;
     });
@@ -86,7 +90,7 @@ export default function AdminProductManager() {
   const handleAddNew = () => {
     const newProd = {
       goodsNo: `SP-${Math.floor(10000 + Math.random() * 90000)}`,
-      name: '', brand: '', category: 'skincare', foreignPrice: 0,
+      name: '', nameKr: '', brand: '', brandKr: '', category: 'skincare', foreignPrice: 0,
       productImage: '', description: '', origin: 'Store Olive Young Seoul, Hàn Quốc',
       rating: 5.0, reviewsCount: 0, usage: '', productUrl: '',
     };
@@ -182,11 +186,18 @@ export default function AdminProductManager() {
         const decoded = JSON.parse(decodeURIComponent(atob(autoFill)));
         setScrapedPreview({
           goodsNo: `SP-${Math.floor(10000 + Math.random() * 90000)}`,
-          name: decoded.name || '', brand: decoded.brand || 'Korea Brand',
-          category: decoded.category || 'skincare', foreignPrice: decoded.price || 0,
-          productImage: decoded.image || '', description: decoded.description || '',
-          usage: decoded.usage || '', origin: 'Store Olive Young, Hàn Quốc',
-          productUrl: decoded.url || '', reviewsCount: 150
+          name: decoded.name || '',
+          nameKr: decoded.nameKr || '',
+          brand: decoded.brand || 'Korea Brand',
+          brandKr: decoded.brandKr || '',
+          category: decoded.category || 'skincare',
+          foreignPrice: decoded.price || 0,
+          productImage: decoded.image || '',
+          description: decoded.description || '',
+          usage: decoded.usage || '',
+          origin: 'Store Olive Young, Hàn Quốc',
+          productUrl: decoded.url || '',
+          reviewsCount: 150
         });
         setActiveTab('bot');
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -249,28 +260,40 @@ export default function AdminProductManager() {
                   <tr>
                     <th style={{ ...styles.th, width: '40px', textAlign: 'center' }}><input type="checkbox" checked={filtered.length > 0 && selectedProducts.length === filtered.length} onChange={toggleSelectAll} style={{ cursor: 'pointer' }} /></th>
                     <th style={{ ...styles.th, width: '60px' }}>Ảnh</th>
-                    <th style={{ ...styles.th, width: '120px' }}>Mã SP</th>
-                    <th style={styles.th}>Tên sản phẩm</th>
-                    <th style={{ ...styles.th, width: '150px' }}>Thương hiệu</th>
-                    <th style={{ ...styles.th, width: '150px', textAlign: 'right' }}>Giá (₩)</th>
-                    <th style={{ ...styles.th, width: '100px', textAlign: 'center' }}>Thao tác</th>
+                    <th style={{ ...styles.th, width: '110px' }}>Mã SP</th>
+                    <th style={styles.th}>Tên sản phẩm (Việt / Hàn)</th>
+                    <th style={{ ...styles.th, width: '130px' }}>Thương hiệu</th>
+                    <th style={{ ...styles.th, width: '110px' }}>Phân loại</th>
+                    <th style={{ ...styles.th, width: '110px', textAlign: 'right' }}>Giá (₩)</th>
+                    <th style={{ ...styles.th, width: '90px', textAlign: 'center' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
-                    <tr><td colSpan={7} style={{ ...styles.td, textAlign: 'center', color: '#6B7280', padding: '40px' }}>Không có dữ liệu</td></tr>
+                    <tr><td colSpan={8} style={{ ...styles.td, textAlign: 'center', color: '#6B7280', padding: '40px' }}>Không có dữ liệu</td></tr>
                   ) : (
                     filtered.map(prod => (
                       <tr key={prod.goodsNo} style={{ backgroundColor: selectedProducts.includes(prod.goodsNo) ? '#F3F4F6' : '#FFF' }}>
                         <td style={{ ...styles.td, textAlign: 'center' }}><input type="checkbox" checked={selectedProducts.includes(prod.goodsNo)} onChange={() => toggleSelectProduct(prod.goodsNo)} style={{ cursor: 'pointer' }} /></td>
                         <td style={styles.td}><img src={prod.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB' }} /></td>
                         <td style={{ ...styles.td, fontFamily: 'monospace' }}>{prod.goodsNo}</td>
-                        <td style={{ ...styles.td, fontWeight: 500 }}>{prod.name}</td>
-                        <td style={styles.td}>{prod.brand}</td>
+                        <td style={styles.td}>
+                          <div style={{ fontWeight: 600, color: '#111827' }}>{prod.name}</div>
+                          {prod.nameKr && <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
+                        </td>
+                        <td style={styles.td}>
+                          <div>{prod.brand}</div>
+                          {prod.brandKr && <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{prod.brandKr}</div>}
+                        </td>
+                        <td style={styles.td}>
+                          <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
+                            {CATEGORIES.find(c => c.value === prod.category)?.label || prod.category || 'Skincare'}
+                          </span>
+                        </td>
                         <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600 }}>₩{(prod.foreignPrice||0).toLocaleString()}</td>
                         <td style={{ ...styles.td, textAlign: 'center' }}>
                           <button onClick={() => openEdit(prod)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563EB', padding: '4px' }}>Sửa</button>
-                          <button onClick={() => setDeleteConfirm(prod.goodsNo)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: '4px', marginLeft: '8px' }}>Xóa</button>
+                          <button onClick={() => setDeleteConfirm(prod.goodsNo)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: '4px', marginLeft: '6px' }}>Xóa</button>
                         </td>
                       </tr>
                     ))
@@ -305,24 +328,36 @@ export default function AdminProductManager() {
                   <tr>
                     <th style={{ ...styles.th, width: '40px', textAlign: 'center' }}><input type="checkbox" checked={pendingProducts?.length > 0 && selectedPending.length === pendingProducts.length} onChange={toggleSelectAllPending} style={{ cursor: 'pointer' }} /></th>
                     <th style={{ ...styles.th, width: '60px' }}>Ảnh</th>
-                    <th style={{ ...styles.th, width: '120px' }}>Mã SP</th>
-                    <th style={styles.th}>Tên sản phẩm</th>
-                    <th style={{ ...styles.th, width: '150px' }}>Thương hiệu</th>
-                    <th style={{ ...styles.th, width: '150px', textAlign: 'right' }}>Giá (₩)</th>
-                    <th style={{ ...styles.th, width: '180px', textAlign: 'center' }}>Thao tác</th>
+                    <th style={{ ...styles.th, width: '110px' }}>Mã SP</th>
+                    <th style={styles.th}>Tên sản phẩm (Việt / Hàn)</th>
+                    <th style={{ ...styles.th, width: '130px' }}>Thương hiệu</th>
+                    <th style={{ ...styles.th, width: '110px' }}>Phân loại</th>
+                    <th style={{ ...styles.th, width: '110px', textAlign: 'right' }}>Giá (₩)</th>
+                    <th style={{ ...styles.th, width: '160px', textAlign: 'center' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {!pendingProducts || pendingProducts.length === 0 ? (
-                    <tr><td colSpan={7} style={{ ...styles.td, textAlign: 'center', color: '#6B7280', padding: '40px' }}>Hàng chờ trống</td></tr>
+                    <tr><td colSpan={8} style={{ ...styles.td, textAlign: 'center', color: '#6B7280', padding: '40px' }}>Hàng chờ trống</td></tr>
                   ) : (
                     pendingProducts.map(prod => (
                       <tr key={prod.goodsNo} style={{ backgroundColor: selectedPending.includes(prod.goodsNo) ? '#F3F4F6' : '#FFF' }}>
                         <td style={{ ...styles.td, textAlign: 'center' }}><input type="checkbox" checked={selectedPending.includes(prod.goodsNo)} onChange={() => toggleSelectPending(prod.goodsNo)} style={{ cursor: 'pointer' }} /></td>
                         <td style={styles.td}><img src={prod.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB' }} /></td>
                         <td style={{ ...styles.td, fontFamily: 'monospace' }}>{prod.goodsNo}</td>
-                        <td style={{ ...styles.td, fontWeight: 500 }}>{prod.name}</td>
-                        <td style={styles.td}>{prod.brand}</td>
+                        <td style={styles.td}>
+                          <div style={{ fontWeight: 600, color: '#111827' }}>{prod.name}</div>
+                          {prod.nameKr && <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
+                        </td>
+                        <td style={styles.td}>
+                          <div>{prod.brand}</div>
+                          {prod.brandKr && <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{prod.brandKr}</div>}
+                        </td>
+                        <td style={styles.td}>
+                          <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
+                            {CATEGORIES.find(c => c.value === prod.category)?.label || prod.category || 'Skincare'}
+                          </span>
+                        </td>
                         <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600 }}>₩{(prod.foreignPrice||0).toLocaleString()}</td>
                         <td style={{ ...styles.td, textAlign: 'center' }}>
                           <button onClick={() => approvePendingProduct(prod.goodsNo)} style={{ background: '#059669', color: '#FFF', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, marginRight: '8px' }}>Duyệt</button>
@@ -385,8 +420,10 @@ export default function AdminProductManager() {
                     <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
                       <img src={scrapedPreview.productImage} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #D1D5DB' }} />
                       <div>
-                        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: '#111827' }}>{scrapedPreview.name}</h4>
-                        <div style={{ fontSize: '0.85rem', color: '#4B5563', marginBottom: '4px' }}>Thương hiệu: <b>{scrapedPreview.brand}</b></div>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', color: '#111827' }}>{scrapedPreview.name}</h4>
+                        {scrapedPreview.nameKr && <div style={{ fontSize: '0.82rem', color: '#6B7280', marginBottom: '8px' }}>🇰🇷 {scrapedPreview.nameKr}</div>}
+                        <div style={{ fontSize: '0.85rem', color: '#4B5563', marginBottom: '4px' }}>Thương hiệu: <b>{scrapedPreview.brand}</b>{scrapedPreview.brandKr ? ` / ${scrapedPreview.brandKr}` : ''}</div>
+                        <div style={{ fontSize: '0.85rem', color: '#4B5563', marginBottom: '4px' }}>Phân loại: <b>{CATEGORIES.find(c => c.value === scrapedPreview.category)?.label || scrapedPreview.category || 'Skincare'}</b></div>
                         <div style={{ fontSize: '0.85rem', color: '#4B5563' }}>Giá gốc: <b>₩{(scrapedPreview.foreignPrice||0).toLocaleString()}</b></div>
                       </div>
                     </div>
@@ -431,11 +468,20 @@ export default function AdminProductManager() {
                 <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Thương hiệu</label>
                 <input value={editForm.brand || ''} onChange={e => handleEditChange('brand', e.target.value)} style={{ ...styles.input, width: '100%' }} />
               </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Thương hiệu tiếng Hàn</label>
+                <input value={editForm.brandKr || ''} onChange={e => handleEditChange('brandKr', e.target.value)} style={{ ...styles.input, width: '100%' }} />
+              </div>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Tên sản phẩm *</label>
               <input value={editForm.name || ''} onChange={e => handleEditChange('name', e.target.value)} style={{ ...styles.input, width: '100%' }} />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Tên sản phẩm tiếng Hàn</label>
+              <input value={editForm.nameKr || ''} onChange={e => handleEditChange('nameKr', e.target.value)} style={{ ...styles.input, width: '100%' }} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
