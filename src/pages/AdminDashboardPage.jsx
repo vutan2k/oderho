@@ -97,17 +97,6 @@ export default function AdminDashboardPage() {
     setPrevOrdersLength(orders.length);
   }, [orders, prevOrdersLength, showToast]);
 
-  if (!isAdminAuthenticated) {
-    return (
-      <div style={{ padding: '80px 20px', textAlign: 'center' }}>
-        <h2>Truy cập bị từ chối. Vui lòng đăng nhập quyền Admin!</h2>
-        <button className="btn-gold" style={{ marginTop: '16px' }} onClick={() => navigate('/admin/login')}>
-          Đến trang đăng nhập Admin
-        </button>
-      </div>
-    );
-  }
-
   // Handle updates for rates & fees
   const handleUpdateKrw = (e) => {
     e.preventDefault();
@@ -190,6 +179,17 @@ export default function AdminDashboardPage() {
     const vals = monthlyStats.map(s => s.total);
     return vals.length > 0 ? Math.max(...vals, 1000000) : 1000000;
   }, [monthlyStats]);
+
+  if (!isAdminAuthenticated) {
+    return (
+      <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+        <h2>Truy cập bị từ chối. Vui lòng đăng nhập quyền Admin!</h2>
+        <button className="btn-gold" style={{ marginTop: '16px' }} onClick={() => navigate('/admin/login')}>
+          Đến trang đăng nhập Admin
+        </button>
+      </div>
+    );
+  }
 
   const handleExportCSV = () => {
     const headers = ['Mã Đơn', 'Khách Hàng', 'Email', 'Ngày Đặt', 'Trạng Thái', 'Tổng Tiền (VND)'];
