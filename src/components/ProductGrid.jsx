@@ -1,26 +1,42 @@
-import React from 'react';
-import { ShoppingBag, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingBag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 40;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [products]);
+
   const formatVnd = (num) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
 
   const formatKrw = (num) =>
     new Intl.NumberFormat('ko-KR').format(num) + ' ₩';
 
+  // Logic phân trang
+  const totalPages = Math.ceil((products?.length || 0) / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentProducts = products?.slice(startIndex, startIndex + itemsPerPage) || [];
+
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-      gap: '28px'
-    }}>
-      {products.map((product, pIdx) => {
-        const calculatedVnd = (product.foreignPrice || 0) * krwRate;
-        const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
+    <div>
+      <div style={{
+        display: 'grid',
+        // Dùng auto-fill để 1 sản phẩm không bị giãn to hết màn hình
+        // minmax 200px để đảm bảo trên destop hiện tầm 4-5 cột
+        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+        gap: '28px'
+      }}>
+        {currentProducts.map((product, pIdx) => {
+          const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
+          const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80';
 
         return (
           <div
             key={product.goodsNo || `grid-prod-${pIdx}`}
+            className="product-card"
             style={{
               borderRadius: '16px',
               overflow: 'hidden',
@@ -110,35 +126,39 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
                 </div>
 
                 {/* Buttons Action: Xem Chi Tiết & Đặt Mua Ngay */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <button
                     onClick={() => onViewDetail && onViewDetail(product)}
                     style={{
-                      padding: '10px 0',
+                      padding: '12px 0',
                       borderRadius: '30px',
                       border: '1px solid var(--purple-primary)',
                       backgroundColor: '#FFF',
                       color: 'var(--purple-primary)',
-                      fontWeight: 700,
-                      fontSize: '0.8rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px'
+                      justifyContent: 'center'
                     }}
+                    title="Xem chi tiết"
                   >
-                    <Eye size={14} />
-                    <span>CHI TIẾT</span>
+                    <Eye size={22} />
                   </button>
 
                   <button
-                    onClick={() => onSelectProduct(product)}
+                    onClick={(e) => onSelectProduct(product, e)}
                     className="btn-gold"
-                    style={{ width: '100%', justifyContent: 'center', padding: '10px 0', fontSize: '0.8rem' }}
+                    style={{ 
+                      width: '100%', 
+                      justifyContent: 'center', 
+                      padding: '12px 0',
+                      borderRadius: '30px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                    title="Thêm vào giỏ hàng"
                   >
-                    <ShoppingBag size={14} />
-                    <span>ĐẶT MUA</span>
+                    <ShoppingBag size={22} />
                   </button>
                 </div>
               </div>
@@ -146,6 +166,62 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
           </div>
         );
       })}
+      </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginTop: '40px',
+          gap: '12px'
+        }}>
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: '1px solid #E5E7EB',
+              backgroundColor: currentPage === 1 ? '#F3F4F6' : '#FFF',
+              color: currentPage === 1 ? '#9CA3AF' : 'var(--text-dark)',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600,
+              transition: 'all 0.2s'
+            }}
+          >
+            <ChevronLeft size={18} /> Trước
+          </button>
+
+          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-dark)' }}>
+            Trang {currentPage} / {totalPages}
+          </span>
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: '1px solid #E5E7EB',
+              backgroundColor: currentPage === totalPages ? '#F3F4F6' : '#FFF',
+              color: currentPage === totalPages ? '#9CA3AF' : 'var(--text-dark)',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600,
+              transition: 'all 0.2s'
+            }}
+          >
+            Sau <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

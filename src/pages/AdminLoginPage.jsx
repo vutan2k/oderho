@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { ShieldCheck, Lock, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Lock, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const { loginAdmin, isAdminAuthenticated } = useContext(AppContext);

@@ -250,23 +250,41 @@ export default function OrdersPage() {
                 <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'center' }}>
                   
                   {/* Chi tiết sản phẩm */}
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    {order.productImage && (
-                      <img src={order.productImage} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '10px' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {order.items ? order.items.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: '16px', alignItems: 'center', borderBottom: idx < order.items.length - 1 ? '1px dashed #E5E7EB' : 'none', paddingBottom: idx < order.items.length - 1 ? '12px' : 0 }}>
+                        <img src={item.productImage} alt="" style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '10px' }} />
+                        <div>
+                          <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '4px' }}>
+                            {item.name}
+                          </h4>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            {item.options} | Số lượng: x{item.qty}
+                          </p>
+                        </div>
+                      </div>
+                    )) : (
+                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        {order.productImage && (
+                          <img src={order.productImage} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '10px' }} />
+                        )}
+                        <div>
+                          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '4px' }}>
+                            {order.productName}
+                          </h4>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                            Thương hiệu: {order.brand} | Quy cách: {order.options} | Số lượng: x{order.qty}
+                          </p>
+                        </div>
+                      </div>
                     )}
-                    <div>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '4px' }}>
-                        {order.productName}
-                      </h4>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                        Thương hiệu: {order.brand} | Quy cách: {order.options} | Số lượng: x{order.qty}
-                      </p>
-                      {order.adminNote && (
-                        <p style={{ fontSize: '0.8rem', color: '#D97706', marginTop: '6px', backgroundColor: '#FEF3C7', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>
+                    {order.adminNote && (
+                      <div style={{ marginTop: '12px' }}>
+                        <p style={{ fontSize: '0.8rem', color: '#D97706', backgroundColor: '#FEF3C7', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>
                           💬 Ghi chú từ Admin: {order.adminNote}
                         </p>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Mã Vận Đơn Air */}

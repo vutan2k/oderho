@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { User, LogOut, Package, LogIn } from 'lucide-react';
+import { User, LogOut, Package, ShoppingCart } from 'lucide-react';
 
-export default function Navbar({ logoSrc }) {
-  const { currentUser, logoutUser } = useContext(AppContext);
+export default function Navbar({ logoSrc: _logoSrc } = {}) {
+  const { currentUser, logoutUser, cart } = useContext(AppContext);
   const navigate = useNavigate();
 
   return (
@@ -38,44 +38,50 @@ export default function Navbar({ logoSrc }) {
         </Link>
 
         {/* User Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
+          {/* Giỏ hàng (ShoppingCart) */}
+          <Link id="cart-icon-header" to="/cart" className="icon-btn" style={{ position: 'relative', transition: 'transform 0.2s ease', color: 'var(--text-dark)' }} aria-label="Giỏ hàng" title="Giỏ hàng">
+            <ShoppingCart size={26} />
+            {cart && cart.length > 0 && (
+              <span style={{
+                position: 'absolute', top: '-8px', right: '-12px',
+                backgroundColor: '#3B82F6', color: '#FFF', fontSize: '0.75rem',
+                fontWeight: 800, width: '22px', height: '22px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: '50%'
+              }}>
+                {cart.length > 99 ? '99+' : cart.length}
+              </span>
+            )}
+          </Link>
+
           {currentUser ? (
             <>
-              <Link
-                to="/orders"
-                className="btn-ghost"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
-              >
-                <Package size={16} />
-                <span>Đơn hàng của tôi</span>
+              {/* Đơn hàng (Package) */}
+              <Link to="/orders" className="icon-btn" aria-label="Đơn hàng" title="Đơn hàng của tôi" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+                <Package size={26} />
               </Link>
-              <Link
-                to="/profile"
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'none', padding: '0 4px' }}
-              >
-                <User size={15} color="var(--purple-primary)" />
-                <span style={{ fontWeight: 600, color: 'var(--text)' }}>{currentUser.name || currentUser.email}</span>
+              {/* Tài khoản (User) */}
+              <Link to="/profile" className="icon-btn" aria-label="Tài khoản" title="Tài khoản" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+                <User size={26} />
               </Link>
+              {/* Đăng xuất (LogOut) */}
               <button
                 onClick={() => {
                   logoutUser();
                   navigate('/');
                 }}
-                className="btn-ghost"
+                className="icon-btn"
+                aria-label="Đăng xuất"
                 title="Đăng xuất"
-                style={{ padding: '8px' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dark)', padding: 0 }}
               >
-                <LogOut size={16} />
+                <LogOut size={26} />
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              className="btn-primary"
-              style={{ fontSize: '0.82rem', padding: '8px 16px' }}
-            >
-              <LogIn size={15} />
-              <span>Đăng nhập / Đăng ký</span>
+            <Link to="/login" className="icon-btn" aria-label="Đăng nhập" title="Đăng nhập" style={{ color: 'var(--text-dark)' }}>
+              <User size={26} />
             </Link>
           )}
         </div>

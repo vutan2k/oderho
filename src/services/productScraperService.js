@@ -195,7 +195,24 @@ export const scrapeProductMetadata = async (url) => {
           if (obj && (obj.name || obj.title)) {
             const rawName = obj.name || obj.title;
             const brand = typeof obj.brand === 'string' ? obj.brand : obj.brand?.name || 'Korea Brand';
-            const image = Array.isArray(obj.image) ? obj.image[0] : (obj.image || '');
+            
+            // Lấy danh sách ảnh từ JSON-LD
+            let parsedImages = [];
+            if (Array.isArray(obj.image)) {
+              parsedImages = obj.image;
+            } else if (typeof obj.image === 'string') {
+              parsedImages = [obj.image];
+            }
+            
+            // Quét HTML để lấy thêm ảnh phụ nếu JSON-LD không đủ ảnh
+            if (parsedImages.length < 4) {
+               const regex = /https:\/\/[^"'\s]+?\.(?:jpg|jpeg|png|webp)/gi;
+               const found = html.match(regex) || [];
+               const validThumbs = [...new Set(found)].filter(url => !url.includes('logo') && !url.includes('icon') && !url.includes('banner') && !url.includes('blank'));
+               parsedImages = [...new Set([...parsedImages, ...validThumbs])].slice(0, 4);
+            }
+
+            const image = parsedImages[0] || 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product';
             const price = parseFloat(obj.offers?.price) || parseKoreanPrice(html) || 22000;
             const rating = parseFloat(obj.aggregateRating?.ratingValue) || 4.9;
             const cleanName = cleanKoreanTitle(rawName);
@@ -208,7 +225,8 @@ export const scrapeProductMetadata = async (url) => {
                 brand,
                 category: guessCategory(cleanName),
                 foreignPrice: price,
-                productImage: image || 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product',
+                productImage: image,
+                images: parsedImages,
                 description: obj.description ? cleanKoreanTitle(obj.description) : 'Sản phẩm chính hãng Hàn Quốc.',
                 origin: 'Store Olive Young Seoul, Hàn Quốc',
                 rating,
@@ -236,6 +254,17 @@ export const scrapeProductMetadata = async (url) => {
         const bracketBrand = ogTitle.match(/^\[([^\]]{2,20})\]/);
         if (bracketBrand) brand = bracketBrand[1].trim();
 
+        // Quét HTML để tìm danh sách ảnh (gallery)
+        let parsedImages = ogImage ? [ogImage] : [];
+        if (parsedImages.length < 4) {
+           const regex = /https:\/\/[^"'\s]+?\.(?:jpg|jpeg|png|webp)/gi;
+           const found = html.match(regex) || [];
+           const validThumbs = [...new Set(found)].filter(url => !url.includes('logo') && !url.includes('icon') && !url.includes('banner') && !url.includes('blank'));
+           parsedImages = [...new Set([...parsedImages, ...validThumbs])].slice(0, 4);
+        }
+        
+        const finalImage = parsedImages[0] || 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product';
+
         return {
           success: true,
           product: {
@@ -244,7 +273,8 @@ export const scrapeProductMetadata = async (url) => {
             brand,
             category: guessCategory(cleanName),
             foreignPrice: price,
-            productImage: ogImage || 'https://placehold.co/600x600/f3f4f6/9ca3af?text=Product',
+            productImage: finalImage,
+            images: parsedImages,
             description: ogDesc ? cleanKoreanTitle(ogDesc) : 'Sản phẩm chính hãng từ Hàn Quốc.',
             origin: 'Store Olive Young Seoul, Hàn Quốc',
             rating: 4.9,

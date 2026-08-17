@@ -1,21 +1,21 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Search, Menu, X
+  Search, Menu, X, ShoppingCart, User, LogOut, Package
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
-import OrderDrawer from '../components/OrderDrawer';
 import ProductDetailModal from '../components/ProductDetailModal';
 import HeroSection from '../components/HeroSection';
 import WhyChooseUs from '../components/WhyChooseUs';
 import ProductGrid from '../components/ProductGrid';
 import Footer from '../components/Footer';
+import { triggerFlyToCart } from '../utils/flyToCart';
 
 export default function KROrderHomePage() {
-  const { oliveYoungCatalog, rates, currentUser, logoutUser } = useContext(AppContext);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const { oliveYoungCatalog, rates, currentUser, logoutUser, cart, addToCart } = useContext(AppContext);
   const [detailProduct, setDetailProduct] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const krwRate = rates?.KRW?.rate || 19.5;
@@ -29,6 +29,13 @@ export default function KROrderHomePage() {
   ];
 
   const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
+    if (searchQuery.trim()) {
+      const query = searchQuery.trim().toLowerCase();
+      const matchName = (product.name || '').toLowerCase().includes(query);
+      const matchBrand = (product.brand || '').toLowerCase().includes(query);
+      if (!matchName && !matchBrand) return false;
+    }
+
     if (activeCategory === 'all') return true;
     const cat = (product.category || '').toLowerCase();
     if (activeCategory === 'skincare') return cat.includes('skin') || cat.includes('dưỡng');
@@ -50,6 +57,13 @@ export default function KROrderHomePage() {
       }
     }
     setMobileMenuOpen(false);
+  };
+
+  const handleAddToCart = (product, e) => {
+    addToCart(product, 1);
+    if (e && product.productImage) {
+      triggerFlyToCart(e, product.productImage);
+    }
   };
 
   return (
@@ -84,26 +98,50 @@ export default function KROrderHomePage() {
               </ul>
             </nav>
 
-            <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              {/* ĐĂNG NHẬP / ĐƠN CỦA TÔI ĐƯỢC CHUYỂN SANG BÊN PHẢI CẠNH KÍNH LÚP TÌM KIẾM */}
-              {currentUser ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Link to="/orders" style={{ color: 'var(--purple-primary)', fontWeight: 700, textDecoration: 'none', fontSize: '0.82rem', letterSpacing: '1px' }}>ĐƠN CỦA TÔI</Link>
-                  <button onClick={() => logoutUser()} style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600, letterSpacing: '1px' }}>ĐĂNG XUẤT</button>
-                </div>
-              ) : (
-                <Link to="/login" style={{ color: 'var(--purple-primary)', fontWeight: 700, textDecoration: 'none', fontSize: '0.85rem', letterSpacing: '1px' }}>ĐĂNG NHẬP</Link>
-              )}
-
-              <a href="#products" className="icon-btn" aria-label="Tìm kiếm" title="Tìm kiếm">
-                <Search size={18} />
+            <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
+              <a href="#products" className="icon-btn" aria-label="Tìm kiếm" title="Tìm kiếm" style={{ color: 'var(--text-dark)' }}>
+                <Search size={26} />
               </a>
+
+              <Link id="cart-icon-header" to="/cart" className="icon-btn" style={{ position: 'relative', transition: 'transform 0.2s ease', color: 'var(--text-dark)' }} aria-label="Giỏ hàng" title="Giỏ hàng">
+                <ShoppingCart size={26} />
+                {cart && cart.length > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '-8px', right: '-12px',
+                    backgroundColor: '#3B82F6', color: '#FFF', fontSize: '0.75rem',
+                    fontWeight: 800, width: '22px', height: '22px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '50%'
+                  }}>
+                    {cart.length > 99 ? '99+' : cart.length}
+                  </span>
+                )}
+              </Link>
+
+              {currentUser ? (
+                <>
+                  <Link to="/orders" className="icon-btn" aria-label="Đơn của tôi" title="Đơn của tôi" style={{ color: 'var(--text-dark)' }}>
+                    <Package size={26} />
+                  </Link>
+                  <Link to="/profile" className="icon-btn" aria-label="Tài khoản" title="Tài khoản" style={{ color: 'var(--text-dark)' }}>
+                    <User size={26} />
+                  </Link>
+                  <button onClick={() => logoutUser()} className="icon-btn" aria-label="Đăng xuất" title="Đăng xuất" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dark)', padding: 0 }}>
+                    <LogOut size={26} />
+                  </button>
+                </>
+              ) : (
+                <Link to="/login" className="icon-btn" aria-label="Đăng nhập" title="Đăng nhập" style={{ color: 'var(--text-dark)' }}>
+                  <User size={26} />
+                </Link>
+              )}
               <button
                 className="icon-btn mobile-menu-toggle"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Toggle Navigation Menu"
+                style={{ color: 'var(--text-dark)' }}
               >
-                {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
               </button>
             </div>
           </div>
@@ -145,16 +183,51 @@ export default function KROrderHomePage() {
               <span style={{ color: 'var(--purple-primary)', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' }}>
                 DANH MỤC HÀNG HÓA SẴN CÓ
               </span>
-              <h2 style={{ fontSize: '2.4rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', marginTop: '6px' }}>
+              <h2 className="section-title" style={{ fontSize: '2.4rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', marginTop: '6px' }}>
                 Mỹ Phẩm & Thực Phẩm Chức Năng Hàn Quốc
               </h2>
             </div>
 
+            {/* Search Input Bar */}
+            <div style={{ maxWidth: '540px', margin: '0 auto 30px auto', position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Tìm kiếm sản phẩm theo tên hoặc thương hiệu..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '14px 44px 14px 44px',
+                  borderRadius: '30px',
+                  border: '1px solid var(--border-color)',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  boxShadow: 'var(--shadow-sm)',
+                  backgroundColor: '#FFFFFF',
+                  color: 'var(--text-dark)'
+                }}
+              />
+              <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Xóa tìm kiếm"
+                  style={{
+                    position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: 0
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+
             {/* Filter Tabs */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
+            <div className="filter-btn-group" style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
               {categories.map((cat) => (
                 <button
                   key={cat.id}
+                  className="filter-btn"
                   onClick={() => setActiveCategory(cat.id)}
                   style={{
                     padding: '10px 22px', borderRadius: '30px',
@@ -173,7 +246,7 @@ export default function KROrderHomePage() {
             <ProductGrid
               products={filteredProducts}
               krwRate={krwRate}
-              onSelectProduct={setSelectedProduct}
+              onSelectProduct={handleAddToCart}
               onViewDetail={setDetailProduct}
             />
           </div>
@@ -188,13 +261,7 @@ export default function KROrderHomePage() {
         product={detailProduct}
         krwRate={krwRate}
         onClose={() => setDetailProduct(null)}
-        onOrderNow={(prod) => setSelectedProduct(prod)}
-      />
-
-      {/* Drawer Đặt Hàng */}
-      <OrderDrawer
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
+        onOrderNow={handleAddToCart}
       />
     </div>
   );

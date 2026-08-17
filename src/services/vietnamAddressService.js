@@ -1,8 +1,4 @@
-/**
- * Official Vietnam Open API Service (provinces.open-api.vn)
- * Real-time 2-Level Administrative Structure: Tỉnh/Thành phố → Xã/Phường/Quận/Huyện
- * Full 63 Official Provinces/Cities of Vietnam with Instant Offline Fallback
- */
+import { LOCATION_DATA } from '../data/vietnamAddressData.js';
 
 export const ALL_63_VIETNAM_PROVINCES = [
   { code: 1, name: 'Thành phố Hà Nội' },
@@ -137,7 +133,9 @@ export const COMMON_SUB_DIVISIONS = {
  */
 export async function fetchVietnamProvinces() {
   try {
-    const res = await fetch('https://provinces.open-api.vn/api/p/');
+    const res = await fetch('https://provinces.open-api.vn/api/p/', {
+      signal: AbortSignal.timeout(3000)
+    });
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -145,7 +143,7 @@ export async function fetchVietnamProvinces() {
       }
     }
   } catch (err) {
-    console.warn('Vietnam Open API offline fallback.', err);
+    console.warn('Vietnam Open API offline fallback for provinces.', err);
   }
   return ALL_63_VIETNAM_PROVINCES;
 }
@@ -156,7 +154,9 @@ export async function fetchVietnamProvinces() {
 export async function fetchVietnamSubDivisions(provinceCode) {
   if (!provinceCode) return [];
   try {
-    const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+    const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`, {
+      signal: AbortSignal.timeout(3000)
+    });
     if (res.ok) {
       const data = await res.json();
       if (data && Array.isArray(data.districts)) {
@@ -166,7 +166,35 @@ export async function fetchVietnamSubDivisions(provinceCode) {
   } catch (err) {
     console.warn(`Vietnam Open API fetch sub-divisions failed for province ${provinceCode}`, err);
   }
-  return COMMON_SUB_DIVISIONS[provinceCode] || [
+
+  if (COMMON_SUB_DIVISIONS[provinceCode]) {
+    return COMMON_SUB_DIVISIONS[provinceCode];
+  }
+
+  // LOCATION_DATA fallback search
+  try {
+    const provInfo = ALL_63_VIETNAM_PROVINCES.find(p => String(p.code) === String(provinceCode));
+    const provName = provInfo ? provInfo.name : '';
+
+    if (LOCATION_DATA && LOCATION_DATA.VN && Array.isArray(LOCATION_DATA.VN.provinces)) {
+      const locProv = LOCATION_DATA.VN.provinces.find(lp => {
+        if (String(lp.code) === String(provinceCode)) return true;
+        if (provName && (lp.name.includes(provName.replace(/^(Thành phố|Tỉnh)\s+/i, '')) || provName.includes(lp.name.replace(/^TP\.\s+/i, '')))) return true;
+        return false;
+      });
+
+      if (locProv && Array.isArray(locProv.districts)) {
+        return locProv.districts.map((d, index) => ({
+          code: d.code || `${provinceCode}-${index + 1}`,
+          name: d.name
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn('LOCATION_DATA sub-divisions fallback parse error:', e);
+  }
+
+  return [
     { code: 'sub-1', name: 'Khu vực Trung tâm / Thành phố' },
     { code: 'sub-2', name: 'Khu vực Ngoại thành / Huyện' }
   ];
