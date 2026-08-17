@@ -1,6 +1,5 @@
-// content.js - Chạy trên trang Olive Young (Version 3.6 - Visual Product & Photo Reviews Focus)
+// content.js - Chạy trên trang Olive Young (Version 3.8 - Maximum Review Photos Scraper)
 
-// Thu thập Album Ảnh Sản Phẩm chính
 const pickProductImages = () => {
   const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/);
   const goodsNo = goodsNoMatch ? goodsNoMatch[1] : '';
@@ -16,7 +15,7 @@ const pickProductImages = () => {
     candidateUrls.push(ogImage);
   }
 
-  if (mainImgSrc && !/banner|display|event|gift|coupon|attached|Logo|Icon|gdasEditor/i.test(mainImgSrc)) {
+  if (mainImgSrc && !/banner|display|event|gift|coupon|attached|Logo|Icon|gdasEditor|thumb_default/i.test(mainImgSrc)) {
     candidateUrls.push(mainImgSrc);
   }
 
@@ -27,7 +26,7 @@ const pickProductImages = () => {
     const height = img.naturalHeight || rect.height || 0;
     const alt = img.alt || '';
 
-    if (!src || width < 180 || height < 180) return;
+    if (!src || width < 150 || height < 150) return;
 
     if (/banner|display|event|gift|coupon|attached|Logo|Icon|gdasEditor|sprite|blank|loading/i.test(src + alt)) {
       return;
@@ -36,7 +35,7 @@ const pickProductImages = () => {
     const isThumbnail = /thumbnails/i.test(src);
     const isMatchGoodsNo = goodsNo && src.includes(goodsNo);
 
-    if (isThumbnail || isMatchGoodsNo || (width >= 280 && height >= 280)) {
+    if (isThumbnail || isMatchGoodsNo || (width >= 250 && height >= 250)) {
       candidateUrls.push(src);
     }
   });
@@ -45,7 +44,7 @@ const pickProductImages = () => {
     return url.replace(/["')\]]/g, '').trim();
   }).filter(url => url.startsWith('http'));
 
-  return uniqueUrls.length > 0 ? uniqueUrls.slice(0, 10) : [ogImage || mainImgSrc || ''];
+  return uniqueUrls.length > 0 ? uniqueUrls.slice(0, 15) : [ogImage || mainImgSrc || ''];
 };
 
 const pickProductImage = () => {
@@ -53,22 +52,30 @@ const pickProductImage = () => {
   return images[0] || document.querySelector('meta[property="og:image"]')?.content || '';
 };
 
-// Thu thập toàn bộ Thư Viện Ảnh Chụp Thật từ Khách Hàng trên Olive Young
+// Thu thập TỐI ĐA TẤT CẢ Ảnh Đánh Giá Thực Tế từ Khách Hàng (Tối đa 100+ ảnh)
 const extractPhotoReviewsFromDOM = () => {
-  const reviewImgNodes = Array.from(document.querySelectorAll('.gReviewList img, .review_list img, #gdasList img, [class*=review] img, .thumbs img') || []);
+  const selectors = [
+    '.gReviewList img', '.review_list img', '#gdasList img', '[class*=review] img', 
+    '[class*=gdas] img', '.thumbs img', '.thumb_list img', '.photo_list img',
+    '[class*=photo] img', '.img_box img', '.rw-img-list img', '.review_cont img'
+  ];
+  
+  const reviewImgNodes = Array.from(document.querySelectorAll(selectors.join(',')) || []);
   const photoUrls = [];
 
   reviewImgNodes.forEach((img) => {
-    const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
+    const src = img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
     if (!src || !src.startsWith('http')) return;
     
-    // Loại bỏ icon, avatar, logo, star
-    if (!/icon|logo|avatar|star|thumb_default|blank|loading/i.test(src)) {
-      photoUrls.push(src.replace(/["')\]]/g, '').trim());
+    // Loại bỏ icon, avatar, logo, star, banner
+    if (!/icon|logo|avatar|star|thumb_default|blank|loading|banner|event|gift/i.test(src)) {
+      // Chuẩn hóa URL HD
+      const hdSrc = src.replace(/RS=\d+x\d+&?/gi, '').replace(/QT=\d+&?/gi, 'QT=100&').replace(/["')\]]/g, '').trim();
+      photoUrls.push(hdSrc);
     }
   });
 
-  return Array.from(new Set(photoUrls)).slice(0, 30);
+  return Array.from(new Set(photoUrls)).slice(0, 80);
 };
 
 const getText = (selector) => document.querySelector(selector)?.textContent?.trim() || '';
@@ -119,7 +126,7 @@ const showMiniToast = (text, type = 'info') => {
 chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
   if (request.action === "SCRAPE_PRODUCT") {
     try {
-      showMiniToast('Đang cào Album Ảnh Sản Phẩm & Ảnh Thực Tế...', 'info');
+      showMiniToast('Đang cào tối đa Album Ảnh Sản Phẩm & Ảnh Đánh Giá...', 'info');
 
       let fullText = document.body.innerText || '';
       if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
@@ -159,7 +166,7 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
           showMiniToast('Chưa cài API Key! Bấm icon TAVY > Cài đặt API Key', 'error');
         } else {
           const name = response?.name ? `"${response.name.slice(0, 28)}..."` : 'Sản phẩm';
-          showMiniToast(`Đã thêm ${name} + Album Ảnh vào chờ duyệt!`, 'success');
+          showMiniToast(`Đã bóc tách ${photoReviews.length + productImages.length}+ Ảnh thành công!`, 'success');
         }
       });
     } catch (error) {
