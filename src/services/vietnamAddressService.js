@@ -129,12 +129,12 @@ export const COMMON_SUB_DIVISIONS = {
 };
 
 /**
- * Fetch All Provinces from Open API (with offline fallback)
+ * Fetch All Provinces from Open API v2 (with 2025/2026 merger updates & offline fallback)
  */
 export async function fetchVietnamProvinces() {
   try {
-    const res = await fetch('https://provinces.open-api.vn/api/p/', {
-      signal: AbortSignal.timeout(3000)
+    const res = await fetch('https://provinces.open-api.vn/api/v2/p/', {
+      signal: AbortSignal.timeout(3500)
     });
     if (res.ok) {
       const data = await res.json();
@@ -143,28 +143,29 @@ export async function fetchVietnamProvinces() {
       }
     }
   } catch (err) {
-    console.warn('Vietnam Open API offline fallback for provinces.', err);
+    console.warn('Vietnam Open API v2 offline fallback for provinces.', err);
   }
   return ALL_63_VIETNAM_PROVINCES;
 }
 
 /**
- * Fetch 2nd Level Units (Districts/Wards/Cities) for a Province from Open API
+ * Fetch 2nd Level Units (Wards/Subdivisions) for a Province from Open API v2
  */
 export async function fetchVietnamSubDivisions(provinceCode) {
   if (!provinceCode) return [];
   try {
-    const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`, {
-      signal: AbortSignal.timeout(3000)
+    const res = await fetch(`https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`, {
+      signal: AbortSignal.timeout(3500)
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && Array.isArray(data.districts)) {
-        return data.districts.map(d => ({ code: d.code, name: d.name }));
+      const subs = data.wards || data.districts;
+      if (Array.isArray(subs) && subs.length > 0) {
+        return subs.map(d => ({ code: d.code, name: d.name }));
       }
     }
   } catch (err) {
-    console.warn(`Vietnam Open API fetch sub-divisions failed for province ${provinceCode}`, err);
+    console.warn(`Vietnam Open API v2 fetch sub-divisions failed for province ${provinceCode}`, err);
   }
 
   if (COMMON_SUB_DIVISIONS[provinceCode]) {
