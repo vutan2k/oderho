@@ -99,7 +99,7 @@ ${rawData.fullText}`;
         };
 
         const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));
-        const adminUrl = `https://tavy-oderho.web.app/admin/dashboard?autoFill=${encodedData}`;
+        const adminUrl = `https://tavyorder.web.app/admin/dashboard?autoFill=${encodedData}`;
 
         // Mở Tab Admin chạy ngầm để lưu vào hàng chờ
         chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
