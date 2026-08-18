@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "tavy-toolcaowed",
-  "version": "3.8",
-  "description": "Tiện ích cào dữ liệu sản phẩm & album ảnh thực tế HD tavy-toolcaowed",
+  "version": "5.5",
+  "description": "Tiện ích cào dữ liệu sản phẩm & Tự động cào Ranking Top 50 Chạy Ngầm 100%",
   "permissions": [
     "activeTab",
     "scripting",
     "tabs",
-    "storage"
+    "storage",
+    "notifications"
   ],
   "host_permissions": [
     "*://*.oliveyoung.co.kr/*",

@@ -224,6 +224,30 @@ export const AppProvider = ({ children }) => {
     return OLIVE_YOUNG_CATALOG;
   });
 
+  // ----- Realtime Firestore Rates Sync -----
+  useEffect(() => {
+    const unsubscribe = subscribeToRates((realtimeRates) => {
+      if (realtimeRates && typeof realtimeRates === 'object') {
+        setRates(prev => {
+          const merged = { ...prev, ...realtimeRates };
+          try {
+            localStorage.setItem('beauty_rates', JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const updateRates = async (newRates) => {
+    setRates(newRates);
+    try {
+      localStorage.setItem('beauty_rates', JSON.stringify(newRates));
+    } catch {}
+    updateRatesInDB(newRates).catch(err => console.warn('Firestore updateRates failed:', err));
+  };
+
   // ----- Realtime Firestore Products Sync -----
   useEffect(() => {
     const unsubscribe = subscribeToProducts((realtimeProducts) => {
@@ -645,6 +669,7 @@ export const AppProvider = ({ children }) => {
     setOrders,
     rates,
     setRates,
+    updateRates,
     products,
     setProducts,
     addProduct,

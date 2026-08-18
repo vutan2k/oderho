@@ -26,9 +26,8 @@ export default function Footer() {
             <h5>DANH MỤC HÀNG</h5>
             <ul className="footer-links">
               <li><a href="#skincare">Mỹ phẩm Dưỡng da</a></li>
-              <li><a href="#makeup">Mỹ phẩm Trang điểm</a></li>
               <li><a href="#health">Hồng sâm & Collagen</a></li>
-              <li><a href="#pharmacy">Thuốc hiệu thuốc Hàn</a></li>
+              <li><a href="#pharmacy">Hiệu thuốc Hàn</a></li>
             </ul>
           </div>
 

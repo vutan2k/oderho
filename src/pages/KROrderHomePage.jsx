@@ -23,9 +23,8 @@ export default function KROrderHomePage() {
   const categories = [
     { id: 'all', name: 'Tất cả sản phẩm' },
     { id: 'skincare', name: 'Mỹ phẩm Dưỡng Da' },
-    { id: 'makeup', name: 'Trang Điểm K-Beauty' },
     { id: 'health', name: 'Thực Phẩm Chức Năng' },
-    { id: 'pharmacy', name: 'Thuốc Hiệu Thuốc Hàn' }
+    { id: 'pharmacy', name: 'Hiệu Thuốc Hàn' }
   ];
 
   const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {

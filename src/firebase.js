@@ -13,9 +13,7 @@ import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 // Cấu hình Firebase qua environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: typeof window !== 'undefined' && window.location.hostname.includes('web.app')
-    ? window.location.hostname
-    : (import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'tavy-oderho.web.app'),
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'tavyorder.firebaseapp.com',
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,

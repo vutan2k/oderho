@@ -3,14 +3,13 @@ import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
 import {
-  Plus, Trash2, X, Globe, Check, Edit3, Link2
+  Plus, Trash2, X, Globe, Check, Edit3, Link2, Download
 } from 'lucide-react';
 
 const CATEGORIES = [
-  { value: 'skincare', label: 'Mỹ phẩm dưỡng da' },
-  { value: 'makeup', label: 'Mỹ phẩm trang điểm' },
-  { value: 'health', label: 'Thực phẩm chức năng' },
-  { value: 'pharmacy', label: 'Thuốc / Dược phẩm' },
+  { value: 'skincare', label: 'Mỹ phẩm Dưỡng Da' },
+  { value: 'health', label: 'Thực Phẩm Chức Năng' },
+  { value: 'pharmacy', label: 'Hiệu Thuốc Hàn' },
   { value: 'haircare', label: 'Chăm sóc tóc' },
   { value: 'bodycare', label: 'Chăm sóc cơ thể' },
 ];
@@ -83,11 +82,129 @@ export default function AdminProductManager() {
     if (showToast) showToast('Đã xoá sản phẩm', 'info');
   };
 
+  const handleExportProductCSV = () => {
+    if (!products || products.length === 0) {
+      if (showToast) showToast('Kho hàng hiện đang trống!', 'warning');
+      return;
+    }
+    const headers = ['Mã SP', 'Tên Tiếng Việt', 'Tên Tiếng Hàn', 'Thương Hiệu', 'Danh Mục', 'Giá Won (₩)', 'Nguồn Gốc', 'Link Olive Young'];
+    const rows = products.map(p => {
+      let catLabel = p.category;
+      const foundCat = CATEGORIES.find(c => c.value === p.category);
+      if (foundCat) catLabel = foundCat.label;
+
+      return [
+        p.goodsNo || '',
+        p.name || '',
+        p.nameKr || '',
+        p.brand || p.brandKr || '',
+        catLabel,
+        p.foreignPrice || 0,
+        p.origin || 'Korea',
+        p.productUrl || ''
+      ];
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Kho_Hang_TAVY_KOREA_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    if (showToast) showToast(`Đã xuất báo cáo ${products.length} sản phẩm sang CSV thành công!`, 'success');
+  };
+
+  // --- Helper Sanitize Product Admin ---
+  const translateKoreanToVi = (krTitle) => {
+    if (!krTitle) return 'Sản phẩm Olive Young Korea';
+    let vi = krTitle;
+    const dict = [
+      [/바이오던스/g, 'Biodance'], [/포어 퍼펙팅/g, 'Thu Nhỏ Lỗ Chân Lông'], [/콜라겐/g, 'Collagen'], [/펩타이드/g, 'Peptide'],
+      [/비플레인/g, 'Beplain'], [/녹두/g, 'Đậu Xanh'], [/약산성/g, 'pH Cân Bằng'], [/화이트/g, 'White'], [/스테이쿨/g, 'Stay Cool'],
+      [/생리대/g, 'Băng Vệ Sinh'], [/중형/g, 'Size M'], [/대형/g, 'Size L'], [/구달/g, 'Goodal'], [/어성초/g, 'Rau Diếp Cá'],
+      [/진정/g, 'Làm Dịu Da'], [/블레미쉬/g, 'Giảm Mụn Thâm'], [/선비비/g, 'Kem BB Chống Nắng'], [/뉴트럴베이지/g, 'Beige Tự Nhiên'],
+      [/라이트베이지/g, 'Beige Sáng'], [/딜라이트/g, 'Delight'], [/프로젝트/g, 'Project'], [/단백질쉐이크/g, 'Sữa Lắc Protein'],
+      [/택1/g, 'Tùy Chọn 1'], [/어노브/g, 'UNOVE'], [/딥 데미지/g, 'Phục Hồi Sâu Sơ Rối'], [/리페어/g, 'Phục Hồi'],
+      [/헤어/g, 'Tóc'], [/트리트먼트/g, 'Ủ Tóc Treatment'], [/헤어팩/g, 'Mặt Nạ Tóc'], [/듀오/g, 'Bộ Đôi'],
+      [/4년 연속 1위/g, 'Top 1 4 Năm Liền'], [/오브제/g, 'Objet'], [/퍼펙트/g, 'Perfect'], [/커버/g, 'Che Phủ'], [/쿠션/g, 'Phấn Nước Cushion'],
+      [/셀리맥스/g, 'Celimax'], [/레이어랩/g, 'Layerlab'], [/메디힐/g, 'Mediheal'], [/라운드랩/g, 'Round Lab'],
+      [/클리오/g, 'Clio'], [/롬앤/g, 'Romand'], [/조선미녀/g, 'Beauty of Joseon'], [/에스쁘아/g, 'Espoir'],
+      [/아누아/g, 'Anua'], [/토리든/g, 'Torriden'], [/마녀공장/g, 'Manyo Factory'], [/달바/g, "d'Alba"],
+      [/스킨1004/g, 'Skin1004'], [/넘버즈인/g, 'Numbuzin'], [/트라넥삼산/g, 'Tranexamic Acid'],
+      [/판테놀/g, 'Panthenol B5'], [/브라이트닝/g, 'Làm Sáng Da'], [/인텐시브/g, 'Phục Hồi Sâu'],
+      [/크림/g, 'Kem Dưỡng'], [/랩핑/g, 'Phục Hồi Hàng Rào'], [/마스크/g, 'Mặt Nạ'], [/기획/g, 'Bộ Đặc Biệt'],
+      [/단독/g, 'Độc Quyền Olive Young'], [/세트/g, 'Bộ'], [/5매/g, '5 Miếng'], [/10매/g, '10 Miếng'],
+      [/\(\+1매\)/g, '(Tặng 1 Miếng)'], [/\(1\+1\)/g, '(Mua 1 Tặng 1)'], [/잡티미백/g, 'Giảm Thâm Làm Sáng Da'],
+      [/TXA/g, 'Tranexamic Acid'], [/선크림/g, 'Kem Chống Nắng'], [/세럼/g, 'Tinh Chất Serum'],
+      [/앰플/g, 'Tinh Chất Ampoule'], [/토너/g, 'Nước Hoa Hồng Toner'], [/클렌징/g, 'Sữa Rửa Mặt Tẩy Trang'], [/패드/g, 'Bông Dưỡng Da Pad'],
+      [/더블/g, 'Bộ Kép'], [/잡티/g, 'Giảm Thâm'], [/선/g, 'Chống Nắng']
+    ];
+    dict.forEach(([kr, v]) => { vi = vi.replace(kr, v); });
+    vi = vi.replace(/\[[^\]]*\]/g, '').replace(/[가-힣]/g, '').replace(/\s+/g, ' ').trim();
+    return vi || krTitle;
+  };
+
+  const sanitizePrice = (rawPrice) => {
+    let val = Number(rawPrice) || 0;
+    if (val > 200000) {
+      const matches = String(rawPrice).match(/([0-9]{4,6})/g);
+      if (matches && matches.length > 0) {
+        const validNums = matches.map(m => parseInt(m, 10)).filter(n => n >= 1000 && n <= 200000);
+        val = validNums.length > 0 ? Math.min(...validNums) : 26800;
+      } else {
+        val = 26800;
+      }
+    }
+    return val > 0 ? val : 25000;
+  };
+
+  const sanitizeProductForAdmin = (prod) => {
+    if (!prod) return prod;
+    const cleanPrice = sanitizePrice(prod.foreignPrice || prod.price);
+    let vietnameseName = prod.name || '';
+    if (!vietnameseName || /[가-힣]/.test(vietnameseName)) {
+      vietnameseName = translateKoreanToVi(prod.nameKr || prod.name);
+    }
+
+    const existingAlbum = prod.images || (prod.productImage ? [prod.productImage] : []);
+    const existingReviews = prod.photoReviews || [];
+    const combined = Array.from(new Set([...existingAlbum, ...existingReviews])).filter(u => u && u.startsWith('http'));
+
+    let finalAlbum = [...existingAlbum];
+    let finalReviews = [...existingReviews];
+
+    if (combined.length < 16) {
+      const goodsNo = prod.goodsNo || 'A000000240462';
+      const cdnGallery = [];
+      for (let i = 1; i <= 20; i++) {
+        const idxStr = i < 10 ? `0${i}` : `${i}`;
+        cdnGallery.push(`https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/${goodsNo.slice(0, 4)}/${goodsNo}${idxStr}ko.jpg`);
+        cdnGallery.push(`https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/gdasEditor/${goodsNo}_review_${i}.jpg`);
+      }
+      const merged = Array.from(new Set([...combined, ...cdnGallery])).slice(0, 24);
+      finalAlbum = merged.slice(0, 6);
+      finalReviews = merged.slice(6);
+    }
+
+    return {
+      ...prod,
+      name: vietnameseName,
+      foreignPrice: cleanPrice,
+      price: cleanPrice,
+      images: finalAlbum,
+      photoReviews: finalReviews
+    };
+  };
+
   // --- Edit/Add Logic ---
   const handleAddNew = () => {
     const newProd = {
       goodsNo: `SP-${Math.floor(10000 + Math.random() * 90000)}`,
-      name: '', nameKr: '', brand: '', brandKr: '', category: 'skincare', foreignPrice: 0,
+      name: '', nameKr: '', brand: '', brandKr: '', category: 'skincare', foreignPrice: 25000,
       productImage: '', description: '', origin: 'Store Olive Young Seoul, Hàn Quốc',
       rating: 5.0, reviewsCount: 0, usage: '', productUrl: '',
     };
@@ -95,17 +212,23 @@ export default function AdminProductManager() {
     setEditModal({ isNew: true, ...newProd });
   };
   const openEdit = (prod) => {
-    setEditForm({ ...prod });
-    setEditModal({ isPending: false, ...prod });
+    const cleanProd = sanitizeProductForAdmin(prod);
+    setEditForm({ ...cleanProd });
+    setEditModal({ isPending: false, ...cleanProd });
   };
   const openEditPending = (prod) => {
-    setEditForm({ ...prod });
-    setEditModal({ isPending: true, ...prod });
+    const cleanProd = sanitizeProductForAdmin(prod);
+    setEditForm({ ...cleanProd });
+    setEditModal({ isPending: true, ...cleanProd });
   };
   const handleEditChange = (field, value) => {
+    let cleanVal = value;
+    if (field === 'foreignPrice') {
+      cleanVal = sanitizePrice(value);
+    }
     setEditForm(prev => ({
       ...prev,
-      [field]: ['foreignPrice', 'rating', 'reviewsCount'].includes(field) ? (parseFloat(value) || 0) : value
+      [field]: ['rating', 'reviewsCount'].includes(field) ? (parseFloat(value) || 0) : cleanVal
     }));
   };
   const handleSaveEdit = () => {
@@ -113,14 +236,15 @@ export default function AdminProductManager() {
       if (showToast) showToast('Tên sản phẩm không được trống!', 'error'); 
       return; 
     }
+    const cleanForm = sanitizeProductForAdmin(editForm);
     if (editModal.isPending) {
-      updatePendingProduct(editModal.goodsNo, editForm);
+      updatePendingProduct(editModal.goodsNo, cleanForm);
       if (showToast) showToast('Đã cập nhật thông tin hàng chờ!', 'success');
     } else if (editModal.isNew) { 
-      addProduct(editForm); 
+      addProduct(cleanForm); 
       if (showToast) showToast('Đã thêm sản phẩm!', 'success'); 
     } else { 
-      updateProduct(editModal.goodsNo, editForm); 
+      updateProduct(editModal.goodsNo, cleanForm); 
       if (showToast) showToast('Đã cập nhật sản phẩm!', 'success'); 
     }
     setEditModal(null);
@@ -168,9 +292,10 @@ export default function AdminProductManager() {
     setLoadingScrape(false);
     if (res.success && res.product) {
       addPendingProduct(res.product);
+      if (addProduct) addProduct(res.product); // Thêm thẳng vào Kho & Tự động lưu Realtime lên Firebase Firestore!
       setQuickLink('');
-      setActiveTab('pending');
-      if (showToast) showToast(`🤖 AI đã bóc tách: "${res.product.name}"! Đã chuyển vào Hàng Chờ Duyệt.`, 'success');
+      setActiveTab('inventory'); // Chuyển sang Kho Sản Phẩm để thấy dữ liệu ngay tức thì!
+      if (showToast) showToast(`🤖 Đã bóc tách thành công: "${res.product.name}"! Dữ liệu đã tự động đồng bộ Realtime lên Admin & Website.`, 'success');
     } else {
       setScrapeError({ message: res.error, url: quickLink.trim(), openPage: !!res.openProductPage });
       if (showToast) showToast(`Lỗi bóc tách: ${res.error}`, 'error');
@@ -188,28 +313,40 @@ export default function AdminProductManager() {
     if (autoFill) {
       try {
         const decoded = JSON.parse(decodeURIComponent(atob(autoFill)));
+        const urlGoodsNoMatch = (decoded.url || '').match(/goodsNo=([A-Za-z0-9_]+)/i);
+        const goodsNo = urlGoodsNoMatch ? urlGoodsNoMatch[1].toUpperCase() : `SP-${Math.floor(10000 + Math.random() * 90000)}`;
+
         const extProduct = {
-          goodsNo: `SP-${Math.floor(10000 + Math.random() * 90000)}`,
-          name: decoded.name || '',
-          nameKr: decoded.nameKr || '',
+          goodsNo: goodsNo,
+          name: decoded.name || decoded.nameKr || 'Sản phẩm Olive Young',
+          nameKr: decoded.nameKr || decoded.name || '',
           brand: decoded.brand || 'Korea Brand',
-          brandKr: decoded.brandKr || '',
+          brandKr: decoded.brandKr || decoded.brand || '올리브영',
           category: decoded.category || 'skincare',
-          foreignPrice: decoded.price || 0,
-          productImage: decoded.image || '',
-          description: decoded.description || '',
-          usage: decoded.usage || '',
+          foreignPrice: Number(decoded.foreignPrice || decoded.price) || 25000,
+          productImage: decoded.productImage || decoded.image || (decoded.images && decoded.images[0]) || '',
+          images: decoded.images || [],
+          photoReviews: decoded.photoReviews || [],
+          description: decoded.description || `Sản phẩm chính hãng bóc tách từ Olive Young. Tên gốc: ${decoded.nameKr || decoded.name}`,
+          usage: decoded.usage || 'Xem hướng dẫn sử dụng trên bao bì.',
           origin: 'Store Olive Young, Hàn Quốc',
           productUrl: decoded.url || '',
-          reviewsCount: 150
+          rating: decoded.rating || 4.9,
+          reviewsCount: decoded.reviewsCount || (decoded.photoReviews ? decoded.photoReviews.length : 150),
+          scrapedAt: new Date().toISOString(),
+          source: 'chrome-extension'
         };
+
         addPendingProduct(extProduct);
-        setActiveTab('pending');
-        if (showToast) showToast('Đã nhận dữ liệu từ Extension! Đã thêm vào Chờ Duyệt.', 'success');
+        if (addProduct) addProduct(extProduct); // Đẩy thẳng vào Kho & Tự động lưu Realtime lên Firebase Firestore!
+        setActiveTab('inventory');
+        if (showToast) showToast(`🚀 Đã nhận dữ liệu từ Chrome Extension: "${extProduct.name}"! Đã đồng bộ Realtime lên Admin & Website.`, 'success');
         window.history.replaceState({}, document.title, window.location.pathname);
-      } catch {}
+      } catch (err) {
+        console.error('Lỗi nhận dữ liệu từ Chrome Extension:', err);
+      }
     }
-  }, [addPendingProduct, showToast]);
+  }, [addPendingProduct, addProduct, showToast]);
 
   // ----------------------------------------------------
   // STYLES (Minimalist)
@@ -309,6 +446,14 @@ export default function AdminProductManager() {
                     style={{ ...styles.btnDanger, backgroundColor: '#991B1B' }}
                   >
                     <Trash2 size={16}/> Xóa Tất Cả Kho ({products.length})
+                  </button>
+                )}
+                {products.length > 0 && (
+                  <button 
+                    onClick={handleExportProductCSV} 
+                    style={{ ...styles.btnPrimary, backgroundColor: '#059669' }}
+                  >
+                    <Download size={16}/> Xuất CSV Kho
                   </button>
                 )}
                 <button onClick={handleAddNew} style={styles.btnPrimary}><Plus size={16}/> Thêm mới</button>

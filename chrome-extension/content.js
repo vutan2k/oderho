@@ -123,7 +123,39 @@ const showMiniToast = (text, type = 'info') => {
   }
 };
 
-chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
+// Trích xuất danh sách 50 mã sản phẩm Ranking Best Sellers từ Olive Young
+const extractRankingGoodsFromDOM = () => {
+  const links = Array.from(document.querySelectorAll('a[href*="goodsNo="]') || []);
+  const goodsMap = new Map();
+
+  links.forEach(a => {
+    const href = a.href || a.getAttribute('href') || '';
+    const match = href.match(/goodsNo=([A-Za-z0-9_]+)/i);
+    if (match) {
+      const goodsNo = match[1].toUpperCase();
+      if (!goodsMap.has(goodsNo)) {
+        goodsMap.set(goodsNo, `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${goodsNo}`);
+      }
+    }
+  });
+
+  return Array.from(goodsMap.entries()).map(([goodsNo, url]) => ({ goodsNo, url })).slice(0, 50);
+};
+
+chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+  if (request.action === "SCRAPE_RANKING_50") {
+    try {
+      showMiniToast('🔥 Đang cào danh sách 50 mã Ranking Olive Young...', 'info');
+      const items = extractRankingGoodsFromDOM();
+      showMiniToast(`Đã tìm thấy ${items.length} mã sản phẩm trên trang!`, 'success');
+      sendResponse({ success: true, items });
+    } catch (e) {
+      showMiniToast(`Lỗi quét Ranking: ${e.message}`, 'error');
+      sendResponse({ success: false, error: e.message, items: [] });
+    }
+    return true;
+  }
+
   if (request.action === "SCRAPE_PRODUCT") {
     try {
       showMiniToast('Đang cào tối đa Album Ảnh Sản Phẩm & Ảnh Đánh Giá...', 'info');

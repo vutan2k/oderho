@@ -98,10 +98,11 @@ export default function AdminDashboardPage() {
   // Handle updates for rates & fees
   const handleUpdateKrw = (e) => {
     e.preventDefault();
-    const val = parseFloat(krwRateInput);
+    const cleanStr = String(krwRateInput || '').replace(',', '.').trim();
+    const val = parseFloat(cleanStr);
     if (!val || val <= 0) return;
     updateRates({ ...rates, KRW: { ...rates.KRW, rate: val } });
-    if (showToast) showToast('Đã cập nhật tỷ giá KRW thành công!', 'success');
+    if (showToast) showToast(`Đã cập nhật tỷ giá KRW = ${val} ₫/Won thành công!`, 'success');
   };
 
   const handleUpdateUsd = (e) => {
@@ -826,21 +827,19 @@ export default function AdminDashboardPage() {
         {activeTab === 'settings' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             
-            {/* Rates & Fee Card */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-              
-              {/* KRW Rate form */}
+            {/* KRW Rate Card */}
+            <div style={{ maxWidth: '500px' }}>
               <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
                 <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '14px' }}>₩ Tỷ giá Won Hàn Quốc (KRW/VND)</h4>
                 <form onSubmit={handleUpdateKrw} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div>
                     <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Giá trị quy đổi (1 KRW = x VND):</label>
                     <input
-                      type="number"
-                      step="0.01"
+                      type="text"
                       value={krwRateInput}
                       onChange={(e) => setKrwRateInput(e.target.value)}
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', marginTop: '4px', fontSize: '0.9rem', fontWeight: 700 }}
+                      placeholder="Ví dụ: 19.5 hoặc 19,5"
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', marginTop: '4px', fontSize: '1.1rem', fontWeight: 700, color: 'var(--purple-primary)' }}
                     />
                   </div>
                   <button 
@@ -849,82 +848,18 @@ export default function AdminDashboardPage() {
                       backgroundColor: 'var(--purple-primary)', 
                       color: '#FFF', 
                       border: 'none', 
-                      padding: '10px', 
+                      padding: '12px', 
                       borderRadius: '6px', 
                       cursor: 'pointer',
-                      fontSize: '0.88rem',
-                      fontWeight: 700
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      marginTop: '4px'
                     }}
                   >
                     Cập nhật tỷ giá KRW
                   </button>
                 </form>
               </div>
-
-              {/* USD Rate form */}
-              <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
-                <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '14px' }}>$ Tỷ giá Đô la Mỹ (USD/VND)</h4>
-                <form onSubmit={handleUpdateUsd} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Giá trị quy đổi (1 USD = x VND):</label>
-                    <input
-                      type="number"
-                      step="1"
-                      value={usdRateInput}
-                      onChange={(e) => setUsdRateInput(e.target.value)}
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', marginTop: '4px', fontSize: '0.9rem', fontWeight: 700 }}
-                    />
-                  </div>
-                  <button 
-                    type="submit" 
-                    style={{ 
-                      backgroundColor: 'var(--purple-primary)', 
-                      color: '#FFF', 
-                      border: 'none', 
-                      padding: '10px', 
-                      borderRadius: '6px', 
-                      cursor: 'pointer',
-                      fontSize: '0.88rem',
-                      fontWeight: 700
-                    }}
-                  >
-                    Cập nhật tỷ giá USD
-                  </button>
-                </form>
-              </div>
-
-              {/* Service Fee Form */}
-              <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
-                <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '14px' }}>⚙️ Phần trăm phí dịch vụ (%)</h4>
-                <form onSubmit={handleUpdateServiceFee} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Phí mua hộ thu của khách (% trên giá sản phẩm):</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={serviceFeeInput}
-                      onChange={(e) => setServiceFeeInput(e.target.value)}
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', marginTop: '4px', fontSize: '0.9rem', fontWeight: 700 }}
-                    />
-                  </div>
-                  <button 
-                    type="submit" 
-                    style={{ 
-                      backgroundColor: 'var(--purple-primary)', 
-                      color: '#FFF', 
-                      border: 'none', 
-                      padding: '10px', 
-                      borderRadius: '6px', 
-                      cursor: 'pointer',
-                      fontSize: '0.88rem',
-                      fontWeight: 700
-                    }}
-                  >
-                    Cập nhật phí dịch vụ
-                  </button>
-                </form>
-              </div>
-
             </div>
 
             {/* Sync & Maintenance Actions */}

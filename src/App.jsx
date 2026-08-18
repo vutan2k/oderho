@@ -36,6 +36,7 @@ export default function App() {
                 <Route path="/profile" element={<><Navbar /><UserProfilePage /></>} />
                 <Route path="/payment/:orderId" element={<><Navbar /><PaymentPage /></>} />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
