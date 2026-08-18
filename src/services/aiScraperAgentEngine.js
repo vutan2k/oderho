@@ -61,12 +61,20 @@ ${markdown.slice(0, 15000)}`;
         body: JSON.stringify({
           model: openAiCfg.model,
           messages: [{ role: 'user', content: prompt }],
+          stream: false,
           temperature: 0.2
         })
       });
       if (res.ok) {
-        const d = await res.json();
-        const text = d?.choices?.[0]?.message?.content || '';
+        const rawText = await res.text();
+        let d;
+        try {
+          d = JSON.parse(rawText);
+        } catch {
+          const cleanedText = rawText.split('\n').find(line => line.startsWith('data: '))?.replace(/^data:\s*/, '');
+          if (cleanedText && cleanedText !== '[DONE]') d = JSON.parse(cleanedText);
+        }
+        const text = d?.choices?.[0]?.message?.content || d?.choices?.[0]?.delta?.content || '';
         const cleaned = text.replace(/```json|```/g, '').trim();
         const start = cleaned.indexOf('{');
         const end = cleaned.lastIndexOf('}');

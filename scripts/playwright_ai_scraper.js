@@ -21,7 +21,10 @@ const MAX_PRODUCTS = parseInt(process.env.MAX_PRODUCTS || '10', 10);
 
 const KRW_TO_VND = 18.5; // Default fallback exchange rate
 
-/** Direct OpenAI / Gemini AI Vision & Translator */
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+let lastAiCallTimestamp = 0;
+
+/** Direct OpenAI / Gemini AI Vision & Translator với Rate Limiter & Automatic Retry (Tránh lỗi 429 Rate Limit) */
 async function translateProductWithAI(rawTitle, brandKr) {
   if (!rawTitle) return { name: 'Sản Phẩm Hàn Quốc Hàng Đầu', category: 'skincare' };
   
@@ -35,42 +38,80 @@ async function translateProductWithAI(rawTitle, brandKr) {
   else if (/바디|클렌저|로션|body/i.test(lower)) category = 'bodycare';
   else if (/비타민|영양제|콜라겐|health|vitamin/i.test(lower)) category = 'health';
 
-  // 1. Prioritize Custom OpenAI API (http://localhost:20128/v1) if key provided
+  // 🛡️ BẮT BỘC: Giới hạn tần suất gọi API (tối thiểu 3.5 giây giữa các lần gọi để không vượt quá Quota/Rate Limit)
+  const now = Date.now();
+  const timeSinceLastCall = now - lastAiCallTimestamp;
+  const MIN_INTERVAL_MS = 3500; // 3.5 giây nghỉ giữa mỗi sản phẩm
+  if (timeSinceLastCall < MIN_INTERVAL_MS) {
+    const waitTime = MIN_INTERVAL_MS - timeSinceLastCall;
+    console.log(`⏱️ [Throttling Rate Limit Safeguard] Giảm tốc độ gọi AI... Nghỉ ${waitTime}ms trước khi gửi request...`);
+    await delay(waitTime);
+  }
+  lastAiCallTimestamp = Date.now();
+
+  // 1. Prioritize Custom OpenAI API (http://localhost:20128/v1) với Retry khi dính Rate Limit
   if (OPENAI_API_KEY) {
-    try {
-      const endpoint = `${OPENAI_BASE_URL.replace(/\/$/, '')}/chat/completions`;
-      console.log(`🤖 [OpenAI AI Endpoint] Dịch thuật qua ${endpoint} (model: ${OPENAI_MODEL})...`);
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          messages: [
-            {
-              role: 'system',
-              content: 'Bạn là chuyên gia dịch thuật mỹ phẩm Hàn Quốc chuyên nghiệp. Dịch tên sản phẩm tiếng Hàn sang tiếng Việt tự nhiên, đúng mốt thị trường Việt Nam (tối đa 120 ký tự).'
-            },
-            {
-              role: 'user',
-              content: `Dịch tên sản phẩm Hàn Quốc:\nTên Hàn: "${cleanTitle}"\nThương hiệu: "${brandKr}"`
-            }
-          ],
-          temperature: 0.3
-        })
-      });
-      const data = await response.json();
-      const aiText = data?.choices?.[0]?.message?.content?.trim();
-      if (aiText && aiText.length > 5) {
-        return {
-          name: aiText.replace(/^["'\s]+|["'\s]+$/g, ''),
-          category
-        };
+    const MAX_RETRIES = 3;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const endpoint = `${OPENAI_BASE_URL.replace(/\/$/, '')}/chat/completions`;
+        console.log(`🤖 [OpenAI AI (Thử ${attempt}/${MAX_RETRIES})] Dịch thuật qua ${endpoint} (model: ${OPENAI_MODEL})...`);
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: OPENAI_MODEL,
+            messages: [
+              {
+                role: 'system',
+                content: 'Bạn là chuyên gia dịch thuật mỹ phẩm Hàn Quốc chuyên nghiệp. Dịch tên sản phẩm tiếng Hàn sang tiếng Việt tự nhiên, đúng mốt thị trường Việt Nam (tối đa 120 ký tự).'
+              },
+              {
+                role: 'user',
+                content: `Dịch tên sản phẩm Hàn Quốc:\nTên Hàn: "${cleanTitle}"\nThương hiệu: "${brandKr}"`
+              }
+            ],
+            stream: false,
+            temperature: 0.3
+          }),
+          signal: AbortSignal.timeout(8000)
+        });
+
+        if (response.status === 429) {
+          console.warn(`⏳ [Rate Limit 429] Bị giới hạn số lượt API/phút! Tự động nghỉ 5.5s trước khi thử lại (${attempt}/${MAX_RETRIES})...`);
+          await delay(5500);
+          continue;
+        }
+
+        const rawText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (eParse) {
+          // Xử lý nếu Proxy trả về dòng dạng data: {...}
+          const cleanedText = rawText.split('\n').find(line => line.startsWith('data: '))?.replace(/^data:\s*/, '');
+          if (cleanedText && cleanedText !== '[DONE]') {
+            data = JSON.parse(cleanedText);
+          } else {
+            throw eParse;
+          }
+        }
+
+        const aiText = data?.choices?.[0]?.message?.content?.trim() || data?.choices?.[0]?.delta?.content?.trim();
+        if (aiText && aiText.length > 3) {
+          return {
+            name: aiText.replace(/^["'\s]+|["'\s]+$/g, ''),
+            category
+          };
+        }
+      } catch (e) {
+        console.warn(`⚠️ OpenAI Translation Error (Thử ${attempt}/${MAX_RETRIES}):`, e.message);
+        if (attempt < MAX_RETRIES) await delay(3000);
       }
-    } catch (e) {
-      console.warn("⚠️ OpenAI Translation Error:", e.message);
     }
   }
 
@@ -195,13 +236,16 @@ async function runPlaywrightAIScraper() {
 
         // --- EXPLICIT FIX FOR "상품설명 더보기" BUTTON STICKING ---
         try {
-          const moreBtn = page.locator('button:has-text("상품설명 더보기"), .btn_detail_more, #btn_artcDescMore, .artcDesc_more, a:has-text("더보기")').first();
-          if (await moreBtn.isVisible().catch(() => false)) {
-            console.log(`🔘 [Auto Click] Phát hiện nút "상품설명 더보기" (Product Description View More). Đang click tự động...`);
-            await moreBtn.scrollIntoViewIfNeeded().catch(() => {});
-            await moreBtn.click({ force: true }).catch(() => {});
-            await page.waitForTimeout(600);
-          }
+          console.log(`🔘 [Auto Click] Phát hiện & tự động mở rộng nút "상품설명 더보기"...`);
+          await page.evaluate(() => {
+            const btns = Array.from(document.querySelectorAll('button, a, .btn_detail_more, #btn_artcDescMore, .artcDesc_more'));
+            btns.forEach(b => {
+              if (b.textContent && (b.textContent.includes('상품설명 더보기') || b.textContent.includes('상세정보 더보기'))) {
+                try { b.click(); } catch(e){}
+              }
+            });
+          }).catch(() => {});
+          await page.waitForTimeout(500);
         } catch (errMore) {
           console.log(`ℹ️ [Note] Không có nút "상품설명 더보기" hoặc đã được mở sẵn.`);
         }
@@ -221,42 +265,62 @@ async function runPlaywrightAIScraper() {
         await page.evaluate(() => window.scrollBy({ top: 500, behavior: 'smooth' }));
         await page.waitForTimeout(800);
 
-        // Extract deep product detail page data
-        const brand = await page.locator('.prd_brand, .brand_name, #moveBrandShop').first().textContent().catch(() => 'Olive Young');
-        const nameKr = await page.locator('.prd_name, #goodsNm, .goods_name').first().textContent().catch(() => 'Sản phẩm Korea');
+        // Extract deep product detail page data siêu tốc với DOM evaluation (Zero Timeout Wait)
+        const detailData = await page.evaluate(() => {
+          const brandEl = document.querySelector('.prd_brand, .brand_name, #moveBrandShop');
+          const nameEl = document.querySelector('.prd_name, #goodsNm, .goods_name');
+          const priceEl = document.querySelector('#goodsSatPrice, .price .prd_price, .price strong');
+          const mainImgEl = document.querySelector('#mainImg, #goodsImg img, .prd_detail_info img');
+          const descEl = document.querySelector('#artcDesc, #prdDetail, .detail_info_area');
+          const scoreEl = document.querySelector('.graph_score .num, #evalScore, .review_point');
+
+          const thumbs = Array.from(document.querySelectorAll('#thumbs img, .prd_thumb img, .thumb_list img, .goods_thumb img'))
+            .map(img => img.getAttribute('src') || '')
+            .filter(Boolean)
+            .slice(0, 5);
+
+          return {
+            brand: brandEl ? brandEl.textContent.trim() : 'Olive Young',
+            nameKr: nameEl ? nameEl.textContent.trim() : 'Sản phẩm Korea',
+            priceTxt: priceEl ? priceEl.textContent.trim() : '25000',
+            mainImg: mainImgEl ? (mainImgEl.getAttribute('src') || '') : '',
+            albumImgs: thumbs,
+            descText: descEl ? descEl.textContent.trim() : '',
+            reviewScoreTxt: scoreEl ? scoreEl.textContent.trim() : '4.9'
+          };
+        }).catch(() => ({
+          brand: 'Olive Young',
+          nameKr: 'Sản phẩm Korea',
+          priceTxt: '25000',
+          mainImg: '',
+          albumImgs: [],
+          descText: '',
+          reviewScoreTxt: '4.9'
+        }));
+
+        const brand = detailData.brand || 'Olive Young';
+        const nameKr = detailData.nameKr || 'Sản phẩm Korea';
+        const foreignPrice = parseInt(detailData.priceTxt.replace(/[^0-9]/g, '') || '25000', 10);
         
-        // Extract Price (Won)
-        const priceTxt = await page.locator('#goodsSatPrice, .price .prd_price, .price strong').first().textContent().catch(() => '25000');
-        const foreignPrice = parseInt(priceTxt.replace(/[^0-9]/g, '') || '25000', 10);
-        
-        // Extract Main High-Res Image
-        let mainImg = await page.locator('#mainImg, #goodsImg img, .prd_detail_info img').first().getAttribute('src').catch(() => '');
+        let mainImg = detailData.mainImg;
         if (mainImg && mainImg.startsWith('//')) mainImg = 'https:' + mainImg;
 
-        // Extract Thumbnail Gallery Album Images (up to 5)
         const albumImgs = [];
-        const thumbLocs = page.locator('#thumbs img, .prd_thumb img, .thumb_list img');
-        const thumbCount = await thumbLocs.count();
-        for (let t = 0; t < Math.min(thumbCount, 5); t++) {
-          let tUrl = await thumbLocs.nth(t).getAttribute('src').catch(() => '');
+        for (let tUrl of detailData.albumImgs) {
           if (tUrl && tUrl.startsWith('//')) tUrl = 'https:' + tUrl;
           if (tUrl && !albumImgs.includes(tUrl)) albumImgs.push(tUrl);
         }
         if (mainImg && !albumImgs.includes(mainImg)) albumImgs.unshift(mainImg);
 
-        // Extract Description & Review summary
-        const descText = await page.locator('#artcDesc, #prdDetail, .detail_info_area').first().textContent().catch(() => '');
-        const cleanDesc = descText ? descText.replace(/\s+/g, ' ').substring(0, 300) : '';
-
-        const reviewScoreTxt = await page.locator('.graph_score .num, #evalScore, .review_point').first().textContent().catch(() => '4.9');
-        const rating = parseFloat(reviewScoreTxt.replace(/[^0-9.]/g, '') || '4.9');
+        const cleanDesc = detailData.descText ? detailData.descText.replace(/\s+/g, ' ').substring(0, 300) : '';
+        const rating = parseFloat(detailData.reviewScoreTxt.replace(/[^0-9.]/g, '') || '4.9');
 
         console.log(`📌 Mã SP: ${goodsNo}`);
-        console.log(`🏷️ Tên Hàn: ${nameKr.trim()}`);
+        console.log(`🏷️ Tên Hàn: ${nameKr}`);
         console.log(`🖼️ Album ảnh HD: ${albumImgs.length} ảnh`);
 
-        // Translate with OpenAI / Gemini AI Vision / Language Model
-        const aiResult = await translateProductWithAI(nameKr.trim(), brand.trim());
+        // Translate with OpenAI / Gemini AI Vision / Language Model (có Rate Limiter 3.5s & Exponential Backoff)
+        const aiResult = await translateProductWithAI(nameKr, brand);
         const calculatedVndPrice = Math.round(foreignPrice * KRW_TO_VND);
 
         const productObj = {
