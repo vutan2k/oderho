@@ -363,13 +363,16 @@ export default function AdminProductManager() {
       <div style={styles.topBanner}>
         <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E40AF', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Globe size={18} /> Bóc Tách Dữ Liệu Sản Phẩm Từ Link (Olive Young Korea)
+            <Globe size={18} /> 🎭 Playwright AI Autonomous Scraper (Giả Lập Người Dùng & AI Vision)
           </div>
           {/* Tool Status Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E', boxShadow: '0 0 8px #22C55E', display: 'inline-block' }}></span>
-            <span style={{ color: '#1E40AF', fontWeight: 600 }}>tavy-toolcaowed v3.8: Sẵn Sàng (Cào Album & Ảnh Đánh Giá HD)</span>
+            <span style={{ color: '#1E40AF', fontWeight: 600 }}>Playwright + Chromium AI Scraper v1.0: Sẵn Sàng (CLI & Web Sync)</span>
           </div>
+        </div>
+        <div style={{ fontSize: '0.82rem', color: '#3B82F6', marginBottom: '10px', lineHeight: 1.5 }}>
+          🤖 <b>Công nghệ Playwright AI:</b> Trình duyệt Chromium tự động khởi chạy, cuộn trang, rê chuột, soi hình ảnh sản phẩm bằng Gemini AI Vision và click từng sản phẩm để tải hình HD về kho Admin. Bạn có thể kích hoạt qua lệnh: <code style={{ background: '#DBEAFE', padding: '2px 6px', borderRadius: '4px', color: '#1E40AF' }}>npm run scrape:playwright</code>
         </div>
         <form onSubmit={handleScrape} style={{ display: 'flex', gap: '10px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
