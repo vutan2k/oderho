@@ -7,6 +7,14 @@
 
 import { lookupKnownGoods } from './productScraperService';
 
+/** Lấy OpenAI / Custom AI config từ env hoặc localStorage */
+const getOpenAIConfig = () => {
+  const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENAI_BASE_URL) || 'http://localhost:20128/v1';
+  const apiKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENAI_API_KEY) || 'sk-a5baa61b8eb09efe-2zgl83-5d00c109';
+  const model = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_OPENAI_MODEL) || 'ag/gemini-3.6-flash-medium';
+  return { baseUrl, apiKey, model };
+};
+
 /** Lấy API key từ env (build) hoặc localStorage (admin nhập) */
 const getGeminiKey = () => {
   const envKey = typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY;
@@ -18,10 +26,10 @@ const getGeminiKey = () => {
   }
 };
 
-/** Gọi Gemini trích xuất JSON từ nội dung trang Olive Young */
+/** Gọi OpenAI / Gemini trích xuất JSON từ nội dung trang Olive Young */
 const aiExtractProduct = async (markdown, url) => {
-  const apiKey = getGeminiKey();
-  if (!apiKey) return null;
+  const openAiCfg = getOpenAIConfig();
+  const geminiKey = getGeminiKey();
 
   const prompt = `Bạn là chuyên gia mỹ phẩm Hàn Quốc. Dưới đây là nội dung thật (markdown) trang sản phẩm Olive Young.
 Trích xuất JSON CHÍNH XÁC, TUYỆT ĐỐI KHÔNG bịa dữ liệu. Nếu không có thông tin, để trống.
@@ -40,20 +48,51 @@ URL: ${url}
 Nội dung:
 ${markdown.slice(0, 15000)}`;
 
+  // 1. Thử gọi qua OpenAI Custom Endpoint (http://localhost:20128/v1)
+  if (openAiCfg.apiKey) {
+    try {
+      const endpoint = `${openAiCfg.baseUrl.replace(/\/$/, '')}/chat/completions`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openAiCfg.apiKey}`
+        },
+        body: JSON.stringify({
+          model: openAiCfg.model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2
+        })
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const text = d?.choices?.[0]?.message?.content || '';
+        const cleaned = text.replace(/```json|```/g, '').trim();
+        const start = cleaned.indexOf('{');
+        const end = cleaned.lastIndexOf('}');
+        if (start >= 0 && end >= 0) {
+          const parsed = JSON.parse(cleaned.slice(start, end + 1));
+          if (parsed.name || parsed.nameKr) return parsed;
+        }
+      }
+    } catch (err) {
+      console.warn('OpenAI Custom Endpoint fallback:', err.message);
+    }
+  }
+
+  // 2. Fallback Gemini model chain
+  if (!geminiKey) return null;
   try {
-    // Fallback model chain — bất kỳ lỗi nào cũng thử model kế tiếp
     const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
     let data = null;
     for (const model of MODELS) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       });
       const d = await res.json();
-      // Thành công nếu có candidates; bất kỳ lỗi nào cũng thử model kế
       if (res.ok && d.candidates && d.candidates.length > 0) { data = d; break; }
-      // res.ok=false (429, 503, overloaded, quota...), hoặc d.error -> tiếp tục
       continue;
     }
     if (!data || !data.candidates || !data.candidates[0]) return null;

@@ -13,8 +13,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY || '';
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const OPENAI_BASE_URL = process.env.VITE_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL || 'http://localhost:20128/v1';
+const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'sk-a5baa61b8eb09efe-2zgl83-5d00c109';
+const OPENAI_MODEL = process.env.VITE_OPENAI_MODEL || process.env.OPENAI_MODEL || 'ag/gemini-3.6-flash-medium';
 const HEADLESS = process.env.HEADLESS === 'true'; // Default headful mode when requested by user to observe live browser clicks
 const MAX_PRODUCTS = parseInt(process.env.MAX_PRODUCTS || '10', 10);
 
@@ -34,11 +35,12 @@ async function translateProductWithAI(rawTitle, brandKr) {
   else if (/바디|클렌저|로션|body/i.test(lower)) category = 'bodycare';
   else if (/비타민|영양제|콜라겐|health|vitamin/i.test(lower)) category = 'health';
 
-  // 1. Prioritize OpenAI API if key provided
+  // 1. Prioritize Custom OpenAI API (http://localhost:20128/v1) if key provided
   if (OPENAI_API_KEY) {
     try {
-      console.log(`🤖 [OpenAI AI Vision] Dịch thuật bằng model ${OPENAI_MODEL}...`);
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const endpoint = `${OPENAI_BASE_URL.replace(/\/$/, '')}/chat/completions`;
+      console.log(`🤖 [OpenAI AI Endpoint] Dịch thuật qua ${endpoint} (model: ${OPENAI_MODEL})...`);
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
