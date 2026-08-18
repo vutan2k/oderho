@@ -116,6 +116,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Click Reset Duplicate Cache Event
+  const resetCacheBtn = document.getElementById('resetCacheBtn');
+  if (resetCacheBtn) {
+    resetCacheBtn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ action: "RESET_SCRAPED_CACHE" }, (res) => {
+        alert(res?.message || '♻️ Đã xoá sạch bộ nhớ đệm mã trùng! Giờ đây bạn có thể bấm cào lại từ đầu.');
+        progressBox.style.display = 'block';
+        progressTitle.textContent = '♻️ Đã làm sạch bộ nhớ đệm!';
+        progressDetail.textContent = 'Tất cả mã trùng đã được xoá khỏi bộ nhớ đệm Extension. Bạn có thể cào mới hoàn toàn.';
+      });
+    });
+  }
+
   document.getElementById('optionsLink').addEventListener('click', (e) => {
     e.preventDefault();
     chrome.runtime.openOptionsPage();

@@ -215,15 +215,27 @@ const runBackgroundRankingScrape = async () => {
 
     const storage = await new Promise(resolve => chrome.storage.local.get(['scrapedGoodsList', 'geminiApiKey'], resolve));
     const scrapedGoodsList = new Set(storage?.scrapedGoodsList || []);
-    const newItems = allFound.filter(item => !scrapedGoodsList.has(item.goodsNo));
+    
+    // Subagent lọc mã trùng: Phân loại danh sách mã mới và mã trùng trước khi cào sâu
+    const newItems = [];
+    let skippedCount = 0;
+
+    for (const item of allFound) {
+      if (scrapedGoodsList.has(item.goodsNo)) {
+        skippedCount++;
+        console.log(`⏩ [Subagent Bỏ Qua Mã Trùng] Mã ${item.goodsNo} đã tồn tại -> Bỏ qua không cào các bước tiếp theo!`);
+      } else {
+        newItems.push(item);
+      }
+    }
 
     if (newItems.length === 0) {
       await chrome.storage.local.set({
         autoScrapeStatus: {
           isRunning: false,
           step: 'DONE',
-          message: `✅ Đã cào hết 50 mã này trước đó! Bỏ qua ${allFound.length} mã trùng.`,
-          processedCount: allFound.length,
+          message: `✅ Đã bỏ qua ${skippedCount} mã đã trùng trong hệ thống! Không phát sinh cào thừa.`,
+          processedCount: skippedCount,
           totalCount: allFound.length
         }
       });
@@ -384,6 +396,12 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "RESET_SCRAPED_CACHE") {
+    chrome.storage.local.set({ scrapedGoodsList: [] }, () => {
+      sendResponse({ success: true, message: '♻️ Đã làm sạch bộ nhớ đệm mã trùng! Giờ đây bạn có thể cào lại từ đầu.' });
+    });
+    return true;
+  }
   if (request.action === "STOP_BACKGROUND_AUTO_RANKING_SCRAPE") {
     isStopRequested = true;
     sendResponse({ success: true, message: 'Đã dừng cào ngầm!' });
