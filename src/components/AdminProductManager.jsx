@@ -170,33 +170,22 @@ export default function AdminProductManager() {
       vietnameseName = translateKoreanToVi(prod.nameKr || prod.name);
     }
 
-    const existingAlbum = prod.images || (prod.productImage ? [prod.productImage] : []);
-    const existingReviews = prod.photoReviews || [];
-    const combined = Array.from(new Set([...existingAlbum, ...existingReviews])).filter(u => u && u.startsWith('http'));
+    // Lọc bỏ các link ảnh đoán mò bị lỗi 404 (gdasEditor và ko.jpg đoán chuỗi)
+    const isRealWorkingUrl = (u) => u && u.startsWith('http') && !/gdasEditor/i.test(u) && !/A00000[0-9]{6}[0-9]{2}ko\.jpg/i.test(u);
 
-    let finalAlbum = [...existingAlbum];
-    let finalReviews = [...existingReviews];
+    const existingAlbum = (prod.images || (prod.productImage ? [prod.productImage] : [])).filter(isRealWorkingUrl);
+    const existingReviews = (prod.photoReviews || []).filter(isRealWorkingUrl);
 
-    if (combined.length < 16) {
-      const goodsNo = prod.goodsNo || 'A000000240462';
-      const cdnGallery = [];
-      for (let i = 1; i <= 20; i++) {
-        const idxStr = i < 10 ? `0${i}` : `${i}`;
-        cdnGallery.push(`https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/${goodsNo.slice(0, 4)}/${goodsNo}${idxStr}ko.jpg`);
-        cdnGallery.push(`https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/gdasEditor/${goodsNo}_review_${i}.jpg`);
-      }
-      const merged = Array.from(new Set([...combined, ...cdnGallery])).slice(0, 24);
-      finalAlbum = merged.slice(0, 6);
-      finalReviews = merged.slice(6);
-    }
+    const mainImg = existingAlbum[0] || (isRealWorkingUrl(prod.productImage) ? prod.productImage : '');
 
     return {
       ...prod,
       name: vietnameseName,
       foreignPrice: cleanPrice,
       price: cleanPrice,
-      images: finalAlbum,
-      photoReviews: finalReviews
+      productImage: mainImg,
+      images: existingAlbum.length > 0 ? existingAlbum : (mainImg ? [mainImg] : []),
+      photoReviews: existingReviews
     };
   };
 

@@ -59,22 +59,33 @@ const fetchOliveYoungPageData = async (goodsNo, itemUrl) => {
     if (res.ok) {
       const text = await res.text();
       
+      // Kiểm tra nếu bị trang xác thực WAF bot
+      if (/잠시만\s*기다려|Access\s*Denied|Security\s*Check|robot/i.test(text)) {
+        console.warn("Bị WAF Bot Challenge trên Jina cho mã:", goodsNo);
+        return null;
+      }
+
       const titleMatch = text.match(/###\s*([^\n]+)/) || text.match(/Title:\s*([^\n]+)/i);
-      const rawTitle = titleMatch ? titleMatch[1].replace(/\|\s*올리브영/g, '').trim() : '';
+      let rawTitle = titleMatch ? titleMatch[1].replace(/\|\s*올리브영/g, '').trim() : '';
+
+      if (!rawTitle || /잠시만\s*기다려|Access\s*Denied|Security\s*Check/i.test(rawTitle)) {
+        return null;
+      }
 
       const priceMatches = text.match(/([0-9]{1,3}(?:,[0-9]{3})+)\s*원/g) || [];
       const parsedPrices = priceMatches.map(p => parseInt(p.replace(/[^0-9]/g, ''), 10)).filter(n => n >= 1000 && n <= 200000);
       const cleanDomPrice = parsedPrices.length > 0 ? Math.min(...parsedPrices) : 25000;
 
-      const imgMatches = Array.from(new Set(text.match(/https?:\/\/[^\s\)]+\.(?:jpg|png|jpeg)/gi) || []))
-        .filter(u => /image\.oliveyoung\.co\.kr/i.test(u) && !/logo|icon|avatar|star|banner|event/i.test(u));
+      // LẤY CHÍNH XÁC CÁC LINK ẢNH THỰC TẾ HOẠT ĐỘNG
+      const imgMatches = Array.from(new Set(text.match(/https?:\/\/[^\s\)\?\#]+\.(?:jpg|png|jpeg)/gi) || []))
+        .filter(u => /image\.oliveyoung\.co\.kr/i.test(u) && !/logo|icon|avatar|star|banner|event|static/i.test(u));
 
       return {
         goodsNo,
         title: rawTitle,
         image: imgMatches[0] || '',
-        images: imgMatches.slice(0, 6),
-        photoReviews: imgMatches.slice(6, 24),
+        images: imgMatches.slice(0, 10),
+        photoReviews: imgMatches.slice(10, 24),
         priceText: priceMatches.join(' '),
         domPrice: cleanDomPrice,
         brandText: '',
@@ -83,58 +94,10 @@ const fetchOliveYoungPageData = async (goodsNo, itemUrl) => {
       };
     }
   } catch (e) {
-    console.warn("Lỗi Jina Reader, thử fallback...", e);
+    console.warn("Lỗi Jina Reader:", e);
   }
 
-  // Direct fetch fallback
-  try {
-    const res = await fetch(targetUrl, {
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7,vi;q=0.6'
-      }
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-
-    const titleMatch = html.match(/<title>([^<]*)<\/title>/i) || html.match(/property="og:title"\s+content="([^"]*)"/i);
-    const rawTitle = titleMatch ? titleMatch[1].replace(/\|\s*올리브영/g, '').trim() : '';
-
-    const ogImageMatch = html.match(/property="og:image"\s+content="([^"]*)"/i) || html.match(/id="mainImg"\s+src="([^"]*)"/i);
-    let mainImg = ogImageMatch ? ogImageMatch[1] : '';
-    if (mainImg && mainImg.startsWith('//')) mainImg = 'https:' + mainImg;
-
-    const priceMatch = html.match(/class="[^"]*price[^"]*"\s*>([^<]*)</gi) || html.match(/([0-9]{1,3}(?:,[0-9]{3})+)\s*원/gi);
-    const priceText = priceMatch ? priceMatch.join(' ') : '';
-
-    const brandMatch = html.match(/class="[^"]*brand[^"]*"\s*>([^<]*)</i);
-    const brandText = brandMatch ? brandMatch[1].trim() : '';
-
-    const imgRegex = /(https:\/\/image\.oliveyoung\.co\.kr\/[^\s"')]+\.(?:jpg|png|jpeg))/gi;
-    const allImgs = Array.from(new Set(html.match(imgRegex) || []))
-      .filter(u => !/icon|logo|avatar|star|blank|loading|banner|event|gift|sprite/i.test(u));
-
-    const cleanText = html.replace(/<script\b[^<]*>([\s\S]*?)<\/script>/gi, '')
-                          .replace(/<style\b[^<]*>([\s\S]*?)<\/style>/gi, '')
-                          .replace(/<[^>]+>/g, ' ')
-                          .replace(/\s+/g, ' ')
-                          .slice(0, 12000);
-
-    return {
-      goodsNo,
-      title: rawTitle,
-      image: mainImg || allImgs[0] || '',
-      images: allImgs.slice(0, 6),
-      photoReviews: allImgs.slice(6, 24),
-      priceText: priceText,
-      domPrice: parseDomPrice(priceText),
-      brandText: brandText,
-      fullText: cleanText,
-      url: targetUrl
-    };
-  } catch (e) {
-    return null;
-  }
+  return null;
 };
 
 const runBackgroundRankingScrape = async () => {
@@ -157,7 +120,7 @@ const runBackgroundRankingScrape = async () => {
       if (r.ok) html = await r.text();
     } catch {}
 
-    if (!html) {
+    if (!html || /잠시만\s*기다려|Access\s*Denied/i.test(html)) {
       const res = await fetch('https://www.oliveyoung.co.kr/store/main/getBestList.do');
       if (res.ok) html = await res.text();
     }
@@ -219,6 +182,13 @@ const runBackgroundRankingScrape = async () => {
 
       try {
         const pageData = await fetchOliveYoungPageData(item.goodsNo, item.url);
+        
+        // BỎ QUA SẢN PHẨM BỊ LỖI TRANG XÁC THỰC WAF ROBOT
+        if (!pageData || !pageData.title || /잠시만\s*기다려|Access\s*Denied|Trang\s*Xác\s*Thực/i.test(pageData.title)) {
+          console.warn("Bỏ qua sản phẩm bị WAF challenge:", item.goodsNo);
+          continue;
+        }
+
         const apiKey = storage?.geminiApiKey;
         let aiData = {};
 
@@ -233,10 +203,10 @@ NỘI DUNG NGUYÊN BẢN:
 ${pageData.fullText}
 
 BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
-- name: Tên sản phẩm đã dịch sang TIẾNG VIỆT 100% mượt mà chuẩn đẹp (Ví dụ: "Tinh Chất Serum Collagen Peptide Thu Nhỏ Lỗ Chân Lông Biodance 30ml"). TUYỆT ĐỐI KHÔNG để lại bất kỳ chữ tiếng Hàn HANGUL nào!
+- name: Tên sản phẩm đã dịch sang TIẾNG VIỆT 100% mượt mà chuẩn đẹp (Ví dụ: "Bộ Set Đổi Mới Nâng Cấp 7 Loại Miếng Đệm Dưỡng Da Mediheal Derma Pad Cỡ Lớn 200 Miếng Độc Quyền"). TUYỆT ĐỐI KHÔNG để lại bất kỳ chữ tiếng Hàn HANGUL nào! KHÔNG đặt tên dạng "Trang Xác Thực Truy Cập"!
 - nameKr: Tên sản phẩm tiếng Hàn gốc từ TITLE.
-- price: Giá Won (KRW) bán thực tế (chữ số nguyên dương ví dụ 29300, 21900, 34900, KHÔNG lấy giá mặc định 25000 nếu có giá thực).
-- brand: Thương hiệu (Biodance, Celimax, Beplain, Goodal, UNOVE, Objet, Anua, Torriden...). Dịch sang tên tiếng Anh/Việt chuẩn.
+- price: Giá Won (KRW) bán thực tế (chữ số nguyên dương ví dụ 28900, 29300, 21900, 34900, KHÔNG lấy giá mặc định 25000 nếu có giá thực).
+- brand: Thương hiệu (Mediheal, Biodance, Celimax, Beplain, Goodal, UNOVE, Objet, Anua, Torriden...). Dịch sang tên tiếng Anh/Việt chuẩn.
 - category: skincare|makeup|health|pharmacy|haircare|bodycare.
 - description: Mô tả công dụng sản phẩm bằng tiếng Việt chuẩn.
 - usage: Hướng dẫn sử dụng bằng tiếng Việt.`;
@@ -266,14 +236,19 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
           }
         }
 
-        const titleRaw = pageData?.title || `Sản phẩm Olive Young ${item.goodsNo}`;
+        const titleRaw = pageData.title;
         const krName = aiData.nameKr || titleRaw;
         let viName = aiData.name || translateKoreanToVi(krName);
         if (/[가-힣]/.test(viName)) {
           viName = translateKoreanToVi(viName);
         }
 
-        const domPrice = pageData?.domPrice || parseDomPrice(pageData?.priceText);
+        if (/Trang\s*Xác\s*Thực|잠시만\s*기다려/i.test(viName)) {
+          console.warn("Bỏ qua tên trang xác thực:", viName);
+          continue;
+        }
+
+        const domPrice = pageData.domPrice || parseDomPrice(pageData.priceText);
         let parsedAiPrice = parseInt(String(aiData.price).replace(/[^0-9]/g, ''), 10) || 0;
         if (parsedAiPrice > 200000 || parsedAiPrice < 1000) {
           parsedAiPrice = 0;
@@ -281,9 +256,9 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
 
         const cleanPrice = parsedAiPrice > 0 ? parsedAiPrice : (domPrice || 26800);
 
-        const mainImage = pageData?.image || (pageData?.images && pageData.images[0]) || `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/${item.goodsNo.slice(0, 4)}/${item.goodsNo}01ko.jpg`;
-        const albumImages = (pageData?.images && pageData.images.length > 0) ? pageData.images : [mainImage];
-        const photoReviews = pageData?.photoReviews || [];
+        const albumImages = (pageData.images && pageData.images.length > 0) ? pageData.images : (pageData.image ? [pageData.image] : []);
+        const photoReviews = pageData.photoReviews || [];
+        const mainImage = albumImages[0] || pageData.image || '';
 
         const productData = {
           goodsNo: item.goodsNo,
@@ -294,8 +269,8 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
           productImage: mainImage,
           images: albumImages,
           photoReviews: photoReviews,
-          brand: aiData.brand || pageData?.brandText || 'Olive Young Korea',
-          brandKr: aiData.brandKr || pageData?.brandText || '올리브영',
+          brand: aiData.brand || pageData.brandText || 'Olive Young Korea',
+          brandKr: aiData.brandKr || pageData.brandText || '올리브영',
           url: item.url,
           category: aiData.category || 'skincare',
           description: aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp chính hãng. Tên gốc: ${krName}`,
