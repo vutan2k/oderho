@@ -47,6 +47,33 @@ export default function AdminProductManager() {
   const [isPlaywrightLive, setIsPlaywrightLive] = useState(false);
   const [playwrightLogs, setPlaywrightLogs] = useState([]);
 
+  // --- Auto-Sync Scraped Products on Load ---
+  const [hasAutoSynced, setHasAutoSynced] = useState(false);
+  React.useEffect(() => {
+    if (hasAutoSynced) return;
+    setHasAutoSynced(true);
+    fetchLatestPlaywrightScrapedProducts().then(latestData => {
+      if (latestData && latestData.length > 0) {
+        let addedCount = 0;
+        const itemsToSync = [];
+        latestData.forEach(item => {
+          const gNo = item.goodsNo || item.id;
+          // Check if already in memory
+          const exists = pendingProducts.some(p => p.goodsNo === gNo) || products.some(p => p.goodsNo === gNo);
+          if (!exists) {
+            addPendingProduct(item);
+            itemsToSync.push(item);
+            addedCount++;
+          }
+        });
+        if (addedCount > 0) {
+          syncPlaywrightScrapedProductsToDb(itemsToSync);
+          if (showToast) showToast(`🎉 Tự động đồng bộ ${addedCount} sản phẩm cào mới vào Hàng Chờ!`, 'success');
+        }
+      }
+    });
+  }, [hasAutoSynced, pendingProducts, products, addPendingProduct, showToast]);
+
   // ----------------------------------------------------
   // INVENTORY LOGIC
   // ----------------------------------------------------
