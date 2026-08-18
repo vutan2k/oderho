@@ -248,7 +248,7 @@ export const AppProvider = ({ children }) => {
     updateRatesInDB(newRates).catch(err => console.warn('Firestore updateRates failed:', err));
   };
 
-  // ----- Realtime Firestore Products Sync (Hợp nhất dữ liệu kho hàng tuyệt đối không mất sản phẩm khi chuyển tab) -----
+  // ----- Realtime Firestore Products Sync (Đồng bộ trực tiếp từ Firestore - Firestore là Nguồn Sự Thật Duy Nhất) -----
   useEffect(() => {
     const unsubscribe = subscribeToProducts((realtimeProducts) => {
       if (Array.isArray(realtimeProducts)) {
@@ -259,33 +259,17 @@ export const AppProvider = ({ children }) => {
           catch { return []; }
         };
 
-        setProducts(prev => {
-          const deletedIds = getDeletedIds();
-          const map = new Map();
-          (prev || []).forEach(p => { 
-            if (p && p.goodsNo && !deletedIds.includes(p.goodsNo)) map.set(p.goodsNo, p); 
-          });
-          clean.forEach(p => { 
-            if (p && p.goodsNo && !deletedIds.includes(p.goodsNo)) map.set(p.goodsNo, p); 
-          });
-          const merged = Array.from(map.values());
-          try { localStorage.setItem('tavy_custom_products', JSON.stringify(merged)); } catch {}
-          return merged;
-        });
+        const deletedIds = getDeletedIds();
+        
+        // Chỉ lọc bỏ các sản phẩm đã có trong danh sách đen bị xoá
+        const filteredProducts = clean.filter(p => p && p.goodsNo && !deletedIds.includes(p.goodsNo));
 
-        setPublishedProducts(prev => {
-          const deletedIds = getDeletedIds();
-          const map = new Map();
-          (prev || []).forEach(p => { 
-            if (p && p.goodsNo && !deletedIds.includes(p.goodsNo)) map.set(p.goodsNo, p); 
-          });
-          clean.forEach(p => { 
-            if (p && p.goodsNo && !deletedIds.includes(p.goodsNo)) map.set(p.goodsNo, p); 
-          });
-          const merged = Array.from(map.values());
-          try { localStorage.setItem('tavy_published_products', JSON.stringify(merged)); } catch {}
-          return merged;
-        });
+        setProducts(filteredProducts);
+        try { localStorage.setItem('tavy_custom_products', JSON.stringify(filteredProducts)); } catch {}
+
+        const filteredPublished = filteredProducts.filter(p => p.isPublished);
+        setPublishedProducts(filteredPublished);
+        try { localStorage.setItem('tavy_published_products', JSON.stringify(filteredPublished)); } catch {}
       }
     });
     return () => unsubscribe();

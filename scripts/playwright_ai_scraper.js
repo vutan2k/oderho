@@ -284,16 +284,37 @@ async function runPlaywrightAIScraper() {
               }
             }
 
-            const allImgs = Array.from(document.querySelectorAll('img'))
+            // Trích xuất ảnh sản phẩm (chỉ lấy 1-3 ảnh)
+            const prodImgs = Array.from(document.querySelectorAll('#repImageContainer img, .prd_thumb_list img, .prd_thumb_bg img, .prd_img img'))
               .map(img => img.getAttribute('data-src') || img.src || '')
-              .filter(src => src.includes('cf-goods') || src.includes('gdasEditor') || src.includes('item') || src.includes('crop') || src.includes('thumbnails'));
+              .filter(src => src && (src.includes('item') || src.includes('cf-goods') || src.includes('goods')));
             
-            // De-dupe and clean up URLs
-            const cleanImgs = [...new Set(allImgs)].map(src => {
-               if (src.startsWith('//')) return 'https:' + src;
-               if (src.startsWith('/')) return 'https://www.oliveyoung.co.kr' + src;
-               return src;
-            });
+            // Trích xuất ảnh review chân thực của khách hàng (ưu tiên)
+            const revImgs = Array.from(document.querySelectorAll('.review_thum img, .review_list img, #gdasList img, .gdas_img img, .review_cont img, .review_img_wrap img'))
+              .map(img => img.getAttribute('data-src') || img.src || '')
+              .filter(src => src && (src.includes('gdas') || src.includes('review') || src.includes('crop') || src.includes('thumbnails')));
+            
+            // Fallback nếu không tìm thấy bằng class, tìm tất cả ảnh chứa keyword review/gdas
+            if (revImgs.length === 0) {
+              Array.from(document.querySelectorAll('img')).forEach(img => {
+                const src = img.getAttribute('data-src') || img.src || '';
+                if (src && (src.includes('gdasEditor') || src.includes('review'))) {
+                  revImgs.push(src);
+                }
+              });
+            }
+
+            // Làm sạch link URL
+            const cleanProd = [...new Set(prodImgs)].map(src => src.startsWith('//') ? 'https:' + src : (src.startsWith('/') ? 'https://www.oliveyoung.co.kr' + src : src));
+            const cleanRev = [...new Set(revImgs)].map(src => src.startsWith('//') ? 'https:' + src : (src.startsWith('/') ? 'https://www.oliveyoung.co.kr' + src : src));
+            
+            // Gộp: 1-3 ảnh sản phẩm đầu, còn lại toàn bộ là ảnh review
+            const cleanImgs = [...cleanProd.slice(0, 3), ...cleanRev.slice(0, 15)];
+            if (cleanImgs.length === 0) {
+              // Extreme fallback
+              const genericImgs = Array.from(document.querySelectorAll('img')).map(i => i.src).filter(s => s && (s.includes('cf-goods') || s.includes('gdas'))).slice(0, 5);
+              cleanImgs.push(...genericImgs);
+            }
 
             return {
               brand: 'Olive Young',
