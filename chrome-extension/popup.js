@@ -87,6 +87,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateProgressFromStorage();
   setInterval(updateProgressFromStorage, 1500);
 
+  const playwrightAiBtn = document.getElementById('playwrightAiBtn');
+
+  // Click Playwright AI 1-Click Button Event
+  if (playwrightAiBtn) {
+    playwrightAiBtn.addEventListener('click', async () => {
+      if (!hasKey) {
+        alert("⚠️ Vui lòng cài Gemini API Key trước khi kích hoạt Playwright AI!");
+        chrome.runtime.openOptionsPage();
+        return;
+      }
+
+      progressBox.style.display = 'block';
+      progressTitle.textContent = '🎭 Playwright AI Đang Hoạt Động (1-Click)!';
+      progressDetail.textContent = 'Trình duyệt đang tự động bóc tách sản phẩm, soi ảnh HD & đẩy về trang Web Admin...';
+
+      chrome.runtime.sendMessage({ action: "START_AUTO_SCRAPE" }, (response) => {
+        if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError);
+      });
+    });
+  }
+
   // Click Auto-Scrape Top 50 Ranking Event (100% Background Runner)
   autoScrapeBtn.addEventListener('click', async () => {
     if (!hasKey) {

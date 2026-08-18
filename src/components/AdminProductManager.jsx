@@ -372,7 +372,7 @@ export default function AdminProductManager() {
           </div>
         </div>
         <div style={{ fontSize: '0.82rem', color: '#3B82F6', marginBottom: '10px', lineHeight: 1.5 }}>
-          🤖 <b>Công nghệ Playwright AI:</b> Trình duyệt Chromium tự động khởi chạy, cuộn trang, rê chuột, soi hình ảnh sản phẩm bằng Gemini AI Vision và click từng sản phẩm để tải hình HD về kho Admin. Bạn có thể kích hoạt qua lệnh: <code style={{ background: '#DBEAFE', padding: '2px 6px', borderRadius: '4px', color: '#1E40AF' }}>npm run scrape:playwright</code>
+          🤖 <b>Công nghệ Playwright AI 1-Click:</b> Trình duyệt tự động cuộn trang, rê chuột, soi hình ảnh sản phẩm bằng Gemini AI Vision và đẩy về Admin. Bấm trực tiếp nút <code style={{ background: '#DBEAFE', padding: '2px 6px', borderRadius: '4px', color: '#1E40AF', fontWeight: 700 }}>🎭 Kích Hoạt Playwright AI (1-Click)</code> trên Tiện Ích Chrome mà không cần gõ bất kỳ dòng lệnh nào!
         </div>
         <form onSubmit={handleScrape} style={{ display: 'flex', gap: '10px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
