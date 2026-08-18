@@ -14,6 +14,9 @@ import {
   saveProductToDB,
   deleteProductFromDB,
   deleteOrderFromDB,
+  subscribeToPendingProducts,
+  savePendingProductToDB,
+  deletePendingProductFromDB
 } from '../services/dbService';
 import { auth, db, loginWithGoogle, checkGoogleRedirectResult } from '../firebase';
 import {
@@ -327,11 +330,36 @@ export const AppProvider = ({ children }) => {
     }
   });
 
+  // Sync Firestore Pending Products Realtime
+  useEffect(() => {
+    const unsubscribe = subscribeToPendingProducts((remoteItems) => {
+      if (remoteItems && Array.isArray(remoteItems)) {
+        const clean = sanitizeProducts(remoteItems);
+        setPendingProducts(clean);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem('tavy_pending_products', JSON.stringify(pendingProducts));
     } catch {}
   }, [pendingProducts]);
+
+  // Sync qua storage event giữa các tab trình duyệt
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'tavy_pending_products' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) setPendingProducts(sanitizeProducts(parsed));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Global autoFill listener - Tự động nhận dữ liệu từ Extension bất kỳ ở trang nào
   useEffect(() => {
@@ -392,10 +420,16 @@ export const AppProvider = ({ children }) => {
       const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
       return [cleanProduct, ...filtered];
     });
+    savePendingProductToDB(cleanProduct).catch(e => console.warn("Lỗi lưu pending Firestore:", e));
   };
 
   const updatePendingProduct = (goodsNo, updates) => {
-    setPendingProducts(prev => prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p));
+    setPendingProducts(prev => {
+      const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
+      const target = updated.find(p => p.goodsNo === goodsNo);
+      if (target) savePendingProductToDB(target).catch(() => {});
+      return updated;
+    });
   };
 
   const addProduct = (product) => {
@@ -453,47 +487,39 @@ export const AppProvider = ({ children }) => {
     });
 
     if (targetUpdated) {
-      saveProductToDB(targetUpdated).catch(err => console.warn('Firestore sync update product failed:', err));
+      saveProductToDB(targetUpdated).catch(err => console.warn('Firestore update product failed:', err));
     }
   };
 
   const deleteProduct = (goodsNo) => {
-    setProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
-    setPublishedProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+    setProducts(prev => {
+      const updated = prev.filter(p => p.goodsNo !== goodsNo);
+      try {
+        localStorage.setItem('tavy_custom_products', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
-    try {
-      const savedPub = localStorage.getItem('tavy_published_products');
-      if (savedPub) {
-        const parsed = JSON.parse(savedPub);
-        if (Array.isArray(parsed)) {
-          localStorage.setItem('tavy_published_products', JSON.stringify(parsed.filter(p => p.goodsNo !== goodsNo)));
-        }
-      }
-      const savedCust = localStorage.getItem('tavy_custom_products');
-      if (savedCust) {
-        const parsed = JSON.parse(savedCust);
-        if (Array.isArray(parsed)) {
-          localStorage.setItem('tavy_custom_products', JSON.stringify(parsed.filter(p => p.goodsNo !== goodsNo)));
-        }
-      }
-    } catch (e) {
-      console.warn('Lỗi cập nhật localStorage khi xóa sản phẩm:', e);
-    }
+    setPublishedProducts(prev => {
+      const updated = prev.filter(p => p.goodsNo !== goodsNo);
+      try {
+        localStorage.setItem('tavy_published_products', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
     deleteProductFromDB(goodsNo).catch(err => console.warn('Firestore delete product failed:', err));
   };
 
-  const deleteAllProducts = async () => {
+  const deleteAllProducts = () => {
     const listToDelete = [...products];
     setProducts([]);
     setPublishedProducts([]);
     try {
-      localStorage.setItem('tavy_catalog_cleared', 'true');
-      localStorage.setItem('tavy_published_products', JSON.stringify([]));
-      localStorage.setItem('tavy_custom_products', JSON.stringify([]));
-    } catch (e) {
-      console.warn('Lỗi xóa localStorage:', e);
-    }
+      localStorage.removeItem('tavy_custom_products');
+      localStorage.removeItem('tavy_published_products');
+    } catch {}
+
     for (const item of listToDelete) {
       if (item && item.goodsNo) {
         deleteProductFromDB(item.goodsNo).catch(() => {});
@@ -506,6 +532,7 @@ export const AppProvider = ({ children }) => {
     if (target) {
       addProduct(target);
       setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+      deletePendingProductFromDB(goodsNo).catch(e => console.warn("Lỗi xoá pending Firestore:", e));
     }
   };
 
@@ -516,19 +543,25 @@ export const AppProvider = ({ children }) => {
     
     targets.forEach(item => {
       addProduct(item);
+      deletePendingProductFromDB(item.goodsNo).catch(() => {});
     });
 
     setPendingProducts(prev => prev.filter(p => !selectedSet.has(p.goodsNo)));
   };
 
   const approveAllPendingProducts = () => {
-    pendingProducts.forEach(p => addProduct(p));
+    pendingProducts.forEach(p => {
+      addProduct(p);
+      deletePendingProductFromDB(p.goodsNo).catch(() => {});
+    });
     setPendingProducts([]);
   };
 
   const rejectPendingProduct = (goodsNo) => {
     setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
+    deletePendingProductFromDB(goodsNo).catch(e => console.warn("Lỗi xoá pending Firestore:", e));
   };
+
   const [cart, setCart] = useState(() => {
     try {
       const savedCart = localStorage.getItem('tavy_cart');

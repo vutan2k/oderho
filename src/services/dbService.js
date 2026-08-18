@@ -18,6 +18,7 @@ const ORDERS_COLLECTION = 'orders';
 const USERS_COLLECTION = 'users';
 const SYSTEM_CONFIG_COLLECTION = 'system_config';
 const PRODUCTS_COLLECTION = 'products';
+const PENDING_PRODUCTS_COLLECTION = 'pending_products';
 const RATES_DOC = 'rates';
 
 /**
@@ -289,3 +290,85 @@ export const deleteProductFromDB = async (goodsNo) => {
     return { success: false, error: err };
   }
 };
+
+/**
+ * 11. Subscribe to Realtime Pending Products (Hàng chờ duyệt)
+ */
+export const subscribeToPendingProducts = (onUpdate) => {
+  try {
+    const colRef = collection(db, PENDING_PRODUCTS_COLLECTION);
+    return onSnapshot(colRef, (snapshot) => {
+      const pendingItems = snapshot.docs.map(docSnap => ({
+        goodsNo: docSnap.id,
+        ...docSnap.data()
+      }));
+
+      pendingItems.sort((a, b) => {
+        const timeA = new Date(a.scrapedAt || 0).getTime();
+        const timeB = new Date(b.scrapedAt || 0).getTime();
+        return timeB - timeA;
+      });
+
+      onUpdate(pendingItems);
+    }, (err) => {
+      console.warn("Firestore pending_products listener error:", err);
+    });
+  } catch (err) {
+    console.warn("Firestore subscribeToPendingProducts error:", err);
+    return () => {};
+  }
+};
+
+/**
+ * 12. Save Pending Product to Firestore
+ */
+export const savePendingProductToDB = async (product) => {
+  try {
+    if (!product || typeof product !== 'object') return { success: false };
+    const goodsNo = product.goodsNo || `SP-${Date.now()}`;
+    const docRef = doc(db, PENDING_PRODUCTS_COLLECTION, String(goodsNo));
+
+    const cleanPayload = {
+      goodsNo: String(goodsNo),
+      name: String(product.name || ''),
+      nameKr: String(product.nameKr || product.name || ''),
+      brand: String(product.brand || 'Korea Brand'),
+      brandKr: String(product.brandKr || product.brand || ''),
+      category: String(product.category || 'skincare'),
+      foreignPrice: Number(product.foreignPrice || product.price) || 0,
+      price: Number(product.price || product.foreignPrice) || 0,
+      productImage: String(product.productImage || ''),
+      images: Array.isArray(product.images) ? product.images.map(String) : [String(product.productImage || '')],
+      photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String) : [],
+      description: String(product.description || ''),
+      usage: String(product.usage || ''),
+      origin: String(product.origin || 'Store Olive Young Korea'),
+      rating: Number(product.rating) || 4.9,
+      reviewsCount: Number(product.reviewsCount) || 120,
+      productUrl: String(product.productUrl || ''),
+      scrapedAt: product.scrapedAt || new Date().toISOString(),
+      updatedAt: serverTimestamp()
+    };
+
+    await setDoc(docRef, cleanPayload, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.warn("Firestore savePendingProduct error:", err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * 13. Delete Pending Product from Firestore
+ */
+export const deletePendingProductFromDB = async (goodsNo) => {
+  try {
+    const docRef = doc(db, PENDING_PRODUCTS_COLLECTION, String(goodsNo));
+    await deleteDoc(docRef);
+    return { success: true };
+  } catch (err) {
+    console.warn("Firestore deletePendingProduct error:", err);
+    return { success: false, error: err };
+  }
+};
+
