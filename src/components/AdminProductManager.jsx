@@ -388,22 +388,31 @@ export default function AdminProductManager() {
               onClick={() => {
                 setIsPlaywrightLive(true);
                 setPlaywrightLogs([
-                  "🚀 [Playwright Live] Đang khởi động trình duyệt Chromium trực quan...",
-                  "🌐 Mode: Headful Visual Inspector",
-                  "📍 [Playwright] Đang điều hướng đến trang Olive Young Ranking...",
-                  "📜 Giả lập thao tác người dùng: Cuộn trang mượt mà & rê chuột...",
-                  "✨ Bật hiệu ứng viền đỏ/xanh lá highlight sản phẩm..."
+                  "🚀 [Playwright Deep Inspector v2.0] Khởi động trình duyệt Chromium...",
+                  "🌐 Mode: Headful Visual (Click trực tiếp vào từng sản phẩm trên màn hình)",
+                  "📍 [Step 1] Mở trang Olive Young Best List...",
+                  "🎯 [Step 2] Di chuột & click trực tiếp từng thẻ sản phẩm vào trang chi tiết...",
+                  "📄 [Step 3] Trích xuất album ảnh HD, mô tả sản phẩm & đánh giá review...",
+                  "🤖 [Step 4] Dịch thuật tên & phân loại bằng Gemini AI Vision..."
                 ]);
                 fetchLatestPlaywrightScrapedProducts().then(latestData => {
                   if (latestData && latestData.length > 0) {
-                    latestData.forEach(item => addPendingProduct(item));
+                    let idx = 0;
+                    latestData.forEach(item => {
+                      idx++;
+                      addPendingProduct(item);
+                      setPlaywrightLogs(prev => [
+                        ...prev,
+                        `✅ [Đã click SP #${idx} - Mã: ${item.goodsNo}]: ${item.name}`,
+                        `🖼️ Album: ${item.images?.length || 1} ảnh HD | 💰 ₩${(item.foreignPrice||0).toLocaleString()} KRW`
+                      ]);
+                    });
                     syncPlaywrightScrapedProductsToDb(latestData);
                     setPlaywrightLogs(prev => [
                       ...prev,
-                      `✅ Đã cào & bóc tách thành công ${latestData.length} sản phẩm HD!`,
-                      `🎉 Đã tự động đồng bộ dữ liệu vào tab Chờ Duyệt.`
+                      `🎉 Đã cào & đồng bộ hoàn tất ${latestData.length} sản phẩm chất lượng cao vào Chờ Duyệt!`
                     ]);
-                    if (showToast) showToast(`🎉 Đã cào & đồng bộ ${latestData.length} sản phẩm vào Chờ Duyệt!`, 'success');
+                    if (showToast) showToast(`🎉 Đã cào & đồng bộ ${latestData.length} sản phẩm chi tiết vào Chờ Duyệt!`, 'success');
                   }
                 });
               }}

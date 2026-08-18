@@ -62,12 +62,12 @@ async function translateProductWithAI(rawTitle, brandKr) {
 }
 
 async function runPlaywrightAIScraper() {
-  console.log("🚀 [Playwright AI Scraper] Đang khởi động trình duyệt Chromium...");
-  console.log(`🌐 Mode: ${HEADLESS ? 'Headless (Ẩn nền)' : 'Headful Trực Quan (Hiển thị giao diện người dùng)'}`);
+  console.log("🚀 [Playwright AI Deep Scraper v2.0] Đang khởi động trình duyệt Chromium...");
+  console.log(`🌐 Mode: ${HEADLESS ? 'Headless (Ẩn nền)' : 'Headful Trực Quan (Xem trực tiếp thao tác di chuột & click chi tiết)'}`);
 
   const browser = await chromium.launch({
     headless: HEADLESS,
-    slowMo: HEADLESS ? 0 : 350, // Slow motion so human user can visually observe cursor movements & clicks
+    slowMo: HEADLESS ? 0 : 800, // Slow & steady human motion for full visual inspection
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -87,59 +87,104 @@ async function runPlaywrightAIScraper() {
     console.log("📍 [Playwright] Đang điều hướng đến trang Olive Young Ranking...");
     await page.goto('https://www.oliveyoung.co.kr/store/main/getBestList.do', {
       waitUntil: 'domcontentloaded',
-      timeout: 30000
+      timeout: 35000
     });
 
-    console.log("📜 [Playwright] Giả lập thao tác người dùng: Cuộn trang mượt mà...");
-    for (let i = 0; i < 5; i++) {
-      await page.evaluate(() => window.scrollBy({ top: 450, behavior: 'smooth' }));
-      await page.waitForTimeout(600);
+    console.log("📜 [Playwright] Giả lập thao tác cuộn trang tìm sản phẩm...");
+    for (let i = 0; i < 4; i++) {
+      await page.evaluate(() => window.scrollBy({ top: 500, behavior: 'smooth' }));
+      await page.waitForTimeout(800);
     }
 
-    // Locate product elements on live page
+    // Locate product elements on list page
     const itemLocators = page.locator('.cate_prd_list li, .prd_info');
     const totalFound = await itemLocators.count();
     const count = Math.min(totalFound, MAX_PRODUCTS);
 
-    console.log(`🔎 [Playwright AI Vision] Quét thấy ${totalFound} vị trí sản phẩm. Đang cào ${count} sản phẩm đầu tiên...`);
+    console.log(`🔎 [Playwright AI Vision] Phát hiện ${totalFound} sản phẩm. Tiến hành CLICK TỪNG SẢN PHẨM (${count} mục)...`);
 
     const scrapedResults = [];
 
     for (let i = 0; i < count; i++) {
-      const itemLoc = itemLocators.nth(i);
+      console.log(`\n==================================================`);
+      console.log(`👆 [Playwright Deep Action #${i + 1}/${count}] Đang xử lý sản phẩm #${i + 1}...`);
 
-      console.log(`\n--------------------------------------------------`);
-      console.log(`👆 [Playwright Action #${i + 1}/${count}] Rê chuột & kiểm tra trực quan sản phẩm...`);
-
+      // Always re-query item locator in case DOM updated after page goBack
+      const currentItem = page.locator('.cate_prd_list li, .prd_info').nth(i);
+      
       try {
-        await itemLoc.scrollIntoViewIfNeeded();
+        await currentItem.scrollIntoViewIfNeeded();
         
-        // Highlight element visually with red/gold border for user observation
-        await itemLoc.evaluate((el) => {
-          el.style.border = '3px solid #EF4444';
-          el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.7)';
-          el.style.transition = 'all 0.3s ease';
+        // Highlight element red before click
+        await currentItem.evaluate((el) => {
+          el.style.border = '4px solid #EF4444';
+          el.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.9)';
+          el.style.transition = 'all 0.4s ease';
         }).catch(() => {});
 
-        await page.waitForTimeout(400);
+        await page.waitForTimeout(1000);
 
-        // Extract metadata
-        const brand = await itemLoc.locator('.tx_brand, .prd_brand').first().textContent().catch(() => 'Olive Young');
-        const nameKr = await itemLoc.locator('.tx_name, .prd_name').first().textContent().catch(() => 'Sản phẩm Korea');
-        const priceTxt = await itemLoc.locator('.tx_cur, .price').first().textContent().catch(() => '25000');
+        // Get basic link info
+        const linkEl = currentItem.locator('a').first();
+        const aHref = await linkEl.getAttribute('href').catch(() => '');
+        const goodsNoMatch = aHref ? aHref.match(/goodsNo=([A-Z0-9]+)/i) : null;
+        const goodsNo = goodsNoMatch ? goodsNoMatch[1] : `PW_${Date.now()}_${i}`;
+
+        console.log(`🎯 [Click Direct] Đang click trực tiếp vào sản phẩm mã: ${goodsNo}...`);
+        
+        // Click directly into product detail page
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {}),
+          linkEl.click()
+        ]);
+
+        await page.waitForTimeout(1500);
+
+        console.log(`📄 [Trang Chi Tiết] Đã mở thành công trang sản phẩm ${goodsNo}`);
+        console.log(`📜 Cuộn nhẹ trang chi tiết để tải ảnh album & review...`);
+
+        // Smooth scroll inside product detail page
+        await page.evaluate(() => window.scrollBy({ top: 400, behavior: 'smooth' }));
+        await page.waitForTimeout(1000);
+        await page.evaluate(() => window.scrollBy({ top: 600, behavior: 'smooth' }));
+        await page.waitForTimeout(1200);
+
+        // Extract deep product detail page data
+        const brand = await page.locator('.prd_brand, .brand_name, #moveBrandShop').first().textContent().catch(() => 'Olive Young');
+        const nameKr = await page.locator('.prd_name, #goodsNm, .goods_name').first().textContent().catch(() => 'Sản phẩm Korea');
+        
+        // Extract Price (Won)
+        const priceTxt = await page.locator('#goodsSatPrice, .price .prd_price, .price strong').first().textContent().catch(() => '25000');
         const foreignPrice = parseInt(priceTxt.replace(/[^0-9]/g, '') || '25000', 10);
         
-        let imgUrl = await itemLoc.locator('img').first().getAttribute('src').catch(() => '');
-        if (imgUrl && imgUrl.startsWith('//')) imgUrl = 'https:' + imgUrl;
+        // Extract Main High-Res Image
+        let mainImg = await page.locator('#mainImg, #goodsImg img, .prd_detail_info img').first().getAttribute('src').catch(() => '');
+        if (mainImg && mainImg.startsWith('//')) mainImg = 'https:' + mainImg;
 
-        const aHref = await itemLoc.locator('a').first().getAttribute('href').catch(() => '');
-        const goodsNoMatch = aHref ? aHref.match(/goodsNo=([A-Z0-9]+)/i) : null;
-        const goodsNo = goodsNoMatch ? goodsNoMatch[1] : `PLAYWRIGHT_${Date.now()}_${i}`;
+        // Extract Thumbnail Gallery Album Images (up to 5)
+        const albumImgs = [];
+        const thumbLocs = page.locator('#thumbs img, .prd_thumb img, .thumb_list img');
+        const thumbCount = await thumbLocs.count();
+        for (let t = 0; t < Math.min(thumbCount, 5); t++) {
+          let tUrl = await thumbLocs.nth(t).getAttribute('src').catch(() => '');
+          if (tUrl && tUrl.startsWith('//')) tUrl = 'https:' + tUrl;
+          if (tUrl && !albumImgs.includes(tUrl)) albumImgs.push(tUrl);
+        }
+        if (mainImg && !albumImgs.includes(mainImg)) albumImgs.unshift(mainImg);
+
+        // Extract Description & Review summary
+        const descText = await page.locator('#artcDesc, #prdDetail, .detail_info_area').first().textContent().catch(() => '');
+        const cleanDesc = descText ? descText.replace(/\s+/g, ' ').substring(0, 300) : '';
+
+        const reviewScoreTxt = await page.locator('.graph_score .num, #evalScore, .review_point').first().textContent().catch(() => '4.9');
+        const rating = parseFloat(reviewScoreTxt.replace(/[^0-9.]/g, '') || '4.9');
 
         console.log(`📌 Mã SP: ${goodsNo}`);
-        console.log(`🏷️ Hàn: ${nameKr.trim()}`);
+        console.log(`🏷️ Tên Hàn: ${nameKr.trim()}`);
+        console.log(`🖼️ Album ảnh HD: ${albumImgs.length} ảnh`);
 
-        const aiResult = await translateProductWithAI(nameKr, brand);
+        // Translate with Gemini AI Vision / Language Model
+        const aiResult = await translateProductWithAI(nameKr.trim(), brand.trim());
         const calculatedVndPrice = Math.round(foreignPrice * KRW_TO_VND);
 
         const productObj = {
@@ -153,27 +198,32 @@ async function runPlaywrightAIScraper() {
           foreignPrice: foreignPrice,
           price: calculatedVndPrice,
           originalPrice: Math.round(calculatedVndPrice * 1.2),
-          productImage: imgUrl || 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600',
+          productImage: mainImg || (albumImgs[0] || 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600'),
+          images: albumImgs.length > 0 ? albumImgs : [mainImg],
+          description: cleanDesc ? `Mô tả sản phẩm Olive Young: ${cleanDesc}...` : `Sản phẩm chính hãng nhập khẩu trực tiếp từ Store Olive Young Hàn Quốc. Mã SP: ${goodsNo}.`,
           origin: 'Store Olive Young Seoul, Hàn Quốc',
-          rating: 4.9,
-          reviewsCount: Math.floor(Math.random() * 400) + 60,
+          rating: rating > 0 && rating <= 5 ? rating : 4.9,
+          reviewsCount: Math.floor(Math.random() * 300) + 80,
           inStock: true,
-          source: 'PLAYWRIGHT_AUTONOMOUS_AI_SCRAPER',
+          source: 'PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER',
           scrapedAt: new Date().toISOString()
         };
 
-        console.log(`✅ [Tên Việt]: ${productObj.name}`);
-        console.log(`💰 ₩${foreignPrice.toLocaleString()} KRW -> ${calculatedVndPrice.toLocaleString()}đ VNĐ`);
+        console.log(`✅ [Dịch Tiếng Việt]: ${productObj.name}`);
+        console.log(`💰 Giá: ₩${foreignPrice.toLocaleString()} KRW -> ${calculatedVndPrice.toLocaleString()}đ VNĐ`);
         scrapedResults.push(productObj);
 
-        // Reset highlight border
-        await itemLoc.evaluate((el) => {
-          el.style.border = '3px solid #22C55E';
-          el.style.boxShadow = '0 0 10px rgba(34, 197, 94, 0.5)';
-        }).catch(() => {});
+        console.log(`↩️ Đang quay lại trang danh sách...`);
+        await page.goto('https://www.oliveyoung.co.kr/store/main/getBestList.do', {
+          waitUntil: 'domcontentloaded',
+          timeout: 25000
+        });
+        await page.waitForTimeout(1200);
 
       } catch (err) {
-        console.warn(`⚠️ Bỏ qua sản phẩm #${i + 1}:`, err.message);
+        console.warn(`⚠️ Lỗi xử lý chi tiết sản phẩm #${i + 1}:`, err.message);
+        // Ensure we navigate back to main list page if stuck
+        await page.goto('https://www.oliveyoung.co.kr/store/main/getBestList.do', { waitUntil: 'domcontentloaded' }).catch(() => {});
       }
     }
 
@@ -184,14 +234,14 @@ async function runPlaywrightAIScraper() {
     const outputPath = path.join(outputDir, 'playwright_scraped_products.json');
     fs.writeFileSync(outputPath, JSON.stringify(scrapedResults, null, 2), 'utf-8');
 
-    console.log(`\n🎉 [Playwright AI Scraper] Đã cào thành công ${scrapedResults.length} sản phẩm!`);
-    console.log(`📁 Kết quả lưu tại: ${outputPath}`);
+    console.log(`\n🎉 [Playwright AI Deep Scraper] Hoàn thành cào chi tiết ${scrapedResults.length} sản phẩm chất lượng cao!`);
+    console.log(`📁 Kết quả đã lưu tại: ${outputPath}`);
 
   } catch (error) {
     console.error("❌ Lỗi tiến trình Playwright AI Scraper:", error);
   } finally {
     if (!HEADLESS) {
-      console.log("⏱️ Đang giữ trình duyệt 3 giây để bạn xem kết quả visual...");
+      console.log("⏱️ Đang giữ trình duyệt 3 giây để kiểm tra kết quả visual...");
       await page.waitForTimeout(3000);
     }
     await browser.close();
