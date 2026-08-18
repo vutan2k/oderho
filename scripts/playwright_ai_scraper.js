@@ -13,12 +13,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY || '';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const HEADLESS = process.env.HEADLESS === 'true'; // Default headful mode when requested by user to observe live browser clicks
 const MAX_PRODUCTS = parseInt(process.env.MAX_PRODUCTS || '10', 10);
 
 const KRW_TO_VND = 18.5; // Default fallback exchange rate
 
-/** Direct Gemini AI Vision / Translator */
+/** Direct OpenAI / Gemini AI Vision & Translator */
 async function translateProductWithAI(rawTitle, brandKr) {
   if (!rawTitle) return { name: 'Sản Phẩm Hàn Quốc Hàng Đầu', category: 'skincare' };
   
@@ -32,8 +34,48 @@ async function translateProductWithAI(rawTitle, brandKr) {
   else if (/바디|클렌저|로션|body/i.test(lower)) category = 'bodycare';
   else if (/비타민|영양제|콜라겐|health|vitamin/i.test(lower)) category = 'health';
 
+  // 1. Prioritize OpenAI API if key provided
+  if (OPENAI_API_KEY) {
+    try {
+      console.log(`🤖 [OpenAI AI Vision] Dịch thuật bằng model ${OPENAI_MODEL}...`);
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: 'Bạn là chuyên gia dịch thuật mỹ phẩm Hàn Quốc chuyên nghiệp. Dịch tên sản phẩm tiếng Hàn sang tiếng Việt tự nhiên, đúng mốt thị trường Việt Nam (tối đa 120 ký tự).'
+            },
+            {
+              role: 'user',
+              content: `Dịch tên sản phẩm Hàn Quốc:\nTên Hàn: "${cleanTitle}"\nThương hiệu: "${brandKr}"`
+            }
+          ],
+          temperature: 0.3
+        })
+      });
+      const data = await response.json();
+      const aiText = data?.choices?.[0]?.message?.content?.trim();
+      if (aiText && aiText.length > 5) {
+        return {
+          name: aiText.replace(/^["'\s]+|["'\s]+$/g, ''),
+          category
+        };
+      }
+    } catch (e) {
+      console.warn("⚠️ OpenAI Translation Error:", e.message);
+    }
+  }
+
+  // 2. Fallback to Gemini AI if key provided
   if (GEMINI_API_KEY) {
     try {
+      console.log(`🤖 [Gemini AI Vision] Dịch thuật bằng Gemini 2.0 Flash...`);
       const prompt = `Bạn là chuyên gia dịch thuật mỹ phẩm Hàn Quốc chuyên nghiệp. Hãy dịch tiêu đề sản phẩm Hàn Quốc sau sang tiếng Việt mượt mà, đúng mốt thị trường Việt Nam (tối đa 120 ký tự):\nTên tiếng Hàn: "${cleanTitle}"\nThương hiệu: "${brandKr}"`;
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
@@ -51,7 +93,7 @@ async function translateProductWithAI(rawTitle, brandKr) {
         };
       }
     } catch (e) {
-      console.warn("⚠️ AI Translation fallback to structured rule:", e.message);
+      console.warn("⚠️ Gemini Translation fallback:", e.message);
     }
   }
 
@@ -62,8 +104,10 @@ async function translateProductWithAI(rawTitle, brandKr) {
 }
 
 async function runPlaywrightAIScraper() {
-  console.log("🚀 [Playwright AI Deep Scraper v2.0] Đang khởi động trình duyệt Chromium...");
+  console.log("🚀 [Playwright AI Deep Scraper v2.5] Đang khởi động trình duyệt Chromium...");
   console.log(`🌐 Mode: ${HEADLESS ? 'Headless (Ẩn nền)' : 'Headful Trực Quan (Xem trực tiếp thao tác di chuột & click chi tiết)'}`);
+  if (OPENAI_API_KEY) console.log(`🔑 AI Provider: OpenAI API (${OPENAI_MODEL})`);
+  else if (GEMINI_API_KEY) console.log(`🔑 AI Provider: Gemini AI Vision (2.0 Flash)`);
 
   const browser = await chromium.launch({
     headless: HEADLESS,
@@ -132,22 +176,48 @@ async function runPlaywrightAIScraper() {
 
         console.log(`🎯 [Click Direct] Đang click trực tiếp vào sản phẩm mã: ${goodsNo}...`);
         
-        // Click directly into product detail page
+        // Click directly into product detail page safely
         await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {}),
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {}),
           linkEl.click()
         ]);
 
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(1200);
 
         console.log(`📄 [Trang Chi Tiết] Đã mở thành công trang sản phẩm ${goodsNo}`);
         console.log(`📜 Cuộn nhẹ trang chi tiết để tải ảnh album & review...`);
 
         // Smooth scroll inside product detail page
         await page.evaluate(() => window.scrollBy({ top: 400, behavior: 'smooth' }));
-        await page.waitForTimeout(1000);
-        await page.evaluate(() => window.scrollBy({ top: 600, behavior: 'smooth' }));
-        await page.waitForTimeout(1200);
+        await page.waitForTimeout(800);
+
+        // --- EXPLICIT FIX FOR "상품설명 더보기" BUTTON STICKING ---
+        try {
+          const moreBtn = page.locator('button:has-text("상품설명 더보기"), .btn_detail_more, #btn_artcDescMore, .artcDesc_more, a:has-text("더보기")').first();
+          if (await moreBtn.isVisible().catch(() => false)) {
+            console.log(`🔘 [Auto Click] Phát hiện nút "상품설명 더보기" (Product Description View More). Đang click tự động...`);
+            await moreBtn.scrollIntoViewIfNeeded().catch(() => {});
+            await moreBtn.click({ force: true }).catch(() => {});
+            await page.waitForTimeout(600);
+          }
+        } catch (errMore) {
+          console.log(`ℹ️ [Note] Không có nút "상품설명 더보기" hoặc đã được mở sẵn.`);
+        }
+
+        // Force expand any hidden description containers or accordion divs to prevent standing/freezing
+        await page.evaluate(() => {
+          document.querySelectorAll('.artcDesc_more, .btn_detail_more, #btn_artcDescMore, [class*="more"]').forEach(b => {
+            try { b.click(); } catch(e){}
+          });
+          document.querySelectorAll('#artcDesc, #prdDetail, .detail_info_area').forEach(el => {
+            el.style.display = 'block';
+            el.style.maxHeight = 'none';
+            el.style.height = 'auto';
+          });
+        }).catch(() => {});
+
+        await page.evaluate(() => window.scrollBy({ top: 500, behavior: 'smooth' }));
+        await page.waitForTimeout(800);
 
         // Extract deep product detail page data
         const brand = await page.locator('.prd_brand, .brand_name, #moveBrandShop').first().textContent().catch(() => 'Olive Young');
@@ -183,7 +253,7 @@ async function runPlaywrightAIScraper() {
         console.log(`🏷️ Tên Hàn: ${nameKr.trim()}`);
         console.log(`🖼️ Album ảnh HD: ${albumImgs.length} ảnh`);
 
-        // Translate with Gemini AI Vision / Language Model
+        // Translate with OpenAI / Gemini AI Vision / Language Model
         const aiResult = await translateProductWithAI(nameKr.trim(), brand.trim());
         const calculatedVndPrice = Math.round(foreignPrice * KRW_TO_VND);
 
