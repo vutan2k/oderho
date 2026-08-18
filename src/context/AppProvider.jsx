@@ -36,16 +36,13 @@ const defaultRates = {
   serviceFeePercent: 5,
 };
 
-// Loại bỏ sản phẩm fake cũ (fallback trước đây) khỏi localStorage — chỉ giữ dữ liệu thật
+// Loại bỏ sản phẩm fake cũ (ảnh Unsplash mẫu cũ) — giữ 100% sản phẩm cào thật từ Olive Young
 const isFakeProduct = (p) => {
   if (!p || typeof p !== 'object') return true;
   const img = String(p.productImage || '');
   const name = String(p.name || '');
-  const brand = String(p.brand || '');
-  if (img.includes('unsplash.com')) return true; // Tự động loại bỏ ảnh mẫu Unsplash cũ
-  if (name.startsWith('Sản Phẩm Hàn Quốc')) return true;
-  if (name.startsWith('S<')) return true;
-  if (brand === 'Korea Brand') return true;
+  if (img.includes('unsplash.com')) return true; // Chỉ loại bỏ ảnh mẫu Unsplash cũ
+  if (name === 'Sản Phẩm Test Fake') return true;
   return false;
 };
 
@@ -251,19 +248,28 @@ export const AppProvider = ({ children }) => {
     updateRatesInDB(newRates).catch(err => console.warn('Firestore updateRates failed:', err));
   };
 
-  // ----- Realtime Firestore Products Sync -----
+  // ----- Realtime Firestore Products Sync (Hợp nhất dữ liệu kho hàng tuyệt đối không mất sản phẩm khi chuyển tab) -----
   useEffect(() => {
     const unsubscribe = subscribeToProducts((realtimeProducts) => {
-      if (Array.isArray(realtimeProducts) && realtimeProducts.length > 0) {
+      if (Array.isArray(realtimeProducts)) {
         const clean = sanitizeProducts(realtimeProducts);
-        if (clean.length > 0) {
-          const inventory = clean.filter(p => p.status !== 'pending');
-          const published = clean.filter(p => p.isPublished !== false && p.status !== 'pending');
-          setProducts(inventory.length > 0 ? inventory : clean);
-          setPublishedProducts(published.length > 0 ? published : clean);
-          localStorage.setItem('tavy_published_products', JSON.stringify(published));
-          localStorage.setItem('tavy_custom_products', JSON.stringify(inventory));
-        }
+        setProducts(prev => {
+          const map = new Map();
+          (prev || []).forEach(p => { if (p && p.goodsNo) map.set(p.goodsNo, p); });
+          clean.forEach(p => { if (p && p.goodsNo) map.set(p.goodsNo, p); });
+          const merged = Array.from(map.values());
+          try { localStorage.setItem('tavy_custom_products', JSON.stringify(merged)); } catch {}
+          return merged;
+        });
+
+        setPublishedProducts(prev => {
+          const map = new Map();
+          (prev || []).forEach(p => { if (p && p.goodsNo) map.set(p.goodsNo, p); });
+          clean.forEach(p => { if (p && p.goodsNo) map.set(p.goodsNo, p); });
+          const merged = Array.from(map.values());
+          try { localStorage.setItem('tavy_published_products', JSON.stringify(merged)); } catch {}
+          return merged;
+        });
       }
     });
     return () => unsubscribe();
