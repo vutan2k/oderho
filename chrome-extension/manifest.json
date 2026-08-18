@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "tavy-toolcaowed",
-  "version": "5.5",
-  "description": "Tiện ích cào dữ liệu sản phẩm & Tự động cào Ranking Top 50 Chạy Ngầm 100%",
+  "version": "6.0",
+  "description": "Tiện ích cào dữ liệu sản phẩm & Tự động cào Ranking Top 50 AI Pro v6.0",
   "permissions": [
     "activeTab",
     "scripting",
