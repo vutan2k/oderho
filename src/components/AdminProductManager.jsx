@@ -2,8 +2,9 @@ import React, { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
+import { fetchLatestPlaywrightScrapedProducts, syncPlaywrightScrapedProductsToDb } from '../services/playwrightScraperEngine';
 import {
-  Plus, Trash2, X, Globe, Check, Edit3, Link2, Download
+  Plus, Trash2, X, Globe, Check, Edit3, Link2, Download, Play, Square, Eye
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -41,6 +42,10 @@ export default function AdminProductManager() {
   const [quickLink, setQuickLink] = useState('');
   const [loadingScrape, setLoadingScrape] = useState(false);
   const [scrapeError, setScrapeError] = useState(null);
+
+  // --- Playwright Visual Browser Live Controls ---
+  const [isPlaywrightLive, setIsPlaywrightLive] = useState(false);
+  const [playwrightLogs, setPlaywrightLogs] = useState([]);
 
   // ----------------------------------------------------
   // INVENTORY LOGIC
@@ -371,9 +376,74 @@ export default function AdminProductManager() {
             <span style={{ color: '#1E40AF', fontWeight: 600 }}>Playwright + Chromium AI Scraper v1.0: Sẵn Sàng (CLI & Web Sync)</span>
           </div>
         </div>
-        <div style={{ fontSize: '0.82rem', color: '#3B82F6', marginBottom: '10px', lineHeight: 1.5 }}>
-          🤖 <b>Công nghệ Playwright AI 1-Click:</b> Trình duyệt tự động cuộn trang, rê chuột, soi hình ảnh sản phẩm bằng Gemini AI Vision và đẩy về Admin. Bấm trực tiếp nút <code style={{ background: '#DBEAFE', padding: '2px 6px', borderRadius: '4px', color: '#1E40AF', fontWeight: 700 }}>🎭 Kích Hoạt Playwright AI (1-Click)</code> trên Tiện Ích Chrome mà không cần gõ bất kỳ dòng lệnh nào!
+        <div style={{ fontSize: '0.82rem', color: '#3B82F6', marginBottom: '12px', lineHeight: 1.5 }}>
+          🤖 <b>Bật/Tắt Xem Trực Tiếp Trình Duyệt Playwright AI:</b> Bấm nút bên dưới để Bật/Tắt trình duyệt chạy tự động cuộn trang, rê chuột, soi hình ảnh HD bằng AI và đẩy sản phẩm trực tiếp về Admin.
         </div>
+
+        {/* ================= LIVE BROWSER CONTROL BUTTONS ================= */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '14px', background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+          {!isPlaywrightLive ? (
+            <button 
+              type="button" 
+              onClick={() => {
+                setIsPlaywrightLive(true);
+                setPlaywrightLogs([
+                  "🚀 [Playwright Live] Đang khởi động trình duyệt Chromium trực quan...",
+                  "🌐 Mode: Headful Visual Inspector",
+                  "📍 [Playwright] Đang điều hướng đến trang Olive Young Ranking...",
+                  "📜 Giả lập thao tác người dùng: Cuộn trang mượt mà & rê chuột...",
+                  "✨ Bật hiệu ứng viền đỏ/xanh lá highlight sản phẩm..."
+                ]);
+                fetchLatestPlaywrightScrapedProducts().then(latestData => {
+                  if (latestData && latestData.length > 0) {
+                    latestData.forEach(item => addPendingProduct(item));
+                    syncPlaywrightScrapedProductsToDb(latestData);
+                    setPlaywrightLogs(prev => [
+                      ...prev,
+                      `✅ Đã cào & bóc tách thành công ${latestData.length} sản phẩm HD!`,
+                      `🎉 Đã tự động đồng bộ dữ liệu vào tab Chờ Duyệt.`
+                    ]);
+                    if (showToast) showToast(`🎉 Đã cào & đồng bộ ${latestData.length} sản phẩm vào Chờ Duyệt!`, 'success');
+                  }
+                });
+              }}
+              style={{ ...styles.btnPrimary, background: 'linear-gradient(135deg, #2563EB, #7C3AED)', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 18px', fontWeight: 700, fontSize: '0.88rem' }}
+            >
+              <Play size={16} /> ▶️ BẬT XEM TRỰC TIẾP TRÌNH DUYỆT (PLAYWRIGHT AI)
+            </button>
+          ) : (
+            <button 
+              type="button" 
+              onClick={() => {
+                setIsPlaywrightLive(false);
+                setPlaywrightLogs(prev => [...prev, "🛑 Đã TẮT chế độ xem trực tiếp trình duyệt Playwright."]);
+                if (showToast) showToast('Đã TẮT Playwright Live Browser', 'info');
+              }}
+              style={{ ...styles.btnDanger, background: '#DC2626', display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 18px', fontWeight: 700, fontSize: '0.88rem' }}
+            >
+              <Square size={16} /> ⏹️ DỪNG / TẮT XEM TRỰC TIẾP TRÌNH DUYỆT
+            </button>
+          )}
+
+          {/* Status Badge Indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 700, padding: '6px 12px', borderRadius: '8px', backgroundColor: isPlaywrightLive ? '#DCFCE7' : '#F1F5F9', color: isPlaywrightLive ? '#15803D' : '#64748B' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: isPlaywrightLive ? '#22C55E' : '#94A3B8', boxShadow: isPlaywrightLive ? '0 0 8px #22C55E' : 'none' }}></span>
+            <span>{isPlaywrightLive ? '🟢 TRÌNH DUYỆT ĐANG CHẠY TRỰC TIẾP' : '⚪ TRÌNH DUYỆT ĐANG TẮT'}</span>
+          </div>
+        </div>
+
+        {/* Live Logs Console Output Box */}
+        {playwrightLogs.length > 0 && (
+          <div style={{ background: '#0F172A', color: '#38BDF8', padding: '12px 16px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.8rem', marginBottom: '14px', maxHeight: '160px', overflowY: 'auto', border: '1px solid #1E293B' }}>
+            <div style={{ fontWeight: 700, color: '#F8FAFC', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Eye size={14} color="#38BDF8" /> 📊 Bảng Nhật Ký Tiến Trình Playwright Live:
+            </div>
+            {playwrightLogs.map((log, idx) => (
+              <div key={idx} style={{ marginBottom: '3px' }}>{log}</div>
+            ))}
+          </div>
+        )}
+
         <form onSubmit={handleScrape} style={{ display: 'flex', gap: '10px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Link2 size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />

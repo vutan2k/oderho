@@ -4,7 +4,7 @@
  */
 
 import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
-import { db } from '../config/firebase.js';
+import { db } from '../firebase.js';
 
 export const syncPlaywrightScrapedProductsToDb = async (productsArray) => {
   if (!Array.isArray(productsArray) || productsArray.length === 0) {
