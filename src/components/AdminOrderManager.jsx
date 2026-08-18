@@ -362,7 +362,7 @@ export default function AdminOrderManager() {
                 filteredOrders.map((order) => {
                   const stCfg = getStatusConfig(order.status);
                   const isSelected = selectedOrderIds.includes(order.id);
-                  const totalVndVal = order.quote ? order.quote.totalVnd : Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1));
+                  const totalVndVal = order.totalVnd || (order.quote ? order.quote.totalVnd : (Array.isArray(order.items) && order.items.length > 0 ? order.items.reduce((sum, item) => sum + (item.price || Math.round((item.foreignPrice || 0) * krwRate)) * (item.qty || 1), 0) : Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1))));
 
                   return (
                     <tr

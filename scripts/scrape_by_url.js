@@ -1,0 +1,143 @@
+import 'dotenv/config';
+import { chromium } from 'playwright';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+
+const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+const OPENAI_BASE_URL = process.env.VITE_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL || 'http://localhost:20128/v1';
+const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'sk-a5baa61b8eb09efe-2zgl83-5d00c109';
+const OPENAI_MODEL = process.env.VITE_OPENAI_MODEL || process.env.OPENAI_MODEL || 'ag/gemini-3.6-flash-medium';
+const KRW_TO_VND = 18.5;
+
+const firebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyDummyKeyForScraperSync12345",
+  authDomain: "tavyorder.firebaseapp.com",
+  projectId: "tavyorder",
+  storageBucket: "tavyorder.firebasestorage.app",
+  messagingSenderId: "90000000000",
+  appId: "1:90000000000:web:abcdef1234567890"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const targetUrl = process.env.PRODUCT_URL || process.argv[2] || 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000223414';
+
+async function scrapeSingleProductByUrl(url) {
+  console.log(`🚀 [Playwright Single URL Scraper] Đang mở đường dẫn: ${url}`);
+  
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+  });
+  
+  const page = await context.newPage();
+
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 35000 });
+    await page.waitForTimeout(1000);
+
+    // Mở rộng thông tin
+    await page.evaluate(() => {
+      document.querySelectorAll('.artcDesc_more, .btn_detail_more, #btn_artcDescMore').forEach(b => { try { b.click(); } catch(e){} });
+    }).catch(() => {});
+
+    // Cuộn trang tải ảnh review GDAS
+    await page.evaluate(() => window.scrollTo({ top: 2000, behavior: 'smooth' }));
+    await page.waitForTimeout(1000);
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('a, button, span')).filter(b => b.textContent && b.textContent.includes('포토리뷰'));
+      btns.forEach(b => { try { b.click(); } catch(e){} });
+    }).catch(() => {});
+    await page.waitForTimeout(1000);
+    await page.evaluate(() => window.scrollTo({ top: 3500, behavior: 'smooth' }));
+    await page.waitForTimeout(1000);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    await page.waitForTimeout(500);
+
+    const goodsNoMatch = url.match(/goodsNo=([A-Z0-9]+)/i);
+    const goodsNo = goodsNoMatch ? goodsNoMatch[1] : `SP_${Date.now()}`;
+
+    const detailData = await page.evaluate(() => {
+      const upgradeUrl = (url) => (url || '').replace(/\?RS=\d+x\d+.*$/, '').replace(/\?.*$/, '');
+      const isJunkImg = (src) => /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_/i.test(src);
+      const cleanUrl = (s) => s.startsWith('//') ? 'https:' + s : (s.startsWith('/') ? 'https://www.oliveyoung.co.kr' + s : s);
+
+      let nameKr = document.title ? document.title.split('|')[0].trim() : 'Sản phẩm Olive Young';
+      let brand = 'Olive Young';
+      const brandEl = document.querySelector('#moveBrandShop, .prd_brand, .tx_brand, .brand_name');
+      if (brandEl && brandEl.textContent) brand = brandEl.textContent.trim();
+
+      const elementsWithWon = Array.from(document.querySelectorAll('*')).filter(el => el.children.length === 0 && el.textContent.includes('원'));
+      let priceTxt = '25000';
+      for (const el of elementsWithWon) {
+        const match = el.textContent.match(/[\d,]+원/);
+        if (match) { priceTxt = match[0]; break; }
+      }
+
+      // Quét tất cả thẻ img sạch trên trang
+      const allImgs = Array.from(document.querySelectorAll('img'))
+        .map(img => cleanUrl(upgradeUrl(img.getAttribute('data-src') || img.src || '')))
+        .filter(src => src && src.length > 10 && src.includes('oliveyoung') && !isJunkImg(src));
+
+      // Phân loại: Ảnh review GDAS vs Ảnh sản phẩm HD (thumbnails / crop)
+      const reviewImgs = allImgs.filter(src => src.includes('gdasEditor') || src.includes('review') || src.includes('gdas'));
+      const albumImgs = allImgs.filter(src => !reviewImgs.includes(src) && (src.includes('thumbnails') || src.includes('/html/crop/') || src.includes('goods')));
+
+      const finalMain = albumImgs[0] || (allImgs[0] || '');
+      const finalAlbum = [...new Set([finalMain, ...albumImgs])].filter(Boolean);
+      const finalReviews = [...new Set(reviewImgs)].filter(r => !finalAlbum.includes(r));
+
+      return {
+        brand,
+        nameKr,
+        foreignPrice: parseInt(priceTxt.replace(/[^0-9]/g, '') || '25000', 10),
+        mainImg: finalMain,
+        albumImgs: finalAlbum.slice(0, 10),
+        reviewImgs: finalReviews.slice(0, 12)
+      };
+    });
+
+    const calculatedPrice = Math.round(detailData.foreignPrice * KRW_TO_VND);
+    const productObj = {
+      id: goodsNo,
+      goodsNo: goodsNo,
+      name: detailData.nameKr,
+      nameKr: detailData.nameKr,
+      brand: detailData.brand,
+      category: 'skincare',
+      foreignPrice: detailData.foreignPrice,
+      price: calculatedPrice,
+      originalPrice: Math.round(calculatedPrice * 1.2),
+      productImage: detailData.mainImg,
+      images: detailData.albumImgs,
+      photoReviews: detailData.reviewImgs,
+      description: `Sản phẩm nhập khẩu từ Olive Young Korea. Mã SP: ${goodsNo}`,
+      origin: 'Store Olive Young Seoul, Hàn Quốc',
+      rating: 4.9,
+      reviewsCount: detailData.reviewImgs.length > 0 ? detailData.reviewImgs.length * 20 : 150,
+      productUrl: url,
+      scrapedAt: new Date().toISOString()
+    };
+
+    console.log(`✅ [Playwright URL Scraper] Đã bóc tách thành công sản phẩm: ${productObj.name}`);
+    console.log(`🖼️ Album ảnh: ${productObj.images.length} | 📸 Ảnh review: ${productObj.photoReviews.length}`);
+
+    // Đồng bộ Firestore
+    await setDoc(doc(db, "pending_products", productObj.id), productObj);
+    console.log(`🔄 [Firestore] Đã đồng bộ trực tiếp sản phẩm ${productObj.id} vào pending_products!`);
+
+    await browser.close();
+    return productObj;
+  } catch (err) {
+    console.error('❌ Lỗi cào sản phẩm theo URL:', err);
+    await browser.close();
+    return null;
+  }
+}
+
+scrapeSingleProductByUrl(targetUrl);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ShoppingBag, Sparkles } from 'lucide-react';
+import { X, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Chuẩn hóa URL ảnh HD sắc nét từ Olive Young
 const getHighResUrl = (url) => {
@@ -11,12 +11,18 @@ const getHighResUrl = (url) => {
     .trim();
 };
 
-export default function ProductDetailModal({ product, krwRate, onClose, onOrderNow }) {
+export default function ProductDetailModal({ product, krwRate, onClose, onOrderNow, hideAddToCart = false }) {
   const rawImages = product?.images && product.images.length > 0 ? product.images : (product?.productImage ? [product.productImage] : []);
   const images = Array.from(new Set(rawImages.map(getHighResUrl))).filter(Boolean);
 
   const [selectedImg, setSelectedImg] = useState(images[0] || '');
-  const [zoomImg, setZoomImg] = useState(null); // Fullscreen HD Lightbox Zoom
+  const [zoomIndex, setZoomIndex] = useState(null); // Fullscreen HD Lightbox Index
+  const [touchStartX, setTouchStartX] = useState(null);
+
+  const reviewPhotos = Array.from(new Set([
+    ...(product?.photoReviews || []),
+    ...images
+  ])).map(getHighResUrl).filter(Boolean);
 
   useEffect(() => {
     const imgs = Array.from(new Set((product?.images && product.images.length > 0 ? product.images : (product?.productImage ? [product.productImage] : [])).map(getHighResUrl))).filter(Boolean);
@@ -27,6 +33,25 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
 
   const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null || reviewPhotos.length <= 1) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+
+    if (deltaX < -40) {
+      // Vuốt sang trái -> Xem ảnh tiếp theo
+      setZoomIndex((prev) => (prev === null ? 0 : (prev + 1) % reviewPhotos.length));
+    } else if (deltaX > 40) {
+      // Vuốt sang phải -> Xem ảnh trước đó
+      setZoomIndex((prev) => (prev === null ? 0 : (prev - 1 + reviewPhotos.length) % reviewPhotos.length));
+    }
+    setTouchStartX(null);
+  };
 
   return (
     <div 
@@ -40,7 +65,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px'
+        padding: '12px'
       }}
     >
       <div 
@@ -83,16 +108,19 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
           <X size={20} color="#374151" />
         </button>
 
-        {/* Bố cục Grid 2 Cột Cân Bằng (1fr 1.05fr) - Tập trung 100% vào HÌNH ẢNH */}
-        <div style={{ padding: '32px 36px', display: 'grid', gridTemplateColumns: '1fr 1.05fr', gap: '32px', minWidth: 0 }}>
+        {/* Bố cục Grid Cân Bằng (1fr 1.05fr trên PC, 1fr trên Mobile) */}
+        <div className="product-modal-grid" style={{ padding: '24px 28px', display: 'grid', gridTemplateColumns: '1fr 1.05fr', gap: '24px', minWidth: 0 }}>
           
           {/* Cột Trái: Ảnh Chính Siêu Nét HD + Thư Viện Thumbs Ảnh Sản Phẩm */}
           <div style={{ minWidth: 0 }}>
             <div 
-              onClick={() => setZoomImg(selectedImg || getHighResUrl(product.productImage))}
+              onClick={() => {
+                const idx = reviewPhotos.indexOf(selectedImg || getHighResUrl(product.productImage));
+                setZoomIndex(idx >= 0 ? idx : 0);
+              }}
               style={{
                 width: '100%',
-                height: '400px',
+                height: '360px',
                 borderRadius: '20px',
                 overflow: 'hidden',
                 backgroundColor: '#FAFAFA',
@@ -131,8 +159,8 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                     key={idx}
                     onClick={() => setSelectedImg(img)}
                     style={{
-                      width: '72px',
-                      height: '72px',
+                      width: '68px',
+                      height: '68px',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
@@ -151,7 +179,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
           </div>
 
           {/* Cột Phải: Thương Hiệu, Tên & BỘ SƯU TẬP ÁNH ĐÁNH GIÁ THỰC TẾ KHÁCH HÀNG */}
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0, paddingRight: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
             <div>
               {/* Thương hiệu */}
               <div style={{ marginBottom: '8px' }}>
@@ -161,108 +189,106 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
               </div>
 
               {/* Tên sản phẩm */}
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#111827', lineHeight: '1.35', marginBottom: '10px', wordBreak: 'break-word' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', lineHeight: '1.35', marginBottom: '10px', wordBreak: 'break-word' }}>
                 {product.name}
               </h2>
 
               {/* Mô tả ngắn */}
-              <p style={{ margin: '0 0 16px 0', fontSize: '0.88rem', color: '#4B5563', lineHeight: '1.5' }}>
+              <p style={{ margin: '0 0 14px 0', fontSize: '0.85rem', color: '#4B5563', lineHeight: '1.5' }}>
                 {product.description || 'Sản phẩm chính hãng nội địa Hàn Quốc nhập khẩu trực tiếp.'}
               </p>
 
-              {/* KHU VỰC CHÍNH: BỘ SƯU TẬP LƯỚI ÁNH ĐÁNH GIÁ THỰC TẾ TỪ KHÁCH HÀNG */}
-              {(() => {
-                const reviewPhotos = Array.from(new Set([
-                  ...(product?.photoReviews || []),
-                  ...images
-                ])).map(getHighResUrl).filter(Boolean);
+              {/* KHU VỰC HÌNH ẢNH THỰC TẾ (THIẾT KẾ TỐI GIẢN CAO CẤP) */}
+              <div style={{ background: '#F9FAFB', padding: '14px', borderRadius: '14px', border: '1px solid #E5E7EB' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#374151', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Hình ảnh thực tế ({reviewPhotos.length})
+                </div>
 
-                return (
-                  <div style={{ background: '#FAF5FF', padding: '14px', borderRadius: '16px', border: '1px solid #E9D5FF' }}>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--purple-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Sparkles size={16} /> 📸 Đánh giá ({reviewPhotos.length})
+                {/* Lưới Ảnh Thực Tế 3 Cột Sắc Nét */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '210px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {reviewPhotos.map((img, idx) => (
+                    <div 
+                      key={idx}
+                      onClick={() => setZoomIndex(idx)}
+                      style={{
+                        aspectRatio: '1 / 1',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
+                        cursor: 'pointer',
+                        backgroundColor: '#FFF',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+                      }}
+                    >
+                      <img src={img} alt={`Review photo ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
-
-                    {/* Lưới Ảnh Thực Tế 3 Cột Sắc Nét */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '230px', overflowY: 'auto', paddingRight: '4px' }}>
-                      {reviewPhotos.map((img, idx) => (
-                        <div 
-                          key={idx}
-                          onClick={() => setZoomImg(img)}
-                          style={{
-                            aspectRatio: '1 / 1',
-                            borderRadius: '10px',
-                            overflow: 'hidden',
-                            border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
-                            cursor: 'pointer',
-                            backgroundColor: '#FFF',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
-                          }}
-                        >
-                          <img src={img} alt={`Review photo ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Nút Thêm Vào Giỏ Hàng */}
-            <div style={{ paddingTop: '16px', borderTop: '1px solid #F3F4F6', marginTop: '12px' }}>
-              <button
-                onClick={(e) => {
-                  if (onOrderNow) onOrderNow(product, e);
-                  if (onClose) onClose();
-                }}
-                className="btn-gold"
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  padding: '14px 24px',
-                  borderRadius: '50px',
-                  boxShadow: '0 10px 25px -5px rgba(122, 75, 158, 0.4)',
-                  cursor: 'pointer',
-                  border: 'none'
-                }}
-              >
-                <ShoppingBag size={18} />
-                <span style={{ fontSize: '1rem', fontWeight: 800 }}>
-                  THÊM VÀO GIỎ ({formatVnd(calculatedVnd)})
-                </span>
-              </button>
-            </div>
+            {/* Nút Thêm Vào Giỏ Hàng (Chỉ hiện khi chưa ở trong đơn hàng) */}
+            {!hideAddToCart && onOrderNow && (
+              <div style={{ paddingTop: '16px', borderTop: '1px solid #F3F4F6', marginTop: '12px' }}>
+                <button
+                  onClick={(e) => {
+                    if (onOrderNow) onOrderNow(product, e);
+                    if (onClose) onClose();
+                  }}
+                  className="btn-gold"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    padding: '14px 24px',
+                    borderRadius: '50px',
+                    boxShadow: '0 10px 25px -5px rgba(122, 75, 158, 0.4)',
+                    cursor: 'pointer',
+                    border: 'none'
+                  }}
+                >
+                  <ShoppingBag size={18} />
+                  <span style={{ fontSize: '1rem', fontWeight: 800 }}>
+                    THÊM VÀO GIỎ ({formatVnd(calculatedVnd)})
+                  </span>
+                </button>
+              </div>
+            )}
 
           </div>
 
         </div>
       </div>
 
-      {/* LIGHTBOX PHÓNG TO ẢNH HD FULL SCREEN */}
-      {zoomImg && (
+      {/* LIGHTBOX PHÓNG TO ẢNH HD FULL SCREEN HỖ TRỢ VUỐT CẢM ỨNG 2 BÊN */}
+      {zoomIndex !== null && reviewPhotos[zoomIndex] && (
         <div 
-          onClick={() => setZoomImg(null)}
+          onClick={() => setZoomIndex(null)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           style={{
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.92)',
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            backdropFilter: 'blur(10px)',
             zIndex: 100000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '20px'
+            padding: '16px',
+            userSelect: 'none'
           }}
         >
+          {/* Nút Đóng */}
           <button
-            onClick={() => setZoomImg(null)}
+            onClick={() => setZoomIndex(null)}
             style={{
               position: 'absolute',
-              top: '24px',
-              right: '24px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              top: '20px',
+              right: '20px',
+              backgroundColor: 'rgba(255, 255, 255, 0.25)',
               border: 'none',
               borderRadius: '50%',
               width: '44px',
@@ -271,16 +297,101 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: '#FFF'
+              color: '#FFF',
+              zIndex: 100002
             }}
           >
             <X size={26} />
           </button>
+
+          {/* Counter Badge: 1 / 8 */}
+          <div style={{
+            position: 'absolute',
+            top: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            color: '#FFF',
+            padding: '6px 16px',
+            borderRadius: '20px',
+            fontSize: '0.88rem',
+            fontWeight: 700,
+            letterSpacing: '1px',
+            zIndex: 100002
+          }}>
+            {zoomIndex + 1} / {reviewPhotos.length}
+          </div>
+
+          {/* Nút Xem Ảnh Trước (Trái) */}
+          {reviewPhotos.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomIndex((prev) => (prev === null ? 0 : (prev - 1 + reviewPhotos.length) % reviewPhotos.length));
+              }}
+              style={{
+                position: 'absolute',
+                left: '12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#FFF',
+                zIndex: 100002,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              }}
+            >
+              <ChevronLeft size={30} />
+            </button>
+          )}
+
+          {/* Ảnh HD Zoom */}
           <img 
-            src={zoomImg} 
-            alt="HD Zoom" 
-            style={{ maxWidth: '92vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }} 
+            src={reviewPhotos[zoomIndex]} 
+            alt={`HD Zoom ${zoomIndex}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '92vw',
+              maxHeight: '85vh',
+              objectFit: 'contain',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.6)',
+              transition: 'all 0.2s ease'
+            }} 
           />
+
+          {/* Nút Xem Ảnh Tiếp theo (Phải) */}
+          {reviewPhotos.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomIndex((prev) => (prev === null ? 0 : (prev + 1) % reviewPhotos.length));
+              }}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#FFF',
+                zIndex: 100002,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              }}
+            >
+              <ChevronRight size={30} />
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -22,6 +22,7 @@ import { auth, db, loginWithGoogle, checkGoogleRedirectResult } from '../firebas
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
   updatePassword,
   reauthenticateWithCredential,
@@ -80,18 +81,29 @@ export const AppProvider = ({ children }) => {
     const saved = localStorage.getItem('admin_auth');
     return saved === 'true';
   });
-  const loginAdmin = (password) => {
+  const loginAdmin = async (password) => {
     const adminPass = import.meta.env.VITE_ADMIN_PASSWORD;
     if (password === adminPass) {
-      setIsAdminAuthenticated(true);
-      localStorage.setItem('admin_auth', 'true');
-      return { success: true };
+      try {
+        await signInWithEmailAndPassword(auth, 'admin@tavykorea.vn', password);
+        setIsAdminAuthenticated(true);
+        localStorage.setItem('admin_auth', 'true');
+        return { success: true };
+      } catch (err) {
+        console.error("Lỗi đăng nhập Firebase Auth Admin:", err);
+        return { success: false, message: 'Lỗi đồng bộ cơ sở dữ liệu: ' + err.message };
+      }
     }
     return { success: false, message: 'Mật khẩu không đúng' };
   };
-  const logoutAdmin = () => {
+  const logoutAdmin = async () => {
     setIsAdminAuthenticated(false);
     localStorage.removeItem('admin_auth');
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn("Lỗi signout Firebase:", err);
+    }
   };
 
   // Listen for Firebase auth changes and load/create profile
@@ -114,6 +126,22 @@ export const AppProvider = ({ children }) => {
     });
     return () => unsubscribe();
   }, []);
+
+  // Tự động khôi phục đăng nhập Firebase Auth Admin khi làm mới trang (F5)
+  useEffect(() => {
+    const autoLoginAdmin = async () => {
+      if (isAdminAuthenticated && (!authUser || authUser.email !== 'admin@tavykorea.vn')) {
+        try {
+          const adminPass = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ADMIN_PASSWORD) || 'admin123';
+          await signInWithEmailAndPassword(auth, 'admin@tavykorea.vn', adminPass);
+          console.log("⚡ [Firebase Auto-login] Đăng nhập Admin thành công!");
+        } catch (err) {
+          console.warn("⚠️ [Firebase Auto-login] Thất bại:", err.message);
+        }
+      }
+    };
+    autoLoginAdmin();
+  }, [isAdminAuthenticated, authUser]);
 
   // Handle Google Redirect Result
   useEffect(() => {
@@ -194,7 +222,7 @@ export const AppProvider = ({ children }) => {
     } catch (e) {
       console.warn('Error reading tavy_custom_products:', e);
     }
-    return OLIVE_YOUNG_CATALOG;
+    return [];
   });
 
   const [publishedProducts, setPublishedProducts] = useState(() => {
@@ -221,7 +249,7 @@ export const AppProvider = ({ children }) => {
     } catch (e) {
       console.warn('Error reading tavy_published_products:', e);
     }
-    return OLIVE_YOUNG_CATALOG;
+    return [];
   });
 
   // ----- Realtime Firestore Rates Sync -----
@@ -303,6 +331,21 @@ export const AppProvider = ({ children }) => {
       userEmail: authUser?.email || 'guest@tavy.vn',
       createdAt: new Date().toISOString(),
     };
+
+    // Nếu người dùng đã có 1 đơn hàng chờ cọc (Active Pending Order), cập nhật đơn hàng đó chứ không tạo đơn mới
+    if (activePendingOrder) {
+      const updates = {
+        ...payload,
+        id: activePendingOrder.id,
+        status: 'pending',
+        paymentStatus: 'unpaid',
+        paymentDue: new Date(Date.now() + 15 * 60 * 1000).toISOString()
+      };
+      await updateOrderStatusInDB(activePendingOrder.id, updates);
+      setOrders(prev => prev.map(o => o.id === activePendingOrder.id ? { ...o, ...updates } : o));
+      return { success: true, id: activePendingOrder.id };
+    }
+
     const res = await createOrderInDB(payload);
     if (!res.success) {
       const newOrder = { id: `ORD-${Math.floor(100000 + Math.random() * 900000)}`, ...payload };
@@ -628,6 +671,39 @@ export const AppProvider = ({ children }) => {
     return [];
   });
 
+  // Tìm Đơn hàng chờ cọc (Active Pending Order) duy nhất của người dùng hiện tại
+  const activePendingOrder = orders.find(o => {
+    const isUserOrder = (currentUser?.email && o.userEmail && o.userEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+                        (currentUser?.phone && o.customerPhone && o.customerPhone === currentUser.phone);
+    const isUnpaidPending = (o.status === 'pending' || o.status === 'quoted') && o.paymentStatus !== 'paid';
+    return isUserOrder && isUnpaidPending;
+  });
+
+  // Tự động đồng bộ giỏ hàng với Đơn hàng chờ cọc khi chưa cọc 100%
+  useEffect(() => {
+    if (activePendingOrder && Array.isArray(activePendingOrder.items) && activePendingOrder.items.length > 0) {
+      setCart(activePendingOrder.items);
+    }
+  }, [activePendingOrder?.id, JSON.stringify(activePendingOrder?.items)]);
+
+  const syncActivePendingOrderItems = (newItems) => {
+    if (!activePendingOrder) return;
+    const krwRate = rates?.KRW?.rate || 19.5;
+    const newTotalVnd = newItems.reduce((sum, item) => {
+      const price = item.price || Math.round((item.foreignPrice || 0) * krwRate);
+      return sum + price * (item.qty || 1);
+    }, 0);
+
+    const updates = {
+      items: newItems,
+      totalVnd: newTotalVnd,
+      paymentDue: new Date(Date.now() + 15 * 60 * 1000).toISOString()
+    };
+
+    updateOrderStatusInDB(activePendingOrder.id, updates).catch(err => console.warn('Lỗi sync pending order:', err));
+    setOrders(prev => prev.map(o => o.id === activePendingOrder.id ? { ...o, ...updates } : o));
+  };
+
   useEffect(() => {
     localStorage.setItem('tavy_cart', JSON.stringify(cart));
   }, [cart]);
@@ -635,26 +711,55 @@ export const AppProvider = ({ children }) => {
   const addToCart = (product, qty = 1) => {
     if (!product) return;
     const productId = product.goodsNo || product.id;
+    let newCart = [];
     setCart((prev) => {
       const existing = prev.find((item) => (item.goodsNo || item.id) === productId);
       if (existing) {
-        return prev.map((item) =>
+        newCart = prev.map((item) =>
           (item.goodsNo || item.id) === productId ? { ...item, qty: item.qty + qty } : item
         );
+      } else {
+        newCart = [...prev, { ...product, qty }];
       }
-      return [...prev, { ...product, qty }];
+      return newCart;
     });
+
+    if (activePendingOrder) {
+      setTimeout(() => {
+        setCart(currentCart => {
+          syncActivePendingOrderItems(currentCart);
+          return currentCart;
+        });
+      }, 50);
+    }
   };
 
   const removeFromCart = (goodsNo) => {
-    setCart((prev) => prev.filter((item) => (item.goodsNo || item.id) !== goodsNo));
+    let newCart = [];
+    setCart((prev) => {
+      newCart = prev.filter((item) => (item.goodsNo || item.id) !== goodsNo);
+      if (activePendingOrder) {
+        if (newCart.length === 0) {
+          deleteOrderFromDB(activePendingOrder.id).catch(() => {});
+          setOrders(oPrev => oPrev.filter(o => o.id !== activePendingOrder.id));
+        } else {
+          syncActivePendingOrderItems(newCart);
+        }
+      }
+      return newCart;
+    });
   };
 
   const updateCartQty = (goodsNo, qty) => {
     if (qty <= 0) return removeFromCart(goodsNo);
-    setCart((prev) =>
-      prev.map((item) => ((item.goodsNo || item.id) === goodsNo ? { ...item, qty } : item))
-    );
+    let newCart = [];
+    setCart((prev) => {
+      newCart = prev.map((item) => ((item.goodsNo || item.id) === goodsNo ? { ...item, qty } : item));
+      if (activePendingOrder) {
+        syncActivePendingOrderItems(newCart);
+      }
+      return newCart;
+    });
   };
 
   const clearCart = () => {

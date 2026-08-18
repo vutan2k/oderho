@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "tavy-toolcaowed",
-  "version": "6.1",
-  "description": "Tiện ích cào dữ liệu sản phẩm & Tự động cào Ranking Top 50 AI Pro v6.1 (Truyền tin nhắn bộ nhớ 0 limit)",
+  "name": "TAVY AI Scraper Pro",
+  "version": "17.0",
+  "description": "TAVY AI Scraper v17.0 PRO - Tùy chọn Model Gemini AI trực tiếp từ Menu Tiện ích & Bóc 30+ Ảnh GDAS",
   "permissions": [
     "activeTab",
     "scripting",

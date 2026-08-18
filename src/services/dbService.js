@@ -225,7 +225,8 @@ export const subscribeToProducts = (onUpdate) => {
       products.sort((a, b) => {
         const timeA = a.updatedAt?.seconds || (a.createdAt?.seconds) || (new Date(a.scrapedAt || 0).getTime()) || 0;
         const timeB = b.updatedAt?.seconds || (b.createdAt?.seconds) || (new Date(b.scrapedAt || 0).getTime()) || 0;
-        return timeB - timeA;
+        if (timeB !== timeA) return timeB - timeA;
+        return String(b.goodsNo).localeCompare(String(a.goodsNo));
       });
 
       onUpdate(products);
@@ -307,7 +308,8 @@ export const subscribeToPendingProducts = (onUpdate) => {
       pendingItems.sort((a, b) => {
         const timeA = new Date(a.scrapedAt || 0).getTime();
         const timeB = new Date(b.scrapedAt || 0).getTime();
-        return timeB - timeA;
+        if (timeB !== timeA) return timeB - timeA;
+        return String(b.goodsNo).localeCompare(String(a.goodsNo));
       });
 
       onUpdate(pendingItems);

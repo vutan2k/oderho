@@ -16,7 +16,7 @@ const BANK_ACCOUNTS = {
     flag: '🇻🇳',
   },
   KR: {
-    bankName: '우라은행',
+    bankName: '우라은행 (Woori Bank)',
     accountNumber: '1002959863658',
     accountHolder: 'VU VAN TAN',
     currency: 'KRW',
@@ -26,9 +26,13 @@ const BANK_ACCOUNTS = {
 
 const PAYMENT_DEADLINE_MS = 15 * 60 * 1000; // 15 phút
 
-function getQRUrl(bankInfo, amount, orderId) {
-  const content = `${bankInfo.bankName} ${bankInfo.accountNumber} ${bankInfo.accountHolder} ${orderId}`;
-  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(content)}`;
+function getVndQRUrl(amount, orderId) {
+  return `https://img.vietqr.io/image/MBBANK-34966778899-compact2.png?amount=${amount || 0}&addInfo=${encodeURIComponent(orderId)}&accountName=VU%20VAN%20TAN`;
+}
+
+function getKrwQRUrl(orderId) {
+  // Chỉ mã hóa thuần số tài khoản 1002959863658 để các ứng dụng ngân hàng Hàn Quốc (Toss, Woori WON, KakaoPay) quét trực tiếp số tài khoản
+  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=1002959863658`;
 }
 
 function formatTime(ms) {
@@ -46,9 +50,6 @@ export default function PaymentPage() {
   const [order, setOrder] = useState(null);
   const [timeLeft, setTimeLeft] = useState(PAYMENT_DEADLINE_MS);
   const [copied, setCopied] = useState('');
-  const [proofFile, setProofFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadDone, setUploadDone] = useState(false);
 
   // Realtime listener cho order
   useEffect(() => {
@@ -76,11 +77,11 @@ export default function PaymentPage() {
     return () => clearInterval(interval);
   }, [order?.paymentDue]);
 
-  // Auto-hold khi hết giờ
+  // Khi hết 15 phút -> Chuyển về trạng thái 'pending' (Chờ cọc)
   useEffect(() => {
-    if (timeLeft <= 0 && order && order.paymentStatus === 'unpaid' && order.status !== 'on_hold') {
+    if (timeLeft <= 0 && order && order.paymentStatus === 'unpaid' && order.status !== 'pending') {
       updateDoc(doc(db, 'orders', orderId), {
-        status: 'on_hold',
+        status: 'pending',
         updatedAt: serverTimestamp(),
       }).catch(console.warn);
     }
@@ -93,26 +94,17 @@ export default function PaymentPage() {
     });
   }, []);
 
-  const handleUploadProof = async () => {
-    if (!proofFile || !orderId) return;
-    setUploading(true);
+  const handleRenewPayment = async () => {
+    if (!orderId) return;
     try {
-      // Lưu file dạng base64 vào Firestore (đơn giản, không cần Storage)
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target.result;
-        await updateDoc(doc(db, 'orders', orderId), {
-          paymentProofUrl: base64,
-          paymentProofName: proofFile.name,
-          updatedAt: serverTimestamp(),
-        });
-        setUploadDone(true);
-        setUploading(false);
-      };
-      reader.readAsDataURL(proofFile);
+      const newDue = new Date(Date.now() + PAYMENT_DEADLINE_MS).toISOString();
+      await updateDoc(doc(db, 'orders', orderId), {
+        paymentDue: newDue,
+        status: 'pending',
+        updatedAt: serverTimestamp(),
+      });
     } catch (err) {
-      console.warn('Upload proof error:', err);
-      setUploading(false);
+      console.warn('Renew payment error:', err);
     }
   };
 
@@ -145,38 +137,17 @@ export default function PaymentPage() {
     );
   }
 
-  // Đã bị hold
-  if (order.status === 'on_hold') {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9F6FA' }}>
-        <Helmet><title>Đơn hàng tạm dừng - TAVY Korea</title></Helmet>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', background: '#fff', padding: '50px', borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', maxWidth: '480px' }}>
-            <AlertTriangle size={64} color="#F59E0B" style={{ margin: '0 auto 20px' }} />
-            <h2 style={{ fontSize: '1.6rem', color: '#1a1a2e', marginBottom: '12px' }}>Đơn hàng tạm dừng</h2>
-            <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-              Đơn <strong>{orderId}</strong> đã quá thời hạn thanh toán 15 phút. Vui lòng liên hệ admin để được hỗ trợ.
-            </p>
-            <button onClick={() => navigate('/orders')} className="btn-primary">Xem đơn hàng</button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Xác định bank theo country
-  const country = order.country === 'KRW' ? 'KR' : 'VN';
-  const bankInfo = BANK_ACCOUNTS[country];
-  const otherBank = BANK_ACCOUNTS[country === 'VN' ? 'KR' : 'VN'];
-  const qrUrl = getQRUrl(bankInfo, order.totalVnd || 0, orderId);
+  const bankVn = BANK_ACCOUNTS.VN;
+  const bankKr = BANK_ACCOUNTS.KR;
+  const qrVnUrl = getVndQRUrl(order.totalVnd || 0, orderId);
+  const qrKrUrl = getKrwQRUrl(orderId);
   const isExpired = timeLeft <= 0;
-  const isUrgent = timeLeft > 0 && timeLeft < 3 * 60 * 1000; // dưới 3 phút
+  const isUrgent = timeLeft > 0 && timeLeft < 3 * 60 * 1000;
 
   const s = {
     page: { minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9F6FA' },
-    main: { flex: 1, padding: '40px 24px', maxWidth: '720px', margin: '0 auto', width: '100%' },
-    card: { background: '#fff', borderRadius: '20px', padding: '32px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', marginBottom: '24px' },
+    main: { flex: 1, padding: '40px 24px', maxWidth: '980px', margin: '0 auto', width: '100%' },
+    card: { background: '#fff', borderRadius: '20px', padding: '28px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
     header: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' },
     timer: {
       display: 'inline-flex', alignItems: 'center', gap: '8px',
@@ -186,16 +157,12 @@ export default function PaymentPage() {
     },
     bankRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f3f4f6' },
     bankLabel: { color: '#6b7280', fontSize: '0.9rem' },
-    bankValue: { fontWeight: 700, color: '#1a1a2e', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' },
+    bankValue: { fontWeight: 700, color: '#1a1a2e', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' },
     copyBtn: {
       background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px 8px',
       cursor: 'pointer', color: '#6b7280', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px',
     },
-    qrWrap: { textAlign: 'center', padding: '20px', background: '#FAFAFA', borderRadius: '16px', margin: '20px 0' },
-    uploadArea: {
-      border: '2px dashed #d1d5db', borderRadius: '12px', padding: '24px', textAlign: 'center',
-      cursor: 'pointer', transition: 'border-color 0.2s',
-    },
+    qrWrap: { textAlign: 'center', padding: '16px', background: '#FAFAFA', borderRadius: '16px', margin: '16px 0', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
   };
 
   return (
@@ -209,127 +176,144 @@ export default function PaymentPage() {
           <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-serif)', color: '#1a1a2e', margin: 0 }}>Thanh toán đơn hàng</h1>
         </div>
 
-        {/* Timer */}
+        {/* Timer & Renew Button */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={s.timer}>
             <Clock size={20} />
-            {isExpired ? 'Hết thời hạn!' : formatTime(timeLeft)}
+            {isExpired ? 'Đã quá 15 phút!' : formatTime(timeLeft)}
           </div>
           <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '8px' }}>
-            {isExpired ? 'Vui lòng liên hệ admin.' : 'Vui lòng chuyển khoản trong thời gian trên'}
+            {isExpired ? 'Đơn hàng đang ở trạng thái Chờ Cọc. Bấm nút gia hạn để tiếp tục cọc đơn hàng này.' : 'Vui lòng chuyển khoản trong thời gian trên'}
           </p>
+          {isExpired && (
+            <button
+              onClick={handleRenewPayment}
+              style={{
+                marginTop: '12px',
+                backgroundColor: 'var(--purple-primary)',
+                color: '#fff',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)'
+              }}
+            >
+              🔄 Gia hạn 15 phút & Tiếp tục chuyển khoản cọc
+            </button>
+          )}
         </div>
 
-        {/* Thông tin chuyển khoản chính */}
-        <div style={s.card}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {bankInfo.flag} Chuyển khoản {bankInfo.currency}
-          </h3>
+        {/* HAI BẢNG CHUYỂN KHOẢN NẰM NGANG NHAU (SIDE-BY-SIDE GRID) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+          
+          {/* 1. BẢNG CHUYỂN KHOẢN VND */}
+          <div style={s.card}>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1a1a2e' }}>
+                {bankVn.flag} Chuyển khoản VND
+              </h3>
 
-          <div style={s.qrWrap}>
-            <img src={qrUrl} alt="QR Code thanh toán" width={220} height={220} style={{ borderRadius: '12px' }} />
-            <p style={{ color: '#9ca3af', fontSize: '0.8rem', marginTop: '8px' }}>Quét mã QR để chuyển khoản</p>
-          </div>
-
-          <div style={s.bankRow}>
-            <span style={s.bankLabel}>Ngân hàng</span>
-            <span style={s.bankValue}>{bankInfo.bankName}</span>
-          </div>
-          <div style={s.bankRow}>
-            <span style={s.bankLabel}>Số tài khoản</span>
-            <span style={s.bankValue}>
-              {bankInfo.accountNumber}
-              <button style={s.copyBtn} onClick={() => copyToClipboard(bankInfo.accountNumber, 'stk')}>
-                <Copy size={12} /> {copied === 'stk' ? 'Đã copy!' : 'Copy'}
-              </button>
-            </span>
-          </div>
-          <div style={s.bankRow}>
-            <span style={s.bankLabel}>Chủ tài khoản</span>
-            <span style={s.bankValue}>{bankInfo.accountHolder}</span>
-          </div>
-          <div style={{ ...s.bankRow, borderBottom: 'none' }}>
-            <span style={s.bankLabel}>Nội dung CK</span>
-            <span style={s.bankValue}>
-              {orderId}
-              <button style={s.copyBtn} onClick={() => copyToClipboard(orderId, 'nd')}>
-                <Copy size={12} /> {copied === 'nd' ? 'Đã copy!' : 'Copy'}
-              </button>
-            </span>
-          </div>
-        </div>
-
-        {/* Tài khoản phụ */}
-        <div style={{ ...s.card, background: '#FAFAFA' }}>
-          <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {otherBank.flag} Hoặc chuyển khoản {otherBank.currency}
-          </h4>
-          <div style={s.bankRow}>
-            <span style={s.bankLabel}>Ngân hàng</span>
-            <span style={s.bankValue}>{otherBank.bankName}</span>
-          </div>
-          <div style={s.bankRow}>
-            <span style={s.bankLabel}>Số tài khoản</span>
-            <span style={s.bankValue}>
-              {otherBank.accountNumber}
-              <button style={s.copyBtn} onClick={() => copyToClipboard(otherBank.accountNumber, 'stk2')}>
-                <Copy size={12} /> {copied === 'stk2' ? 'Đã copy!' : 'Copy'}
-              </button>
-            </span>
-          </div>
-          <div style={{ ...s.bankRow, borderBottom: 'none' }}>
-            <span style={s.bankLabel}>Chủ tài khoản</span>
-            <span style={s.bankValue}>{otherBank.accountHolder}</span>
-          </div>
-        </div>
-
-        {/* Upload bằng chứng */}
-        <div style={s.card}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Upload size={20} /> Tải lên bằng chứng chuyển khoản
-          </h3>
-
-          {uploadDone || order.paymentProofUrl ? (
-            <div style={{ textAlign: 'center', padding: '20px', background: '#ECFDF5', borderRadius: '12px' }}>
-              <CheckCircle size={32} color="#10B981" style={{ marginBottom: '8px' }} />
-              <p style={{ color: '#059669', fontWeight: 600 }}>Đã tải lên bằng chứng!</p>
-              <p style={{ color: '#6b7280', fontSize: '0.85rem' }}>Admin sẽ xác nhận sớm nhất.</p>
-            </div>
-          ) : (
-            <>
-              <div
-                style={s.uploadArea}
-                onClick={() => document.getElementById('proof-input').click()}
-                onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#7C3AED'; }}
-                onDragLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; }}
-                onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#d1d5db'; setProofFile(e.dataTransfer.files[0]); }}
-              >
-                <Upload size={32} color="#9ca3af" style={{ marginBottom: '8px' }} />
-                <p style={{ color: '#6b7280', marginBottom: '4px' }}>Kéo thả hoặc nhấn để chọn ảnh</p>
-                <p style={{ color: '#9ca3af', fontSize: '0.8rem' }}>PNG, JPG, PDF (tối đa 5MB)</p>
-                <input
-                  id="proof-input"
-                  type="file"
-                  accept="image/*,.pdf"
-                  style={{ display: 'none' }}
-                  onChange={(e) => setProofFile(e.target.files[0])}
-                />
+              <div style={s.qrWrap}>
+                <img src={qrVnUrl} alt="VietQR Chuyển khoản VND" width={200} height={200} style={{ borderRadius: '12px', objectFit: 'contain' }} />
+                <p style={{ color: '#6b7280', fontSize: '0.82rem', marginTop: '8px', fontWeight: 600 }}>Quét mã QR để chuyển khoản VND tự động</p>
               </div>
-              {proofFile && (
-                <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#374151', fontSize: '0.9rem' }}>📎 {proofFile.name}</span>
-                  <button
-                    className="btn-primary"
-                    style={{ padding: '8px 20px', fontSize: '0.9rem' }}
-                    onClick={handleUploadProof}
-                    disabled={uploading}
+            </div>
+
+            <div>
+              <div style={s.bankRow}>
+                <span style={s.bankLabel}>Ngân hàng</span>
+                <span style={s.bankValue}>{bankVn.bankName}</span>
+              </div>
+              <div style={s.bankRow}>
+                <span style={s.bankLabel}>Số tài khoản</span>
+                <span style={s.bankValue}>
+                  {bankVn.accountNumber}
+                  <button style={s.copyBtn} onClick={() => copyToClipboard(bankVn.accountNumber, 'stk_vn')}>
+                    <Copy size={12} /> {copied === 'stk_vn' ? 'Đã copy!' : 'Copy'}
+                  </button>
+                </span>
+              </div>
+              <div style={s.bankRow}>
+                <span style={s.bankLabel}>Chủ tài khoản</span>
+                <span style={s.bankValue}>{bankVn.accountHolder}</span>
+              </div>
+              <div style={{ ...s.bankRow, borderBottom: 'none' }}>
+                <span style={s.bankLabel}>Nội dung CK</span>
+                <span style={s.bankValue}>
+                  {orderId}
+                  <button style={s.copyBtn} onClick={() => copyToClipboard(orderId, 'nd_vn')}>
+                    <Copy size={12} /> {copied === 'nd_vn' ? 'Đã copy!' : 'Copy'}
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. BẢNG CHUYỂN KHOẢN KRW */}
+          <div style={s.card}>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1a1a2e' }}>
+                {bankKr.flag} Hoặc chuyển khoản KRW
+              </h3>
+
+              <div style={s.qrWrap}>
+                <img src={qrKrUrl} alt="QR Code Woori Bank KRW" width={200} height={200} style={{ borderRadius: '12px' }} />
+                <p style={{ color: '#6b7280', fontSize: '0.82rem', marginTop: '8px', fontWeight: 600 }}>Tự động đọc số TK Woori Bank</p>
+                <div style={{ marginTop: '8px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                  <button 
+                    style={{ ...s.copyBtn, background: '#3182F6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '8px', fontWeight: 600 }}
+                    onClick={() => copyToClipboard('1002959863658', 'stk_kr_main')}
                   >
-                    {uploading ? 'Đang tải...' : 'Gửi bằng chứng'}
+                    {copied === 'stk_kr_main' ? '✓ Đã sao chép' : '📋 계좌번호 복사 (Copy STK)'}
                   </button>
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            </div>
+
+            <div>
+              <div style={s.bankRow}>
+                <span style={s.bankLabel}>Ngân hàng</span>
+                <span style={s.bankValue}>{bankKr.bankName}</span>
+              </div>
+              <div style={s.bankRow}>
+                <span style={s.bankLabel}>Số tài khoản</span>
+                <span style={s.bankValue}>
+                  {bankKr.accountNumber}
+                  <button style={s.copyBtn} onClick={() => copyToClipboard(bankKr.accountNumber, 'stk_kr')}>
+                    <Copy size={12} /> {copied === 'stk_kr' ? 'Đã copy!' : 'Copy'}
+                  </button>
+                </span>
+              </div>
+              <div style={s.bankRow}>
+                <span style={s.bankLabel}>Chủ tài khoản</span>
+                <span style={s.bankValue}>{bankKr.accountHolder}</span>
+              </div>
+              <div style={{ ...s.bankRow, borderBottom: 'none' }}>
+                <span style={s.bankLabel}>Nội dung CK</span>
+                <span style={s.bankValue}>
+                  {orderId}
+                  <button style={s.copyBtn} onClick={() => copyToClipboard(orderId, 'nd_kr')}>
+                    <Copy size={12} /> {copied === 'nd_kr' ? 'Đã copy!' : 'Copy'}
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* THÔNG BÁO TỰ ĐỘNG XÁC NHẬN QUA API NGÂN HÀNG (THAY THẾ UPLOAD BẰNG CHỨNG) */}
+        <div style={{ ...s.card, background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)', border: '1px solid #A7F3D0', textAlign: 'center', padding: '24px' }}>
+          <CheckCircle size={36} color="#10B981" style={{ margin: '0 auto 12px' }} />
+          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#065F46', marginBottom: '8px' }}>
+            ⚡ Hệ thống tự động xác nhận thanh toán qua API Ngân hàng
+          </h4>
+          <p style={{ color: '#047857', fontSize: '0.88rem', margin: 0, lineHeight: 1.5 }}>
+            Sau khi chuyển khoản thành công với đúng <strong>Nội dung CK: {orderId}</strong>, hệ thống Ngân hàng sẽ tự động đối soát và kích hoạt đơn hàng trong 1-3 phút mà không cần tải lên hóa đơn.
+          </p>
         </div>
 
         {/* Nút quay lại */}

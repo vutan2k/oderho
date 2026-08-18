@@ -37,6 +37,50 @@ const translateKoreanToVi = (krTitle) => {
   return vi || krTitle;
 };
 
+// =========================================================================
+// THUẬT TOÁN XOAY VÒNG ROUND-ROBIN DÀNH RIÊNG CHO MÔ HÌNH GEMINI 3.X (v16.0 PRO)
+// Tránh chạm hạn ngạch (Rate Limit 429) và tối ưu 100% cho Gemini 3.x
+// =========================================================================
+const ALL_SUPPORTED_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-3.7-flash',
+  'gemini-3-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-3.1-pro'
+];
+
+let globalModelRotationIndex = 0;
+
+const getRotatedModelsList = () => {
+  const rotated = [];
+  const len = ALL_SUPPORTED_MODELS.length;
+  for (let i = 0; i < len; i++) {
+    const idx = (globalModelRotationIndex + i) % len;
+    rotated.push(ALL_SUPPORTED_MODELS[idx]);
+  }
+  globalModelRotationIndex = (globalModelRotationIndex + 1) % len;
+  return rotated;
+};
+
+const extractCleanBrand = (rawData, aiBrand) => {
+  if (aiBrand && typeof aiBrand === 'string' && aiBrand.trim().length > 0 && aiBrand !== 'Olive Young Korea') {
+    return aiBrand.trim();
+  }
+  const brandText = rawData?.brandText || '';
+  if (brandText) {
+    const clean = brandText.replace(/[\n\r]/g, '').trim();
+    if (clean) return clean;
+  }
+  const title = rawData?.title || '';
+  const match = title.match(/\[(.*?)\]/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return 'Olive Young Korea';
+};
+
 const parseDomPrice = (priceStr) => {
   if (!priceStr) return 25000;
   const matches = String(priceStr).match(/([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{4,6})/g);
@@ -50,7 +94,61 @@ const parseDomPrice = (priceStr) => {
   return Math.min(...validPrices);
 };
 
-// Hàm gửi dữ liệu sản phẩm lên Admin tab (ƯU TIÊN CÁCH 1: Gửi tin nhắn trực tiếp qua bộ nhớ - ZERO Limit & KHÔNG MỞ TAB)
+// Hàm đồng bộ trực tiếp sản phẩm cào vào Cloud Firestore (pending_products) qua REST API (v11.0 PRO)
+const saveProductToFirestoreRest = async (product) => {
+  try {
+    const goodsNo = product.goodsNo || `SP-${Date.now()}`;
+    const endpoint = `https://firestore.googleapis.com/v1/projects/tavyorder/databases/(default)/documents/pending_products/${goodsNo}`;
+    
+    const formatArray = (arr) => {
+      const clean = (arr || []).filter(u => u && typeof u === 'string' && u.startsWith('http'));
+      if (clean.length === 0) {
+        return { arrayValue: {} };
+      }
+      return {
+        arrayValue: {
+          values: clean.map(u => ({ stringValue: String(u) }))
+        }
+      };
+    };
+
+    const docFields = {
+      goodsNo: { stringValue: String(product.goodsNo || '') },
+      name: { stringValue: String(product.name || '') },
+      nameKr: { stringValue: String(product.nameKr || '') },
+      brand: { stringValue: String(product.brand || '') },
+      brandKr: { stringValue: String(product.brandKr || '') },
+      category: { stringValue: String(product.category || 'skincare') },
+      foreignPrice: { doubleValue: Number(product.foreignPrice || product.price || 25000) },
+      price: { doubleValue: Number(product.price || 25000) },
+      productImage: { stringValue: String(product.productImage || '') },
+      images: formatArray(product.images),
+      photoReviews: formatArray(product.photoReviews),
+      description: { stringValue: String(product.description || '') },
+      usage: { stringValue: String(product.usage || '') },
+      origin: { stringValue: String(product.origin || 'Store Olive Young Korea') },
+      productUrl: { stringValue: String(product.productUrl || '') },
+      scrapedAt: { stringValue: product.scrapedAt || new Date().toISOString() }
+    };
+
+    const res = await fetch(endpoint, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: docFields })
+    });
+    
+    if (!res.ok) {
+      const errTxt = await res.text();
+      console.warn("⚠️ [Background] Firestore REST sync status:", res.status, errTxt);
+    } else {
+      console.log("⚡ [Background] Đã đồng bộ Firestore REST thành công cho:", goodsNo);
+    }
+  } catch (err) {
+    console.warn("⚠️ [Background] Lỗi Firestore REST sync:", err);
+  }
+};
+
+// Hàm gửi dữ liệu sản phẩm lên Admin tab
 const sendProductToAdminTab = (goodsNo, name, nameKr, price, mainImage, albumImages, photoReviews, brand, brandKr, category, description, usage, url) => {
   const fullProductData = {
     goodsNo: goodsNo || `SP-${Date.now()}`,
@@ -73,6 +171,9 @@ const sendProductToAdminTab = (goodsNo, name, nameKr, price, mainImage, albumIma
     productUrl: url || '',
     scrapedAt: new Date().toISOString()
   };
+
+  // Đồng bộ trực tiếp vào Cloud Firestore pending_products collection qua REST API
+  saveProductToFirestoreRest(fullProductData).catch(err => console.warn('Firestore REST sync:', err));
 
   // 1. Kiểm tra xem có Tab Admin nào đang mở không -> Gửi tin nhắn trực tiếp qua bộ nhớ (0 giới hạn dung lượng!)
   chrome.tabs.query({ url: ["https://tavyorder.web.app/admin/*", "https://tavyorder.web.app/*", "http://localhost/*"] }, (tabs) => {
@@ -299,7 +400,7 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
 - description: Mô tả công dụng sản phẩm bằng tiếng Việt chuẩn.
 - usage: Hướng dẫn sử dụng bằng tiếng Việt.`;
 
-          const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
+          const MODELS = getRotatedModelsList();
           for (const model of MODELS) {
             try {
               const controller = new AbortController();
@@ -524,29 +625,34 @@ Chỉ trả về JSON thuần hợp lệ, KHÔNG markdown.`;
 
     (async () => {
       try {
-        const result = await new Promise(resolve => chrome.storage.local.get(['geminiApiKey'], resolve));
+        const result = await new Promise(resolve => chrome.storage.local.get(['geminiApiKey', 'selectedModel'], resolve));
         const apiKey = result?.geminiApiKey;
+        const userModel = result?.selectedModel;
 
         let aiData = {};
 
         if (apiKey) {
-          const prompt = `Trích xuất dữ liệu sản phẩm Olive Young từ DOM thật sau thành JSON hợp lệ.
-Yêu cầu bắt buộc:
+          const prompt = `Trích xuất dữ liệu sản phẩm Olive Young từ DOM thật và lọc ra ĐÚNG 10 ÁNH ĐÁNH GIÁ THỰC TẾ từ người dùng.
+Yêu cầu bắt buộc trả về JSON:
 - name: Tên sản phẩm đã dịch sang tiếng Việt đầy đủ, bỏ chữ khuyến mãi.
 - nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc từ TITLE.
 - price: Giá bán thực tế bằng Won (KRW) (chỉ chữ số nguyên dương ví dụ 26800, KHÔNG ghép nhiều giá).
 - brand: Tên thương hiệu thật (ví dụ: Celimax, Layerlab, Romand, Mediheal).
 - category: skincare|makeup|health|pharmacy|haircare|bodycare.
 - description: Mô tả công dụng sản phẩm bằng tiếng Việt.
+- filteredReviews: Mảng chứa tối đa 10 URL ảnh đánh giá thực tế của người dùng từ danh sách CANDIDATE_REVIEWS (loại bỏ ảnh studio, banner quảng cáo, quà tặng).
 
 URL: ${rawData.url}
 TITLE: ${rawData.title || ''}
 BRAND_TEXT: ${rawData.brandText || ''}
 PRICE_TEXT: ${rawData.priceText || ''}
-IMAGE_URL: ${rawData.image || ''}
+CANDIDATE_REVIEWS: ${JSON.stringify(rawData.reviewCandidates || [])}
 VĂN BẢN TRANG WEB: ${rawData.fullText}`;
 
-          const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
+          let MODELS = getRotatedModelsList();
+          if (userModel && userModel !== 'auto') {
+            MODELS = [userModel, ...ALL_SUPPORTED_MODELS.filter(m => m !== userModel)];
+          }
           
           for (const model of MODELS) {
             try {
@@ -593,29 +699,21 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
           vietnameseName = translateKoreanToVi(aiData.nameKr || titleClean || titleRaw);
         }
 
-        const productImages = rawData.images || (rawData.image ? [rawData.image] : []);
-        const photoReviews = rawData.photoReviews || [];
-
         const goodsNoMatch = (rawData.url || '').match(/goodsNo=([A-Za-z0-9_]+)/i);
-        const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : 'A000000240462';
+        const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : `A${Date.now()}`;
 
-        const combined = Array.from(new Set([...productImages, ...photoReviews])).filter(u => u && u.startsWith('http'));
-        let finalAlbum = productImages;
-        let finalReviews = photoReviews;
+        // CHÍNH XÁC: 3 Ảnh Sản Phẩm HD & TỐI ĐA 30+ Ảnh Đánh Giá Thực Tế GDAS từ Khách Hàng (v13.0 PRO)
+        const finalAlbum = (rawData.images && rawData.images.length > 0) 
+          ? rawData.images.slice(0, 3) 
+          : (rawData.image ? [rawData.image] : []);
 
-        if (combined.length < 16) {
-          const cdnGallery = [];
-          for (let i = 1; i <= 20; i++) {
-            const idxStr = i < 10 ? `0${i}` : `${i}`;
-            cdnGallery.push(`https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/${goodsNo.slice(0, 4)}/${goodsNo}${idxStr}ko.jpg`);
-            cdnGallery.push(`https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/gdasEditor/${goodsNo}_review_${i}.jpg`);
-          }
-          const merged = Array.from(new Set([...combined, ...cdnGallery])).slice(0, 24);
-          finalAlbum = merged.slice(0, 6);
-          finalReviews = merged.slice(6);
-        }
+        let finalReviews = (aiData.filteredReviews && Array.isArray(aiData.filteredReviews) && aiData.filteredReviews.length > 0)
+          ? aiData.filteredReviews.filter(u => u && typeof u === 'string' && u.startsWith('http'))
+          : (rawData.reviewCandidates || []);
 
-        const mainImg = rawData.image || productImages[0] || '';
+        finalReviews = Array.from(new Set(finalReviews)).slice(0, 30);
+
+        const mainImg = finalAlbum[0] || rawData.image || '';
 
         sendProductToAdminTab(
           goodsNo,
@@ -623,8 +721,8 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
           aiData.nameKr || titleRaw,
           finalPrice,
           mainImg,
-          productImages,
-          photoReviews,
+          finalAlbum,
+          finalReviews,
           brandFallback,
           aiData.brandKr || brandFallback,
           aiData.category || 'skincare',

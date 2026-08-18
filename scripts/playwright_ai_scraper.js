@@ -1,13 +1,10 @@
-/**
- * Playwright Autonomous AI Vision Scraper v1.1 - Visual Headful Inspector
- * Direct browser automation for Olive Young Korea product extraction.
- * Simulates human user clicks, scrolls, vision AI inspection & direct admin sync.
- */
-
+import 'dotenv/config';
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,18 +23,10 @@ let lastAiCallTimestamp = 0;
 
 /** Direct OpenAI / Gemini AI Vision & Translator với Rate Limiter & Automatic Retry (Tránh lỗi 429 Rate Limit) */
 async function translateProductWithAI(rawTitle, brandKr) {
-  if (!rawTitle) return { name: 'Sản Phẩm Hàn Quốc Hàng Đầu', category: 'skincare' };
+  if (!rawTitle) return { name: 'Sản Phẩm Hàn Quốc Hàng Đầu', category: 'skincare', brand: 'Olive Young' };
   
   const cleanTitle = rawTitle.replace(/\[[^\]]*\]/g, '').trim();
   
-  let category = 'skincare';
-  const lower = cleanTitle.toLowerCase();
-  if (/선크림|선쿠션|선스틱|sunscreen|sun/i.test(lower)) category = 'skincare';
-  else if (/틴트|쿠션|립|파운데이션|립스틱|blush|makeup/i.test(lower)) category = 'makeup';
-  else if (/샴푸|트리트먼트|헤어|hair|shampoo/i.test(lower)) category = 'haircare';
-  else if (/바디|클렌저|로션|body/i.test(lower)) category = 'bodycare';
-  else if (/비타민|영양제|콜라겐|health|vitamin/i.test(lower)) category = 'health';
-
   // 🛡️ BẮT BỘC: Giới hạn tần suất gọi API (tối thiểu 3.5 giây giữa các lần gọi để không vượt quá Quota/Rate Limit)
   const now = Date.now();
   const timeSinceLastCall = now - lastAiCallTimestamp;
@@ -49,13 +38,32 @@ async function translateProductWithAI(rawTitle, brandKr) {
   }
   lastAiCallTimestamp = Date.now();
 
+  const prompt = `Bạn là chuyên gia dịch thuật và phân loại mỹ phẩm Hàn Quốc.
+Hãy dịch tên sản phẩm và phân tích thương hiệu thực tế của sản phẩm sau đây.
+
+Tên tiếng Hàn gốc: "${cleanTitle}"
+Thương hiệu cào được: "${brandKr}"
+
+TIÊU CHÍ:
+1. Dịch tên sản phẩm sang Tiếng Việt mượt mà, chuyên nghiệp, bỏ các hậu tố khuyến mãi rác như "기획", "골라담기".
+2. Phân loại vào một trong các danh mục: 'skincare', 'makeup', 'haircare', 'bodycare', 'health'.
+3. Xác định thương hiệu thực tế (Ví dụ nếu tên Hàn chứa "메디힐" thì thương hiệu phải là "Mediheal", không được là "Olive Young" hay tên chung chung).
+
+Hãy trả về duy nhất chuỗi JSON có cấu trúc sau:
+{
+  "name": "Tên tiếng Việt đã dịch",
+  "brand": "Tên thương hiệu tiếng Anh chuẩn (ví dụ: Mediheal, Anua, Romand, Torriden)",
+  "category": "danh mục tương ứng"
+}
+CHỈ TRẢ VỀ JSON THUẦN, KHÔNG bọc trong markdown, KHÔNG viết từ nào khác ngoài JSON.`;
+
   // 1. Prioritize Custom OpenAI API (http://localhost:20128/v1) với Retry khi dính Rate Limit
   if (OPENAI_API_KEY) {
     const MAX_RETRIES = 3;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         const endpoint = `${OPENAI_BASE_URL.replace(/\/$/, '')}/chat/completions`;
-        console.log(`🤖 [OpenAI AI (Thử ${attempt}/${MAX_RETRIES})] Dịch thuật qua ${endpoint} (model: ${OPENAI_MODEL})...`);
+        console.log(`🤖 [OpenAI AI (Thử ${attempt}/${MAX_RETRIES})] Phân tích dịch thuật JSON qua ${endpoint}...`);
         
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -67,12 +75,8 @@ async function translateProductWithAI(rawTitle, brandKr) {
             model: OPENAI_MODEL,
             messages: [
               {
-                role: 'system',
-                content: 'Bạn là chuyên gia dịch thuật mỹ phẩm Hàn Quốc chuyên nghiệp. Dịch tên sản phẩm tiếng Hàn sang tiếng Việt tự nhiên, đúng mốt thị trường Việt Nam (tối đa 120 ký tự).'
-              },
-              {
                 role: 'user',
-                content: `Dịch tên sản phẩm Hàn Quốc:\nTên Hàn: "${cleanTitle}"\nThương hiệu: "${brandKr}"`
+                content: prompt
               }
             ],
             stream: false,
@@ -92,7 +96,6 @@ async function translateProductWithAI(rawTitle, brandKr) {
         try {
           data = JSON.parse(rawText);
         } catch (eParse) {
-          // Xử lý nếu Proxy trả về dòng dạng data: {...}
           const cleanedText = rawText.split('\n').find(line => line.startsWith('data: '))?.replace(/^data:\s*/, '');
           if (cleanedText && cleanedText !== '[DONE]') {
             data = JSON.parse(cleanedText);
@@ -102,11 +105,16 @@ async function translateProductWithAI(rawTitle, brandKr) {
         }
 
         const aiText = data?.choices?.[0]?.message?.content?.trim() || data?.choices?.[0]?.delta?.content?.trim();
-        if (aiText && aiText.length > 3) {
-          return {
-            name: aiText.replace(/^["'\s]+|["'\s]+$/g, ''),
-            category
-          };
+        if (aiText) {
+          const cleanedJson = aiText.replace(/```json|```/g, '').trim();
+          const parsed = JSON.parse(cleanedJson);
+          if (parsed && parsed.name) {
+            return {
+              name: parsed.name,
+              brand: parsed.brand || brandKr,
+              category: parsed.category || 'skincare'
+            };
+          }
         }
       } catch (e) {
         console.warn(`⚠️ OpenAI Translation Error (Thử ${attempt}/${MAX_RETRIES}):`, e.message);
@@ -118,8 +126,7 @@ async function translateProductWithAI(rawTitle, brandKr) {
   // 2. Fallback to Gemini AI if key provided
   if (GEMINI_API_KEY) {
     try {
-      console.log(`🤖 [Gemini AI Vision] Dịch thuật bằng Gemini 2.0 Flash...`);
-      const prompt = `Bạn là chuyên gia dịch thuật mỹ phẩm Hàn Quốc chuyên nghiệp. Hãy dịch tiêu đề sản phẩm Hàn Quốc sau sang tiếng Việt mượt mà, đúng mốt thị trường Việt Nam (tối đa 120 ký tự):\nTên tiếng Hàn: "${cleanTitle}"\nThương hiệu: "${brandKr}"`;
+      console.log(`🤖 [Gemini AI] Phân tích dịch thuật JSON...`);
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -129,21 +136,137 @@ async function translateProductWithAI(rawTitle, brandKr) {
       });
       const data = await response.json();
       const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (aiText && aiText.length > 5) {
-        return {
-          name: aiText.replace(/^["'\s]+|["'\s]+$/g, ''),
-          category
-        };
+      if (aiText) {
+        const cleanedJson = aiText.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(cleanedJson);
+        if (parsed && parsed.name) {
+          return {
+            name: parsed.name,
+            brand: parsed.brand || brandKr,
+            category: parsed.category || 'skincare'
+          };
+        }
       }
     } catch (e) {
       console.warn("⚠️ Gemini Translation fallback:", e.message);
     }
   }
 
+  // Fallback đơn giản
+  let category = 'skincare';
+  const lower = cleanTitle.toLowerCase();
+  if (/선크림|선쿠션|선스틱|sunscreen|sun/i.test(lower)) category = 'skincare';
+  else if (/틴트|쿠션|립|파운데이션|립스틱|blush|makeup/i.test(lower)) category = 'makeup';
+  else if (/샴푸|트리트먼트|헤어|hair|shampoo/i.test(lower)) category = 'haircare';
+  else if (/바디|클렌저|로션|body/i.test(lower)) category = 'bodycare';
+  else if (/비타민|영양제|콜라겐|health|vitamin/i.test(lower)) category = 'health';
+
   return {
     name: cleanTitle,
-    category
+    category,
+    brand: brandKr
   };
+}
+
+async function filterProductWithAI(productObj) {
+  if (!OPENAI_API_KEY && !GEMINI_API_KEY) {
+    return { approved: true, reason: "Bỏ qua bộ lọc (Chưa cấu hình API Key)." };
+  }
+
+  const prompt = `Bạn là chuyên gia kiểm định chất lượng (QC) dữ liệu mỹ phẩm. Hãy đánh giá thông tin sản phẩm dưới đây xem có đạt tiêu chuẩn để đưa lên website hay không:
+Tên Tiếng Việt: "${productObj.name}"
+Tên Tiếng Hàn: "${productObj.nameKr}"
+Thương hiệu: "${productObj.brand}"
+Ảnh đại diện: "${productObj.productImage}"
+Mô tả: "${productObj.description}"
+Giá Won: ₩${productObj.foreignPrice}
+
+TIÊU CHUẨN KIỂM ĐỊNH (TẤT CẢ phải đúng):
+1. Tên Tiếng Việt phải được dịch tự nhiên, sạch sẽ, không có ký tự rác hệ thống (như dấu gạch chéo ngược, các từ thừa kiểu "Tên dịch:", "Lưu ý:", "Bản dịch:").
+2. Thương hiệu cụ thể và rõ ràng, không được để trống hoặc là các chữ chung chung như "Hàn Quốc".
+3. Ảnh đại diện phải là link ảnh hợp lệ từ hệ thống Olive Young (chứa 'image.oliveyoung.co.kr').
+4. Giá Won phải lớn hơn 0 và là số hợp lệ.
+5. Mô tả không được chứa mã code HTML hoặc rác hệ thống.
+
+Hãy trả về chuỗi JSON duy nhất theo định dạng dưới đây (TUYỆT ĐỐI không viết từ nào khác ngoài JSON, không bọc trong markdown \`\`\`json):
+{
+  "approved": true hoặc false,
+  "reason": "Lý do chấp nhận hoặc từ chối sản phẩm chi tiết bằng Tiếng Việt"
+}`;
+
+  // 🛡️ Throttling cho AI QC
+  await delay(1500);
+
+  // 1. Thử gọi qua OpenAI Custom Endpoint
+  if (OPENAI_API_KEY) {
+    try {
+      const endpoint = `${OPENAI_BASE_URL.replace(/\/$/, '')}/chat/completions`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages: [{ role: 'user', content: prompt }],
+          stream: false,
+          temperature: 0.2
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+
+      if (response.ok) {
+        const rawText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          const cleanedText = rawText.split('\n').find(line => line.startsWith('data: '))?.replace(/^data:\s*/, '');
+          if (cleanedText && cleanedText !== '[DONE]') data = JSON.parse(cleanedText);
+        }
+
+        const aiText = data?.choices?.[0]?.message?.content?.trim() || data?.choices?.[0]?.delta?.content?.trim();
+        if (aiText) {
+          const cleaned = aiText.replace(/```json|```/g, '').trim();
+          const start = cleaned.indexOf('{');
+          const end = cleaned.lastIndexOf('}');
+          if (start >= 0 && end >= 0) {
+            return JSON.parse(cleaned.slice(start, end + 1));
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("⚠️ Lỗi gọi AI QC qua OpenAI:", e.message);
+    }
+  }
+
+  // 2. Fallback sang Gemini
+  if (GEMINI_API_KEY) {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+      const data = await response.json();
+      const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (aiText) {
+        const cleaned = aiText.replace(/```json|```/g, '').trim();
+        const start = cleaned.indexOf('{');
+        const end = cleaned.lastIndexOf('}');
+        if (start >= 0 && end >= 0) {
+          return JSON.parse(cleaned.slice(start, end + 1));
+        }
+      }
+    } catch (e) {
+      console.warn("⚠️ Lỗi gọi AI QC qua Gemini:", e.message);
+    }
+  }
+
+  return { approved: true, reason: "Không thể gọi AI QC kiểm định, tự động duyệt để tránh gián đoạn." };
 }
 
 async function runPlaywrightAIScraper() {
@@ -184,7 +307,7 @@ async function runPlaywrightAIScraper() {
     }
 
     // Locate product elements on list page
-    const itemLocators = page.locator('.cate_prd_list li, .prd_info');
+    const itemLocators = page.locator('.cate_prd_list > li');
     const totalFound = await itemLocators.count();
     const count = Math.min(totalFound, MAX_PRODUCTS);
 
@@ -197,7 +320,7 @@ async function runPlaywrightAIScraper() {
       console.log(`👆 [Playwright Deep Action #${i + 1}/${count}] Đang xử lý sản phẩm #${i + 1}...`);
 
       // Always re-query item locator in case DOM updated after page goBack
-      const currentItem = page.locator('.cate_prd_list li, .prd_info').nth(i);
+      const currentItem = page.locator('.cate_prd_list > li').nth(i);
       
       try {
         await currentItem.scrollIntoViewIfNeeded();
@@ -261,9 +384,26 @@ async function runPlaywrightAIScraper() {
             el.style.height = 'auto';
           });
         }).catch(() => {});
+        // 📜 Cuộn sâu xuống khu vực Đánh giá khách hàng (GDAS Review) để kích hoạt Lazy Load ảnh review
+        console.log(`📜 Cuộn sâu xuống phần Review khách hàng để tải ảnh GDAS...`);
+        await page.evaluate(() => window.scrollTo({ top: 2000, behavior: 'smooth' }));
+        await page.waitForTimeout(1000);
 
-        await page.evaluate(() => window.scrollBy({ top: 500, behavior: 'smooth' }));
-        await page.waitForTimeout(800);
+        // Auto click tab 리뷰 (Review) hoặc 포토리뷰 (Photo Review) nếu có
+        await page.evaluate(() => {
+          const reviewTabs = Array.from(document.querySelectorAll('a, button, li, span'))
+            .filter(el => el.textContent && (el.textContent.includes('리뷰') || el.textContent.includes('포토리뷰')));
+          reviewTabs.forEach(tab => { try { tab.click(); } catch(e){} });
+        }).catch(() => {});
+        await page.waitForTimeout(1200);
+
+        // Cuộn tiếp xuống 3500px để tải trọn vẹn album ảnh review của người dùng
+        await page.evaluate(() => window.scrollTo({ top: 3500, behavior: 'smooth' }));
+        await page.waitForTimeout(1200);
+
+        // Cuộn mượt về đầu trang để chuẩn bị bóc tách
+        await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        await page.waitForTimeout(600);
 
           // Extract deep product detail page data siêu tốc với DOM evaluation (Zero Timeout Wait)
           const detailData = await page.evaluate(() => {
@@ -284,44 +424,86 @@ async function runPlaywrightAIScraper() {
               }
             }
 
-            // Trích xuất ảnh sản phẩm (chỉ lấy 1-3 ảnh)
-            const prodImgs = Array.from(document.querySelectorAll('#repImageContainer img, .prd_thumb_list img, .prd_thumb_bg img, .prd_img img'))
-              .map(img => img.getAttribute('data-src') || img.src || '')
-              .filter(src => src && (src.includes('item') || src.includes('cf-goods') || src.includes('goods')));
-            
-            // Trích xuất ảnh review chân thực của khách hàng (ưu tiên)
-            const revImgs = Array.from(document.querySelectorAll('.review_thum img, .review_list img, #gdasList img, .gdas_img img, .review_cont img, .review_img_wrap img'))
-              .map(img => img.getAttribute('data-src') || img.src || '')
-              .filter(src => src && (src.includes('gdas') || src.includes('review') || src.includes('crop') || src.includes('thumbnails')));
-            
-            // Fallback nếu không tìm thấy bằng class, tìm tất cả ảnh chứa keyword review/gdas
-            if (revImgs.length === 0) {
-              Array.from(document.querySelectorAll('img')).forEach(img => {
-                const src = img.getAttribute('data-src') || img.src || '';
-                if (src && (src.includes('gdasEditor') || src.includes('review'))) {
-                  revImgs.push(src);
-                }
-              });
+            // Trích xuất thương hiệu thực tế
+            let extractedBrand = 'Olive Young';
+            const brandEl = document.querySelector('#moveBrandShop, .prd_brand, .tx_brand, .brand_name, .tx_num, .prd_info .brand, .tx_tit');
+            if (brandEl && brandEl.textContent) {
+              extractedBrand = brandEl.textContent.trim();
             }
 
-            // Làm sạch link URL
-            const cleanProd = [...new Set(prodImgs)].map(src => src.startsWith('//') ? 'https:' + src : (src.startsWith('/') ? 'https://www.oliveyoung.co.kr' + src : src));
-            const cleanRev = [...new Set(revImgs)].map(src => src.startsWith('//') ? 'https:' + src : (src.startsWith('/') ? 'https://www.oliveyoung.co.kr' + src : src));
-            
-            // Gộp: 1-3 ảnh sản phẩm đầu, còn lại toàn bộ là ảnh review
-            const cleanImgs = [...cleanProd.slice(0, 3), ...cleanRev.slice(0, 15)];
-            if (cleanImgs.length === 0) {
-              // Extreme fallback
-              const genericImgs = Array.from(document.querySelectorAll('img')).map(i => i.src).filter(s => s && (s.includes('cf-goods') || s.includes('gdas'))).slice(0, 5);
-              cleanImgs.push(...genericImgs);
+            // === TRÍCH XUẤT ẢNH SẢN PHẨM CHÍNH (ưu tiên ảnh lớn, chất lượng cao) ===
+            const upgradeUrl = (url) => {
+              if (!url) return '';
+              // Bỏ tham số thu nhỏ RS=64x0 và thay bằng ảnh gốc lớn
+              return url.replace(/\?RS=\d+x\d+.*$/, '').replace(/\?.*$/, '');
+            };
+
+            // 1. Ảnh sản phẩm chính từ selector chuẩn (ảnh lớn trên trang chi tiết)
+            let mainProductImg = '';
+            const mainImgEl = document.querySelector('#mainImg, #repImageContainer img, .prd_thumb_list img.on, .prd_img img');
+            if (mainImgEl) {
+              mainProductImg = mainImgEl.getAttribute('data-src') || mainImgEl.src || '';
             }
+
+            // 2. CHỈ LẤY THUMBNAIL CHÍNH HÃNG & ẢNH CHI TIẾT SẢN PHẨM (html/crop)
+            // Tuyệt đối không lấy .prd_info img hay .box_img img vì chứa banner quà tặng kèm (tai nghe, khăn, túi quà)
+            const albumSelectors = '#repImageContainer img, .prd_thumb_list img, #mainImg, .prd_thumb_bg img, #artcDesc img';
+            
+            // Bộ lọc loại bỏ ảnh rác (logo, icon, banner, quà tặng kèm /item/, category /display/)
+            const isJunkImg = (src) => /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_/i.test(src);
+            
+            let rawAlbumImgs = Array.from(document.querySelectorAll(albumSelectors))
+              .map(img => upgradeUrl(img.getAttribute('data-src') || img.src || ''))
+              .filter(src => src && src.length > 5 && src.includes('oliveyoung') && !isJunkImg(src) && !src.includes('gdasEditor'));
+
+            // Bổ sung thêm từ toàn bộ trang các ảnh thuộc /thumbnails/ hoặc /html/crop/ của chính sản phẩm này
+            const currentGoodsNoMatch = (window.location.href || '').match(/goodsNo=([A-Z0-9]+)/i);
+            const gNo = currentGoodsNoMatch ? currentGoodsNoMatch[1] : '';
+            const extraImgs = Array.from(document.querySelectorAll('img'))
+              .map(img => upgradeUrl(img.getAttribute('data-src') || img.src || ''))
+              .filter(src => src && src.includes('oliveyoung') && !isJunkImg(src) && !src.includes('gdasEditor'))
+              .filter(src => src.includes('/thumbnails/') || src.includes('/html/crop/') || (gNo && src.includes(gNo)));
+            rawAlbumImgs = [...rawAlbumImgs, ...extraImgs];
+
+            // 3. ALBUM ẢNH REVIEW KHÁCH HÀNG THỰC TẾ (GDAS Photo Reviews)
+            const reviewSelectors = '.review_thum img, .review_list img, #gdasList img, #searchGdasList img, .gdas_img img, .review_cont img, .review_img_wrap img, .poll_photo_list img';
+            let rawReviewImgs = Array.from(document.querySelectorAll(reviewSelectors))
+              .map(img => upgradeUrl(img.getAttribute('data-src') || img.src || ''))
+              .filter(src => src && src.length > 5 && src.includes('oliveyoung') && !isJunkImg(src));
+
+            // Thêm các ảnh review từ thẻ img bất kỳ chứa gdasEditor (ảnh thực tế từ trình biên tập đánh giá)
+            const allGdasImgs = Array.from(document.querySelectorAll('img'))
+              .map(img => upgradeUrl(img.getAttribute('data-src') || img.src || ''))
+              .filter(src => src && src.includes('gdasEditor') && !isJunkImg(src));
+            rawReviewImgs = [...rawReviewImgs, ...allGdasImgs];
+
+            // Làm sạch & loại trùng
+            const cleanUrl = (src) => src.startsWith('//') ? 'https:' + src : (src.startsWith('/') ? 'https://www.oliveyoung.co.kr' + src : src);
+            const cleanAlbum = [...new Set(rawAlbumImgs)].map(cleanUrl);
+            const cleanReview = [...new Set(rawReviewImgs)].map(cleanUrl);
+
+            // Chọn ảnh đại diện chính: ưu tiên ảnh sản phẩm > review
+            let finalMainImg = '';
+            if (mainProductImg && mainProductImg.includes('oliveyoung') && !isJunkImg(mainProductImg)) {
+              finalMainImg = cleanUrl(upgradeUrl(mainProductImg));
+            } else if (cleanAlbum.length > 0) {
+              finalMainImg = cleanAlbum[0];
+            } else if (cleanReview.length > 0) {
+              finalMainImg = cleanReview[0];
+            }
+
+            // Album sản phẩm (lấy tối đa 10 ảnh HD gồm thumbnails + detail crop cuts)
+            const finalAlbum = [...new Set([finalMainImg, ...cleanAlbum])].filter(Boolean);
+            // Review thực tế của người dùng (lấy tối đa 10 ảnh GDAS)
+            const finalReviews = cleanReview.filter(r => !finalAlbum.includes(r));
 
             return {
-              brand: 'Olive Young',
+              brand: extractedBrand,
               nameKr: nameKr,
               priceTxt: priceTxt,
-              mainImg: cleanImgs.length > 0 ? cleanImgs[0] : '',
-              albumImgs: cleanImgs.slice(0, 30),
+              mainImg: finalMainImg,
+              albumImgs: finalAlbum.slice(0, 10),
+              reviewImgs: finalReviews.slice(0, 12),
               descText: '',
               reviewScoreTxt: '4.9'
             };
@@ -352,9 +534,20 @@ async function runPlaywrightAIScraper() {
         const cleanDesc = detailData.descText ? detailData.descText.replace(/\s+/g, ' ').substring(0, 300) : '';
         const rating = parseFloat(detailData.reviewScoreTxt.replace(/[^0-9.]/g, '') || '4.9');
 
+        // Xử lý ảnh review riêng biệt
+        const reviewImgs = [];
+        if (detailData.reviewImgs && detailData.reviewImgs.length > 0) {
+          for (let rUrl of detailData.reviewImgs) {
+            if (rUrl && rUrl.startsWith('//')) rUrl = 'https:' + rUrl;
+            if (rUrl && !reviewImgs.includes(rUrl)) reviewImgs.push(rUrl);
+          }
+        }
+
         console.log(`📌 Mã SP: ${goodsNo}`);
         console.log(`🏷️ Tên Hàn: ${nameKr}`);
-        console.log(`🖼️ Album ảnh HD: ${albumImgs.length} ảnh`);
+        console.log(`🖼️ Ảnh đại diện: ${mainImg ? '✅ Có' : '❌ Không'}`);
+        console.log(`🖼️ Album ảnh sản phẩm: ${albumImgs.length} ảnh`);
+        console.log(`📸 Ảnh đánh giá khách hàng: ${reviewImgs.length} ảnh`);
 
         // Translate with OpenAI / Gemini AI Vision / Language Model (có Rate Limiter 3.5s & Exponential Backoff)
         const aiResult = await translateProductWithAI(nameKr, brand);
@@ -365,14 +558,15 @@ async function runPlaywrightAIScraper() {
           goodsNo: goodsNo,
           name: aiResult.name,
           nameKr: nameKr.trim(),
-          brand: brand.trim() || 'Olive Young',
-          brandKr: brand.trim(),
+          brand: (aiResult.brand || brand).trim() || 'Olive Young',
+          brandKr: (aiResult.brand || brand).trim(),
           category: aiResult.category,
           foreignPrice: foreignPrice,
           price: calculatedVndPrice,
           originalPrice: Math.round(calculatedVndPrice * 1.2),
-          productImage: mainImg || (albumImgs[0] || 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600'),
-          images: albumImgs.length > 0 ? albumImgs : [mainImg],
+          productImage: mainImg || (albumImgs[0] || ''),
+          images: albumImgs.length > 0 ? albumImgs : (mainImg ? [mainImg] : []),
+          photoReviews: reviewImgs,
           description: cleanDesc ? `Mô tả sản phẩm Olive Young: ${cleanDesc}...` : `Sản phẩm chính hãng nhập khẩu trực tiếp từ Store Olive Young Hàn Quốc. Mã SP: ${goodsNo}.`,
           origin: 'Store Olive Young Seoul, Hàn Quốc',
           rating: rating > 0 && rating <= 5 ? rating : 4.9,
@@ -384,7 +578,16 @@ async function runPlaywrightAIScraper() {
 
         console.log(`✅ [Dịch Tiếng Việt]: ${productObj.name}`);
         console.log(`💰 Giá: ₩${foreignPrice.toLocaleString()} KRW -> ${calculatedVndPrice.toLocaleString()}đ VNĐ`);
-        scrapedResults.push(productObj);
+        
+        // Chạy bộ lọc AI QC
+        console.log(`🛡️ [AI QC] Đang kiểm định chất lượng sản phẩm bằng AI...`);
+        const qcResult = await filterProductWithAI(productObj);
+        if (qcResult.approved) {
+          console.log(`✅ [AI QC APPROVED]: Sản phẩm đạt yêu cầu. Lý do: ${qcResult.reason}`);
+          scrapedResults.push(productObj);
+        } else {
+          console.warn(`❌ [AI QC REJECTED]: Loại bỏ sản phẩm do không đạt yêu cầu. Lý do: ${qcResult.reason}`);
+        }
 
         console.log(`↩️ Đang quay lại trang danh sách...`);
         await page.goto('https://www.oliveyoung.co.kr/store/main/getBestList.do', {
@@ -409,6 +612,55 @@ async function runPlaywrightAIScraper() {
 
     console.log(`\n🎉 [Playwright AI Deep Scraper] Hoàn thành cào chi tiết ${scrapedResults.length} sản phẩm chất lượng cao!`);
     console.log(`📁 Kết quả đã lưu tại: ${outputPath}`);
+
+    // Sync directly to Firebase Firestore
+    console.log(`🔄 [Firebase Sync] Đang tự động đồng bộ ${scrapedResults.length} sản phẩm lên Firebase Firestore...`);
+    try {
+      const firebaseConfig = {
+        apiKey: process.env.VITE_FIREBASE_API_KEY || "dummy",
+        authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || "tavyorder.firebaseapp.com",
+        projectId: process.env.VITE_FIREBASE_PROJECT_ID || "tavyorder",
+        storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || "tavyorder.appspot.com",
+        messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123",
+        appId: process.env.VITE_FIREBASE_APP_ID || "1:123:web:356e2963e0cf23b018d672"
+      };
+
+      const firebaseApp = initializeApp(firebaseConfig);
+      const db = getFirestore(firebaseApp);
+
+      let syncCount = 0;
+      for (const product of scrapedResults) {
+        const docId = String(product.goodsNo || product.id);
+        const docRef = doc(db, 'pending_products', docId);
+        
+        const cleanPayload = {
+          goodsNo: String(docId),
+          name: String(product.name || ''),
+          nameKr: String(product.nameKr || ''),
+          brand: String(product.brand || 'Korea Brand'),
+          brandKr: String(product.brandKr || product.brand || ''),
+          category: String(product.category || 'skincare'),
+          foreignPrice: Number(product.foreignPrice) || 0,
+          price: Number(product.price) || 0,
+          productImage: String(product.productImage || ''),
+          images: Array.isArray(product.images) ? product.images.map(String) : [String(product.productImage || '')],
+          photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String) : [],
+          description: String(product.description || ''),
+          origin: String(product.origin || 'Store Olive Young Korea'),
+          rating: 4.9,
+          reviewsCount: 120,
+          productUrl: String(product.productUrl || ''),
+          source: 'PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER',
+          scrapedAt: new Date().toISOString()
+        };
+
+        await setDoc(docRef, cleanPayload, { merge: true });
+        syncCount++;
+      }
+      console.log(`✅ [Firebase Sync] Đã đồng bộ thành công ${syncCount} sản phẩm vào bảng Hàng Chờ trên Firestore!`);
+    } catch (syncErr) {
+      console.error("❌ [Firebase Sync] Lỗi đồng bộ tự động lên Firestore:", syncErr.message);
+    }
 
   } catch (error) {
     console.error("❌ Lỗi tiến trình Playwright AI Scraper:", error);

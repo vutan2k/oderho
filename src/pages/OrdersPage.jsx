@@ -3,14 +3,37 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { 
   Package, ArrowLeft, ShoppingBag, 
-  Copy, Check
+  Copy, Check, CreditCard, ExternalLink
 } from 'lucide-react';
+import ProductDetailModal from '../components/ProductDetailModal';
 
 export default function OrdersPage() {
-  const { currentUser, orders, rates } = useContext(AppContext);
+  const { currentUser, orders, rates, oliveYoungCatalog, addToCart } = useContext(AppContext);
   const navigate = useNavigate();
   const [copiedCode, setCopiedCode] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [detailProduct, setDetailProduct] = useState(null);
+
+  const krwRate = rates?.KRW?.rate || 19.5;
+
+  const handleProductClick = (item, order) => {
+    const itemName = item?.name || order?.productName;
+    const match = oliveYoungCatalog?.find(p => p.id === item?.productId || (itemName && p.name?.toLowerCase() === itemName.toLowerCase()));
+    if (match) {
+      setDetailProduct(match);
+    } else {
+      setDetailProduct({
+        id: item?.productId || order?.id || 'temp-id',
+        name: itemName || 'Sản phẩm Hàn Quốc',
+        brand: item?.brand || order?.brand || 'Olive Young',
+        productImage: item?.productImage || order?.productImage,
+        images: item?.productImage ? [item.productImage] : (order?.productImage ? [order.productImage] : []),
+        foreignPrice: item?.foreignPrice || order?.foreignPrice || 0,
+        description: 'Sản phẩm mua hộ trực tiếp từ Hàn Quốc.',
+        options: item?.options || order?.options || 'Tiêu chuẩn'
+      });
+    }
+  };
 
   if (!currentUser) {
     return (
@@ -47,14 +70,13 @@ export default function OrdersPage() {
     setTimeout(() => setCopiedCode(''), 2500);
   };
 
-  // Các bước tiến trình thực tế
+  // Các bước tiến trình thực tế (8 bước)
   const steps = [
     { key: 'pending', title: 'Chờ cọc' },
-    { key: 'quoted', title: 'Đã báo giá' },
-    { key: 'deposit_paid', title: 'Đã cọc 50%' },
-    { key: 'purchased', title: 'Đã mua tại Hàn' },
+    { key: 'deposit_paid', title: 'Đã cọc 100%' },
+    { key: 'purchased', title: 'Đang mua hộ' },
     { key: 'in_kr_warehouse', title: 'Kho Seoul' },
-    { key: 'transit', title: 'Bay về VN' },
+    { key: 'transit', title: 'Shipping' },
     { key: 'in_vn_warehouse', title: 'Kho VN' },
     { key: 'delivering', title: 'Đang giao' },
     { key: 'completed', title: 'Đã giao' }
@@ -62,26 +84,26 @@ export default function OrdersPage() {
 
   const getStepIndex = (status) => {
     switch (status) {
-      case 'pending': return 0;
-      case 'quoted': return 1;
-      case 'deposit_paid': return 2;
-      case 'purchased': return 3;
-      case 'in_kr_warehouse': return 4;
-      case 'transit': return 5;
-      case 'in_vn_warehouse': return 6;
-      case 'delivering': return 7;
-      case 'completed': return 8;
+      case 'pending':
+      case 'quoted':
+        return 0;
+      case 'deposit_paid': return 1;
+      case 'purchased': return 2;
+      case 'in_kr_warehouse': return 3;
+      case 'transit': return 4;
+      case 'in_vn_warehouse': return 5;
+      case 'delivering': return 6;
+      case 'completed': return 7;
       default: return 0;
     }
   };
 
   const statusTabs = [
     { id: 'all', label: 'Tất cả đơn' },
-    { id: 'pending', label: 'Chờ báo giá / Cọc' },
-    { id: 'quoted', label: 'Đã báo giá' },
-    { id: 'deposit_paid', label: 'Đã cọc' },
-    { id: 'purchased', label: 'Đã mua Hàn' },
-    { id: 'transit', label: 'Đang bay Air' },
+    { id: 'pending', label: 'Chờ cọc' },
+    { id: 'deposit_paid', label: 'Đã cọc 100%' },
+    { id: 'purchased', label: 'Đang mua hộ' },
+    { id: 'transit', label: 'Shipping' },
     { id: 'completed', label: 'Hoàn thành' }
   ];
 
@@ -138,8 +160,21 @@ export default function OrdersPage() {
           {filteredOrders.map((order) => {
             const currentStepIdx = getStepIndex(order.status);
             const krwRate = rates?.KRW?.rate || 19.5;
-            const estimatedVnd = Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1));
-            const displayTotal = order.quote ? order.quote.totalVnd : estimatedVnd;
+
+            // Tính tổng hóa đơn 100% chuẩn xác (không bao giờ bằng 0đ)
+            let displayTotal = 0;
+            if (order.totalVnd && order.totalVnd > 0) {
+              displayTotal = order.totalVnd;
+            } else if (order.quote?.totalVnd && order.quote.totalVnd > 0) {
+              displayTotal = order.quote.totalVnd;
+            } else if (Array.isArray(order.items) && order.items.length > 0) {
+              displayTotal = order.items.reduce((sum, item) => {
+                const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate);
+                return sum + itemPrice * (item.qty || 1);
+              }, 0);
+            } else {
+              displayTotal = Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1));
+            }
 
             return (
               <div
@@ -164,7 +199,9 @@ export default function OrdersPage() {
                   gap: '12px'
                 }}>
                   <div>
-                    <span style={{ fontSize: '0.8rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '1px' }}>MÃ ĐƠN HÀNG</span>
+                    <span style={{ fontSize: '0.78rem', color: order.paymentStatus !== 'paid' && order.status === 'pending' ? '#D97706' : '#6B7280', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      {order.paymentStatus !== 'paid' && order.status === 'pending' ? '⚡ GIỎ HÀNG CHỜ CỌC 100%' : 'MÃ ĐƠN HÀNG HOÀN CHỈNH'}
+                    </span>
                     <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--purple-primary)' }}>{order.id}</h4>
                   </div>
 
@@ -182,10 +219,37 @@ export default function OrdersPage() {
                         {formatVnd(displayTotal)}
                       </div>
                     </div>
+
+                    {/* NÚT THANH TOÁN CỌC (HIỆN KHI ĐƠN CHƯA CỌC / CHỜ CỌC) */}
+                    {(order.paymentStatus !== 'paid' && order.status !== 'completed' && order.status !== 'purchased') && (
+                      <div style={{ paddingLeft: '15px', borderLeft: '1px solid #E5E7EB' }}>
+                        <button
+                          onClick={() => navigate(`/payment/${order.id}`)}
+                          style={{
+                            backgroundColor: 'var(--purple-primary)',
+                            color: '#FFF',
+                            border: 'none',
+                            padding: '8px 16px',
+                            borderRadius: '10px',
+                            fontWeight: 700,
+                            fontSize: '0.88rem',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            boxShadow: '0 2px 8px rgba(122, 75, 158, 0.3)',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <CreditCard size={16} />
+                          <span>Thanh toán cọc</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Progress Bar 5 Bước */}
+                {/* Progress Bar 8 Bước */}
                 <div style={{ padding: '30px 24px', backgroundColor: '#FDFBFF', borderBottom: '1px solid #E5E7EB' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
                     
@@ -247,84 +311,135 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Tracking Code Bar & Info */}
-                <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'center' }}>
-                  
-                  {/* Chi tiết sản phẩm */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {order.items ? order.items.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', gap: '16px', alignItems: 'center', borderBottom: idx < order.items.length - 1 ? '1px dashed #E5E7EB' : 'none', paddingBottom: idx < order.items.length - 1 ? '12px' : 0 }}>
-                        <img src={item.productImage} alt="" style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '10px' }} />
-                        <div>
-                          <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '4px' }}>
-                            {item.name}
-                          </h4>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                            {item.options} | Số lượng: x{item.qty}
-                          </p>
-                        </div>
-                      </div>
-                    )) : (
-                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                        {order.productImage && (
-                          <img src={order.productImage} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '10px' }} />
+                {(() => {
+                  const showTracking = Boolean(order.trackingCode || (order.paymentStatus === 'paid' && order.status !== 'pending'));
+                  return (
+                    <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: showTracking ? '1.2fr 1fr' : '1fr', gap: '20px', alignItems: 'center' }}>
+                      
+                      {/* Chi tiết sản phẩm */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {order.items ? order.items.map((item, idx) => {
+                          const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate);
+                          const itemTotal = itemPrice * (item.qty || 1);
+                          return (
+                            <div key={idx} style={{ display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'space-between', borderBottom: idx < order.items.length - 1 ? '1px dashed #E5E7EB' : 'none', paddingBottom: idx < order.items.length - 1 ? '12px' : 0 }}>
+                              <div 
+                                onClick={() => handleProductClick(item, order)}
+                                style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1, cursor: 'pointer' }}
+                                title="Bấm để xem chi tiết sản phẩm"
+                              >
+                                <img src={item.productImage} alt="" style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '10px', transition: 'transform 0.2s ease' }} />
+                                <div>
+                                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--purple-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span>{item.name}</span>
+                                    <ExternalLink size={14} style={{ opacity: 0.7 }} />
+                                  </h4>
+                                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                    {item.options ? `${item.options} | ` : ''}Số lượng: x{item.qty || 1}
+                                  </p>
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right', minWidth: '130px' }}>
+                                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--purple-primary)' }}>
+                                  {formatVnd(itemTotal)}
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>
+                                  {formatVnd(itemPrice)} × {item.qty || 1}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }) : (
+                          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div 
+                              onClick={() => handleProductClick(null, order)}
+                              style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1, cursor: 'pointer' }}
+                              title="Bấm để xem chi tiết sản phẩm"
+                            >
+                              {order.productImage && (
+                                <img src={order.productImage} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '10px' }} />
+                              )}
+                              <div>
+                                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--purple-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <span>{order.productName}</span>
+                                  <ExternalLink size={14} style={{ opacity: 0.7 }} />
+                                </h4>
+                                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                  Thương hiệu: {order.brand} | Quy cách: {order.options} | Số lượng: x{order.qty || 1}
+                                </p>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right', minWidth: '130px' }}>
+                              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--purple-primary)' }}>
+                                {formatVnd(Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1)))}
+                              </div>
+                              <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>
+                                {formatVnd(Math.round((order.foreignPrice || 0) * krwRate))} × {order.qty || 1}
+                              </div>
+                            </div>
+                          </div>
                         )}
-                        <div>
-                          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '4px' }}>
-                            {order.productName}
-                          </h4>
-                          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                            Thương hiệu: {order.brand} | Quy cách: {order.options} | Số lượng: x{order.qty}
-                          </p>
+                        {order.adminNote && (
+                          <div style={{ marginTop: '12px' }}>
+                            <p style={{ fontSize: '0.8rem', color: '#D97706', backgroundColor: '#FEF3C7', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>
+                              💬 Ghi chú từ Admin: {order.adminNote}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Mã Vận Đơn Air (Chỉ hiện khi đã cọc 100% hoặc có mã vận thực) */}
+                      {showTracking && (
+                        <div style={{ backgroundColor: '#F9FAFB', padding: '14px 18px', borderRadius: '12px', border: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <span style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block' }}>MÃ VẬN ĐƠN (AIR HÀN - VIỆT)</span>
+                            <strong style={{ fontSize: '1rem', fontFamily: 'monospace', color: 'var(--purple-primary)' }}>
+                              {order.trackingCode || 'Đang cập nhật...'}
+                            </strong>
+                          </div>
+
+                          {order.trackingCode && (
+                            <button
+                              onClick={() => handleCopyCode(order.trackingCode)}
+                              style={{
+                                backgroundColor: copiedCode === order.trackingCode ? '#10B981' : 'var(--purple-primary)',
+                                color: '#FFF',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                fontSize: '0.78rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              {copiedCode === order.trackingCode ? <Check size={14} /> : <Copy size={14} />}
+                              <span>{copiedCode === order.trackingCode ? 'Đã chép' : 'Sao chép'}</span>
+                            </button>
+                          )}
                         </div>
-                      </div>
-                    )}
-                    {order.adminNote && (
-                      <div style={{ marginTop: '12px' }}>
-                        <p style={{ fontSize: '0.8rem', color: '#D97706', backgroundColor: '#FEF3C7', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>
-                          💬 Ghi chú từ Admin: {order.adminNote}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                      )}
 
-                  {/* Mã Vận Đơn Air */}
-                  <div style={{ backgroundColor: '#F9FAFB', padding: '14px 18px', borderRadius: '12px', border: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block' }}>MÃ VẬN ĐƠN (AIR HÀN - VIỆT)</span>
-                      <strong style={{ fontSize: '1rem', fontFamily: 'monospace', color: 'var(--purple-primary)' }}>
-                        {order.trackingCode || 'Đang cập nhật...'}
-                      </strong>
                     </div>
-
-                    {order.trackingCode && (
-                      <button
-                        onClick={() => handleCopyCode(order.trackingCode)}
-                        style={{
-                          backgroundColor: copiedCode === order.trackingCode ? '#10B981' : 'var(--purple-primary)',
-                          color: '#FFF',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                      >
-                        {copiedCode === order.trackingCode ? <Check size={14} /> : <Copy size={14} />}
-                        <span>{copiedCode === order.trackingCode ? 'Đã chép' : 'Sao chép'}</span>
-                      </button>
-                    )}
-                  </div>
-
-                </div>
+                  );
+                })()}
 
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Popup Modal Chi Tiết Sản Phẩm */}
+      {detailProduct && (
+        <ProductDetailModal
+          product={detailProduct}
+          krwRate={krwRate}
+          onClose={() => setDetailProduct(null)}
+          hideAddToCart={true}
+        />
       )}
 
     </div>

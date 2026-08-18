@@ -9,8 +9,16 @@ import Footer from '../components/Footer';
 import confetti from 'canvas-confetti';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateCartQty, clearCart, currentUser, createOrder, rates } = useContext(AppContext);
+  const { cart, removeFromCart, updateCartQty, clearCart, currentUser, createOrder, rates, orders } = useContext(AppContext);
   const navigate = useNavigate();
+
+  // Đơn hàng chờ cọc active của người dùng hiện tại
+  const activePendingOrder = orders?.find(o => {
+    const isUserOrder = (currentUser?.email && o.userEmail && o.userEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+                        (currentUser?.phone && o.customerPhone && o.customerPhone === currentUser.phone);
+    const isUnpaidPending = (o.status === 'pending' || o.status === 'quoted') && o.paymentStatus !== 'paid';
+    return isUserOrder && isUnpaidPending;
+  });
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -55,7 +63,6 @@ export default function CartPage() {
     };
 
     const res = await createOrder(orderData);
-    clearCart();
     
     confetti({
       particleCount: 150,
@@ -64,8 +71,8 @@ export default function CartPage() {
       colors: ['#7A4B9E', '#FFD1DC', '#F4EAD3'],
     });
 
-    // Navigate tới trang thanh toán
-    const newOrderId = res?.id || orderData.id || 'unknown';
+    // Navigate tới trang thanh toán cọc 100%
+    const newOrderId = res?.id || activePendingOrder?.id || orderData.id || 'unknown';
     navigate(`/payment/${newOrderId}`);
   };
   const handleCheckout = async () => {
@@ -112,8 +119,22 @@ export default function CartPage() {
       {/* Navbar chung sẽ được hiển thị từ App.jsx nên không cần header đơn giản riêng ở đây */}
 
       <main className="container" style={{ flex: 1, padding: '40px 24px' }}>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.4rem', color: 'var(--purple-dark)', marginBottom: '30px' }}>Giỏ Hàng Của Bạn</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.4rem', color: 'var(--purple-dark)', marginBottom: '16px' }}>Giỏ Hàng Của Bạn</h1>
         
+        {activePendingOrder && (
+          <div style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '14px', padding: '14px 20px', marginBottom: '24px', color: '#92400E', fontSize: '0.88rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              ⚡ Bạn đang có <strong>1 Giỏ Hàng Chờ Cọc (Mã: {activePendingOrder.id})</strong>. Mọi sản phẩm bạn thêm/xóa sẽ tự động cập nhật giỏ hàng này. Giỏ hàng sẽ chính thức chuyển thành Đơn hàng hoàn chỉnh sau khi bạn cọc 100%!
+            </div>
+            <button 
+              onClick={() => navigate(`/payment/${activePendingOrder.id}`)}
+              style={{ backgroundColor: '#D97706', color: '#FFF', border: 'none', padding: '6px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              💳 Thanh toán cọc ngay
+            </button>
+          </div>
+        )}
+
         {cart.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', backgroundColor: '#FFF', borderRadius: '16px' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginBottom: '20px' }}>Giỏ hàng đang trống.</p>

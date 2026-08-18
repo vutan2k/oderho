@@ -14,7 +14,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mendable/firecrawl-js": "^4.32.2",
     "canvas-confetti": "^1.9.4",
+    "dotenv": "^17.4.2",
     "firebase": "^12.17.1",
     "lucide-react": "^1.31.0",
     "playwright": "^1.62.1",

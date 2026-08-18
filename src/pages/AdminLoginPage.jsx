@@ -13,10 +13,10 @@ export default function AdminLoginPage() {
     navigate('/admin/dashboard');
   }
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    const res = loginAdmin(password);
+    const res = await loginAdmin(password);
     if (res.success) {
       navigate('/admin/dashboard');
     } else {

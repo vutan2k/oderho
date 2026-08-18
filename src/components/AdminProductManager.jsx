@@ -2,7 +2,6 @@ import React, { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
-import { fetchLatestPlaywrightScrapedProducts, syncPlaywrightScrapedProductsToDb } from '../services/playwrightScraperEngine';
 import {
   Plus, Trash2, X, Globe, Check, Edit3, Link2, Download, Play, Square, Eye
 } from 'lucide-react';
@@ -46,33 +45,28 @@ export default function AdminProductManager() {
   // --- Playwright Visual Browser Live Controls ---
   const [isPlaywrightLive, setIsPlaywrightLive] = useState(false);
   const [playwrightLogs, setPlaywrightLogs] = useState([]);
+  const [maxProductsInput, setMaxProductsInput] = useState(10);
+  const [headlessInput, setHeadlessInput] = useState(true);
+  const [zoomImage, setZoomImage] = useState(null);
 
-  // --- Auto-Sync Scraped Products on Load ---
-  const [hasAutoSynced, setHasAutoSynced] = useState(false);
-  React.useEffect(() => {
-    if (hasAutoSynced) return;
-    setHasAutoSynced(true);
-    fetchLatestPlaywrightScrapedProducts().then(latestData => {
-      if (latestData && latestData.length > 0) {
-        let addedCount = 0;
-        const itemsToSync = [];
-        latestData.forEach(item => {
-          const gNo = item.goodsNo || item.id;
-          // Check if already in memory
-          const exists = pendingProducts.some(p => p.goodsNo === gNo) || products.some(p => p.goodsNo === gNo);
-          if (!exists) {
-            addPendingProduct(item);
-            itemsToSync.push(item);
-            addedCount++;
-          }
+  const handleLocalImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result;
+        setEditForm(prev => {
+          const currentImages = prev.images || [];
+          const updatedImages = [...currentImages, base64];
+          const mainImg = prev.productImage || base64;
+          return { ...prev, images: updatedImages, productImage: mainImg };
         });
-        if (addedCount > 0) {
-          syncPlaywrightScrapedProductsToDb(itemsToSync);
-          if (showToast) showToast(`🎉 Tự động đồng bộ ${addedCount} sản phẩm cào mới vào Hàng Chờ!`, 'success');
-        }
-      }
+      };
+      reader.readAsDataURL(file);
     });
-  }, [hasAutoSynced, pendingProducts, products, addPendingProduct, showToast]);
+  };
+
+
 
   // ----------------------------------------------------
   // INVENTORY LOGIC
@@ -202,13 +196,14 @@ export default function AdminProductManager() {
       vietnameseName = translateKoreanToVi(prod.nameKr || prod.name);
     }
 
-    // Lọc bỏ các link ảnh đoán mò bị lỗi 404 (gdasEditor và ko.jpg đoán chuỗi)
-    const isRealWorkingUrl = (u) => u && u.startsWith('http') && !/gdasEditor/i.test(u) && !/A00000[0-9]{6}[0-9]{2}ko\.jpg/i.test(u);
+    // Lọc loại bỏ ảnh rác (logo, icon, banner, quà tặng kèm /item/, category /display/)
+    const isJunkImg = (u) => /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_/i.test(u);
+    const isRealWorkingUrl = (u) => u && typeof u === 'string' && u.startsWith('http') && !isJunkImg(u);
 
     const existingAlbum = (prod.images || (prod.productImage ? [prod.productImage] : [])).filter(isRealWorkingUrl);
     const existingReviews = (prod.photoReviews || []).filter(isRealWorkingUrl);
 
-    const mainImg = existingAlbum[0] || (isRealWorkingUrl(prod.productImage) ? prod.productImage : '');
+    const mainImg = (prod.productImage && isRealWorkingUrl(prod.productImage)) ? prod.productImage : (existingAlbum[0] || (existingReviews[0] || ''));
 
     return {
       ...prod,
@@ -313,10 +308,9 @@ export default function AdminProductManager() {
     setLoadingScrape(false);
     if (res.success && res.product) {
       addPendingProduct(res.product);
-      if (addProduct) addProduct(res.product); // Thêm thẳng vào Kho & Tự động lưu Realtime lên Firebase Firestore!
       setQuickLink('');
-      setActiveTab('inventory'); // Chuyển sang Kho Sản Phẩm để thấy dữ liệu ngay tức thì!
-      if (showToast) showToast(`🤖 Đã bóc tách thành công: "${res.product.name}"! Dữ liệu đã tự động đồng bộ Realtime lên Admin & Website.`, 'success');
+      setActiveTab('pending'); // Chuyển sang Hàng Chờ để review
+      if (showToast) showToast(`🤖 Đã bóc tách thành công: "${res.product.name}"! Dữ liệu đã được thêm vào Hàng Chờ.`, 'success');
     } else {
       setScrapeError({ message: res.error, url: quickLink.trim(), openPage: !!res.openProductPage });
       if (showToast) showToast(`Lỗi bóc tách: ${res.error}`, 'error');
@@ -359,9 +353,8 @@ export default function AdminProductManager() {
         };
 
         addPendingProduct(extProduct);
-        if (addProduct) addProduct(extProduct); // Đẩy thẳng vào Kho & Tự động lưu Realtime lên Firebase Firestore!
-        setActiveTab('inventory');
-        if (showToast) showToast(`🚀 Đã nhận dữ liệu từ Chrome Extension: "${extProduct.name}"! Đã đồng bộ Realtime lên Admin & Website.`, 'success');
+        setActiveTab('pending'); // Chuyển sang Hàng Chờ để review
+        if (showToast) showToast(`🚀 Đã nhận dữ liệu từ Chrome Extension: "${extProduct.name}"! Dữ liệu đã được thêm vào Hàng Chờ.`, 'success');
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (err) {
         console.error('Lỗi nhận dữ liệu từ Chrome Extension:', err);
@@ -409,62 +402,101 @@ export default function AdminProductManager() {
 
         {/* ================= LIVE BROWSER CONTROL BUTTONS ================= */}
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '14px', background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+          {/* Cấu hình cào */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151' }}>Số sản phẩm:</label>
+            <select 
+              value={maxProductsInput} 
+              onChange={e => setMaxProductsInput(parseInt(e.target.value, 10))}
+              style={{ ...styles.input, padding: '6px 10px', width: '70px' }}
+            >
+              <option value={2}>2 (Test)</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <input 
+              type="checkbox" 
+              id="headlessMode" 
+              checked={!headlessInput} 
+              onChange={e => setHeadlessInput(!e.target.checked)} 
+              style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+            />
+            <label htmlFor="headlessMode" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151', cursor: 'pointer' }}>
+              Hiện trình duyệt (Visual Mode)
+            </label>
+          </div>
+
           {!isPlaywrightLive ? (
             <button 
               type="button" 
               onClick={() => {
                 setIsPlaywrightLive(true);
                 setPlaywrightLogs([
-                  "🚀 [Playwright Deep Inspector v2.0] Khởi động trình duyệt Chromium...",
-                  "🌐 Mode: Headful Visual (Click trực tiếp vào từng sản phẩm trên màn hình)",
-                  "📍 [Step 1] Mở trang Olive Young Best List...",
-                  "🎯 [Step 2] Di chuột & click trực tiếp từng thẻ sản phẩm vào trang chi tiết...",
-                  "📄 [Step 3] Trích xuất album ảnh HD, mô tả sản phẩm & đánh giá review...",
-                  "🤖 [Step 4] Dịch thuật tên & phân loại bằng Gemini AI Vision..."
+                  "🚀 [Vite Backend Engine] Gửi lệnh khởi chạy Playwright Scraper...",
+                  `📦 Cấu hình: Số lượng = ${maxProductsInput} sản phẩm | Chế độ = ${headlessInput ? 'Không màn hình (Chạy ngầm)' : 'Mở màn hình (Visual)'}`,
+                  "⏳ Đang chạy tiến trình cào ngầm. Dữ liệu sẽ tự động đồng bộ realtime vào bảng Hàng Chờ...",
+                  "📊 Bạn có thể theo dõi tiến trình cào trên Terminal đang chạy Vite dev server."
                 ]);
-                fetchLatestPlaywrightScrapedProducts().then(latestData => {
-                  if (latestData && latestData.length > 0) {
-                    let idx = 0;
-                    latestData.forEach(item => {
-                      idx++;
-                      addPendingProduct(item);
+                fetch('/api/run-scraper', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ maxProducts: maxProductsInput, headless: headlessInput })
+                })
+                  .then(async r => {
+                    const text = await r.text();
+                    try {
+                      return JSON.parse(text);
+                    } catch {
+                      return { isHtmlResponse: true };
+                    }
+                  })
+                  .then(data => {
+                    if (data.isHtmlResponse) {
                       setPlaywrightLogs(prev => [
                         ...prev,
-                        `✅ [Đã click SP #${idx} - Mã: ${item.goodsNo}]: ${item.name}`,
-                        `🖼️ Album: ${item.images?.length || 1} ảnh HD | 💰 ₩${(item.foreignPrice||0).toLocaleString()} KRW`
+                        "💡 THÔNG BÁO MÔI TRƯỜNG CHẠY:",
+                        "1. Trình cào Playwright CLI tự động yêu cầu môi trường Node.js Server cục bộ (chạy lệnh 'npm run dev' trên máy tính).",
+                        "2. Trên trang Web Hosting Live, vui lòng dùng ngay Tiện ích Chrome Extension TAVY AI Scraper v17.0 PRO góc trên trình duyệt để Cào 1-Click 100% sản phẩm & 30+ Ảnh Review thực tế về Admin!"
                       ]);
-                    });
-                    syncPlaywrightScrapedProductsToDb(latestData);
-                    setPlaywrightLogs(prev => [
-                      ...prev,
-                      `🎉 Đã cào & đồng bộ hoàn tất ${latestData.length} sản phẩm chất lượng cao vào Chờ Duyệt!`
-                    ]);
-                    if (showToast) showToast(`🎉 Đã cào & đồng bộ ${latestData.length} sản phẩm chi tiết vào Chờ Duyệt!`, 'success');
-                  }
-                });
+                      setIsPlaywrightLive(false);
+                    } else if (data.success) {
+                      setPlaywrightLogs(prev => [...prev, "⚡ Lệnh cào đã được tiếp nhận thành công. Trình duyệt bắt đầu chạy..."]);
+                    } else {
+                      setPlaywrightLogs(prev => [...prev, `❌ Thất bại: ${data.message}`]);
+                      setIsPlaywrightLive(false);
+                    }
+                  })
+                  .catch(err => {
+                    setPlaywrightLogs(prev => [...prev, `❌ Lỗi kết nối: ${err.message}`]);
+                    setIsPlaywrightLive(false);
+                  });
               }}
               style={{ ...styles.btnPrimary, background: 'linear-gradient(135deg, #2563EB, #7C3AED)', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 18px', fontWeight: 700, fontSize: '0.88rem' }}
             >
-              <Play size={16} /> ▶️ BẬT XEM TRỰC TIẾP TRÌNH DUYỆT (PLAYWRIGHT AI)
+              <Play size={16} /> ▶️ BẮT ĐẦU CÀO SẢN PHẨM
             </button>
           ) : (
             <button 
               type="button" 
               onClick={() => {
                 setIsPlaywrightLive(false);
-                setPlaywrightLogs(prev => [...prev, "🛑 Đã TẮT chế độ xem trực tiếp trình duyệt Playwright."]);
-                if (showToast) showToast('Đã TẮT Playwright Live Browser', 'info');
+                setPlaywrightLogs(prev => [...prev, "🛑 Đã ngừng hiển thị logs. Tiến trình cào ngầm vẫn tiếp tục chạy trên Server."]);
+                if (showToast) showToast('Đã dừng theo dõi logs.', 'info');
               }}
               style={{ ...styles.btnDanger, background: '#DC2626', display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 18px', fontWeight: 700, fontSize: '0.88rem' }}
             >
-              <Square size={16} /> ⏹️ DỪNG / TẮT XEM TRỰC TIẾP TRÌNH DUYỆT
+              <Square size={16} /> ⏹️ NGỪNG THEO DÕI LOGS
             </button>
           )}
 
           {/* Status Badge Indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 700, padding: '6px 12px', borderRadius: '8px', backgroundColor: isPlaywrightLive ? '#DCFCE7' : '#F1F5F9', color: isPlaywrightLive ? '#15803D' : '#64748B' }}>
             <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: isPlaywrightLive ? '#22C55E' : '#94A3B8', boxShadow: isPlaywrightLive ? '0 0 8px #22C55E' : 'none' }}></span>
-            <span>{isPlaywrightLive ? '🟢 TRÌNH DUYỆT ĐANG CHẠY TRỰC TIẾP' : '⚪ TRÌNH DUYỆT ĐANG TẮT'}</span>
+            <span>{isPlaywrightLive ? '🟢 ĐANG CÀO DỮ LIỆU' : '⚪ TRÌNH CÀO ĐANG TẮT'}</span>
           </div>
         </div>
 
@@ -579,9 +611,11 @@ export default function AdminProductManager() {
                     filtered.map(prod => (
                       <tr key={prod.goodsNo} style={{ backgroundColor: selectedProducts.includes(prod.goodsNo) ? '#F3F4F6' : '#FFF' }}>
                         <td style={{ ...styles.td, textAlign: 'center' }}><input type="checkbox" checked={selectedProducts.includes(prod.goodsNo)} onChange={() => toggleSelectProduct(prod.goodsNo)} style={{ cursor: 'pointer' }} /></td>
-                        <td style={styles.td}><img src={prod.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB' }} /></td>
+                        <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEdit(prod)}>
+                          <img src={prod.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB' }} />
+                        </td>
                         <td style={{ ...styles.td, fontFamily: 'monospace' }}>{prod.goodsNo}</td>
-                        <td style={styles.td}>
+                        <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEdit(prod)}>
                           <div style={{ fontWeight: 600, color: '#111827' }}>{prod.name}</div>
                           {prod.nameKr && <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
                         </td>
@@ -648,9 +682,11 @@ export default function AdminProductManager() {
                     pendingProducts.map(prod => (
                       <tr key={prod.goodsNo} style={{ backgroundColor: selectedPending.includes(prod.goodsNo) ? '#F3F4F6' : '#FFF' }}>
                         <td style={{ ...styles.td, textAlign: 'center' }}><input type="checkbox" checked={selectedPending.includes(prod.goodsNo)} onChange={() => toggleSelectPending(prod.goodsNo)} style={{ cursor: 'pointer' }} /></td>
-                        <td style={styles.td}><img src={prod.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB' }} /></td>
+                        <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEditPending(prod)}>
+                          <img src={prod.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB' }} />
+                        </td>
                         <td style={{ ...styles.td, fontFamily: 'monospace' }}>{prod.goodsNo}</td>
-                        <td style={styles.td}>
+                        <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEditPending(prod)}>
                           <div style={{ fontWeight: 600, color: '#111827' }}>{prod.name}</div>
                           {prod.nameKr && <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
                         </td>
@@ -746,32 +782,172 @@ export default function AdminProductManager() {
             </div>
             
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Ảnh đại diện sản phẩm (URL)</label>
-              <input value={editForm.productImage || ''} onChange={e => handleEditChange('productImage', e.target.value)} style={{ ...styles.input, width: '100%' }} />
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Ảnh đại diện sản phẩm (URL hoặc tự nạp khi chọn file)</label>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input value={editForm.productImage || ''} onChange={e => handleEditChange('productImage', e.target.value)} style={{ ...styles.input, flex: 1 }} placeholder="Đường dẫn URL ảnh hoặc tự nạp khi tải file bên dưới" />
+                {editForm.productImage && (
+                  <img 
+                    src={editForm.productImage} 
+                    alt="Preview" 
+                    onClick={() => setZoomImage(editForm.productImage)}
+                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB', cursor: 'pointer' }} 
+                  />
+                )}
+              </div>
             </div>
 
-            {/* ALBUM ẢNH SẢN PHẨM & ẢNH ĐÁNH GIÁ (HIỂN THỊ ĐỦ NHƯ TRANG WEB) */}
-            {((editForm.images && editForm.images.length > 0) || (editForm.photoReviews && editForm.photoReviews.length > 0)) && (
-              <div style={{ marginBottom: '16px', background: '#F9FAFB', padding: '12px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151', marginBottom: '8px' }}>
-                  📸 Bộ sưu tập ảnh hiển thị trên Website ({((editForm.images || []).length + (editForm.photoReviews || []).length)} ảnh)
-                </div>
-                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
-                  {(editForm.images || []).map((imgUrl, i) => (
-                    <div key={`album-${i}`} style={{ position: 'relative', width: '56px', height: '56px', borderRadius: '6px', overflow: 'hidden', border: '2px solid #2563EB', flexShrink: 0 }}>
-                      <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, bg: 'rgba(0,0,0,0.6)', color: '#FFF', fontSize: '0.65rem', textAlign: 'center', fontWeight: 700, background: 'rgba(37,99,235,0.85)' }}>Album</span>
-                    </div>
-                  ))}
-                  {(editForm.photoReviews || []).map((rvUrl, j) => (
-                    <div key={`rv-${j}`} style={{ position: 'relative', width: '56px', height: '56px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #D1D5DB', flexShrink: 0 }}>
-                      <img src={rvUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, color: '#FFF', fontSize: '0.65rem', textAlign: 'center', fontWeight: 700, background: 'rgba(5,150,105,0.85)' }}>Review</span>
-                    </div>
-                  ))}
-                </div>
+            {/* TRÌNH QUẢN LÝ ALBUM ẢNH & UPLOAD FILE */}
+            <div style={{ marginBottom: '16px', background: '#F9FAFB', padding: '16px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#374151' }}>
+                  📸 Bộ sưu tập ảnh hiển thị ({((editForm.images || []).length)} ảnh)
+                </span>
+                <label style={{ ...styles.btnOutline, cursor: 'pointer', padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px', background: '#FFF' }}>
+                  <Plus size={14} /> Tải ảnh lên từ máy tính
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple 
+                    onChange={handleLocalImageUpload} 
+                    style={{ display: 'none' }} 
+                  />
+                </label>
               </div>
-            )}
+
+              {(editForm.images && editForm.images.length > 0) ? (
+                <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', paddingTop: '4px' }}>
+                  {(editForm.images || []).map((imgUrl, i) => {
+                    const isMain = editForm.productImage === imgUrl;
+                    return (
+                      <div 
+                        key={`album-edit-${i}`} 
+                        style={{ 
+                          position: 'relative', 
+                          width: '64px', 
+                          height: '64px', 
+                          borderRadius: '8px', 
+                          overflow: 'hidden', 
+                          border: isMain ? '2.5px solid #2563EB' : '1px solid #D1D5DB', 
+                          flexShrink: 0,
+                          cursor: 'pointer',
+                          boxShadow: isMain ? '0 0 6px rgba(37,99,235,0.4)' : 'none'
+                        }}
+                      >
+                        <img 
+                          src={imgUrl} 
+                          alt="" 
+                          onClick={() => setZoomImage(imgUrl)}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                        {/* Nút đặt làm ảnh chính */}
+                        <button
+                          type="button"
+                          onClick={() => handleEditChange('productImage', imgUrl)}
+                          title="Đặt làm ảnh đại diện"
+                          style={{ position: 'absolute', bottom: '2px', left: '2px', background: isMain ? '#2563EB' : 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '4px', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, color: isMain ? '#FFF' : '#374151', cursor: 'pointer' }}
+                        >
+                          ★
+                        </button>
+                        {/* Nút xóa ảnh */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (editForm.images || []).filter((_, idx) => idx !== i);
+                            let newMain = editForm.productImage;
+                            if (isMain) newMain = updated.length > 0 ? updated[0] : '';
+                            setEditForm(prev => ({ ...prev, images: updated, productImage: newMain }));
+                          }}
+                          title="Xóa ảnh này"
+                          style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(220,38,38,0.85)', color: '#FFF', border: 'none', borderRadius: '4px', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontWeight: 'bold', fontSize: '0.65rem', cursor: 'pointer' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.8rem', color: '#6B7280', textAlign: 'center', padding: '10px 0', border: '1px dashed #D1D5DB', borderRadius: '6px' }}>
+                  Chưa có hình ảnh nào. Hãy nhấn nút phía trên để tải ảnh lên.
+                </div>
+              )}
+            </div>
+
+            {/* TRÌNH QUẢN LÝ ÁNH ĐÁNH GIÁ THỰC TẾ GDAS */}
+            <div style={{ marginBottom: '16px', background: '#F0FDF4', padding: '16px', borderRadius: '8px', border: '1px solid #BBF7D0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534' }}>
+                  📸 Bộ sưu tập Ảnh Đánh Giá Thực Tế GDAS ({((editForm.photoReviews || []).length)} ảnh)
+                </span>
+                <label style={{ ...styles.btnOutline, cursor: 'pointer', padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px', background: '#FFF', color: '#166534', borderColor: '#86EFAC' }}>
+                  <Plus size={14} /> Thêm ảnh đánh giá
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple 
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      files.forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          const base64Url = ev.target?.result;
+                          if (base64Url) {
+                            setEditForm(prev => ({
+                              ...prev,
+                              photoReviews: [...(prev.photoReviews || []), base64Url]
+                            }));
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      });
+                    }} 
+                    style={{ display: 'none' }} 
+                  />
+                </label>
+              </div>
+
+              {(editForm.photoReviews && editForm.photoReviews.length > 0) ? (
+                <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', paddingTop: '4px' }}>
+                  {(editForm.photoReviews || []).map((imgUrl, i) => (
+                    <div 
+                      key={`review-edit-${i}`} 
+                      style={{ 
+                        position: 'relative', 
+                        width: '64px', 
+                        height: '64px', 
+                        borderRadius: '8px', 
+                        overflow: 'hidden', 
+                        border: '1.5px solid #16A34A', 
+                        flexShrink: 0,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <img 
+                        src={imgUrl} 
+                        alt="" 
+                        onClick={() => setZoomImage(imgUrl)}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = (editForm.photoReviews || []).filter((_, idx) => idx !== i);
+                          setEditForm(prev => ({ ...prev, photoReviews: updated }));
+                        }}
+                        title="Xóa ảnh đánh giá này"
+                        style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(220,38,38,0.85)', color: '#FFF', border: 'none', borderRadius: '4px', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontWeight: 'bold', fontSize: '0.65rem', cursor: 'pointer' }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.8rem', color: '#166534', textAlign: 'center', padding: '10px 0', border: '1px dashed #86EFAC', borderRadius: '6px' }}>
+                  Chưa có ảnh đánh giá thực tế nào. Khi cào sản phẩm, tiện ích sẽ tự nạp 10 ảnh GDAS thật vào đây.
+                </div>
+              )}
+            </div>
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Mô tả sản phẩm</label>
@@ -782,6 +958,24 @@ export default function AdminProductManager() {
               <button onClick={() => setEditModal(null)} style={styles.btnOutline}>Hủy</button>
               <button onClick={handleSaveEdit} style={styles.btnPrimary}>Lưu thông tin</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Phóng To Ảnh */}
+      {zoomImage && (
+        <div 
+          onClick={() => setZoomImage(null)}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, cursor: 'zoom-out' }}
+        >
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <img src={zoomImage} alt="Zoom" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+            <button 
+              onClick={() => setZoomImage(null)}
+              style={{ position: 'absolute', top: '-40px', right: '0px', background: 'none', border: 'none', color: '#FFF', fontSize: '1.2rem', cursor: 'pointer' }}
+            >
+              ✕ Đóng
+            </button>
           </div>
         </div>
       )}

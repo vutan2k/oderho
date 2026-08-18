@@ -5,39 +5,30 @@
 export const ORDER_STATUSES = {
   pending: {
     id: 'pending',
-    label: 'Chờ báo giá / Chờ cọc',
+    label: 'Chờ cọc',
     shortLabel: 'Chờ cọc',
     color: '#D97706',
     bgColor: '#FEF3C7',
     borderColor: '#F59E0B',
     stepIndex: 0
   },
-  quoted: {
-    id: 'quoted',
-    label: 'Đã báo giá (Chờ duyệt)',
-    shortLabel: 'Đã báo giá',
-    color: '#2563EB',
-    bgColor: '#DBEAFE',
-    borderColor: '#3B82F6',
-    stepIndex: 1
-  },
   deposit_paid: {
     id: 'deposit_paid',
-    label: 'Đã cọc 50%',
-    shortLabel: 'Đã cọc',
+    label: 'Đã cọc 100%',
+    shortLabel: 'Đã cọc 100%',
     color: '#4F46E5',
     bgColor: '#EEF2FF',
     borderColor: '#6366F1',
-    stepIndex: 2
+    stepIndex: 1
   },
   purchased: {
     id: 'purchased',
-    label: 'Đã mua tại Hàn Quốc',
-    shortLabel: 'Đã mua Hàn',
+    label: 'Đang mua hộ (Hàn Quốc)',
+    shortLabel: 'Đang mua hộ',
     color: '#7C3AED',
     bgColor: '#F3E8FF',
     borderColor: '#8B5CF6',
-    stepIndex: 3
+    stepIndex: 2
   },
   in_kr_warehouse: {
     id: 'in_kr_warehouse',
@@ -46,16 +37,16 @@ export const ORDER_STATUSES = {
     color: '#DB2777',
     bgColor: '#FCE7F3',
     borderColor: '#EC4899',
-    stepIndex: 4
+    stepIndex: 3
   },
   transit: {
     id: 'transit',
-    label: 'Đang bay về Việt Nam (Air Cargo)',
-    shortLabel: 'Đang về VN',
+    label: 'Shipping (Bay Air Hàn - Việt)',
+    shortLabel: 'Shipping',
     color: '#0891B2',
     bgColor: '#CFFAFE',
     borderColor: '#06B6D4',
-    stepIndex: 5
+    stepIndex: 4
   },
   in_vn_warehouse: {
     id: 'in_vn_warehouse',
@@ -64,7 +55,7 @@ export const ORDER_STATUSES = {
     color: '#0D9488',
     bgColor: '#CCFBF1',
     borderColor: '#14B8A6',
-    stepIndex: 6
+    stepIndex: 5
   },
   delivering: {
     id: 'delivering',
@@ -73,7 +64,7 @@ export const ORDER_STATUSES = {
     color: '#EA580C',
     bgColor: '#FFEDD5',
     borderColor: '#F97316',
-    stepIndex: 7
+    stepIndex: 6
   },
   completed: {
     id: 'completed',
@@ -82,7 +73,7 @@ export const ORDER_STATUSES = {
     color: '#059669',
     bgColor: '#D1FAE5',
     borderColor: '#10B981',
-    stepIndex: 8
+    stepIndex: 7
   },
   cancelled: {
     id: 'cancelled',
