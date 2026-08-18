@@ -253,19 +253,35 @@ export const AppProvider = ({ children }) => {
     const unsubscribe = subscribeToProducts((realtimeProducts) => {
       if (Array.isArray(realtimeProducts)) {
         const clean = sanitizeProducts(realtimeProducts);
+        
+        const getDeletedIds = () => {
+          try { return JSON.parse(localStorage.getItem('tavy_deleted_products') || '[]'); } 
+          catch { return []; }
+        };
+
         setProducts(prev => {
+          const deletedIds = getDeletedIds();
           const map = new Map();
-          (prev || []).forEach(p => { if (p && p.goodsNo) map.set(p.goodsNo, p); });
-          clean.forEach(p => { if (p && p.goodsNo) map.set(p.goodsNo, p); });
+          (prev || []).forEach(p => { 
+            if (p && p.goodsNo && !deletedIds.includes(p.goodsNo)) map.set(p.goodsNo, p); 
+          });
+          clean.forEach(p => { 
+            if (p && p.goodsNo && !deletedIds.includes(p.goodsNo)) map.set(p.goodsNo, p); 
+          });
           const merged = Array.from(map.values());
           try { localStorage.setItem('tavy_custom_products', JSON.stringify(merged)); } catch {}
           return merged;
         });
 
         setPublishedProducts(prev => {
+          const deletedIds = getDeletedIds();
           const map = new Map();
-          (prev || []).forEach(p => { if (p && p.goodsNo) map.set(p.goodsNo, p); });
-          clean.forEach(p => { if (p && p.goodsNo) map.set(p.goodsNo, p); });
+          (prev || []).forEach(p => { 
+            if (p && p.goodsNo && !deletedIds.includes(p.goodsNo)) map.set(p.goodsNo, p); 
+          });
+          clean.forEach(p => { 
+            if (p && p.goodsNo && !deletedIds.includes(p.goodsNo)) map.set(p.goodsNo, p); 
+          });
           const merged = Array.from(map.values());
           try { localStorage.setItem('tavy_published_products', JSON.stringify(merged)); } catch {}
           return merged;
@@ -527,6 +543,15 @@ export const AppProvider = ({ children }) => {
   };
 
   const deleteProduct = (goodsNo) => {
+    // Thêm ID vào danh sách đã xoá để ngăn Firebase merge lại
+    try {
+      const deletedIds = JSON.parse(localStorage.getItem('tavy_deleted_products') || '[]');
+      if (!deletedIds.includes(goodsNo)) {
+        deletedIds.push(goodsNo);
+        localStorage.setItem('tavy_deleted_products', JSON.stringify(deletedIds));
+      }
+    } catch {}
+
     setProducts(prev => {
       const updated = prev.filter(p => p.goodsNo !== goodsNo);
       try {
@@ -551,8 +576,17 @@ export const AppProvider = ({ children }) => {
     setProducts([]);
     setPublishedProducts([]);
     try {
+      localStorage.setItem('tavy_catalog_cleared', 'true');
       localStorage.removeItem('tavy_custom_products');
       localStorage.removeItem('tavy_published_products');
+      
+      const deletedIds = JSON.parse(localStorage.getItem('tavy_deleted_products') || '[]');
+      listToDelete.forEach(item => {
+        if (item && item.goodsNo && !deletedIds.includes(item.goodsNo)) {
+          deletedIds.push(item.goodsNo);
+        }
+      });
+      localStorage.setItem('tavy_deleted_products', JSON.stringify(deletedIds));
     } catch {}
 
     for (const item of listToDelete) {
