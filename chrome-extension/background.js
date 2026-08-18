@@ -50,33 +50,79 @@ const parseDomPrice = (priceStr) => {
   return Math.min(...validPrices);
 };
 
-// Hàm gửi dữ liệu sản phẩm lên Admin tab với URL compact nhỏ dưới 1000 ký tự (Tránh 100% lỗi HTTP 414 URI Too Long)
-const sendProductToAdminTab = (goodsNo, name, nameKr, price, mainImage, albumImages, brand, category, description, usage, url) => {
-  const compactPayload = {
-    g: goodsNo || '',
-    n: String(name || '').slice(0, 100),
-    nk: String(nameKr || '').slice(0, 100),
-    fp: price || 0,
-    p: price || 0,
-    img: mainImage || '',
-    imgs: (albumImages || []).slice(0, 3),
-    b: String(brand || 'Olive Young').slice(0, 35),
-    cat: category || 'skincare',
-    d: String(description || 'Sản phẩm chính hãng Hàn Quốc').slice(0, 120),
-    u: String(usage || 'Thoa nhẹ nhàng').slice(0, 80),
-    url: url || ''
+// Hàm gửi dữ liệu sản phẩm lên Admin tab (ƯU TIÊN CÁCH 1: Gửi tin nhắn trực tiếp qua bộ nhớ - ZERO Limit & KHÔNG MỞ TAB)
+const sendProductToAdminTab = (goodsNo, name, nameKr, price, mainImage, albumImages, photoReviews, brand, brandKr, category, description, usage, url) => {
+  const fullProductData = {
+    goodsNo: goodsNo || `SP-${Date.now()}`,
+    name: name || 'Sản phẩm Olive Young',
+    nameKr: nameKr || name || '',
+    foreignPrice: price || 25000,
+    price: price || 25000,
+    productImage: mainImage || (albumImages && albumImages[0]) || '',
+    images: (albumImages && albumImages.length > 0) ? albumImages : (mainImage ? [mainImage] : []),
+    photoReviews: photoReviews || [],
+    brand: brand || 'Olive Young Korea',
+    brandKr: brandKr || brand || '올리브영',
+    category: category || 'skincare',
+    options: '1 Hộp',
+    origin: 'Store Olive Young Korea',
+    description: description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${nameKr}`,
+    usage: usage || 'Xem chi tiết trên bao bì.',
+    rating: 4.9,
+    reviewsCount: (photoReviews && photoReviews.length) || 180,
+    productUrl: url || '',
+    scrapedAt: new Date().toISOString()
   };
 
-  const jsonStr = JSON.stringify(compactPayload);
-  const encodedData = btoa(encodeURIComponent(jsonStr));
-  const adminUrl = `https://tavyorder.web.app/admin/dashboard?autoFill=${encodedData}`;
+  // 1. Kiểm tra xem có Tab Admin nào đang mở không -> Gửi tin nhắn trực tiếp qua bộ nhớ (0 giới hạn dung lượng!)
+  chrome.tabs.query({ url: ["https://tavyorder.web.app/admin/*", "https://tavyorder.web.app/*", "http://localhost/*"] }, (tabs) => {
+    let sentSuccess = false;
 
-  chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
-    setTimeout(() => {
-      if (adminTab && adminTab.id) {
-        try { chrome.tabs.remove(adminTab.id); } catch {}
-      }
-    }, 3500);
+    if (tabs && tabs.length > 0) {
+      tabs.forEach(t => {
+        if (t.id) {
+          try {
+            chrome.tabs.sendMessage(t.id, {
+              type: 'TAVY_NEW_SCRAPED_PRODUCT',
+              payload: fullProductData
+            }, () => {
+              if (chrome.runtime.lastError) {}
+            });
+            sentSuccess = true;
+          } catch {}
+        }
+      });
+    }
+
+    // 2. Nếu không có tab Admin nào mở, mới bật 1 tab ngầm ngắn gọn làm fallback
+    if (!sentSuccess) {
+      const compactPayload = {
+        g: fullProductData.goodsNo,
+        n: String(fullProductData.name).slice(0, 100),
+        nk: String(fullProductData.nameKr).slice(0, 100),
+        fp: fullProductData.price,
+        p: fullProductData.price,
+        img: fullProductData.productImage,
+        imgs: fullProductData.images.slice(0, 3),
+        b: String(fullProductData.brand).slice(0, 35),
+        cat: fullProductData.category,
+        d: String(fullProductData.description).slice(0, 120),
+        u: String(fullProductData.usage).slice(0, 80),
+        url: fullProductData.productUrl
+      };
+
+      const jsonStr = JSON.stringify(compactPayload);
+      const encodedData = btoa(encodeURIComponent(jsonStr));
+      const adminUrl = `https://tavyorder.web.app/admin/dashboard?autoFill=${encodedData}`;
+
+      chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
+        setTimeout(() => {
+          if (adminTab && adminTab.id) {
+            try { chrome.tabs.remove(adminTab.id); } catch {}
+          }
+        }, 3500);
+      });
+    }
   });
 };
 
@@ -286,6 +332,8 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
 
         const cleanPrice = parsedAiPrice > 0 ? parsedAiPrice : (domPrice || 26800);
 
+        const albumImages = (pageData.images && pageData.images.length > 0) ? pageData.images : (pageData.image ? [pageData.image] : []);
+        const photoReviews = pageData.photoReviews || [];
         const mainImage = albumImages[0] || pageData.image || '';
 
         sendProductToAdminTab(
@@ -295,7 +343,9 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
           cleanPrice,
           mainImage,
           albumImages,
-          aiData.brand || pageData.brandText || 'Olive Young',
+          photoReviews,
+          aiData.brand || pageData.brandText || 'Olive Young Korea',
+          aiData.brandKr || pageData.brandText || '올리브영',
           aiData.category || 'skincare',
           aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp. Tên gốc: ${krName}`,
           aiData.usage || 'Thoa nhẹ nhàng lên vùng da cần chăm sóc.',
@@ -421,22 +471,20 @@ Chỉ trả về JSON thuần hợp lệ, KHÔNG markdown.`;
         const cleanPrice = parsedAiPrice > 0 ? parsedAiPrice : (domPrice || 26800);
 
         const mainImage = pageData?.image || (pageData?.images && pageData.images[0]) || `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/${goodsNo.slice(0, 4)}/${goodsNo}01ko.jpg`;
-        const albumImages = (pageData?.images && pageData.images.length > 0) ? pageData.images : [mainImage];
+        const albumImages = (pageData?.images && pageData.images.length > 0) ? pageData.images : (pageData?.image ? [pageData.image] : []);
         const photoReviews = pageData?.photoReviews || [];
-
-        const productData = {
-          goodsNo: goodsNo,
-          name: viName,
-        const mainImage = albumImages[0] || pageData?.image || '';
+        const mainImg = albumImages[0] || pageData?.image || '';
 
         sendProductToAdminTab(
           goodsNo,
           viName,
           krName,
           cleanPrice,
-          mainImage,
+          mainImg,
           albumImages,
-          aiData.brand || pageData?.brandText || 'Olive Young',
+          photoReviews,
+          aiData.brand || pageData?.brandText || 'Olive Young Korea',
+          aiData.brandKr || pageData?.brandText || '올리브영',
           aiData.category || 'skincare',
           aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp. Tên gốc: ${krName}`,
           aiData.usage || 'Thoa nhẹ nhàng lên vùng da cần chăm sóc.',
@@ -549,8 +597,7 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
           finalReviews = merged.slice(6);
         }
 
-        const mainImg = rawData.image || finalAlbum[0] || '';
-        const goodsNo = (rawData.url || '').match(/goodsNo=([A-Za-z0-9_]+)/)?.[1] || '';
+        const mainImg = rawData.image || productImages[0] || '';
 
         sendProductToAdminTab(
           goodsNo,
@@ -558,8 +605,10 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
           aiData.nameKr || titleRaw,
           finalPrice,
           mainImg,
-          finalAlbum,
+          productImages,
+          photoReviews,
           brandFallback,
+          aiData.brandKr || brandFallback,
           aiData.category || 'skincare',
           aiData.description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${titleRaw}`,
           aiData.usage || 'Xem chi tiết trên bao bì sản phẩm.',

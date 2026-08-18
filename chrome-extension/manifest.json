@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "tavy-toolcaowed",
-  "version": "6.0",
-  "description": "Tiện ích cào dữ liệu sản phẩm & Tự động cào Ranking Top 50 AI Pro v6.0",
+  "version": "6.1",
+  "description": "Tiện ích cào dữ liệu sản phẩm & Tự động cào Ranking Top 50 AI Pro v6.1 (Truyền tin nhắn bộ nhớ 0 limit)",
   "permissions": [
     "activeTab",
     "scripting",
@@ -12,7 +12,9 @@
   ],
   "host_permissions": [
     "*://*.oliveyoung.co.kr/*",
-    "https://generativelanguage.googleapis.com/*"
+    "https://generativelanguage.googleapis.com/*",
+    "https://tavyorder.web.app/*",
+    "http://localhost/*"
   ],
   "options_page": "options.html",
   "background": {
@@ -26,6 +28,14 @@
     {
       "matches": ["*://*.oliveyoung.co.kr/*"],
       "js": ["content.js"]
+    },
+    {
+      "matches": [
+        "https://tavyorder.web.app/admin/*",
+        "https://tavyorder.web.app/*",
+        "http://localhost/*"
+      ],
+      "js": ["admin-content-script.js"]
     }
   ]
 }

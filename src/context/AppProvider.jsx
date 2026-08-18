@@ -347,6 +347,24 @@ export const AppProvider = ({ children }) => {
     } catch {}
   }, [pendingProducts]);
 
+  // Listener CÁCH 1: Nhận tin nhắn trực tiếp trong bộ nhớ Browser từ Extension (ZERO Limit & KHÔNG NẢY TAB)
+  useEffect(() => {
+    const handleExtensionMessage = (event) => {
+      if (
+        event.data &&
+        event.data.source === 'TAVY_EXTENSION' &&
+        event.data.type === 'TAVY_NEW_SCRAPED_PRODUCT' &&
+        event.data.payload
+      ) {
+        console.log("⚡ [AppProvider] Nhận dữ liệu cào nguyên bản từ TAVY Extension:", event.data.payload.goodsNo);
+        addPendingProduct(event.data.payload);
+      }
+    };
+
+    window.addEventListener('message', handleExtensionMessage);
+    return () => window.removeEventListener('message', handleExtensionMessage);
+  }, []);
+
   // Sync qua storage event giữa các tab trình duyệt
   useEffect(() => {
     const handleStorageChange = (e) => {
