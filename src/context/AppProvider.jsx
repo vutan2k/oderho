@@ -367,34 +367,45 @@ export const AppProvider = ({ children }) => {
       const params = new URLSearchParams(window.location.search);
       const autoFill = params.get('autoFill');
       if (autoFill) {
-        const decodedStr = decodeURIComponent(atob(autoFill));
-        const decoded = JSON.parse(decodedStr);
-        if (decoded && (decoded.name || decoded.nameKr)) {
-          // Trích xuất goodsNo từ URL nếu có
-          const goodsNoMatch = (decoded.url || '').match(/goodsNo=([A-Za-z0-9_]+)/);
-          const extractedGoodsNo = goodsNoMatch ? goodsNoMatch[1] : `SP-OY-${Date.now()}`;
+        let decodedStr = '';
+        try {
+          const base64Clean = autoFill.replace(/-/g, '+').replace(/_/g, '/');
+          decodedStr = decodeURIComponent(escape(atob(base64Clean)));
+        } catch {
+          try {
+            decodedStr = decodeURIComponent(atob(autoFill));
+          } catch {
+            decodedStr = atob(autoFill);
+          }
+        }
 
-          const rawPriceStr = String(decoded.foreignPrice || decoded.price || '0');
-          const parsedPrice = parseInt(rawPriceStr.replace(/[^0-9]/g, ''), 10) || 0;
+        const decoded = JSON.parse(decodedStr);
+        if (decoded && (decoded.name || decoded.n || decoded.nameKr || decoded.nk)) {
+          const goodsNo = decoded.goodsNo || decoded.g || (decoded.url || decoded.u || '').match(/goodsNo=([A-Za-z0-9_]+)/)?.[1] || `SP-OY-${Date.now()}`;
+          const rawPrice = decoded.foreignPrice || decoded.price || decoded.fp || decoded.p || 0;
+          const parsedPrice = parseInt(String(rawPrice).replace(/[^0-9]/g, ''), 10) || 0;
+          const mainImg = decoded.productImage || decoded.image || decoded.img || (decoded.images && decoded.images[0]) || (decoded.imgs && decoded.imgs[0]) || '';
+          const albumImgs = decoded.images || decoded.imgs || (mainImg ? [mainImg] : []);
 
           const newPendingItem = {
-            goodsNo: extractedGoodsNo,
-            name: decoded.name || 'Sản phẩm Olive Young',
-            nameKr: decoded.nameKr || '',
+            goodsNo: goodsNo,
+            name: decoded.name || decoded.n || 'Sản phẩm Olive Young',
+            nameKr: decoded.nameKr || decoded.nk || '',
             foreignPrice: parsedPrice,
-            productImage: decoded.image || (decoded.images && decoded.images[0]) || '',
-            images: decoded.images || [decoded.image || ''],
+            price: parsedPrice,
+            productImage: mainImg,
+            images: albumImgs,
             photoReviews: decoded.photoReviews || [],
-            brand: decoded.brand || 'Korea Brand',
+            brand: decoded.brand || decoded.b || 'Korea Brand',
             brandKr: decoded.brandKr || '',
-            category: decoded.category || 'skincare',
+            category: decoded.category || decoded.cat || 'skincare',
             options: decoded.options || '1 Hộp',
             origin: 'Store Olive Young Korea',
-            description: decoded.description || 'Sản phẩm chính hãng nội địa Hàn Quốc.',
-            usage: decoded.usage || 'Xem chi tiết trên bao bì.',
+            description: decoded.description || decoded.d || 'Sản phẩm chính hãng nội địa Hàn Quốc.',
+            usage: decoded.usage || decoded.u || 'Xem chi tiết trên bao bì.',
             rating: decoded.rating || 4.9,
             reviewsCount: (decoded.photoReviews && decoded.photoReviews.length) || decoded.reviewsCount || 120,
-            productUrl: decoded.url || '',
+            productUrl: decoded.url || decoded.u || '',
             scrapedAt: new Date().toISOString()
           };
 

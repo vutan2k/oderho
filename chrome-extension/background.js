@@ -50,6 +50,36 @@ const parseDomPrice = (priceStr) => {
   return Math.min(...validPrices);
 };
 
+// Hàm gửi dữ liệu sản phẩm lên Admin tab với URL compact nhỏ dưới 1000 ký tự (Tránh 100% lỗi HTTP 414 URI Too Long)
+const sendProductToAdminTab = (goodsNo, name, nameKr, price, mainImage, albumImages, brand, category, description, usage, url) => {
+  const compactPayload = {
+    g: goodsNo || '',
+    n: String(name || '').slice(0, 100),
+    nk: String(nameKr || '').slice(0, 100),
+    fp: price || 0,
+    p: price || 0,
+    img: mainImage || '',
+    imgs: (albumImages || []).slice(0, 3),
+    b: String(brand || 'Olive Young').slice(0, 35),
+    cat: category || 'skincare',
+    d: String(description || 'Sản phẩm chính hãng Hàn Quốc').slice(0, 120),
+    u: String(usage || 'Thoa nhẹ nhàng').slice(0, 80),
+    url: url || ''
+  };
+
+  const jsonStr = JSON.stringify(compactPayload);
+  const encodedData = btoa(encodeURIComponent(jsonStr));
+  const adminUrl = `https://tavyorder.web.app/admin/dashboard?autoFill=${encodedData}`;
+
+  chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
+    setTimeout(() => {
+      if (adminTab && adminTab.id) {
+        try { chrome.tabs.remove(adminTab.id); } catch {}
+      }
+    }, 3500);
+  });
+};
+
 // Tải dữ liệu thật qua Jina Reader (Vượt 100% WAF Olive Young)
 const fetchOliveYoungPageData = async (goodsNo, itemUrl) => {
   const targetUrl = itemUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${goodsNo}`;
@@ -256,39 +286,21 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
 
         const cleanPrice = parsedAiPrice > 0 ? parsedAiPrice : (domPrice || 26800);
 
-        const albumImages = (pageData.images && pageData.images.length > 0) ? pageData.images : (pageData.image ? [pageData.image] : []);
-        const photoReviews = pageData.photoReviews || [];
         const mainImage = albumImages[0] || pageData.image || '';
 
-        const productData = {
-          goodsNo: item.goodsNo,
-          name: viName,
-          nameKr: krName,
-          foreignPrice: cleanPrice,
-          price: cleanPrice,
-          productImage: mainImage,
-          images: albumImages,
-          photoReviews: photoReviews,
-          brand: aiData.brand || pageData.brandText || 'Olive Young Korea',
-          brandKr: aiData.brandKr || pageData.brandText || '올리브영',
-          url: item.url,
-          category: aiData.category || 'skincare',
-          description: aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp chính hãng. Tên gốc: ${krName}`,
-          usage: aiData.usage || 'Thoa nhẹ nhàng lên vùng da cần chăm sóc.',
-          rating: 4.9,
-          reviewsCount: photoReviews.length || 180
-        };
-
-        const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));
-        const adminUrl = `https://tavyorder.web.app/admin/dashboard?autoFill=${encodedData}`;
-
-        chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
-          setTimeout(() => {
-            if (adminTab && adminTab.id) {
-              try { chrome.tabs.remove(adminTab.id); } catch {}
-            }
-          }, 3500);
-        });
+        sendProductToAdminTab(
+          item.goodsNo,
+          viName,
+          krName,
+          cleanPrice,
+          mainImage,
+          albumImages,
+          aiData.brand || pageData.brandText || 'Olive Young',
+          aiData.category || 'skincare',
+          aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp. Tên gốc: ${krName}`,
+          aiData.usage || 'Thoa nhẹ nhàng lên vùng da cần chăm sóc.',
+          item.url
+        );
 
         scrapedGoodsList.add(item.goodsNo);
         await chrome.storage.local.set({ scrapedGoodsList: Array.from(scrapedGoodsList) });
@@ -415,34 +427,23 @@ Chỉ trả về JSON thuần hợp lệ, KHÔNG markdown.`;
         const productData = {
           goodsNo: goodsNo,
           name: viName,
-          nameKr: krName,
-          foreignPrice: cleanPrice,
-          price: cleanPrice,
-          productImage: mainImage,
-          images: albumImages,
-          photoReviews: photoReviews,
-          brand: aiData.brand || pageData?.brandText || 'Olive Young Korea',
-          brandKr: aiData.brandKr || pageData?.brandText || '올리브영',
-          url: itemUrl,
-          category: aiData.category || 'skincare',
-          description: aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp chính hãng. Tên gốc: ${krName}`,
-          usage: aiData.usage || 'Thoa nhẹ nhàng lên vùng da cần chăm sóc.',
-          rating: 4.9,
-          reviewsCount: photoReviews.length || 180
-        };
+        const mainImage = albumImages[0] || pageData?.image || '';
 
-        const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));
-        const adminUrl = `https://tavyorder.web.app/admin/dashboard?autoFill=${encodedData}`;
+        sendProductToAdminTab(
+          goodsNo,
+          viName,
+          krName,
+          cleanPrice,
+          mainImage,
+          albumImages,
+          aiData.brand || pageData?.brandText || 'Olive Young',
+          aiData.category || 'skincare',
+          aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp. Tên gốc: ${krName}`,
+          aiData.usage || 'Thoa nhẹ nhàng lên vùng da cần chăm sóc.',
+          itemUrl
+        );
 
-        chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
-          setTimeout(() => {
-            if (adminTab && adminTab.id) {
-              try { chrome.tabs.remove(adminTab.id); } catch {}
-            }
-          }, 3500);
-        });
-
-        sendResponse({ success: true, name: productData.name });
+        sendResponse({ success: true, name: viName });
       } catch (err) {
         console.error("Lỗi AI Auto Scrape:", err);
         sendResponse({ success: false, error: err.message });
@@ -548,36 +549,24 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
           finalReviews = merged.slice(6);
         }
 
-        const productData = {
-          name: vietnameseName,
-          nameKr: aiData.nameKr || titleRaw,
-          foreignPrice: finalPrice,
-          price: finalPrice,
-          productImage: rawData.image || finalAlbum[0] || '',
-          images: finalAlbum,
-          photoReviews: finalReviews,
-          brand: brandFallback,
-          brandKr: aiData.brandKr || brandFallback,
-          url: rawData.url,
-          category: aiData.category || 'skincare',
-          description: aiData.description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${titleRaw}`,
-          usage: aiData.usage || 'Xem chi tiết trên bao bì sản phẩm.',
-          rating: aiData.rating || 4.9,
-          reviewsCount: finalReviews.length || 180
-        };
+        const mainImg = rawData.image || finalAlbum[0] || '';
+        const goodsNo = (rawData.url || '').match(/goodsNo=([A-Za-z0-9_]+)/)?.[1] || '';
 
-        const encodedData = btoa(encodeURIComponent(JSON.stringify(productData)));
-        const adminUrl = `https://tavyorder.web.app/admin/dashboard?autoFill=${encodedData}`;
+        sendProductToAdminTab(
+          goodsNo,
+          vietnameseName,
+          aiData.nameKr || titleRaw,
+          finalPrice,
+          mainImg,
+          finalAlbum,
+          brandFallback,
+          aiData.category || 'skincare',
+          aiData.description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${titleRaw}`,
+          aiData.usage || 'Xem chi tiết trên bao bì sản phẩm.',
+          rawData.url
+        );
 
-        chrome.tabs.create({ url: adminUrl, active: false }, (adminTab) => {
-          setTimeout(() => {
-            if (adminTab && adminTab.id) {
-              try { chrome.tabs.remove(adminTab.id); } catch {}
-            }
-          }, 3500);
-        });
-
-        sendResponse({ success: true, name: productData.name });
+        sendResponse({ success: true, name: vietnameseName });
 
       } catch (err) {
         console.error("Lỗi AI Service Worker:", err);
