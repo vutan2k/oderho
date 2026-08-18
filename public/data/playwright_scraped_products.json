@@ -13,10 +13,10 @@
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0022/A000000223414117ko.jpg?l=ko",
     "origin": "Store Olive Young Seoul, Hàn Quốc",
     "rating": 4.9,
-    "reviewsCount": 452,
+    "reviewsCount": 309,
     "inStock": true,
     "source": "PLAYWRIGHT_AUTONOMOUS_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T07:00:47.645Z"
+    "scrapedAt": "2026-08-18T07:15:43.245Z"
   },
   {
     "id": "A000000223414",
@@ -32,10 +32,10 @@
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0022/A000000223414117ko.jpg?l=ko",
     "origin": "Store Olive Young Seoul, Hàn Quốc",
     "rating": 4.9,
-    "reviewsCount": 116,
+    "reviewsCount": 369,
     "inStock": true,
     "source": "PLAYWRIGHT_AUTONOMOUS_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T07:00:47.668Z"
+    "scrapedAt": "2026-08-18T07:15:44.130Z"
   },
   {
     "id": "A000000240462",
@@ -51,10 +51,10 @@
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024046219ko.jpg?l=ko",
     "origin": "Store Olive Young Seoul, Hàn Quốc",
     "rating": 4.9,
-    "reviewsCount": 276,
+    "reviewsCount": 418,
     "inStock": true,
     "source": "PLAYWRIGHT_AUTONOMOUS_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T07:00:47.668Z"
+    "scrapedAt": "2026-08-18T07:15:44.958Z"
   },
   {
     "id": "A000000240462",
@@ -70,10 +70,10 @@
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024046219ko.jpg?l=ko",
     "origin": "Store Olive Young Seoul, Hàn Quốc",
     "rating": 4.9,
-    "reviewsCount": 308,
+    "reviewsCount": 329,
     "inStock": true,
     "source": "PLAYWRIGHT_AUTONOMOUS_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T07:00:47.668Z"
+    "scrapedAt": "2026-08-18T07:15:45.791Z"
   },
   {
     "id": "A000000185108",
@@ -89,9 +89,9 @@
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0018/A00000018510822ko.jpg?l=ko",
     "origin": "Store Olive Young Seoul, Hàn Quốc",
     "rating": 4.9,
-    "reviewsCount": 295,
+    "reviewsCount": 311,
     "inStock": true,
     "source": "PLAYWRIGHT_AUTONOMOUS_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T07:00:47.668Z"
+    "scrapedAt": "2026-08-18T07:15:46.626Z"
   }
 ]

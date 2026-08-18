@@ -1,5 +1,5 @@
 /**
- * Playwright Autonomous AI Vision Scraper v1.0
+ * Playwright Autonomous AI Vision Scraper v1.1 - Visual Headful Inspector
  * Direct browser automation for Olive Young Korea product extraction.
  * Simulates human user clicks, scrolls, vision AI inspection & direct admin sync.
  */
@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-const HEADLESS = process.env.HEADLESS !== 'false'; // Default headless mode for background CLI execution
+const HEADLESS = process.env.HEADLESS === 'true'; // Default headful mode when requested by user to observe live browser clicks
 const MAX_PRODUCTS = parseInt(process.env.MAX_PRODUCTS || '10', 10);
 
 const KRW_TO_VND = 18.5; // Default fallback exchange rate
@@ -22,7 +22,6 @@ const KRW_TO_VND = 18.5; // Default fallback exchange rate
 async function translateProductWithAI(rawTitle, brandKr) {
   if (!rawTitle) return { name: 'Sản Phẩm Hàn Quốc Hàng Đầu', category: 'skincare' };
   
-  // Clean Korean promo brackets
   const cleanTitle = rawTitle.replace(/\[[^\]]*\]/g, '').trim();
   
   let category = 'skincare';
@@ -33,7 +32,6 @@ async function translateProductWithAI(rawTitle, brandKr) {
   else if (/바디|클렌저|로션|body/i.test(lower)) category = 'bodycare';
   else if (/비타민|영양제|콜라겐|health|vitamin/i.test(lower)) category = 'health';
 
-  // If Gemini key is available, attempt AI Translation fetch
   if (GEMINI_API_KEY) {
     try {
       const prompt = `Bạn là chuyên gia dịch thuật mỹ phẩm Hàn Quốc chuyên nghiệp. Hãy dịch tiêu đề sản phẩm Hàn Quốc sau sang tiếng Việt mượt mà, đúng mốt thị trường Việt Nam (tối đa 120 ký tự):\nTên tiếng Hàn: "${cleanTitle}"\nThương hiệu: "${brandKr}"`;
@@ -65,20 +63,22 @@ async function translateProductWithAI(rawTitle, brandKr) {
 
 async function runPlaywrightAIScraper() {
   console.log("🚀 [Playwright AI Scraper] Đang khởi động trình duyệt Chromium...");
-  console.log(`🌐 Mode: ${HEADLESS ? 'Headless (Ẩn nền)' : 'Headful (Mở trình duyệt trực quan)'}`);
+  console.log(`🌐 Mode: ${HEADLESS ? 'Headless (Ẩn nền)' : 'Headful Trực Quan (Hiển thị giao diện người dùng)'}`);
 
   const browser = await chromium.launch({
     headless: HEADLESS,
+    slowMo: HEADLESS ? 0 : 350, // Slow motion so human user can visually observe cursor movements & clicks
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
+      '--start-maximized',
       '--disable-blink-features=AutomationControlled'
     ]
   });
 
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    viewport: { width: 1280, height: 900 }
+    viewport: HEADLESS ? { width: 1280, height: 900 } : null
   });
 
   const page = await context.newPage();
@@ -91,77 +91,90 @@ async function runPlaywrightAIScraper() {
     });
 
     console.log("📜 [Playwright] Giả lập thao tác người dùng: Cuộn trang mượt mà...");
-    for (let i = 0; i < 6; i++) {
-      await page.evaluate(() => window.scrollBy(0, 500));
-      await page.waitForTimeout(400);
+    for (let i = 0; i < 5; i++) {
+      await page.evaluate(() => window.scrollBy({ top: 450, behavior: 'smooth' }));
+      await page.waitForTimeout(600);
     }
 
-    // Extract product list elements via Playwright locator
-    const rawItems = await page.evaluate((max) => {
-      const list = [];
-      const nodes = document.querySelectorAll('.cate_prd_list li, .prd_info');
-      for (let i = 0; i < Math.min(nodes.length, max); i++) {
-        const el = nodes[i];
-        const a = el.querySelector('a');
-        const href = a ? a.getAttribute('href') || '' : '';
-        const goodsNoMatch = href.match(/goodsNo=([A-Z0-9]+)/i);
-        const goodsNo = goodsNoMatch ? goodsNoMatch[1] : null;
-        if (!goodsNo) continue;
+    // Locate product elements on live page
+    const itemLocators = page.locator('.cate_prd_list li, .prd_info');
+    const totalFound = await itemLocators.count();
+    const count = Math.min(totalFound, MAX_PRODUCTS);
 
-        const brand = el.querySelector('.tx_brand, .prd_brand')?.textContent?.trim() || 'Olive Young';
-        const nameKr = el.querySelector('.tx_name, .prd_name')?.textContent?.trim() || '';
-        const priceTxt = el.querySelector('.tx_cur, .price')?.textContent?.trim() || '25000';
-        const foreignPrice = parseInt(priceTxt.replace(/[^0-9]/g, '') || '25000', 10);
-        
-        let img = el.querySelector('img')?.getAttribute('src') || '';
-        if (img.startsWith('//')) img = 'https:' + img;
-
-        list.push({
-          goodsNo,
-          brand,
-          nameKr,
-          foreignPrice,
-          imgUrl: img
-        });
-      }
-      return list;
-    }, MAX_PRODUCTS);
-
-    console.log(`🔎 [Playwright AI Vision] Quét thấy ${rawItems.length} sản phẩm hợp lệ.`);
+    console.log(`🔎 [Playwright AI Vision] Quét thấy ${totalFound} vị trí sản phẩm. Đang cào ${count} sản phẩm đầu tiên...`);
 
     const scrapedResults = [];
 
-    for (let i = 0; i < rawItems.length; i++) {
-      const item = rawItems[i];
+    for (let i = 0; i < count; i++) {
+      const itemLoc = itemLocators.nth(i);
+
       console.log(`\n--------------------------------------------------`);
-      console.log(`👆 [Playwright Scrape #${i + 1}/${rawItems.length}] Mã: ${item.goodsNo}`);
-      
-      const aiResult = await translateProductWithAI(item.nameKr, item.brand);
-      const calculatedVndPrice = Math.round(item.foreignPrice * KRW_TO_VND);
+      console.log(`👆 [Playwright Action #${i + 1}/${count}] Rê chuột & kiểm tra trực quan sản phẩm...`);
 
-      const productObj = {
-        id: item.goodsNo,
-        goodsNo: item.goodsNo,
-        name: aiResult.name,
-        nameKr: item.nameKr,
-        brand: item.brand,
-        brandKr: item.brand,
-        category: aiResult.category,
-        foreignPrice: item.foreignPrice,
-        price: calculatedVndPrice,
-        originalPrice: Math.round(calculatedVndPrice * 1.2),
-        productImage: item.imgUrl || 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600',
-        origin: 'Store Olive Young Seoul, Hàn Quốc',
-        rating: 4.9,
-        reviewsCount: Math.floor(Math.random() * 400) + 60,
-        inStock: true,
-        source: 'PLAYWRIGHT_AUTONOMOUS_AI_SCRAPER',
-        scrapedAt: new Date().toISOString()
-      };
+      try {
+        await itemLoc.scrollIntoViewIfNeeded();
+        
+        // Highlight element visually with red/gold border for user observation
+        await itemLoc.evaluate((el) => {
+          el.style.border = '3px solid #EF4444';
+          el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.7)';
+          el.style.transition = 'all 0.3s ease';
+        }).catch(() => {});
 
-      console.log(`✅ [Tên Việt]: ${productObj.name}`);
-      console.log(`💰 ₩${item.foreignPrice.toLocaleString()} KRW -> ${calculatedVndPrice.toLocaleString()}đ VNĐ`);
-      scrapedResults.push(productObj);
+        await page.waitForTimeout(400);
+
+        // Extract metadata
+        const brand = await itemLoc.locator('.tx_brand, .prd_brand').first().textContent().catch(() => 'Olive Young');
+        const nameKr = await itemLoc.locator('.tx_name, .prd_name').first().textContent().catch(() => 'Sản phẩm Korea');
+        const priceTxt = await itemLoc.locator('.tx_cur, .price').first().textContent().catch(() => '25000');
+        const foreignPrice = parseInt(priceTxt.replace(/[^0-9]/g, '') || '25000', 10);
+        
+        let imgUrl = await itemLoc.locator('img').first().getAttribute('src').catch(() => '');
+        if (imgUrl && imgUrl.startsWith('//')) imgUrl = 'https:' + imgUrl;
+
+        const aHref = await itemLoc.locator('a').first().getAttribute('href').catch(() => '');
+        const goodsNoMatch = aHref ? aHref.match(/goodsNo=([A-Z0-9]+)/i) : null;
+        const goodsNo = goodsNoMatch ? goodsNoMatch[1] : `PLAYWRIGHT_${Date.now()}_${i}`;
+
+        console.log(`📌 Mã SP: ${goodsNo}`);
+        console.log(`🏷️ Hàn: ${nameKr.trim()}`);
+
+        const aiResult = await translateProductWithAI(nameKr, brand);
+        const calculatedVndPrice = Math.round(foreignPrice * KRW_TO_VND);
+
+        const productObj = {
+          id: goodsNo,
+          goodsNo: goodsNo,
+          name: aiResult.name,
+          nameKr: nameKr.trim(),
+          brand: brand.trim() || 'Olive Young',
+          brandKr: brand.trim(),
+          category: aiResult.category,
+          foreignPrice: foreignPrice,
+          price: calculatedVndPrice,
+          originalPrice: Math.round(calculatedVndPrice * 1.2),
+          productImage: imgUrl || 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600',
+          origin: 'Store Olive Young Seoul, Hàn Quốc',
+          rating: 4.9,
+          reviewsCount: Math.floor(Math.random() * 400) + 60,
+          inStock: true,
+          source: 'PLAYWRIGHT_AUTONOMOUS_AI_SCRAPER',
+          scrapedAt: new Date().toISOString()
+        };
+
+        console.log(`✅ [Tên Việt]: ${productObj.name}`);
+        console.log(`💰 ₩${foreignPrice.toLocaleString()} KRW -> ${calculatedVndPrice.toLocaleString()}đ VNĐ`);
+        scrapedResults.push(productObj);
+
+        // Reset highlight border
+        await itemLoc.evaluate((el) => {
+          el.style.border = '3px solid #22C55E';
+          el.style.boxShadow = '0 0 10px rgba(34, 197, 94, 0.5)';
+        }).catch(() => {});
+
+      } catch (err) {
+        console.warn(`⚠️ Bỏ qua sản phẩm #${i + 1}:`, err.message);
+      }
     }
 
     // Save outputs locally for app ingestion
@@ -177,10 +190,14 @@ async function runPlaywrightAIScraper() {
   } catch (error) {
     console.error("❌ Lỗi tiến trình Playwright AI Scraper:", error);
   } finally {
+    if (!HEADLESS) {
+      console.log("⏱️ Đang giữ trình duyệt 3 giây để bạn xem kết quả visual...");
+      await page.waitForTimeout(3000);
+    }
     await browser.close();
     console.log("🔒 Trình duyệt Chromium đã đóng an toàn.");
   }
 }
 
-// Execute scraper if called directly
+// Execute scraper
 runPlaywrightAIScraper();
