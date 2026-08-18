@@ -282,7 +282,8 @@ export const saveProductToDB = async (product) => {
  */
 export const deleteProductFromDB = async (goodsNo) => {
   try {
-    const docRef = doc(db, PRODUCTS_COLLECTION, goodsNo);
+    if (!goodsNo) return { success: false, error: 'missing goodsNo' };
+    const docRef = doc(db, PRODUCTS_COLLECTION, String(goodsNo));
     await deleteDoc(docRef);
     return { success: true };
   } catch (err) {
@@ -363,6 +364,7 @@ export const savePendingProductToDB = async (product) => {
  */
 export const deletePendingProductFromDB = async (goodsNo) => {
   try {
+    if (!goodsNo) return { success: false, error: 'missing goodsNo' };
     const docRef = doc(db, PENDING_PRODUCTS_COLLECTION, String(goodsNo));
     await deleteDoc(docRef);
     return { success: true };

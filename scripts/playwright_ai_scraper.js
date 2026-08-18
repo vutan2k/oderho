@@ -265,30 +265,46 @@ async function runPlaywrightAIScraper() {
         await page.evaluate(() => window.scrollBy({ top: 500, behavior: 'smooth' }));
         await page.waitForTimeout(800);
 
-        // Extract deep product detail page data siêu tốc với DOM evaluation (Zero Timeout Wait)
-        const detailData = await page.evaluate(() => {
-          const brandEl = document.querySelector('.prd_brand, .brand_name, #moveBrandShop');
-          const nameEl = document.querySelector('.prd_name, #goodsNm, .goods_name');
-          const priceEl = document.querySelector('#goodsSatPrice, .price .prd_price, .price strong');
-          const mainImgEl = document.querySelector('#mainImg, #goodsImg img, .prd_detail_info img');
-          const descEl = document.querySelector('#artcDesc, #prdDetail, .detail_info_area');
-          const scoreEl = document.querySelector('.graph_score .num, #evalScore, .review_point');
+          // Extract deep product detail page data siêu tốc với DOM evaluation (Zero Timeout Wait)
+          const detailData = await page.evaluate(() => {
+            let nameKr = 'Sản phẩm Korea';
+            if (document.title) {
+              nameKr = document.title.split('|')[0].trim();
+            }
 
-          const thumbs = Array.from(document.querySelectorAll('#thumbs img, .prd_thumb img, .thumb_list img, .goods_thumb img'))
-            .map(img => img.getAttribute('src') || '')
-            .filter(Boolean)
-            .slice(0, 5);
+            // Find all elements containing '원', grab the first one that has a number
+            const elementsWithWon = Array.from(document.querySelectorAll('*'))
+              .filter(el => el.children.length === 0 && el.textContent.includes('원'));
+            let priceTxt = '25000';
+            for (const el of elementsWithWon) {
+              const match = el.textContent.match(/[\d,]+원/);
+              if (match) {
+                priceTxt = match[0];
+                break;
+              }
+            }
 
-          return {
-            brand: brandEl ? brandEl.textContent.trim() : 'Olive Young',
-            nameKr: nameEl ? nameEl.textContent.trim() : 'Sản phẩm Korea',
-            priceTxt: priceEl ? priceEl.textContent.trim() : '25000',
-            mainImg: mainImgEl ? (mainImgEl.getAttribute('src') || '') : '',
-            albumImgs: thumbs,
-            descText: descEl ? descEl.textContent.trim() : '',
-            reviewScoreTxt: scoreEl ? scoreEl.textContent.trim() : '4.9'
-          };
-        }).catch(() => ({
+            const allImgs = Array.from(document.querySelectorAll('img'))
+              .map(img => img.getAttribute('data-src') || img.src || '')
+              .filter(src => src.includes('cf-goods') || src.includes('gdasEditor') || src.includes('item') || src.includes('crop') || src.includes('thumbnails'));
+            
+            // De-dupe and clean up URLs
+            const cleanImgs = [...new Set(allImgs)].map(src => {
+               if (src.startsWith('//')) return 'https:' + src;
+               if (src.startsWith('/')) return 'https://www.oliveyoung.co.kr' + src;
+               return src;
+            });
+
+            return {
+              brand: 'Olive Young',
+              nameKr: nameKr,
+              priceTxt: priceTxt,
+              mainImg: cleanImgs.length > 0 ? cleanImgs[0] : '',
+              albumImgs: cleanImgs.slice(0, 30),
+              descText: '',
+              reviewScoreTxt: '4.9'
+            };
+          }).catch(() => ({
           brand: 'Olive Young',
           nameKr: 'Sản phẩm Korea',
           priceTxt: '25000',
