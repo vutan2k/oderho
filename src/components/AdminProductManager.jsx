@@ -596,11 +596,11 @@ export default function AdminProductManager() {
                   <tr>
                     <th style={{ ...styles.th, width: '40px', textAlign: 'center' }}><input type="checkbox" checked={filtered.length > 0 && selectedProducts.length === filtered.length} onChange={toggleSelectAll} style={{ cursor: 'pointer' }} /></th>
                     <th style={{ ...styles.th, width: '105px', textAlign: 'center' }}>Ảnh (HD)</th>
-                    <th style={{ ...styles.th, width: '110px' }}>Mã SP</th>
+                    <th style={{ ...styles.th, width: '130px', textAlign: 'center' }}>Link Olive Young</th>
                     <th style={styles.th}>Tên sản phẩm (Việt / Hàn)</th>
-                    <th style={{ ...styles.th, width: '130px' }}>Thương hiệu</th>
-                    <th style={{ ...styles.th, width: '110px' }}>Phân loại</th>
-                    <th style={{ ...styles.th, width: '110px', textAlign: 'right' }}>Giá (₩)</th>
+                    <th style={{ ...styles.th, width: '140px' }}>Thương hiệu</th>
+                    <th style={{ ...styles.th, width: '145px' }}>Phân loại</th>
+                    <th style={{ ...styles.th, width: '130px', textAlign: 'right' }}>Giá (₩)</th>
                     <th style={{ ...styles.th, width: '90px', textAlign: 'center' }}>Thao tác</th>
                   </tr>
                 </thead>
@@ -628,20 +628,118 @@ export default function AdminProductManager() {
                             onMouseOut={e => { e.currentTarget.style.transform = 'scale(1.0)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)'; }}
                           />
                         </td>
-                        <td style={{ ...styles.td, fontFamily: 'monospace' }}>{prod.goodsNo}</td>
+                        <td style={{ ...styles.td, width: '130px', textAlign: 'center' }}>
+                          <a 
+                            href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            style={{ 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: '4px', 
+                              padding: '5px 9px', 
+                              borderRadius: '6px', 
+                              backgroundColor: '#EFF6FF', 
+                              color: '#2563EB', 
+                              fontWeight: 700, 
+                              fontSize: '0.78rem',
+                              textDecoration: 'none',
+                              border: '1px solid #BFDBFE'
+                            }}
+                            title="Bấm để mở trang sản phẩm gốc trên Olive Young"
+                          >
+                            <span>Olive Young</span>
+                            <Globe size={13} />
+                          </a>
+                          <div style={{ fontSize: '0.7rem', color: '#9CA3AF', fontFamily: 'monospace', marginTop: '3px' }}>
+                            {prod.goodsNo}
+                          </div>
+                        </td>
                         <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEdit(prod)}>
                           <div style={{ fontWeight: 600, color: '#111827' }}>{prod.name}</div>
                           {prod.nameKr && <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
                         </td>
-                        <td style={styles.td}>
-                          <div>{prod.brand}</div>
+                        <td style={{ ...styles.td, width: '140px' }}>
+                          <input 
+                            type="text" 
+                            defaultValue={prod.brand || ''} 
+                            onBlur={(e) => {
+                              const val = e.target.value.trim();
+                              if (val !== prod.brand) {
+                                const updated = { ...prod, brand: val, brandKr: val };
+                                updateProduct(prod.goodsNo, updated);
+                                if (showToast) showToast(`Đã sửa hãng: ${val}`, 'success');
+                              }
+                            }}
+                            style={{ 
+                              width: '100%', 
+                              padding: '4px 8px', 
+                              borderRadius: '6px', 
+                              border: '1px solid #D1D5DB', 
+                              fontSize: '0.82rem',
+                              fontWeight: 600,
+                              color: '#1F2937',
+                              backgroundColor: '#FAFAFA'
+                            }}
+                            title="Nhấp để chỉnh sửa nhanh thương hiệu"
+                          />
                         </td>
-                        <td style={styles.td}>
-                          <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
-                            {CATEGORIES.find(c => c.value === prod.category)?.label || prod.category || 'Skincare'}
-                          </span>
+                        <td style={{ ...styles.td, width: '145px' }}>
+                          <select 
+                            value={prod.category || 'skincare'} 
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const updated = { ...prod, category: val };
+                              updateProduct(prod.goodsNo, updated);
+                              if (showToast) showToast('Đã đổi phân loại!', 'success');
+                            }}
+                            style={{ 
+                              width: '100%', 
+                              padding: '4px 6px', 
+                              borderRadius: '6px', 
+                              border: '1px solid #C7D2FE', 
+                              backgroundColor: '#EEF2FF', 
+                              color: '#3730A3', 
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                            title="Nhấp để đổi nhanh danh mục"
+                          >
+                            {CATEGORIES.map(c => (
+                              <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                          </select>
                         </td>
-                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600 }}>₩{(prod.foreignPrice||0).toLocaleString()}</td>
+                        <td style={{ ...styles.td, width: '130px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6B7280' }}>₩</span>
+                            <input 
+                              type="number" 
+                              defaultValue={prod.foreignPrice || prod.price || 0} 
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value, 10) || 0;
+                                if (val !== prod.foreignPrice) {
+                                  const updated = { ...prod, foreignPrice: val, price: val };
+                                  updateProduct(prod.goodsNo, updated);
+                                  if (showToast) showToast(`Đã sửa giá: ₩${val.toLocaleString()}`, 'success');
+                                }
+                              }}
+                              style={{ 
+                                width: '85px', 
+                                padding: '4px 6px', 
+                                borderRadius: '6px', 
+                                border: '1px solid #D1D5DB', 
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#111827',
+                                textAlign: 'right',
+                                backgroundColor: '#FAFAFA'
+                              }}
+                              title="Nhấp để sửa nhanh giá Won"
+                            />
+                          </div>
+                        </td>
                         <td style={{ ...styles.td, textAlign: 'center' }}>
                           <button onClick={() => openEdit(prod)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563EB', padding: '4px' }}>Sửa</button>
                           <button onClick={() => setDeleteConfirm(prod.goodsNo)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: '4px', marginLeft: '6px' }}>Xóa</button>
@@ -681,11 +779,11 @@ export default function AdminProductManager() {
                   <tr>
                     <th style={{ ...styles.th, width: '40px', textAlign: 'center' }}><input type="checkbox" checked={pendingProducts?.length > 0 && selectedPending.length === pendingProducts.length} onChange={toggleSelectAllPending} style={{ cursor: 'pointer' }} /></th>
                     <th style={{ ...styles.th, width: '105px', textAlign: 'center' }}>Ảnh (HD)</th>
-                    <th style={{ ...styles.th, width: '110px' }}>Mã SP</th>
+                    <th style={{ ...styles.th, width: '130px', textAlign: 'center' }}>Link Olive Young</th>
                     <th style={styles.th}>Tên sản phẩm (Việt / Hàn)</th>
-                    <th style={{ ...styles.th, width: '130px' }}>Thương hiệu</th>
-                    <th style={{ ...styles.th, width: '110px' }}>Phân loại</th>
-                    <th style={{ ...styles.th, width: '110px', textAlign: 'right' }}>Giá (₩)</th>
+                    <th style={{ ...styles.th, width: '140px' }}>Thương hiệu</th>
+                    <th style={{ ...styles.th, width: '145px' }}>Phân loại</th>
+                    <th style={{ ...styles.th, width: '130px', textAlign: 'right' }}>Giá (₩)</th>
                     <th style={{ ...styles.th, width: '200px', textAlign: 'center' }}>Thao tác</th>
                   </tr>
                 </thead>
@@ -713,20 +811,118 @@ export default function AdminProductManager() {
                             onMouseOut={e => { e.currentTarget.style.transform = 'scale(1.0)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)'; }}
                           />
                         </td>
-                        <td style={{ ...styles.td, fontFamily: 'monospace' }}>{prod.goodsNo}</td>
+                        <td style={{ ...styles.td, width: '130px', textAlign: 'center' }}>
+                          <a 
+                            href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            style={{ 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: '4px', 
+                              padding: '5px 9px', 
+                              borderRadius: '6px', 
+                              backgroundColor: '#EFF6FF', 
+                              color: '#2563EB', 
+                              fontWeight: 700, 
+                              fontSize: '0.78rem',
+                              textDecoration: 'none',
+                              border: '1px solid #BFDBFE'
+                            }}
+                            title="Bấm để mở trang sản phẩm gốc trên Olive Young"
+                          >
+                            <span>Olive Young</span>
+                            <Globe size={13} />
+                          </a>
+                          <div style={{ fontSize: '0.7rem', color: '#9CA3AF', fontFamily: 'monospace', marginTop: '3px' }}>
+                            {prod.goodsNo}
+                          </div>
+                        </td>
                         <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEditPending(prod)}>
                           <div style={{ fontWeight: 600, color: '#111827' }}>{prod.name}</div>
                           {prod.nameKr && <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
                         </td>
-                        <td style={styles.td}>
-                          <div>{prod.brand}</div>
+                        <td style={{ ...styles.td, width: '140px' }}>
+                          <input 
+                            type="text" 
+                            defaultValue={prod.brand || ''} 
+                            onBlur={(e) => {
+                              const val = e.target.value.trim();
+                              if (val !== prod.brand) {
+                                const updated = { ...prod, brand: val, brandKr: val };
+                                updatePendingProduct(prod.goodsNo, updated);
+                                if (showToast) showToast(`Đã sửa hãng: ${val}`, 'success');
+                              }
+                            }}
+                            style={{ 
+                              width: '100%', 
+                              padding: '4px 8px', 
+                              borderRadius: '6px', 
+                              border: '1px solid #D1D5DB', 
+                              fontSize: '0.82rem',
+                              fontWeight: 600,
+                              color: '#1F2937',
+                              backgroundColor: '#FAFAFA'
+                            }}
+                            title="Nhấp để chỉnh sửa nhanh thương hiệu"
+                          />
                         </td>
-                        <td style={styles.td}>
-                          <span style={{ backgroundColor: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
-                            {CATEGORIES.find(c => c.value === prod.category)?.label || prod.category || 'Skincare'}
-                          </span>
+                        <td style={{ ...styles.td, width: '145px' }}>
+                          <select 
+                            value={prod.category || 'skincare'} 
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const updated = { ...prod, category: val };
+                              updatePendingProduct(prod.goodsNo, updated);
+                              if (showToast) showToast('Đã đổi phân loại!', 'success');
+                            }}
+                            style={{ 
+                              width: '100%', 
+                              padding: '4px 6px', 
+                              borderRadius: '6px', 
+                              border: '1px solid #C7D2FE', 
+                              backgroundColor: '#EEF2FF', 
+                              color: '#3730A3', 
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                            title="Nhấp để đổi nhanh danh mục"
+                          >
+                            {CATEGORIES.map(c => (
+                              <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                          </select>
                         </td>
-                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600 }}>₩{(prod.foreignPrice||0).toLocaleString()}</td>
+                        <td style={{ ...styles.td, width: '130px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6B7280' }}>₩</span>
+                            <input 
+                              type="number" 
+                              defaultValue={prod.foreignPrice || prod.price || 0} 
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value, 10) || 0;
+                                if (val !== prod.foreignPrice) {
+                                  const updated = { ...prod, foreignPrice: val, price: val };
+                                  updatePendingProduct(prod.goodsNo, updated);
+                                  if (showToast) showToast(`Đã sửa giá: ₩${val.toLocaleString()}`, 'success');
+                                }
+                              }}
+                              style={{ 
+                                width: '85px', 
+                                padding: '4px 6px', 
+                                borderRadius: '6px', 
+                                border: '1px solid #D1D5DB', 
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#111827',
+                                textAlign: 'right',
+                                backgroundColor: '#FAFAFA'
+                              }}
+                              title="Nhấp để sửa nhanh giá Won"
+                            />
+                          </div>
+                        </td>
                         <td style={{ ...styles.td, textAlign: 'center' }}>
                           <button onClick={() => openEditPending(prod)} style={{ background: '#2563EB', color: '#FFF', border: 'none', borderRadius: '4px', padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, marginRight: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                             <Edit3 size={12}/> Sửa
