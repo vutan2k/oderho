@@ -113,14 +113,18 @@ export const AppProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setAuthUser(user);
       if (user) {
-        const profileRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(profileRef);
-        if (snap.exists()) {
-          setProfile(snap.data());
-        } else {
-          const newProfile = { name: user.displayName || '', email: user.email, phone: '', address: '', addressBook: [] };
-          await setDoc(profileRef, newProfile);
-          setProfile(newProfile);
+        try {
+          const profileRef = doc(db, 'users', user.uid);
+          const snap = await getDoc(profileRef);
+          if (snap.exists()) {
+            setProfile(snap.data());
+          } else {
+            const newProfile = { name: user.displayName || '', email: user.email, phone: '', address: '', addressBook: [] };
+            await setDoc(profileRef, newProfile).catch(() => {});
+            setProfile(newProfile);
+          }
+        } catch (err) {
+          console.warn("Profile fetch permission warning:", err);
         }
       } else {
         setProfile(null);
