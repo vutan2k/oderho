@@ -172,11 +172,11 @@ export default function LoginPage() {
 
           <div style={{ marginBottom: '18px' }}>
             <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-dark)', marginBottom: '6px' }}>
-              Địa chỉ Email
+              Tài khoản / Email
             </label>
             <input
-              type="email"
-              placeholder="example@gmail.com"
+              type="text"
+              placeholder="Nhập tên tài khoản hoặc Email..."
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
