@@ -97,3 +97,25 @@ export const getStatusConfig = (statusKey) => {
     stepIndex: 0
   };
 };
+
+export const ORDER_STEPS = [
+  { key: 'pending', title: 'Chờ cọc', stepIndex: 0 },
+  { key: 'deposit_paid', title: 'Đã cọc 100%', stepIndex: 1 },
+  { key: 'purchased', title: 'Đang mua hộ', stepIndex: 2 },
+  { key: 'in_kr_warehouse', title: 'Kho Seoul', stepIndex: 3 },
+  { key: 'transit', title: 'Shipping Air', stepIndex: 4 },
+  { key: 'in_vn_warehouse', title: 'Kho VN', stepIndex: 5 },
+  { key: 'delivering', title: 'Đang giao', stepIndex: 6 },
+  { key: 'completed', title: 'Đã giao', stepIndex: 7 }
+];
+
+export const getOrderStepIndex = (orderObj) => {
+  if (!orderObj) return 0;
+  const statusKey = typeof orderObj === 'string' ? orderObj : orderObj.status;
+  const config = getStatusConfig(statusKey);
+  if (config && typeof config.stepIndex === 'number' && config.stepIndex >= 0) {
+    return config.stepIndex;
+  }
+  const isPaid = typeof orderObj === 'object' && (orderObj?.paymentStatus === 'paid' || orderObj?.paidAmountVnd > 0);
+  return isPaid ? 1 : 0;
+};

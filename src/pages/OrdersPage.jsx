@@ -6,6 +6,7 @@ import {
   Copy, Check, CreditCard, ExternalLink
 } from 'lucide-react';
 import ProductDetailModal from '../components/ProductDetailModal';
+import { ORDER_STEPS, getOrderStepIndex, getStatusConfig } from '../data/orderStatuses';
 
 export default function OrdersPage() {
   const { currentUser, orders, rates, oliveYoungCatalog, addToCart } = useContext(AppContext);
@@ -70,36 +71,8 @@ export default function OrdersPage() {
     setTimeout(() => setCopiedCode(''), 2500);
   };
 
-  // Các bước tiến trình thực tế (8 bước)
-  const steps = [
-    { key: 'pending', title: 'Chờ cọc' },
-    { key: 'deposit_paid', title: 'Đã cọc 100%' },
-    { key: 'purchased', title: 'Đang mua hộ' },
-    { key: 'in_kr_warehouse', title: 'Kho Seoul' },
-    { key: 'transit', title: 'Shipping' },
-    { key: 'in_vn_warehouse', title: 'Kho VN' },
-    { key: 'delivering', title: 'Đang giao' },
-    { key: 'completed', title: 'Đã giao' }
-  ];
-
-  const getStepIndex = (orderObj) => {
-    const st = typeof orderObj === 'string' ? orderObj : orderObj?.status;
-    const isPaid = typeof orderObj === 'object' && (orderObj?.paymentStatus === 'paid' || orderObj?.paidAmountVnd > 0);
-    
-    switch (st) {
-      case 'completed': return 7;
-      case 'delivering': return 6;
-      case 'in_vn_warehouse': return 5;
-      case 'transit': return 4;
-      case 'in_kr_warehouse': return 3;
-      case 'purchased': return 2;
-      case 'deposit_paid': return 1;
-      case 'quoted':
-      case 'pending':
-      default:
-        return isPaid ? 1 : 0;
-    }
-  };
+  const steps = ORDER_STEPS;
+  const getStepIndex = getOrderStepIndex;
 
   const statusTabs = [
     { id: 'all', label: 'Tất cả đơn' },
@@ -162,6 +135,7 @@ export default function OrdersPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {filteredOrders.map((order) => {
             const currentStepIdx = getStepIndex(order);
+            const statusCfg = getStatusConfig(order.status);
             const krwRate = rates?.KRW?.rate || 19.5;
             const isPaidOrAdvanced = order.paymentStatus === 'paid' || ['deposit_paid', 'purchased', 'in_kr_warehouse', 'transit', 'in_vn_warehouse', 'delivering', 'completed'].includes(order.status);
 
@@ -205,12 +179,12 @@ export default function OrdersPage() {
                   <div>
                     <span style={{
                       fontSize: '0.78rem',
-                      color: isPaidOrAdvanced ? '#059669' : '#D97706',
+                      color: isPaidOrAdvanced ? statusCfg.color || '#059669' : '#D97706',
                       fontWeight: 700,
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px'
                     }}>
-                      {isPaidOrAdvanced ? '✅ ĐÃ CỌC 100% (ĐÃ XÁC NHẬN)' : '⚡ GIỎ HÀNG CHỜ CỌC 100%'}
+                      {isPaidOrAdvanced ? `✅ ${statusCfg.label.toUpperCase()}` : '⚡ GIỎ HÀNG CHỜ CỌC 100%'}
                     </span>
                     <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--purple-primary)' }}>{order.id}</h4>
                   </div>
