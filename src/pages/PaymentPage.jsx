@@ -139,7 +139,11 @@ export default function PaymentPage() {
 
   const bankVn = BANK_ACCOUNTS.VN;
   const bankKr = BANK_ACCOUNTS.KR;
-  const qrVnUrl = getVndQRUrl(order.totalVnd || 0, orderId);
+  
+  const transferVnd = order.quote?.totalVnd || order.totalVnd || Math.round((order.foreignPrice || 0) * (rates?.KRW?.rate || 19.5) * (order.qty || 1));
+  const transferKrw = order.foreignPrice || (order.quote?.totalVnd ? Math.round(order.quote.totalVnd / (rates?.KRW?.rate || 19.5)) : 0);
+
+  const qrVnUrl = getVndQRUrl(transferVnd, orderId);
   const qrKrUrl = getKrwQRUrl(orderId);
   const isExpired = timeLeft <= 0;
   const isUrgent = timeLeft > 0 && timeLeft < 3 * 60 * 1000;
@@ -224,6 +228,15 @@ export default function PaymentPage() {
 
             <div>
               <div style={s.bankRow}>
+                <span style={s.bankLabel}>Số tiền cần chuyển</span>
+                <span style={{ ...s.bankValue, color: '#2563EB', fontSize: '1.05rem', fontWeight: 800 }}>
+                  {transferVnd.toLocaleString()} đ
+                  <button style={{ ...s.copyBtn, background: '#EFF6FF', color: '#2563EB', borderColor: '#BFDBFE', fontWeight: 700 }} onClick={() => copyToClipboard(transferVnd.toString(), 'amount_vn')}>
+                    <Copy size={12} /> {copied === 'amount_vn' ? 'Đã copy!' : 'Copy tiền'}
+                  </button>
+                </span>
+              </div>
+              <div style={s.bankRow}>
                 <span style={s.bankLabel}>Ngân hàng</span>
                 <span style={s.bankValue}>{bankVn.bankName}</span>
               </div>
@@ -274,6 +287,17 @@ export default function PaymentPage() {
             </div>
 
             <div>
+              {transferKrw > 0 && (
+                <div style={s.bankRow}>
+                  <span style={s.bankLabel}>Số tiền cần chuyển</span>
+                  <span style={{ ...s.bankValue, color: '#059669', fontSize: '1.05rem', fontWeight: 800 }}>
+                    ₩{transferKrw.toLocaleString()}
+                    <button style={{ ...s.copyBtn, background: '#ECFDF5', color: '#059669', borderColor: '#A7F3D0', fontWeight: 700 }} onClick={() => copyToClipboard(transferKrw.toString(), 'amount_kr')}>
+                      <Copy size={12} /> {copied === 'amount_kr' ? 'Đã copy!' : 'Copy tiền'}
+                    </button>
+                  </span>
+                </div>
+              )}
               <div style={s.bankRow}>
                 <span style={s.bankLabel}>Ngân hàng</span>
                 <span style={s.bankValue}>{bankKr.bankName}</span>
@@ -305,20 +329,9 @@ export default function PaymentPage() {
 
         </div>
 
-        {/* THÔNG BÁO TỰ ĐỘNG XÁC NHẬN QUA API NGÂN HÀNG (THAY THẾ UPLOAD BẰNG CHỨNG) */}
-        <div style={{ ...s.card, background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)', border: '1px solid #A7F3D0', textAlign: 'center', padding: '24px' }}>
-          <CheckCircle size={36} color="#10B981" style={{ margin: '0 auto 12px' }} />
-          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#065F46', marginBottom: '8px' }}>
-            ⚡ Hệ thống tự động xác nhận thanh toán qua API Ngân hàng
-          </h4>
-          <p style={{ color: '#047857', fontSize: '0.88rem', margin: 0, lineHeight: 1.5 }}>
-            Sau khi chuyển khoản thành công với đúng <strong>Nội dung CK: {orderId}</strong>, hệ thống Ngân hàng sẽ tự động đối soát và kích hoạt đơn hàng trong 1-3 phút mà không cần tải lên hóa đơn.
-          </p>
-        </div>
-
         {/* Nút quay lại */}
-        <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <Link to="/orders" style={{ color: 'var(--purple-primary)', fontWeight: 600, textDecoration: 'none' }}>
+        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+          <Link to="/orders" style={{ color: 'var(--purple-primary)', fontWeight: 600, textDecoration: 'none', fontSize: '0.95rem' }}>
             ← Quay lại danh sách đơn hàng
           </Link>
         </div>
