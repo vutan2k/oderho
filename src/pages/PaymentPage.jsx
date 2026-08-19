@@ -45,7 +45,7 @@ function formatTime(ms) {
 export default function PaymentPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { currentUser } = useContext(AppContext);
+  const { currentUser, rates } = useContext(AppContext);
 
   const [order, setOrder] = useState(null);
   const [timeLeft, setTimeLeft] = useState(PAYMENT_DEADLINE_MS);
@@ -139,9 +139,15 @@ export default function PaymentPage() {
 
   const bankVn = BANK_ACCOUNTS.VN;
   const bankKr = BANK_ACCOUNTS.KR;
+  const krwRate = rates?.KRW?.rate || 19.5;
   
-  const transferVnd = order.quote?.totalVnd || order.totalVnd || Math.round((order.foreignPrice || 0) * (rates?.KRW?.rate || 19.5) * (order.qty || 1));
-  const transferKrw = order.foreignPrice || (order.quote?.totalVnd ? Math.round(order.quote.totalVnd / (rates?.KRW?.rate || 19.5)) : 0);
+  const transferVnd = order.quote?.totalVnd || order.totalVnd || (Array.isArray(order.items) && order.items.length > 0
+    ? order.items.reduce((sum, i) => sum + (i.price || Math.round((i.foreignPrice || 0) * krwRate)) * (i.qty || 1), 0)
+    : Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1)));
+
+  const transferKrw = (Array.isArray(order.items) && order.items.length > 0)
+    ? order.items.reduce((sum, i) => sum + (i.foreignPrice || 0) * (i.qty || 1), 0)
+    : (order.foreignPrice || (order.quote?.totalVnd ? Math.round(order.quote.totalVnd / krwRate) : 0));
 
   const qrVnUrl = getVndQRUrl(transferVnd, orderId);
   const qrKrUrl = getKrwQRUrl(orderId);
