@@ -8,9 +8,9 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const [isLoginTab, setIsLoginTab] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState('tan123');
+  const [password, setPassword] = useState('tan123');
+  const [name, setName] = useState('Khách Hàng Test (Tan123)');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
@@ -23,7 +23,7 @@ export default function LoginPage() {
         if (res.success) {
           navigate('/');
         } else {
-          setError(res.message);
+          setError(res.message || 'Mật khẩu hoặc ID không hợp lệ. Vui lòng dùng ID: tan123 / PW: tan123');
         }
       } else {
         if (!name.trim()) {
@@ -38,7 +38,7 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      setError('Đã có lỗi xảy ra. Vui lòng thử lại.');
+      setError('Đã có lỗi xảy ra. Vui lòng đăng nhập với ID: tan123 / PW: tan123.');
     }
   };
 
@@ -61,14 +61,17 @@ export default function LoginPage() {
         padding: '40px 32px',
       }}>
         {/* Title Header */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <img src="/tavy-logo.png" alt="TAVY Logo" style={{ height: '60px', width: 'auto', display: 'inline-block', objectFit: 'contain', marginBottom: '4px' }} />
           <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '2px', textTransform: 'uppercase' }}>
             KOREA
           </div>
           <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400, marginTop: '4px' }}>
-            {isLoginTab ? 'Đăng Nhập Tài Khoản' : 'Đăng Ký Tài Khoản'}
+            {isLoginTab ? 'Đăng Nhập Tài Khoản Test' : 'Đăng Ký Tài Khoản'}
           </h2>
+          <div style={{ marginTop: '8px', padding: '6px 12px', background: '#F3E8FF', borderRadius: '8px', border: '1px solid #DDD6FE', fontSize: '0.82rem', color: '#6B21A8', fontWeight: 700 }}>
+            🔑 Tài khoản Test duy nhất: ID: <code style={{ color: '#7C3AED' }}>tan123</code> | PW: <code style={{ color: '#7C3AED' }}>tan123</code>
+          </div>
         </div>
 
         {/* Tab switcher */}

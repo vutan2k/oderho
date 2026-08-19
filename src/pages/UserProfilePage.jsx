@@ -120,10 +120,10 @@ export default function UserProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    logoutUser();
-    if (showToast) showToast('Đăng xuất thành công!', 'success');
-    navigate('/');
+  const handleLogout = async () => {
+    await logoutUser();
+    if (showToast) showToast('Đã đăng xuất tài khoản test!', 'success');
+    navigate('/login');
   };
 
   const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);

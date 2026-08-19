@@ -6,7 +6,7 @@ import { Lock, AlertCircle, ArrowLeft } from 'lucide-react';
 export default function AdminLoginPage() {
   const { loginAdmin, isAdminAuthenticated } = useContext(AppContext);
   const navigate = useNavigate();
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('tan123');
   const [error, setError] = useState('');
 
   if (isAdminAuthenticated) {
@@ -48,9 +48,9 @@ export default function AdminLoginPage() {
           <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', fontWeight: 400 }}>
             Quản Trị Hệ Thống
           </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-            TAVY KOREA • CỔNG DÀNH CHO QUẢN TRỊ VIÊN
-          </p>
+          <div style={{ marginTop: '8px', padding: '6px 12px', background: '#F3E8FF', borderRadius: '8px', border: '1px solid #DDD6FE', fontSize: '0.82rem', color: '#6B21A8', fontWeight: 700 }}>
+            🔑 Mật khẩu Admin Test: <code style={{ color: '#7C3AED' }}>tan123</code>
+          </div>
         </div>
 
         {error && (
