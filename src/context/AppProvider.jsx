@@ -129,6 +129,33 @@ export const AppProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  // Tự động tạo & đồng bộ tài khoản test tan123 vào Database Firestore
+  useEffect(() => {
+    const syncTestUserInDB = async () => {
+      try {
+        const testRef = doc(db, 'users', 'test_user_tan123');
+        const snap = await getDoc(testRef);
+        if (!snap.exists()) {
+          const testData = {
+            uid: 'test_user_tan123',
+            username: 'tan123',
+            email: 'tan123@tavykorea.vn',
+            name: 'Khách Hàng Test (Tan123)',
+            phone: '0912345678',
+            address: 'Store TAVY KOREA, 123 Lê Lợi, Quận 1, TP. Hồ Chí Minh',
+            role: 'test_user',
+            createdAt: new Date().toISOString()
+          };
+          await setDoc(testRef, testData);
+          console.log('✅ [Database] Đã tạo tài khoản test_user_tan123 trong Firestore!');
+        }
+      } catch (err) {
+        console.warn('Sync test user error:', err);
+      }
+    };
+    syncTestUserInDB();
+  }, []);
+
   // Tự động khôi phục đăng nhập Firebase Auth Admin khi làm mới trang (F5)
   useEffect(() => {
     const autoLoginAdmin = async () => {
