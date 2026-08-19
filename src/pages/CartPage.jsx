@@ -35,7 +35,7 @@ export default function CartPage() {
   }, [currentUser]);
 
   const krwRate = rates?.KRW?.rate || 19.5;
-  const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+  const formatVnd = (n) => (n || n === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VNĐ` : '0 VNĐ';
   const formatKrw = (n) => new Intl.NumberFormat('ko-KR').format(n) + ' ₩';
 
   const subTotalKrw = cart.reduce((sum, item) => sum + (item.foreignPrice * item.qty), 0);

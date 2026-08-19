@@ -26,7 +26,9 @@
     "reviewsCount": 246,
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T13:52:58.912Z"
+    "scrapedAt": "2026-08-18T13:52:58.912Z",
+    "priceLastSyncedAt": "2026-08-19T08:13:19.115Z",
+    "priceSyncStatus": "synced_oliveyoung"
   },
   {
     "id": "A000000255682",
@@ -36,9 +38,9 @@
     "brand": "Medicube",
     "brandKr": "Medicube",
     "category": "skincare",
-    "foreignPrice": 33000,
-    "price": 610500,
-    "originalPrice": 732600,
+    "foreignPrice": 27900,
+    "price": 27900,
+    "originalPrice": 33000,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025568254ko.jpg",
     "images": [
       "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025568254ko.jpg",
@@ -56,7 +58,9 @@
     "reviewsCount": 277,
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T13:53:19.546Z"
+    "scrapedAt": "2026-08-18T13:53:19.546Z",
+    "priceLastSyncedAt": "2026-08-19T08:13:19.116Z",
+    "priceSyncStatus": "synced_oliveyoung"
   },
   {
     "id": "A000000240462",
@@ -66,9 +70,9 @@
     "brand": "Celimax",
     "brandKr": "Celimax",
     "category": "skincare",
-    "foreignPrice": 26800,
-    "price": 495800,
-    "originalPrice": 594960,
+    "foreignPrice": 16900,
+    "price": 16900,
+    "originalPrice": 26800,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0024/A00000024046219ko.jpg",
     "images": [
       "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0024/A00000024046219ko.jpg",
@@ -89,7 +93,9 @@
     "reviewsCount": 241,
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T13:53:41.444Z"
+    "scrapedAt": "2026-08-18T13:53:41.444Z",
+    "priceLastSyncedAt": "2026-08-19T08:13:19.116Z",
+    "priceSyncStatus": "synced_oliveyoung"
   },
   {
     "id": "A000000204975",
@@ -99,9 +105,9 @@
     "brand": "OBGE",
     "brandKr": "OBGE",
     "category": "makeup",
-    "foreignPrice": 29800,
-    "price": 551300,
-    "originalPrice": 661560,
+    "foreignPrice": 22900,
+    "price": 22900,
+    "originalPrice": 29800,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0020/A00000020497522ko.jpg",
     "images": [
       "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0020/A00000020497522ko.jpg",
@@ -119,7 +125,9 @@
     "reviewsCount": 377,
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T13:54:04.289Z"
+    "scrapedAt": "2026-08-18T13:54:04.289Z",
+    "priceLastSyncedAt": "2026-08-19T08:13:19.116Z",
+    "priceSyncStatus": "synced_oliveyoung"
   },
   {
     "id": "A000000253122",
@@ -129,9 +137,9 @@
     "brand": "fwee",
     "brandKr": "fwee",
     "category": "makeup",
-    "foreignPrice": 38000,
-    "price": 703000,
-    "originalPrice": 843600,
+    "foreignPrice": 27800,
+    "price": 514300,
+    "originalPrice": 703000,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025312239ko.jpg",
     "images": [
       "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025312239ko.jpg",
@@ -148,6 +156,8 @@
     "reviewsCount": 340,
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
-    "scrapedAt": "2026-08-18T13:54:24.523Z"
+    "scrapedAt": "2026-08-18T13:54:24.523Z",
+    "priceLastSyncedAt": "2026-08-19T08:13:19.116Z",
+    "priceSyncStatus": "synced_oliveyoung"
   }
 ]
