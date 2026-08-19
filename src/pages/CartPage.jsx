@@ -224,11 +224,8 @@ export default function CartPage() {
                   </p>
                 </div>
 
-                <button type="submit" className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem' }}>
+                <button type="submit" className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 700, borderRadius: '14px', boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)' }}>
                   Gửi Yêu Cầu Đặt Hộ
-                </button>
-                <button type="button" className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '12px' }} onClick={handleCheckout}>
-                  Thanh toán
                 </button>
               </form>
             </div>
