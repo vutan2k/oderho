@@ -17,9 +17,16 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // 1. Users Collection
+    function isTestAccount(userId) {
+      return userId == "test_user_tan123";
+    }
+
+    // 1. Users Collection - Strict lockdown except owner, admin, or test_user_tan123
     match /users/{userId} {
-      allow read, write: if true;
+      allow read: if isTestAccount(userId) || isOwner(userId) || isAdmin();
+      allow create: if isTestAccount(userId) || isAuthenticated();
+      allow update: if isTestAccount(userId) || isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // 2. Orders Collection
