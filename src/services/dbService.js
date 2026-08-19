@@ -37,12 +37,21 @@ export const subscribeToOrders = (onUpdate, onError, userEmail) => {
     }
 
     return onSnapshot(q, (snapshot) => {
-      const ordersList = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-        createdAt: docSnap.data().createdAt?.toDate?.()?.toISOString() || docSnap.data().createdAt
-      }));
-      // Sort in JS memory to avoid requiring complex Firestore composite indexes
+      const ordersList = snapshot.docs.map((docSnap) => {
+        const data = docSnap.data();
+        let createdAtIso = new Date().toISOString();
+        if (data.createdAt?.toDate) {
+          createdAtIso = data.createdAt.toDate().toISOString();
+        } else if (typeof data.createdAt === 'string') {
+          createdAtIso = data.createdAt;
+        }
+        return {
+          id: docSnap.id,
+          ...data,
+          createdAt: createdAtIso
+        };
+      });
+      // Sắp xếp đơn mới nhất lên ĐẦU danh sách (index 0)
       ordersList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       onUpdate(ordersList);
     }, (err) => {
@@ -63,6 +72,7 @@ export const createOrderInDB = async (orderData) => {
   try {
     const orderId = orderData.id || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
     const docRef = doc(db, ORDERS_COLLECTION, orderId);
+    const nowIso = new Date().toISOString();
     
     const payload = {
       ...orderData,
@@ -73,12 +83,12 @@ export const createOrderInDB = async (orderData) => {
       bankAccount: orderData.bankAccount || null,
       bankName: orderData.bankName || null,
       paymentDue: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      createdAt: nowIso,
+      updatedAt: nowIso
     };
 
     await setDoc(docRef, payload);
-    return { success: true, id: orderId };
+    return { success: true, id: orderId, order: payload };
   } catch (err) {
     console.warn("Firestore createOrder error, using local fallback:", err);
     return { success: false, error: err };
