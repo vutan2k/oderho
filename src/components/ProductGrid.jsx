@@ -13,7 +13,7 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
 
   const formatKrw = (num) =>
-    new Intl.NumberFormat('ko-KR').format(num) + ' ₩';
+    '₩' + new Intl.NumberFormat('ko-KR').format(num || 0);
 
   // Logic phân trang
   const totalPages = Math.ceil((products?.length || 0) / itemsPerPage);
@@ -115,15 +115,15 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
               <div>
                 {/* Song song Won & VND */}
                 <div style={{ marginBottom: '15px', background: '#F8F6FA', padding: '10px 14px', borderRadius: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Giá Hàn Quốc:</span>
-                    <strong style={{ fontSize: '1rem', color: 'var(--text-dark)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap', gap: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>Giá Hàn Quốc:</span>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-dark)', whiteSpace: 'nowrap' }}>
                       {formatKrw(product.foreignPrice)}
                     </strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Quy đổi VNĐ:</span>
-                    <strong style={{ fontSize: '1.1rem', color: 'var(--purple-primary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', flexWrap: 'nowrap', gap: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>Quy đổi VNĐ:</span>
+                    <strong style={{ fontSize: '1.05rem', color: 'var(--purple-primary)', whiteSpace: 'nowrap' }}>
                       {formatVnd(calculatedVnd)}
                     </strong>
                   </div>
