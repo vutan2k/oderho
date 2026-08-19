@@ -595,7 +595,7 @@ export default function AdminProductManager() {
                 <thead>
                   <tr>
                     <th style={{ ...styles.th, width: '40px', textAlign: 'center' }}><input type="checkbox" checked={filtered.length > 0 && selectedProducts.length === filtered.length} onChange={toggleSelectAll} style={{ cursor: 'pointer' }} /></th>
-                    <th style={{ ...styles.th, width: '60px' }}>Ảnh</th>
+                    <th style={{ ...styles.th, width: '105px', textAlign: 'center' }}>Ảnh (HD)</th>
                     <th style={{ ...styles.th, width: '110px' }}>Mã SP</th>
                     <th style={styles.th}>Tên sản phẩm (Việt / Hàn)</th>
                     <th style={{ ...styles.th, width: '130px' }}>Thương hiệu</th>
@@ -611,8 +611,22 @@ export default function AdminProductManager() {
                     filtered.map(prod => (
                       <tr key={prod.goodsNo} style={{ backgroundColor: selectedProducts.includes(prod.goodsNo) ? '#F3F4F6' : '#FFF' }}>
                         <td style={{ ...styles.td, textAlign: 'center' }}><input type="checkbox" checked={selectedProducts.includes(prod.goodsNo)} onChange={() => toggleSelectProduct(prod.goodsNo)} style={{ cursor: 'pointer' }} /></td>
-                        <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEdit(prod)}>
-                          <img src={prod.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB' }} />
+                        <td style={{ ...styles.td, width: '105px', textAlign: 'center', cursor: 'pointer' }} onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}>
+                          <img 
+                            src={prod.productImage || (prod.images && prod.images[0])} 
+                            alt="" 
+                            style={{ 
+                              width: '85px', 
+                              height: '85px', 
+                              objectFit: 'cover', 
+                              borderRadius: '8px', 
+                              border: '2px solid #E5E7EB',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                              transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                            }} 
+                            onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.18)'; }}
+                            onMouseOut={e => { e.currentTarget.style.transform = 'scale(1.0)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)'; }}
+                          />
                         </td>
                         <td style={{ ...styles.td, fontFamily: 'monospace' }}>{prod.goodsNo}</td>
                         <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEdit(prod)}>
@@ -666,7 +680,7 @@ export default function AdminProductManager() {
                 <thead>
                   <tr>
                     <th style={{ ...styles.th, width: '40px', textAlign: 'center' }}><input type="checkbox" checked={pendingProducts?.length > 0 && selectedPending.length === pendingProducts.length} onChange={toggleSelectAllPending} style={{ cursor: 'pointer' }} /></th>
-                    <th style={{ ...styles.th, width: '60px' }}>Ảnh</th>
+                    <th style={{ ...styles.th, width: '105px', textAlign: 'center' }}>Ảnh (HD)</th>
                     <th style={{ ...styles.th, width: '110px' }}>Mã SP</th>
                     <th style={styles.th}>Tên sản phẩm (Việt / Hàn)</th>
                     <th style={{ ...styles.th, width: '130px' }}>Thương hiệu</th>
@@ -682,8 +696,22 @@ export default function AdminProductManager() {
                     pendingProducts.map(prod => (
                       <tr key={prod.goodsNo} style={{ backgroundColor: selectedPending.includes(prod.goodsNo) ? '#F3F4F6' : '#FFF' }}>
                         <td style={{ ...styles.td, textAlign: 'center' }}><input type="checkbox" checked={selectedPending.includes(prod.goodsNo)} onChange={() => toggleSelectPending(prod.goodsNo)} style={{ cursor: 'pointer' }} /></td>
-                        <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEditPending(prod)}>
-                          <img src={prod.productImage} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB' }} />
+                        <td style={{ ...styles.td, width: '105px', textAlign: 'center', cursor: 'pointer' }} onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}>
+                          <img 
+                            src={prod.productImage || (prod.images && prod.images[0])} 
+                            alt="" 
+                            style={{ 
+                              width: '85px', 
+                              height: '85px', 
+                              objectFit: 'cover', 
+                              borderRadius: '8px', 
+                              border: '2px solid #E5E7EB',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                              transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                            }} 
+                            onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.18)'; }}
+                            onMouseOut={e => { e.currentTarget.style.transform = 'scale(1.0)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)'; }}
+                          />
                         </td>
                         <td style={{ ...styles.td, fontFamily: 'monospace' }}>{prod.goodsNo}</td>
                         <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEditPending(prod)}>
@@ -790,7 +818,7 @@ export default function AdminProductManager() {
                     src={editForm.productImage} 
                     alt="Preview" 
                     onClick={() => setZoomImage(editForm.productImage)}
-                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #E5E7EB', cursor: 'pointer' }} 
+                    style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #2563EB', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }} 
                   />
                 )}
               </div>
@@ -823,14 +851,14 @@ export default function AdminProductManager() {
                         key={`album-edit-${i}`} 
                         style={{ 
                           position: 'relative', 
-                          width: '64px', 
-                          height: '64px', 
+                          width: '95px', 
+                          height: '95px', 
                           borderRadius: '8px', 
                           overflow: 'hidden', 
-                          border: isMain ? '2.5px solid #2563EB' : '1px solid #D1D5DB', 
+                          border: isMain ? '3px solid #2563EB' : '1px solid #D1D5DB', 
                           flexShrink: 0,
                           cursor: 'pointer',
-                          boxShadow: isMain ? '0 0 6px rgba(37,99,235,0.4)' : 'none'
+                          boxShadow: isMain ? '0 0 8px rgba(37,99,235,0.5)' : 'none'
                         }}
                       >
                         <img 
@@ -913,11 +941,11 @@ export default function AdminProductManager() {
                       key={`review-edit-${i}`} 
                       style={{ 
                         position: 'relative', 
-                        width: '64px', 
-                        height: '64px', 
+                        width: '95px', 
+                        height: '95px', 
                         borderRadius: '8px', 
                         overflow: 'hidden', 
-                        border: '1.5px solid #16A34A', 
+                        border: '2px solid #16A34A', 
                         flexShrink: 0,
                         cursor: 'pointer'
                       }}
