@@ -901,6 +901,36 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const updateOrderStatus = async (orderId, newStatus) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, updatedAt: new Date().toISOString() } : o));
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, { status: newStatus, updatedAt: serverTimestamp() });
+    } catch (err) {
+      console.warn('Lỗi cập nhật trạng thái đơn hàng trên Firestore:', err);
+    }
+  };
+
+  const updateOrderQuote = async (orderId, quoteData) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, quote: quoteData, totalVnd: quoteData.totalVnd, updatedAt: new Date().toISOString() } : o));
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, { quote: quoteData, totalVnd: quoteData.totalVnd, updatedAt: serverTimestamp() });
+    } catch (err) {
+      console.warn('Lỗi cập nhật báo giá đơn hàng trên Firestore:', err);
+    }
+  };
+
+  const updateOrderTracking = async (orderId, trackingData) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...trackingData, updatedAt: new Date().toISOString() } : o));
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, { ...trackingData, updatedAt: serverTimestamp() });
+    } catch (err) {
+      console.warn('Lỗi cập nhật vận đơn trên Firestore:', err);
+    }
+  };
+
   // ----- Context Value -----
   const contextValue = {
     // Auth related
@@ -919,6 +949,9 @@ export const AppProvider = ({ children }) => {
     // Existing app state
     orders,
     setOrders,
+    updateOrderStatus,
+    updateOrderQuote,
+    updateOrderTracking,
     rates,
     setRates,
     updateRates,

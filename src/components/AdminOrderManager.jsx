@@ -429,17 +429,23 @@ export default function AdminOrderManager() {
                         <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                           <select
                             value={order.status || 'pending'}
-                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                            onChange={(e) => {
+                              const newSt = e.target.value;
+                              updateOrderStatus(order.id, newSt);
+                              const cfg = getStatusConfig(newSt);
+                              if (showToast) showToast(`⚡ Đã chuyển đơn ${order.id} sang: "${cfg.label}"`, 'success');
+                            }}
                             style={{
-                              padding: '5px 10px',
+                              padding: '6px 12px',
                               borderRadius: '20px',
-                              border: `1.5px solid ${stCfg.borderColor}`,
+                              border: `2px solid ${stCfg.borderColor}`,
                               backgroundColor: stCfg.bgColor,
                               color: stCfg.color,
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
+                              fontSize: '0.82rem',
+                              fontWeight: 800,
                               cursor: 'pointer',
-                              outline: 'none'
+                              outline: 'none',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
                             }}
                           >
                             {Object.keys(ORDER_STATUSES).map((k) => (
