@@ -91,7 +91,7 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('admin_auth', 'true');
       return { success: true };
     }
-    return { success: false, message: 'Mật khẩu quản trị không đúng. Mật khẩu mặc định: tan123' };
+    return { success: false, message: 'Mật khẩu quản trị không chính xác.' };
   };
   const logoutAdmin = async () => {
     setIsAdminAuthenticated(false);
@@ -806,7 +806,7 @@ export const AppProvider = ({ children }) => {
         localStorage.setItem('user_auth', JSON.stringify(testProfile));
         return { success: true, user: testUser };
       } else {
-        return { success: false, message: 'Mật khẩu không đúng! Vui lòng dùng PW: tan123' };
+        return { success: false, message: 'Mật khẩu không chính xác.' };
       }
     }
 
@@ -815,7 +815,7 @@ export const AppProvider = ({ children }) => {
       return { success: true, user };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, message: 'Đăng nhập thất bại. Vui lòng dùng ID: tan123 / PW: tan123' };
+      return { success: false, message: 'Đăng nhập thất bại. Email hoặc mật khẩu không chính xác.' };
     }
   };
 
