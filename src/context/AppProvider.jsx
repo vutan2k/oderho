@@ -204,22 +204,17 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : initialMockOrders;
   });
 
-  // Realtime Orders Subscription
+  // Realtime Orders Subscription (Đồng bộ thời gian thực 100% giữa Admin và Khách hàng)
   useEffect(() => {
-    let emailFilter = null;
-    if (authUser && !isAdminAuthenticated) {
-      emailFilter = authUser.email;
-    }
     const unsubscribe = subscribeToOrders(
       (updatedOrders) => {
         setOrders(updatedOrders);
-        localStorage.setItem('beauty_orders', JSON.stringify(updatedOrders));
+        try { localStorage.setItem('beauty_orders', JSON.stringify(updatedOrders)); } catch {}
       },
-      (err) => console.warn('Firestore orders sync:', err),
-      emailFilter
+      (err) => console.warn('Firestore orders sync:', err)
     );
     return () => unsubscribe();
-  }, [authUser, isAdminAuthenticated]);
+  }, []);
 
   const [rates, setRates] = useState(() => {
     const saved = localStorage.getItem('beauty_rates');

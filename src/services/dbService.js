@@ -30,20 +30,21 @@ export const subscribeToOrders = (onUpdate, onError, userEmail) => {
     if (userEmail) {
       q = query(
         collection(db, ORDERS_COLLECTION),
-        where('userEmail', '==', userEmail),
-        orderBy('createdAt', 'desc')
+        where('userEmail', '==', userEmail)
       );
     } else {
-      q = query(collection(db, ORDERS_COLLECTION), orderBy('createdAt', 'desc'));
+      q = query(collection(db, ORDERS_COLLECTION));
     }
 
     return onSnapshot(q, (snapshot) => {
-      const orders = snapshot.docs.map((docSnap) => ({
+      const ordersList = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data(),
         createdAt: docSnap.data().createdAt?.toDate?.()?.toISOString() || docSnap.data().createdAt
       }));
-      onUpdate(orders);
+      // Sort in JS memory to avoid requiring complex Firestore composite indexes
+      ordersList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      onUpdate(ordersList);
     }, (err) => {
       console.warn("Firestore orders listener fallback:", err);
       if (onError) onError(err);
