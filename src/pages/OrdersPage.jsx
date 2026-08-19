@@ -82,19 +82,22 @@ export default function OrdersPage() {
     { key: 'completed', title: 'Đã giao' }
   ];
 
-  const getStepIndex = (status) => {
-    switch (status) {
-      case 'pending':
-      case 'quoted':
-        return 0;
-      case 'deposit_paid': return 1;
-      case 'purchased': return 2;
-      case 'in_kr_warehouse': return 3;
-      case 'transit': return 4;
-      case 'in_vn_warehouse': return 5;
-      case 'delivering': return 6;
+  const getStepIndex = (orderObj) => {
+    const st = typeof orderObj === 'string' ? orderObj : orderObj?.status;
+    const isPaid = typeof orderObj === 'object' && (orderObj?.paymentStatus === 'paid' || orderObj?.paidAmountVnd > 0);
+    
+    switch (st) {
       case 'completed': return 7;
-      default: return 0;
+      case 'delivering': return 6;
+      case 'in_vn_warehouse': return 5;
+      case 'transit': return 4;
+      case 'in_kr_warehouse': return 3;
+      case 'purchased': return 2;
+      case 'deposit_paid': return 1;
+      case 'quoted':
+      case 'pending':
+      default:
+        return isPaid ? 1 : 0;
     }
   };
 
@@ -158,7 +161,7 @@ export default function OrdersPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {filteredOrders.map((order) => {
-            const currentStepIdx = getStepIndex(order.status);
+            const currentStepIdx = getStepIndex(order);
             const krwRate = rates?.KRW?.rate || 19.5;
             const isPaidOrAdvanced = order.paymentStatus === 'paid' || ['deposit_paid', 'purchased', 'in_kr_warehouse', 'transit', 'in_vn_warehouse', 'delivering', 'completed'].includes(order.status);
 
