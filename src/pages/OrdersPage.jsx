@@ -160,8 +160,9 @@ export default function OrdersPage() {
           {filteredOrders.map((order) => {
             const currentStepIdx = getStepIndex(order.status);
             const krwRate = rates?.KRW?.rate || 19.5;
+            const isPaidOrAdvanced = order.paymentStatus === 'paid' || ['deposit_paid', 'purchased', 'in_kr_warehouse', 'transit', 'in_vn_warehouse', 'delivering', 'completed'].includes(order.status);
 
-            // Tính tổng hóa đơn 100% chuẩn xác (không bao giờ bằng 0đ)
+            // Tính tổng hóa đơn 100% chuẩn xác
             let displayTotal = 0;
             if (order.totalVnd && order.totalVnd > 0) {
               displayTotal = order.totalVnd;
@@ -199,8 +200,14 @@ export default function OrdersPage() {
                   gap: '12px'
                 }}>
                   <div>
-                    <span style={{ fontSize: '0.78rem', color: order.paymentStatus !== 'paid' && order.status === 'pending' ? '#D97706' : '#6B7280', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {order.paymentStatus !== 'paid' && order.status === 'pending' ? '⚡ GIỎ HÀNG CHỜ CỌC 100%' : 'MÃ ĐƠN HÀNG HOÀN CHỈNH'}
+                    <span style={{
+                      fontSize: '0.78rem',
+                      color: isPaidOrAdvanced ? '#059669' : '#D97706',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {isPaidOrAdvanced ? '✅ ĐÃ CỌC 100% (ĐÃ XÁC NHẬN)' : '⚡ GIỎ HÀNG CHỜ CỌC 100%'}
                     </span>
                     <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--purple-primary)' }}>{order.id}</h4>
                   </div>
@@ -220,8 +227,8 @@ export default function OrdersPage() {
                       </div>
                     </div>
 
-                    {/* NÚT THANH TOÁN CỌC (HIỆN KHI ĐƠN CHƯA CỌC / CHỜ CỌC) */}
-                    {(order.paymentStatus !== 'paid' && order.status !== 'completed' && order.status !== 'purchased') && (
+                    {/* NÚT THANH TOÁN CỌC (CHỈ HIỆN KHI ĐƠN CHƯA CỌC) */}
+                    {!isPaidOrAdvanced && (
                       <div style={{ paddingLeft: '15px', borderLeft: '1px solid #E5E7EB' }}>
                         <button
                           onClick={() => navigate(`/payment/${order.id}`)}

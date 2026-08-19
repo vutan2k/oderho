@@ -897,10 +897,21 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, updatedAt: new Date().toISOString() } : o));
+    const isPaidStatus = ['deposit_paid', 'purchased', 'in_kr_warehouse', 'transit', 'in_vn_warehouse', 'delivering', 'completed'].includes(newStatus);
+    const updates = {
+      status: newStatus,
+      paymentStatus: isPaidStatus ? 'paid' : 'unpaid',
+      updatedAt: new Date().toISOString()
+    };
+
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updates } : o));
     try {
       const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, { status: newStatus, updatedAt: serverTimestamp() });
+      await updateDoc(orderRef, {
+        status: newStatus,
+        paymentStatus: isPaidStatus ? 'paid' : 'unpaid',
+        updatedAt: serverTimestamp()
+      });
     } catch (err) {
       console.warn('Lỗi cập nhật trạng thái đơn hàng trên Firestore:', err);
     }
