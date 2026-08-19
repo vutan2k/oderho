@@ -31,10 +31,7 @@ service cloud.firestore {
 
     // 2. Orders Collection
     match /orders/{orderId} {
-      // Allow read if owner of order (matching email/uid) or admin or guest looking up by exact ID
-      allow read: if true; 
-      allow create: if true; // Allow guest & logged in users to place order
-      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userEmail == request.auth.token.email);
+      allow read, write: if true;
     }
 
     // 3. Products Catalog Collection
