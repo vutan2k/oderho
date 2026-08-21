@@ -632,15 +632,16 @@ Chỉ trả về JSON thuần hợp lệ, KHÔNG markdown.`;
         let aiData = {};
 
         if (apiKey) {
-          const prompt = `Trích xuất dữ liệu sản phẩm Olive Young từ DOM thật và lọc ra ĐÚNG 10 ÁNH ĐÁNH GIÁ THỰC TẾ từ người dùng.
+          const prompt = `Trích xuất dữ liệu sản phẩm Olive Young từ DOM thật và chọn lọc ảnh đánh giá thực tế của khách hàng Hàn Quốc.
 Yêu cầu bắt buộc trả về JSON:
-- name: Tên sản phẩm đã dịch sang tiếng Việt đầy đủ, bỏ chữ khuyến mãi.
+- name: Tên sản phẩm đã dịch sang TIẾNG VIỆT 100% mượt mà, chuẩn thương mại mỹ phẩm (ví dụ: "Serum Cấp Nước Phục Hồi Torriden Dive-In 50ml", "Miếng Đệm Dưỡng Da Mediheal Teatree Trouble Pad 100 Miếng"). BỎ toàn bộ chữ khuyến mãi dạng [단독기획], (1+1), (Tặng...). TUYỆT ĐỐI KHÔNG để lại bất kỳ chữ tiếng Hàn HANGUL nào!
 - nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc từ TITLE.
-- price: Giá bán thực tế bằng Won (KRW) (chỉ chữ số nguyên dương ví dụ 26800, KHÔNG ghép nhiều giá).
-- brand: Tên thương hiệu thật (ví dụ: Celimax, Layerlab, Romand, Mediheal).
+- price: Giá bán Won (KRW) thực tế (số nguyên dương, ví dụ: 21900, 28900, 19800, ưu tiên giá giảm sale).
+- brand: Tên thương hiệu chuẩn (ví dụ: Torriden, Mediheal, Medicube, Celimax, Round Lab, Beplain, Anua, Skin1004...).
 - category: skincare|makeup|health|pharmacy|haircare|bodycare.
-- description: Mô tả công dụng sản phẩm bằng tiếng Việt.
-- filteredReviews: Mảng chứa tối đa 10 URL ảnh đánh giá thực tế của người dùng từ danh sách CANDIDATE_REVIEWS (loại bỏ ảnh studio, banner quảng cáo, quà tặng).
+- description: Mô tả công dụng sản phẩm chi tiết, chuyên nghiệp bằng tiếng Việt.
+- usage: Hướng dẫn sử dụng bằng tiếng Việt.
+- filteredReviews: Mảng chứa toàn bộ URL ảnh đánh giá thực tế từ CANDIDATE_REVIEWS (tối thiểu 10 tấm nếu có, lọc bỏ ảnh banner, icon, quà tặng).
 
 URL: ${rawData.url}
 TITLE: ${rawData.title || ''}
@@ -653,11 +654,11 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
           if (userModel && userModel !== 'auto') {
             MODELS = [userModel, ...ALL_SUPPORTED_MODELS.filter(m => m !== userModel)];
           }
-          
+
           for (const model of MODELS) {
             try {
               const controller = new AbortController();
-              const timer = setTimeout(() => controller.abort(), 4000);
+              const timer = setTimeout(() => controller.abort(), 5000);
 
               const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
               const res = await fetch(url, {
@@ -702,16 +703,22 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
         const goodsNoMatch = (rawData.url || '').match(/goodsNo=([A-Za-z0-9_]+)/i);
         const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : `A${Date.now()}`;
 
-        // CHÍNH XÁC: 3 Ảnh Sản Phẩm HD & TỐI ĐA 30+ Ảnh Đánh Giá Thực Tế GDAS từ Khách Hàng (v13.0 PRO)
-        const finalAlbum = (rawData.images && rawData.images.length > 0) 
-          ? rawData.images.slice(0, 3) 
+        // Lấy 3 Ảnh đại diện sản phẩm HD
+        const finalAlbum = (rawData.images && rawData.images.length > 0)
+          ? rawData.images.slice(0, 3)
           : (rawData.image ? [rawData.image] : []);
 
-        let finalReviews = (aiData.filteredReviews && Array.isArray(aiData.filteredReviews) && aiData.filteredReviews.length > 0)
-          ? aiData.filteredReviews.filter(u => u && typeof u === 'string' && u.startsWith('http'))
-          : (rawData.reviewCandidates || []);
+        const isJunkUrl = (u) => !u || typeof u !== 'string' || !u.startsWith('http') ||
+          /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_|blank|loading|sprite/i.test(u);
 
-        finalReviews = Array.from(new Set(finalReviews)).slice(0, 30);
+        // Lọc ảnh review: Ưu tiên ảnh thật người dùng, không lấy ảnh rách/quảng cáo, lấy tối đa 35 tấm
+        let candidateList = (rawData.reviewCandidates || []).filter(u => !isJunkUrl(u));
+        let aiList = (aiData.filteredReviews && Array.isArray(aiData.filteredReviews))
+          ? aiData.filteredReviews.filter(u => !isJunkUrl(u))
+          : [];
+
+        let finalReviews = Array.from(new Set([...aiList, ...candidateList])).filter(u => !isJunkUrl(u));
+        finalReviews = finalReviews.slice(0, 35);
 
         const mainImg = finalAlbum[0] || rawData.image || '';
 
@@ -731,7 +738,7 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
           rawData.url
         );
 
-        sendResponse({ success: true, name: vietnameseName });
+        sendResponse({ success: true, name: vietnameseName, reviewCount: finalReviews.length });
 
       } catch (err) {
         console.error("Lỗi AI Service Worker:", err);

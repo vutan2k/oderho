@@ -493,19 +493,24 @@ export default function AdminProductManager() {
         </div>
       </div>
 
-      {/* 🚀 QUICK SCRAPER & PRICE ANCHOR TOOLBAR */}
+      {/* 🚀 QUICK SCRAPER & EXTENSION PRO TOOLBAR */}
       <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#FAF5FF', color: 'var(--purple-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={16} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#FAF5FF', color: 'var(--purple-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={20} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>
-                Bóc Tách & Cào Link Olive Young Hàn Quốc
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B' }}>
-                Dán URL chi tiết sản phẩm Olive Young để tự động lấy tên, giá Won, phân loại và hình ảnh
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>
+                  Tiện Ích Cào Sản Phẩm Chrome Extension Pro v18.0
+                </h3>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, backgroundColor: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: '12px' }}>
+                  Khuyên dùng
+                </span>
+              </div>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#64748B' }}>
+                Mở Olive Young trên Chrome ➔ Bấm icon <strong>TAVY AI Scraper</strong> để tự động bóc 30+ ảnh GDAS, 3 ảnh HD và dịch AI mượt mà về Admin
               </p>
             </div>
           </div>
@@ -517,7 +522,7 @@ export default function AdminProductManager() {
                 backgroundColor: priceSyncConfig.enabled ? '#DCFCE7' : '#F1F5F9',
                 color: priceSyncConfig.enabled ? '#15803D' : '#475569',
                 border: priceSyncConfig.enabled ? '1px solid #86EFAC' : '1px solid #CBD5E1',
-                padding: '6px 12px',
+                padding: '7px 12px',
                 borderRadius: '8px',
                 fontSize: '0.75rem',
                 fontWeight: 700,
@@ -538,7 +543,7 @@ export default function AdminProductManager() {
                 backgroundColor: '#FAF5FF',
                 color: 'var(--purple-primary)',
                 border: '1px solid #E9D5FF',
-                padding: '6px 12px',
+                padding: '7px 12px',
                 borderRadius: '8px',
                 fontSize: '0.75rem',
                 fontWeight: 700,
@@ -553,63 +558,6 @@ export default function AdminProductManager() {
             </button>
           </div>
         </div>
-
-        {/* Form Scrape Link */}
-        <form onSubmit={handleScrape} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '280px' }}>
-            <Link2 size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
-            <input
-              type="url"
-              required
-              placeholder="Dán link sản phẩm Olive Young (https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=...)"
-              value={quickLink}
-              onChange={(e) => setQuickLink(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px 10px 36px',
-                borderRadius: '10px',
-                border: '1px solid #CBD5E1',
-                fontSize: '0.84rem',
-                outline: 'none'
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loadingScrape}
-            style={{
-              backgroundColor: 'var(--purple-primary)',
-              color: '#FFFFFF',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '10px',
-              fontWeight: 800,
-              fontSize: '0.84rem',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <Plus size={16} />
-            {loadingScrape ? 'Đang bóc tách...' : 'Bóc Tách & Đưa Vào Hàng Chờ'}
-          </button>
-        </form>
-
-        {scrapeError && (
-          <div style={{ marginTop: '10px', padding: '10px 14px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.8rem', color: '#991B1B', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>⚠️ {scrapeError.message}</span>
-            {scrapeError.openPage && (
-              <button
-                type="button"
-                onClick={() => window.open(scrapeError.url, '_blank')}
-                style={{ backgroundColor: '#2563EB', color: '#FFF', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
-              >
-                Mở link gốc
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
       {/* 🧭 TABS NAVIGATION */}

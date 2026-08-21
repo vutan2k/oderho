@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "TAVY AI Scraper Pro",
-  "version": "17.0",
-  "description": "TAVY AI Scraper v17.0 PRO - Tùy chọn Model Gemini AI trực tiếp từ Menu Tiện ích & Bóc 30+ Ảnh GDAS",
+  "version": "18.0",
+  "description": "TAVY AI Scraper v18.0 PRO - Bóc tách 30+ Ảnh Đánh Giá GDAS & 3 Ảnh HD Olive Young, Dịch Thuật Gemini AI Độc Quyền",
   "permissions": [
     "activeTab",
     "scripting",
@@ -13,6 +13,7 @@
   "host_permissions": [
     "*://*.oliveyoung.co.kr/*",
     "https://generativelanguage.googleapis.com/*",
+    "https://firestore.googleapis.com/*",
     "https://tavyorder.web.app/*",
     "http://localhost/*"
   ],
