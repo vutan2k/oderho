@@ -23,6 +23,15 @@ export default function Footer() {
           </div>
 
           <div className="footer-col">
+            <h5>CHÍNH SÁCH & QUY ĐỊNH</h5>
+            <ul className="footer-links">
+              <li><a href="/policy">Quy định mua hàng hộ</a></li>
+              <li><a href="/policy">Chính sách đổi trả & Hoàn tiền</a></li>
+              <li><a href="/policy">Hướng dẫn thanh toán</a></li>
+            </ul>
+          </div>
+
+          <div className="footer-col">
             <h5>DANH MỤC HÀNG</h5>
             <ul className="footer-links">
               <li><a href="#skincare">Mỹ phẩm Dưỡng da</a></li>

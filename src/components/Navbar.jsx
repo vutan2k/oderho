@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { User, LogOut, Package, ShoppingCart } from 'lucide-react';
+import { User, LogOut, Package, ShoppingCart, HelpCircle } from 'lucide-react';
 
 export default function Navbar({ logoSrc: _logoSrc } = {}) {
   const { currentUser, logoutUser, cart } = useContext(AppContext);
@@ -39,6 +39,11 @@ export default function Navbar({ logoSrc: _logoSrc } = {}) {
 
         {/* User Navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
+          {/* Chính sách & Quy định */}
+          <Link to="/policy" className="icon-btn" aria-label="Chính sách & Quy định" title="Quy định & Hướng dẫn thanh toán" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
+            <HelpCircle size={24} />
+          </Link>
+
           {/* Giỏ hàng (ShoppingCart) */}
           <Link id="cart-icon-header" to="/cart" className="icon-btn" style={{ position: 'relative', transition: 'transform 0.2s ease', color: 'var(--text-dark)' }} aria-label="Giỏ hàng" title="Giỏ hàng">
             <ShoppingCart size={26} />

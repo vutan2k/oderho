@@ -18,6 +18,7 @@ const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const CartPage = lazy(() => import('./pages/CartPage'));
 const PaymentPage = lazy(() => import('./pages/PaymentPage'));
+const PolicyPage = lazy(() => import('./pages/PolicyPage'));
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
                 <Route path="/orders" element={<><Navbar /><OrdersPage /></>} />
                 <Route path="/profile" element={<><Navbar /><UserProfilePage /></>} />
                 <Route path="/payment/:orderId" element={<><Navbar /><PaymentPage /></>} />
+                <Route path="/policy" element={<><Navbar /><PolicyPage /></>} />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
