@@ -165,7 +165,7 @@ export async function runAIScraperAgent(url) {
 
     // 2. FIRECRAWL AI EXTRACT (Giải pháp ưu tiên số 1 - Chống vỡ DOM 100%)
     const firecrawlKey = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_FIRECRAWL_API_KEY || '') : (process.env.FIRECRAWL_API_KEY || '');
-    if (firecrawlKey && !firecrawlKey.startsWith('fc-')) {
+    if (firecrawlKey && firecrawlKey.startsWith('fc-')) {
       try {
         console.log(`🔥 [Firecrawl] Bắt đầu bóc tách URL: ${cleanUrl}`);
         const firecrawlRes = await fetch('https://api.firecrawl.dev/v1/scrape', {

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 import ProductDetailModal from '../components/ProductDetailModal';
+import { ORDER_STEPS, getOrderStepIndex } from '../data/orderStatuses';
 
 export default function UserProfilePage() {
   const { currentUser, updateUserProfile, changePassword, logoutUser, orders, rates, oliveYoungCatalog, addToCart } = useContext(AppContext);
@@ -167,31 +168,10 @@ export default function UserProfilePage() {
     return order.status === activeOrderTab;
   });
 
-  const steps = [
-    { key: 'pending', title: 'Chờ cọc' },
-    { key: 'deposit_paid', title: 'Đã cọc 100%' },
-    { key: 'purchased', title: 'Đang mua hộ' },
-    { key: 'in_kr_warehouse', title: 'Kho Seoul' },
-    { key: 'transit', title: 'Shipping' },
-    { key: 'in_vn_warehouse', title: 'Kho VN' },
-    { key: 'delivering', title: 'Đang giao' },
-    { key: 'completed', title: 'Đã giao' }
-  ];
+  const steps = ORDER_STEPS;
 
-  const getStepIndex = (status) => {
-    switch (status) {
-      case 'pending':
-      case 'quoted':
-        return 0;
-      case 'deposit_paid': return 1;
-      case 'purchased': return 2;
-      case 'in_kr_warehouse': return 3;
-      case 'transit': return 4;
-      case 'in_vn_warehouse': return 5;
-      case 'delivering': return 6;
-      case 'completed': return 7;
-      default: return 0;
-    }
+  const getStepIndex = (statusOrOrder) => {
+    return getOrderStepIndex(statusOrOrder);
   };
 
   const statusTabs = [

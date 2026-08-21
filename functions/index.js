@@ -100,23 +100,32 @@ exports.payosWebhook = onRequest({ cors: true }, async (req, res) => {
     try {
       verifiedData = payOS.verifyPaymentWebhookData(webhookData);
     } catch (err) {
-      console.warn('⚠️ Chữ ký PayOS Webhook không hợp lệ hoặc dữ liệu test:', err);
-      verifiedData = webhookData.data || webhookData;
+      // Trong môi trường testing/local giả lập, nếu không có chữ ký thật thì ghi nhận cảnh báo
+      if (process.env.NODE_ENV === 'test' || process.env.FUNCTIONS_EMULATOR) {
+        console.warn('⚠️ [Test Mode] Bỏ qua xác thực chữ ký PayOS Webhook:', err.message);
+        verifiedData = webhookData.data || webhookData;
+      } else {
+        console.error('❌ Chữ ký PayOS Webhook không hợp lệ:', err);
+        return res.status(400).json({ success: false, message: 'Invalid webhook signature' });
+      }
     }
 
     if (verifiedData && verifiedData.orderCode) {
       const orderCodeNum = Number(verifiedData.orderCode);
       const searchId = `ORD-${orderCodeNum}`;
 
-      console.log(`⚡ [PayOS Webhook] Nhận xác nhận thanh toán cho đơn hàng ${searchId}, số tiền: ${verifiedData.amount} đ`);
+      console.log(`⚡ [PayOS Webhook] Nhận xác nhận thanh toán cho đơn hàng ${searchId} (orderCode: ${orderCodeNum}), số tiền: ${verifiedData.amount} đ`);
 
-      // Tìm kiếm đơn hàng trong Firestore DB
+      // Tìm kiếm đơn hàng trong Firestore DB theo Document ID hoặc orderCode/id field
       let orderDocRef = db.collection('orders').doc(searchId);
       let orderSnap = await orderDocRef.get();
 
       if (!orderSnap.exists) {
-        // Tìm kiếm query nếu ID không trùng tuyệt đối
-        const querySnap = await db.collection('orders').where('id', '==', searchId).get();
+        // Tìm kiếm query nếu ID không trùng tuyệt đối hoặc query theo orderCode
+        let querySnap = await db.collection('orders').where('orderCode', '==', orderCodeNum).limit(1).get();
+        if (querySnap.empty) {
+          querySnap = await db.collection('orders').where('id', '==', searchId).limit(1).get();
+        }
         if (!querySnap.empty) {
           orderDocRef = querySnap.docs[0].ref;
           orderSnap = querySnap.docs[0];

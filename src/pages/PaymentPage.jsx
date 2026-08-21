@@ -48,17 +48,31 @@ export default function PaymentPage() {
   const { currentUser, rates } = useContext(AppContext);
 
   const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorNotFound, setErrorNotFound] = useState(false);
   const [timeLeft, setTimeLeft] = useState(PAYMENT_DEADLINE_MS);
   const [copied, setCopied] = useState('');
 
   // Realtime listener cho order
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId) {
+      setLoading(false);
+      setErrorNotFound(true);
+      return;
+    }
     const unsub = onSnapshot(doc(db, 'orders', orderId), (snap) => {
+      setLoading(false);
       if (snap.exists()) {
         const data = { id: snap.id, ...snap.data() };
         setOrder(data);
+        setErrorNotFound(false);
+      } else {
+        setErrorNotFound(true);
       }
+    }, (err) => {
+      console.warn('Lỗi đọc đơn hàng:', err);
+      setLoading(false);
+      setErrorNotFound(true);
     });
     return unsub;
   }, [orderId]);
@@ -108,10 +122,29 @@ export default function PaymentPage() {
     }
   };
 
-  if (!order) {
+  if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9F6FA' }}>
         <p style={{ color: 'var(--text-muted)' }}>Đang tải thông tin đơn hàng...</p>
+      </div>
+    );
+  }
+
+  if (errorNotFound || !order) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9F6FA' }}>
+        <Helmet><title>Không tìm thấy đơn hàng - TAVY Korea</title></Helmet>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ textAlign: 'center', background: '#fff', padding: '40px', borderRadius: '24px', maxWidth: '450px', width: '100%', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
+            <h3 style={{ fontSize: '1.4rem', color: '#1a1a2e', marginBottom: '12px' }}>Không tìm thấy đơn hàng</h3>
+            <p style={{ color: '#6b7280', marginBottom: '24px', fontSize: '0.95rem' }}>Mã đơn hàng <strong>{orderId}</strong> không tồn tại hoặc đã bị hủy.</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button onClick={() => navigate('/')} className="btn-outline">Về trang chủ</button>
+              <button onClick={() => navigate('/orders')} className="btn-primary">Danh sách đơn</button>
+            </div>
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }

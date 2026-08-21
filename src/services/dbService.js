@@ -156,7 +156,8 @@ export const confirmOrderPaymentInDB = async (orderId, amountPaid) => {
   try {
     const docRef = doc(db, ORDERS_COLLECTION, orderId);
     await updateDoc(docRef, {
-      status: 'paid',
+      status: 'deposit_paid',
+      paymentStatus: 'paid',
       paymentConfirmed: true,
       paymentDate: new Date().toISOString(),
       amountPaid: amountPaid,
@@ -268,8 +269,10 @@ export const saveProductToDB = async (product) => {
       category: String(product.category || 'skincare'),
       foreignPrice: Number(product.foreignPrice) || 0,
       productImage: String(product.productImage || ''),
-      images: Array.isArray(product.images) ? product.images.map(String) : [String(product.productImage || '')],
-      photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String) : [],
+      images: Array.isArray(product.images) && product.images.length > 0
+        ? product.images.map(String).filter(Boolean)
+        : (product.productImage ? [String(product.productImage)] : []),
+      photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String).filter(Boolean) : [],
       description: String(product.description || ''),
       usage: String(product.usage || ''),
       origin: String(product.origin || 'Store Olive Young Korea'),
@@ -352,8 +355,10 @@ export const savePendingProductToDB = async (product) => {
       foreignPrice: Number(product.foreignPrice || product.price) || 0,
       price: Number(product.price || product.foreignPrice) || 0,
       productImage: String(product.productImage || ''),
-      images: Array.isArray(product.images) ? product.images.map(String) : [String(product.productImage || '')],
-      photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String) : [],
+      images: Array.isArray(product.images) && product.images.length > 0
+        ? product.images.map(String).filter(Boolean)
+        : (product.productImage ? [String(product.productImage)] : []),
+      photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String).filter(Boolean) : [],
       description: String(product.description || ''),
       usage: String(product.usage || ''),
       origin: String(product.origin || 'Store Olive Young Korea'),

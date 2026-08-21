@@ -15,6 +15,13 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
   const [streetAddress, setStreetAddress] = useState('');
 
   const isInitialParsedRef = useRef(false);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  // Reset parsed flag if initialAddress changes externally
+  useEffect(() => {
+    isInitialParsedRef.current = false;
+  }, [initialAddress]);
 
   // 1. Fetch 63 Provinces from Vietnam Open API (or fallback)
   useEffect(() => {
@@ -157,8 +164,8 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
 
     const fullAddress = uniqueParts.join(', ');
 
-    if (onChange) {
-      onChange({
+    if (onChangeRef.current) {
+      onChangeRef.current({
         provinceCode: selectedProvinceCode,
         provinceName: selectedProvinceName,
         subDivisionCode: selectedSubDivisionCode,
@@ -167,7 +174,7 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
         fullAddress
       });
     }
-  }, [selectedProvinceCode, selectedProvinceName, selectedSubDivisionCode, selectedSubDivisionName, streetAddress, onChange]);
+  }, [selectedProvinceCode, selectedProvinceName, selectedSubDivisionCode, selectedSubDivisionName, streetAddress]);
 
   // Handlers
   const handleProvinceSelect = (e) => {
