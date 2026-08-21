@@ -7,6 +7,7 @@ import { AppContext } from '../context/AppContext';
 import ProductDetailModal from '../components/ProductDetailModal';
 import HeroSection from '../components/HeroSection';
 import WhyChooseUs from '../components/WhyChooseUs';
+import HowItWorksSection from '../components/HowItWorksSection';
 import ProductGrid from '../components/ProductGrid';
 import Footer from '../components/Footer';
 import { triggerFlyToCart } from '../utils/flyToCart';
@@ -178,6 +179,7 @@ export default function KROrderHomePage() {
       <main style={{ flex: 1 }}>
         <HeroSection krwRate={krwRate} />
         <WhyChooseUs />
+        <HowItWorksSection />
 
         {/* Danh mục & Danh sách sản phẩm */}
         <section id="products" style={{ padding: '70px 0', background: 'var(--bg-ivory)' }}>
