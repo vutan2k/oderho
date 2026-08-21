@@ -1,35 +1,47 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import AdminProductManager from '../components/AdminProductManager';
 import AdminOrderManager from '../components/AdminOrderManager';
-import { 
-  BarChart3, 
-  ShoppingBag, 
-  FileSpreadsheet, 
-  Settings, 
-  LogOut, 
-  DollarSign, 
-  Tag, 
-  RefreshCw, 
+import { APP_VERSION } from '../data/appVersion';
+import {
+  BarChart3,
+  ShoppingBag,
+  FileSpreadsheet,
+  Settings,
+  LogOut,
+  DollarSign,
+  Tag,
+  RefreshCw,
   FileText,
   TrendingUp,
   Download,
   CreditCard,
   CheckCircle,
   XCircle,
-  Eye
+  Eye,
+  Clock,
+  ArrowRight,
+  Calculator,
+  ChevronRight,
+  Menu,
+  X,
+  Plane,
+  PackageCheck,
+  AlertTriangle,
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export default function AdminDashboardPage() {
-  const { 
-    isAdminAuthenticated, 
-    logoutAdmin, 
-    orders, 
-    rates, 
+  const {
+    isAdminAuthenticated,
+    logoutAdmin,
+    orders,
+    rates,
     updateRates,
     publishToWeb,
     revertFromWeb,
@@ -40,13 +52,36 @@ export default function AdminDashboardPage() {
   const showToast = useToast();
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'orders' | 'products' | 'payments' | 'settings'
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [proofModal, setProofModal] = useState(null);
+
+  // Quick Currency Converter state
+  const [calcWon, setCalcWon] = useState('30000');
+  const [calcVnd, setCalcVnd] = useState('');
+  const [calcMode, setCalcMode] = useState('wonToVnd'); // 'wonToVnd' | 'vndToWon'
+
+  // Settings inputs
   const [krwRateInput, setKrwRateInput] = useState(rates?.KRW?.rate || 19.5);
   const [usdRateInput, setUsdRateInput] = useState(rates?.USD?.rate || 25500);
   const [serviceFeeInput, setServiceFeeInput] = useState(rates?.serviceFeePercent || 5);
   const [prevOrdersLength, setPrevOrdersLength] = useState(orders.length);
 
-  React.useEffect(() => {
+  // Current time clocks (Seoul KST & Vietnam ICT)
+  const [timeNow, setTimeNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setTimeNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const seoulTimeStr = useMemo(() => {
+    return timeNow.toLocaleTimeString('vi-VN', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }, [timeNow]);
+
+  const vnTimeStr = useMemo(() => {
+    return timeNow.toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }, [timeNow]);
+
+  useEffect(() => {
     if (rates) {
       if (rates.KRW?.rate) setKrwRateInput(rates.KRW.rate);
       if (rates.USD?.rate) setUsdRateInput(rates.USD.rate);
@@ -54,15 +89,15 @@ export default function AdminDashboardPage() {
     }
   }, [rates]);
 
-  React.useEffect(() => {
+  // Audio notification on new order
+  useEffect(() => {
     if (orders.length > prevOrdersLength) {
       if (prevOrdersLength > 0) {
         const newestOrder = orders[0];
-        if (newestOrder && newestOrder.status === 'pending') {
+        if (newestOrder && (newestOrder.status === 'pending' || newestOrder.status === 'paid')) {
           if (showToast) {
-            showToast(`🔔 CÓ ĐƠN HÀNG MỚI! Khách hàng ${newestOrder.customerName || 'Khách'} vừa gửi yêu cầu mua hộ ${newestOrder.id}.`, 'info');
+            showToast(`🔔 CÓ ĐƠN HÀNG MỚI! Khách ${newestOrder.customerName || 'Khách'} vừa gửi đơn ${newestOrder.id}.`, 'info');
           }
-          // Play dynamic synth notification double beep
           try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = ctx.createOscillator();
@@ -75,19 +110,6 @@ export default function AdminDashboardPage() {
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.12);
-
-            setTimeout(() => {
-              const osc2 = ctx.createOscillator();
-              const gain2 = ctx.createGain();
-              osc2.connect(gain2);
-              gain2.connect(ctx.destination);
-              osc2.type = 'sine';
-              osc2.frequency.setValueAtTime(1046.5, ctx.currentTime);
-              gain2.gain.setValueAtTime(0.08, ctx.currentTime);
-              gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
-              osc2.start(ctx.currentTime);
-              osc2.stop(ctx.currentTime + 0.18);
-            }, 120);
           } catch {}
         }
       }
@@ -95,72 +117,80 @@ export default function AdminDashboardPage() {
     setPrevOrdersLength(orders.length);
   }, [orders, prevOrdersLength, showToast]);
 
-  // Handle updates for rates & fees
-  const handleUpdateKrw = (e) => {
-    e.preventDefault();
-    const cleanStr = String(krwRateInput || '').replace(',', '.').trim();
-    const val = parseFloat(cleanStr);
-    if (!val || val <= 0) return;
-    updateRates({ ...rates, KRW: { ...rates.KRW, rate: val } });
-    if (showToast) showToast(`Đã cập nhật tỷ giá KRW = ${val} ₫/Won thành công!`, 'success');
-  };
-
-  const handleUpdateUsd = (e) => {
-    e.preventDefault();
-    const val = parseFloat(usdRateInput);
-    if (!val || val <= 0) return;
-    updateRates({ ...rates, USD: { ...rates.USD, rate: val } });
-    if (showToast) showToast('Đã cập nhật tỷ giá USD thành công!', 'success');
-  };
-
-  const handleUpdateServiceFee = (e) => {
-    e.preventDefault();
-    const val = parseFloat(serviceFeeInput);
-    if (val < 0) return;
-    updateRates({ ...rates, serviceFeePercent: val });
-    if (showToast) showToast('Đã cập nhật phần trăm phí dịch vụ!', 'success');
-  };
-
-  // KPI Calculations
   const krwRate = rates?.KRW?.rate || 19.5;
-  const estimatedRevenue = orders.reduce((sum, order) => {
-    if (order.status === 'completed' || order.status === 'cancelled') return sum;
-    const displayTotal = order.quote 
-      ? order.quote.totalVnd 
-      : Math.round((order.foreignPrice || 0) * (rates[order.country]?.rate || krwRate) * (order.qty || 1));
-    return sum + displayTotal;
-  }, 0);
+  const serviceFee = rates?.serviceFeePercent || 5;
+
+  // Rate calculator effect
+  useEffect(() => {
+    if (calcMode === 'wonToVnd') {
+      const won = parseFloat(String(calcWon).replace(/,/g, '')) || 0;
+      const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
+      setCalcVnd(vnd.toLocaleString('vi-VN'));
+    }
+  }, [calcWon, krwRate, serviceFee, calcMode]);
+
+  // Action Queue (Việc cần làm ngay)
+  const urgentQueue = useMemo(() => {
+    const needQuote = orders.filter(o => o.status === 'pending');
+    const needPurchase = orders.filter(o => o.status === 'deposit_paid' || o.status === 'paid');
+    const needPack = orders.filter(o => o.status === 'purchased');
+    const needFlight = orders.filter(o => o.status === 'packed_kr');
+    const pendingProds = pendingProducts || [];
+
+    return {
+      needQuote,
+      needPurchase,
+      needPack,
+      needFlight,
+      pendingProds,
+      totalUrgent: needQuote.length + needPurchase.length + needPack.length + needFlight.length + pendingProds.length
+    };
+  }, [orders, pendingProducts]);
+
+  // Revenue KPI
+  const estimatedRevenue = useMemo(() => {
+    return orders.reduce((sum, order) => {
+      if (order.status === 'cancelled') return sum;
+      const displayTotal = order.quote
+        ? order.quote.totalVnd
+        : Math.round((order.foreignPrice || 0) * (rates[order.country]?.rate || krwRate) * (order.qty || 1));
+      return sum + displayTotal;
+    }, 0);
+  }, [orders, rates, krwRate]);
+
+  const receivedRevenue = useMemo(() => {
+    return orders.reduce((sum, order) => {
+      if (order.status === 'paid' || order.status === 'completed' || order.status === 'purchased' || order.status === 'packed_kr' || order.status === 'shipping_vn') {
+        const displayTotal = order.quote
+          ? order.quote.totalVnd
+          : Math.round((order.foreignPrice || 0) * (rates[order.country]?.rate || krwRate) * (order.qty || 1));
+        return sum + displayTotal;
+      }
+      return sum;
+    }, 0);
+  }, [orders, rates, krwRate]);
 
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'quoted').length;
   const catalogCount = products?.length || 0;
+  const unpaidOrders = useMemo(() => orders.filter(o => o.paymentStatus === 'unpaid' || o.status === 'on_hold'), [orders]);
 
-  // Sorting 5 most recent orders
-  const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 5);
-
-  const monthlyStats = React.useMemo(() => {
+  const monthlyStats = useMemo(() => {
     const stats = {};
     orders.forEach(order => {
       if (order.status === 'cancelled') return;
-      
       const date = new Date(order.createdAt);
       if (isNaN(date.getTime())) return;
-      
       const month = date.getMonth() + 1;
       const year = date.getFullYear();
       const key = `${month.toString().padStart(2, '0')}/${year}`;
-      
       const rateInfo = rates[order.country] || rates.KRW;
-      const value = order.quote 
-        ? order.quote.totalVnd 
+      const value = order.quote
+        ? order.quote.totalVnd
         : Math.round((order.foreignPrice || 0) * (rateInfo?.rate || 19.5) * (order.qty || 1));
-      
+
       if (!stats[key]) {
         stats[key] = { key, month, year, total: 0, received: 0, orderCount: 0 };
       }
-      
       stats[key].total += value;
       if (order.status === 'paid' || order.status === 'completed') {
         stats[key].received += value;
@@ -174,138 +204,189 @@ export default function AdminDashboardPage() {
     });
   }, [orders, rates]);
 
-  const maxVal = React.useMemo(() => {
+  const maxVal = useMemo(() => {
     const vals = monthlyStats.map(s => s.total);
     return vals.length > 0 ? Math.max(...vals, 1000000) : 1000000;
   }, [monthlyStats]);
 
-  if (!isAdminAuthenticated) {
-    return (
-      <div style={{ padding: '80px 20px', textAlign: 'center' }}>
-        <h2>Truy cập bị từ chối. Vui lòng đăng nhập quyền Admin!</h2>
-        <button className="btn-gold" style={{ marginTop: '16px' }} onClick={() => navigate('/admin/login')}>
-          Đến trang đăng nhập Admin
-        </button>
-      </div>
-    );
-  }
+  const handleUpdateKrw = (e) => {
+    e.preventDefault();
+    const cleanStr = String(krwRateInput || '').replace(',', '.').trim();
+    const val = parseFloat(cleanStr);
+    if (!val || val <= 0) return;
+    updateRates({ ...rates, KRW: { ...rates.KRW, rate: val } });
+    if (showToast) showToast(`✅ Đã cập nhật tỷ giá KRW = ${val} ₫/Won!`, 'success');
+  };
 
   const handleExportCSV = () => {
-    const headers = ['Mã Đơn', 'Khách Hàng', 'Email', 'Ngày Đặt', 'Trạng Thái', 'Tổng Tiền (VND)'];
+    const headers = ['Mã Đơn', 'Khách Hàng', 'SĐT', 'Ngày Đặt', 'Trạng Thái', 'Tổng Tiền (VND)', 'Mã Vận Đơn'];
     const rows = orders.map(order => {
       const rateInfo = rates[order.country] || rates.KRW;
-      const value = order.quote 
-        ? order.quote.totalVnd 
+      const value = order.quote
+        ? order.quote.totalVnd
         : Math.round((order.foreignPrice || 0) * (rateInfo?.rate || 19.5) * (order.qty || 1));
-      
-      const dateStr = new Date(order.createdAt).toLocaleDateString('vi-VN');
-      
-      let statusStr = order.status;
-      if (order.status === 'pending') statusStr = 'Chờ xử lý';
-      else if (order.status === 'quoted') statusStr = 'Đã báo giá';
-      else if (order.status === 'paid') statusStr = 'Đã thanh toán';
-      else if (order.status === 'completed') statusStr = 'Hoàn thành';
-      else if (order.status === 'cancelled') statusStr = 'Đã hủy';
 
+      const dateStr = new Date(order.createdAt).toLocaleDateString('vi-VN');
       return [
         order.id,
         order.customerName || 'Khách',
-        order.userEmail || '',
+        order.customerPhone || '',
         dateStr,
-        statusStr,
-        value
+        order.status,
+        value,
+        order.trackingCode || order.domesticTrackingCode || ''
       ];
     });
 
-    const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const csvContent = "﻿" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Bao_cao_doanh_thu_TAVY_KOREA_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute("download", `Bao_cao_TAVY_KOREA_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     if (showToast) showToast('Đã xuất báo cáo CSV thành công!', 'success');
   };
 
-  const unpaidOrders = orders.filter(o => o.paymentStatus === 'unpaid' || o.status === 'on_hold');
+  if (!isAdminAuthenticated) {
+    return (
+      <div style={{ padding: '80px 20px', textAlign: 'center', backgroundColor: '#F9FAFB', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ backgroundColor: '#FFFFFF', padding: '36px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.08)', maxWidth: '400px', width: '100%', border: '1px solid #E5E7EB' }}>
+          <img src="/tavy-logo.png" alt="TAVY Logo" style={{ height: '48px', margin: '0 auto 16px auto', display: 'block' }} />
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '8px' }}>Cổng Quản Trị TAVY Korea</h2>
+          <p style={{ fontSize: '0.85rem', color: '#6B7280', marginBottom: '24px' }}>Vui lòng đăng nhập bằng tài khoản quản trị để tiếp tục.</p>
+          <button
+            className="btn-gold"
+            style={{ width: '100%', padding: '12px', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem' }}
+            onClick={() => navigate('/admin/login')}
+          >
+            Đăng nhập Quản trị viên
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const navItems = [
-    { id: 'overview', label: 'Tổng quan', icon: BarChart3 },
-    { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag, count: orders.length },
-    { id: 'payments', label: 'Thanh toán', icon: CreditCard, count: unpaidOrders.length },
-    { id: 'products', label: 'Sản phẩm', icon: FileSpreadsheet },
-    { id: 'settings', label: 'Cấu hình', icon: Settings },
+    { id: 'overview', label: 'Bàn Làm Việc', icon: BarChart3, badge: urgentQueue.totalUrgent > 0 ? urgentQueue.totalUrgent : null, badgeColor: '#EF4444' },
+    { id: 'orders', label: 'Quy Trình 8 Bước', icon: ShoppingBag, count: orders.length },
+    { id: 'products', label: 'Kho Olive Young', icon: FileSpreadsheet, badge: (pendingProducts?.length || 0) > 0 ? pendingProducts.length : null, badgeColor: '#F59E0B' },
+    { id: 'payments', label: 'Thanh Toán VietQR', icon: CreditCard, count: unpaidOrders.length },
+    { id: 'settings', label: 'Tỷ Giá & Cấu Hình', icon: Settings },
   ];
 
-  const handleConfirmPayment = async (orderId) => {
-    try {
-      await updateDoc(doc(db, 'orders', orderId), {
-        paymentStatus: 'paid',
-        status: 'paid',
-        paidAt: new Date().toISOString(),
-        updatedAt: serverTimestamp(),
-      });
-      showToast('✅ Đã xác nhận thanh toán đơn ' + orderId, 'success');
-    } catch (err) {
-      showToast('❌ Lỗi: ' + err.message, 'error');
-    }
-  };
-
-  const handleRejectPayment = async (orderId) => {
-    try {
-      await updateDoc(doc(db, 'orders', orderId), {
-        paymentStatus: 'failed',
-        status: 'on_hold',
-        updatedAt: serverTimestamp(),
-      });
-      showToast('⚠️ Đã từ chối thanh toán đơn ' + orderId, 'warning');
-    } catch (err) {
-      showToast('❌ Lỗi: ' + err.message, 'error');
-    }
-  };
-
   return (
-    <div className="admin-container">
-      
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F8FAFC', color: '#1E293B', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+
+      {/* MOBILE SIDEBAR OVERLAY */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', zIndex: 9998, backdropFilter: 'blur(2px)' }}
+        />
+      )}
+
       {/* LEFT SIDEBAR */}
-      <aside className="admin-sidebar">
-        {/* Sidebar Header / Brand */}
-        <div className="admin-sidebar-header-wrap" style={{ padding: '24px 20px', borderBottom: '1px solid #374151', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <aside
+        style={{
+          width: '260px',
+          backgroundColor: '#0F172A',
+          color: '#F8FAFC',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'fixed',
+          top: 0,
+          bottom: 0,
+          left: sidebarOpen ? 0 : '-260px',
+          zIndex: 9999,
+          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+          borderRight: '1px solid #1E293B'
+        }}
+        className="admin-sidebar-responsive"
+      >
+        {/* Sidebar Brand Header */}
+        <div style={{ padding: '20px 18px', borderBottom: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img src="/tavy-logo.png" alt="TAVY Logo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
-            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFF', letterSpacing: '1px' }}>TAVY KOREA</span>
+            <img src="/tavy-logo.png" alt="TAVY Logo" style={{ height: '32px', width: 'auto' }} />
+            <div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.5px' }}>TAVY KOREA</div>
+              <div style={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 600 }}>CỔNG QUẢN TRỊ 8 BƯỚC</div>
+            </div>
           </div>
-          <div style={{ display: 'inline-block' }}>
-            <span style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', padding: '3px 8px', borderRadius: '4px', fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.5px' }}>
-              ADMIN PORTAL
-            </span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '4px', display: 'none' }}
+            className="admin-close-mobile-btn"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Live Seoul & VN Clocks */}
+        <div style={{ padding: '12px 18px', backgroundColor: '#1E293B', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#CBD5E1' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+            <span>Seoul (KST): <strong>{seoulTimeStr}</strong></span>
+          </div>
+          <div>
+            <span>VN: <strong>{vnTimeStr}</strong></span>
           </div>
         </div>
 
-        {/* Sidebar Navigation */}
-        <nav className="admin-nav">
-          {navItems.map(item => {
+        {/* Sidebar Nav Items */}
+        <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '6px', overflowY: 'auto' }}>
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`admin-nav-btn ${isActive ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSidebarOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  width: '100%',
+                  padding: '11px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: isActive ? 'var(--purple-primary)' : 'transparent',
+                  color: isActive ? '#FFFFFF' : '#94A3B8',
+                  fontWeight: isActive ? 700 : 600,
+                  fontSize: '0.86rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = '#1E293B';
+                    e.currentTarget.style.color = '#F8FAFC';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#94A3B8';
+                  }
+                }}
               >
-                <Icon size={18} style={{ color: isActive ? 'var(--purple-primary)' : '#9CA3AF' }} />
+                <Icon size={18} style={{ color: isActive ? '#FFFFFF' : '#94A3B8', flexShrink: 0 }} />
                 <span style={{ flex: 1 }}>{item.label}</span>
-                {item.count !== undefined && (
-                  <span style={{ 
-                    backgroundColor: isActive ? 'var(--purple-primary)' : '#4B5563', 
-                    color: '#FFF', 
-                    fontSize: '0.75rem', 
-                    padding: '2px 6px', 
-                    borderRadius: '9999px',
-                    fontWeight: 600
-                  }}>
+                {item.badge && (
+                  <span style={{ backgroundColor: item.badgeColor || '#EF4444', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px', borderRadius: '10px' }}>
+                    {item.badge}
+                  </span>
+                )}
+                {item.count !== undefined && !item.badge && (
+                  <span style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : '#334155', color: isActive ? '#FFF' : '#94A3B8', fontSize: '0.72rem', fontWeight: 700, padding: '2px 6px', borderRadius: '6px' }}>
                     {item.count}
                   </span>
                 )}
@@ -314,617 +395,731 @@ export default function AdminDashboardPage() {
           })}
         </nav>
 
-        {/* Sidebar Footer */}
-        <div className="admin-sidebar-footer-wrap" style={{ padding: '20px', borderTop: '1px solid #374151' }}>
+        {/* Quick Rate Indicator in Sidebar */}
+        <div style={{ padding: '14px 18px', backgroundColor: '#1E293B', margin: '0 12px 12px 12px', borderRadius: '10px', border: '1px solid #334155' }}>
+          <div style={{ fontSize: '0.7rem', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>
+            Tỷ giá hôm nay
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#F8FAFC' }}>
+              1 ₩ = <strong style={{ color: '#FCD34D' }}>{krwRate} ₫</strong>
+            </span>
+            <span style={{ fontSize: '0.7rem', color: '#10B981', backgroundColor: 'rgba(16,185,129,0.15)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+              +{serviceFee}% Phí
+            </span>
+          </div>
+        </div>
+
+        {/* Sidebar Footer / Logout */}
+        <div style={{ padding: '16px 18px', borderTop: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#F8FAFC' }}>Admin TAVY</div>
+            <div style={{ fontSize: '0.68rem', color: '#64748B' }}>v{APP_VERSION}</div>
+          </div>
           <button
             onClick={() => { logoutAdmin(); navigate('/admin/login'); }}
             style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              color: '#F87171',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              padding: '7px 12px',
+              borderRadius: '8px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              width: '100%',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              color: '#FCA5A5',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
-              padding: '10px',
-              borderRadius: '8px',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              gap: '6px'
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; }}
+            title="Đăng xuất khỏi hệ thống"
           >
-            <LogOut size={16} />
-            <span>Đăng xuất</span>
+            <LogOut size={14} />
+            <span>Thoát</span>
           </button>
         </div>
       </aside>
 
-      {/* RIGHT MAIN PANEL */}
-      <main className="admin-main">
-        
-        {/* Tab Header Banner */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-dark)' }}>
-              {activeTab === 'overview' && 'Tổng quan hệ thống'}
-              {activeTab === 'orders' && 'Quản lý đơn hàng'}
-              {activeTab === 'products' && 'Quản lý sản phẩm'}
-              {activeTab === 'payments' && 'Quản lý thanh toán'}
-              {activeTab === 'settings' && 'Cấu hình hệ thống'}
-            </h2>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-              {activeTab === 'overview' && 'Xem hiệu suất bán hàng, đơn hàng mới & điều khiển bot tự động.'}
-              {activeTab === 'orders' && 'Xem trạng thái, cập nhật mã vận đơn & báo giá khách hàng.'}
-              {activeTab === 'products' && 'Quản lý danh sách sản phẩm hiển thị trên website.'}
-              {activeTab === 'payments' && 'Xem trạng thái thanh toán, xác nhận chuyển khoản & quản lý đơn chờ.'}
-              {activeTab === 'settings' && 'Cài đặt tỷ giá hối đoái nước ngoại & đồng bộ hóa dữ liệu.'}
-            </p>
+      {/* MAIN CONTENT AREA */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }} className="admin-main-wrapper">
+
+        {/* TOPBAR */}
+        <header style={{ height: '64px', backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', position: 'sticky', top: 0, zIndex: 99 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              style={{ background: 'none', border: 'none', color: '#334155', cursor: 'pointer', padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
+              className="admin-hamburger-btn"
+            >
+              <Menu size={22} />
+            </button>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+              {activeTab === 'overview' && 'Bàn Làm Việc & Báo Cáo'}
+              {activeTab === 'orders' && 'Quản Lý Quy Trình 8 Bước'}
+              {activeTab === 'products' && 'Kho Sản Phẩm & Cào Link Olive Young'}
+              {activeTab === 'payments' && 'Xác Nhận Thanh Toán VietQR'}
+              {activeTab === 'settings' && 'Cấu Hình Tỷ Giá & Đồng Bộ'}
+            </h1>
           </div>
-          
-          {/* Quick Info Status on Header */}
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#FFF', padding: '8px 16px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
-              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: (pendingProducts?.length || 0) > 0 ? '#F59E0B' : '#9CA3AF' }} />
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-dark)' }}>
-                Hàng chờ duyệt: {pendingProducts?.length || 0}
-              </span>
-            </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              onClick={() => window.open('/', '_blank')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                backgroundColor: '#F1F5F9',
+                color: '#334155',
+                border: '1px solid #CBD5E1',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <ExternalLink size={14} />
+              <span>Xem Web Khách</span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (window.confirm('Đồng bộ dữ liệu kho & giá lên Website chính thức?')) {
+                  publishToWeb();
+                  if (showToast) showToast('✅ Đã đồng bộ lên Website thành công!', 'success');
+                }
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 16px',
+                borderRadius: '8px',
+                backgroundColor: '#10B981',
+                color: '#FFFFFF',
+                border: 'none',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
+              }}
+            >
+              <RefreshCw size={14} />
+              <span>Lên Web Ngay</span>
+            </button>
           </div>
-        </div>
+        </header>
 
-        {/* TAB 1: OVERVIEW */}
-        {activeTab === 'overview' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            
-            {/* KPI Cards Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-              {/* Card 1 */}
-              <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ backgroundColor: 'var(--purple-light)', borderRadius: '10px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <DollarSign size={24} style={{ color: 'var(--purple-primary)' }} />
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Doanh thu dự kiến</p>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px', color: 'var(--text-dark)' }}>
-                    {estimatedRevenue.toLocaleString('vi-VN')} ₫
-                  </h3>
-                </div>
-              </div>
+        {/* TAB CONTENTS */}
+        <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
 
-              {/* Card 2 */}
-              <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ backgroundColor: '#E0F2FE', borderRadius: '10px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ShoppingBag size={24} style={{ color: '#0284C7' }} />
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tổng số đơn hàng</p>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px', color: 'var(--text-dark)' }}>{totalOrders}</h3>
-                </div>
-              </div>
+          {/* TAB 1: OVERVIEW */}
+          {activeTab === 'overview' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1400px', margin: '0 auto' }}>
 
-              {/* Card 3 */}
-              <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ backgroundColor: '#FEF3C7', borderRadius: '10px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <RefreshCw size={24} style={{ color: '#D97706' }} />
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Đơn chờ xử lý</p>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px', color: 'var(--text-dark)' }}>{pendingOrders}</h3>
-                </div>
-              </div>
-
-              {/* Card 4 */}
-              <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ backgroundColor: '#ECFDF5', borderRadius: '10px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Tag size={24} style={{ color: '#059669' }} />
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sản phẩm Web</p>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px', color: 'var(--text-dark)' }}>{catalogCount}</h3>
-                </div>
-              </div>
-            </div>
-
-            {/* MANUAL SCRAPER GUIDE & PENDING QUEUE */}
-            <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                <div style={{ flex: 1, minWidth: '240px' }}>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)' }}>📦 Sản phẩm chờ duyệt</h4>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Sản phẩm bóc từ link Olive Young sẽ vào hàng chờ. Admin kiểm tra ảnh & thông tin trước khi Duyệt lên Web.
-                  </p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: (pendingProducts?.length || 0) > 0 ? '#D97706' : '#6B7280' }}>
-                    {(pendingProducts?.length || 0) > 0 ? `${pendingProducts.length} SẢN PHẨM ĐANG CHỜ` : 'KHÔNG CÓ HÀNG CHỜ'}
+              {/* SECTION: ACTION QUEUE (VIỆC CẦN LÀM GẤP) */}
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ backgroundColor: '#FEF2F2', color: '#EF4444', padding: '6px', borderRadius: '8px' }}>
+                      <AlertTriangle size={18} />
+                    </div>
+                    <div>
+                      <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                        Việc Cần Làm Ngay (Action Center)
+                      </h2>
+                      <span style={{ fontSize: '0.78rem', color: '#64748B' }}>
+                        Các đơn hàng & sản phẩm đang chờ Admin thao tác xử lý
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: urgentQueue.totalUrgent > 0 ? '#EF4444' : '#10B981', backgroundColor: urgentQueue.totalUrgent > 0 ? '#FEF2F2' : '#ECFDF5', padding: '4px 10px', borderRadius: '20px' }}>
+                    {urgentQueue.totalUrgent > 0 ? `${urgentQueue.totalUrgent} mục cần xử lý` : 'Đã xử lý hết việc 🎉'}
                   </span>
                 </div>
-              </div>
-              
-              <div style={{ marginTop: '16px', padding: '12px 16px', backgroundColor: '#F3F4F6', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                  Sản phẩm chờ duyệt trong hàng đợi: <strong style={{ color: 'var(--purple-primary)' }}>{pendingProducts?.length || 0}</strong>
-                </span>
-                <button 
-                  onClick={() => setActiveTab('products')} 
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: 'var(--purple-primary)',
-                    border: 'none',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
-                >
-                  Đến trang quản lý sản phẩm để duyệt
-                </button>
-              </div>
-            </div>
 
-            {/* REVENUE STATISTICS CHART (U01) */}
-            <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-                <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <TrendingUp size={18} style={{ color: 'var(--purple-primary)' }} />
-                    Báo cáo & Thống kê doanh thu theo tháng
-                  </h4>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Biểu đồ doanh thu thực nhận (đã thanh toán/hoàn thành) vs tổng doanh thu dự kiến.
-                  </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+
+                  {/* Task 1: Need Purchase Store */}
+                  <div
+                    onClick={() => setActiveTab('orders')}
+                    style={{
+                      padding: '14px',
+                      borderRadius: '12px',
+                      backgroundColor: urgentQueue.needPurchase.length > 0 ? '#FFFBEB' : '#F8FAFC',
+                      border: `1px solid ${urgentQueue.needPurchase.length > 0 ? '#FCD34D' : '#E2E8F0'}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: urgentQueue.needPurchase.length > 0 ? '#B45309' : '#64748B' }}>
+                        1. Đi Mua Store Hàn
+                      </span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 900, color: urgentQueue.needPurchase.length > 0 ? '#D97706' : '#94A3B8' }}>
+                        {urgentQueue.needPurchase.length}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.72rem', color: '#64748B', margin: '6px 0 0 0' }}>
+                      Đơn đã cọc/thanh toán, cần quay Video POV mua hàng.
+                    </p>
+                  </div>
+
+                  {/* Task 2: Need Pack KR */}
+                  <div
+                    onClick={() => setActiveTab('orders')}
+                    style={{
+                      padding: '14px',
+                      borderRadius: '12px',
+                      backgroundColor: urgentQueue.needPack.length > 0 ? '#FAF5FF' : '#F8FAFC',
+                      border: `1px solid ${urgentQueue.needPack.length > 0 ? '#D8B4FE' : '#E2E8F0'}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: urgentQueue.needPack.length > 0 ? '#7E22CE' : '#64748B' }}>
+                        2. Đóng Kiện & Cân Kg
+                      </span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 900, color: urgentQueue.needPack.length > 0 ? '#9333EA' : '#94A3B8' }}>
+                        {urgentQueue.needPack.length}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.72rem', color: '#64748B', margin: '6px 0 0 0' }}>
+                      Đã mua xong, cần quay video bọc bubble & cân kg.
+                    </p>
+                  </div>
+
+                  {/* Task 3: Need Flight */}
+                  <div
+                    onClick={() => setActiveTab('orders')}
+                    style={{
+                      padding: '14px',
+                      borderRadius: '12px',
+                      backgroundColor: urgentQueue.needFlight.length > 0 ? '#F0F9FF' : '#F8FAFC',
+                      border: `1px solid ${urgentQueue.needFlight.length > 0 ? '#BAE6FD' : '#E2E8F0'}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: urgentQueue.needFlight.length > 0 ? '#0369A1' : '#64748B' }}>
+                        3. Gửi Air Incheon ➔ VN
+                      </span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 900, color: urgentQueue.needFlight.length > 0 ? '#0284C7' : '#94A3B8' }}>
+                        {urgentQueue.needFlight.length}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.72rem', color: '#64748B', margin: '6px 0 0 0' }}>
+                      Kiện đã đóng, cần nhập mã AWB & ngày bay Air.
+                    </p>
+                  </div>
+
+                  {/* Task 4: Pending Products to approve */}
+                  <div
+                    onClick={() => setActiveTab('products')}
+                    style={{
+                      padding: '14px',
+                      borderRadius: '12px',
+                      backgroundColor: urgentQueue.pendingProds.length > 0 ? '#ECFDF5' : '#F8FAFC',
+                      border: `1px solid ${urgentQueue.pendingProds.length > 0 ? '#A7F3D0' : '#E2E8F0'}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: urgentQueue.pendingProds.length > 0 ? '#047857' : '#64748B' }}>
+                        4. Duyệt Hàng Olive Young
+                      </span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 900, color: urgentQueue.pendingProds.length > 0 ? '#059669' : '#94A3B8' }}>
+                        {urgentQueue.pendingProds.length}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.72rem', color: '#64748B', margin: '6px 0 0 0' }}>
+                      Link sản phẩm vừa cào, cần duyệt đẩy lên Web.
+                    </p>
+                  </div>
+
                 </div>
-                <button
-                  onClick={handleExportCSV}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    backgroundColor: 'var(--purple-primary)',
-                    color: '#FFF',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'opacity 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
-                  onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
-                >
-                  <Download size={16} />
-                  Xuất báo cáo CSV
-                </button>
               </div>
 
-              {monthlyStats.length === 0 ? (
-                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)', fontSize: '0.9rem' }}>
-                  Chưa có dữ liệu thống kê doanh thu.
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                  <div style={{ width: '100%', overflowX: 'auto' }}>
-                    <div style={{ minWidth: '500px', padding: '10px 0' }}>
-                      <svg viewBox="0 0 600 240" style={{ width: '100%', height: 'auto', display: 'block' }}>
-                        {/* Grid lines */}
-                        {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                          const y = 20 + ratio * 160;
-                          const val = Math.round(maxVal * (1 - ratio));
-                          return (
-                            <g key={idx}>
-                              <line x1="50" y1={y} x2="560" y2={y} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
-                              <text x="40" y={y + 4} fill="#9CA3AF" fontSize="9" textAnchor="end" fontWeight="500">
-                                {val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : `${val.toLocaleString('vi-VN')}₫`}
-                              </text>
-                            </g>
-                          );
-                        })}
+              {/* KPI CARDS & QUICK CONVERTER GRID */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px' }}>
 
-                        {/* Bars for each month */}
-                        {monthlyStats.map((stat, idx) => {
-                          const barWidth = 32;
-                          const groupGap = 70;
-                          const startX = 75 + idx * groupGap;
-                          
-                          const totalHeight = (stat.total / maxVal) * 160;
-                          const receivedHeight = (stat.received / maxVal) * 160;
-                          
-                          const totalY = 180 - totalHeight;
-                          const receivedY = 180 - receivedHeight;
+                {/* Left 8 Cols: KPI Cards & Revenue Chart */}
+                <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '20px' }} className="admin-grid-span8">
 
-                          return (
-                            <g key={stat.key}>
-                              <rect x={startX - 10} y="15" width={barWidth * 2 + 10} height="175" fill="transparent" />
-                              
-                              {/* Total Bar */}
-                              <rect
-                                x={startX}
-                                y={totalY}
-                                width={barWidth}
-                                height={totalHeight}
-                                fill="#E9D5FF"
-                                rx="4"
-                              />
-                              
-                              {/* Received Bar */}
-                              <rect
-                                x={startX + 6}
-                                y={receivedY}
-                                width={barWidth - 12}
-                                height={receivedHeight}
-                                fill="var(--purple-primary)"
-                                rx="3"
-                              />
+                  {/* 4 KPI Numbers */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+                    <div style={{ backgroundColor: '#FFFFFF', padding: '18px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Tổng Doanh Thu</span>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--purple-primary)', marginTop: '4px' }}>
+                        {estimatedRevenue.toLocaleString('vi-VN')} ₫
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 600 }}>Thực nhận: {receivedRevenue.toLocaleString('vi-VN')} ₫</span>
+                    </div>
 
-                              {/* Month Label */}
-                              <text x={startX + barWidth / 2} y="200" fill="#4B5563" fontSize="10" fontWeight="600" textAnchor="middle">
-                                {stat.key}
-                              </text>
+                    <div style={{ backgroundColor: '#FFFFFF', padding: '18px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Tổng Đơn Hàng</span>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F172A', marginTop: '4px' }}>
+                        {totalOrders}
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: '#64748B' }}>Toàn bộ các kênh</span>
+                    </div>
 
-                              {/* Value Label above */}
-                              <text x={startX + barWidth / 2} y={totalY - 5} fill="#7C3AED" fontSize="8" fontWeight="700" textAnchor="middle">
-                                {stat.total >= 1000000 ? `${(stat.total / 1000000).toFixed(1)}M` : `${Math.round(stat.total/1000)}k`}
-                              </text>
-                            </g>
-                          );
-                        })}
-                        
-                        {/* X-axis */}
-                        <line x1="50" y1="180" x2="560" y2="180" stroke="#9CA3AF" strokeWidth="1" />
-                      </svg>
+                    <div style={{ backgroundColor: '#FFFFFF', padding: '18px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Sản Phẩm Web</span>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F172A', marginTop: '4px' }}>
+                        {catalogCount}
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>Olive Young Store</span>
+                    </div>
+
+                    <div style={{ backgroundColor: '#FFFFFF', padding: '18px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Chờ Thanh Toán</span>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 900, color: unpaidOrders.length > 0 ? '#EF4444' : '#10B981', marginTop: '4px' }}>
+                        {unpaidOrders.length}
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: '#64748B' }}>VietQR & Woori</span>
                     </div>
                   </div>
 
-                  {/* Legend */}
-                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center', padding: '10px 0', borderTop: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '12px', height: '12px', backgroundColor: '#E9D5FF', borderRadius: '3px' }} />
-                      <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Doanh thu dự kiến</span>
+                  {/* Revenue Statistics Chart */}
+                  <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <TrendingUp size={18} style={{ color: 'var(--purple-primary)' }} />
+                          Biểu Đồ Tài Chính Theo Tháng
+                        </h3>
+                        <span style={{ fontSize: '0.75rem', color: '#64748B' }}>So sánh doanh thu dự kiến và thực thu</span>
+                      </div>
+                      <button
+                        onClick={handleExportCSV}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          backgroundColor: '#F8FAFC',
+                          color: '#334155',
+                          border: '1px solid #CBD5E1',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Download size={14} /> Xuất Excel CSV
+                      </button>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--purple-primary)', borderRadius: '3px' }} />
-                      <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Doanh thu thực tế (đã nhận)</span>
-                    </div>
+
+                    {monthlyStats.length === 0 ? (
+                      <div style={{ padding: '30px', textAlign: 'center', color: '#94A3B8', fontSize: '0.85rem' }}>
+                        Chưa có dữ liệu giao dịch tháng này.
+                      </div>
+                    ) : (
+                      <div style={{ width: '100%', overflowX: 'auto' }}>
+                        <div style={{ minWidth: '460px', padding: '6px 0' }}>
+                          <svg viewBox="0 0 540 200" style={{ width: '100%', height: 'auto', display: 'block' }}>
+                            {[0, 0.33, 0.66, 1].map((ratio, idx) => {
+                              const y = 20 + ratio * 130;
+                              const val = Math.round(maxVal * (1 - ratio));
+                              return (
+                                <g key={idx}>
+                                  <line x1="50" y1={y} x2="520" y2={y} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
+                                  <text x="42" y={y + 4} fill="#94A3B8" fontSize="9" textAnchor="end" fontWeight="500">
+                                    {val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : `${val.toLocaleString('vi-VN')}₫`}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {monthlyStats.map((stat, idx) => {
+                              const barWidth = 28;
+                              const groupGap = 65;
+                              const startX = 75 + idx * groupGap;
+                              const totalHeight = (stat.total / maxVal) * 130;
+                              const receivedHeight = (stat.received / maxVal) * 130;
+                              const totalY = 150 - totalHeight;
+                              const receivedY = 150 - receivedHeight;
+
+                              return (
+                                <g key={stat.key}>
+                                  <rect x={startX} y={totalY} width={barWidth} height={totalHeight} fill="#E9D5FF" rx="4" />
+                                  <rect x={startX + 5} y={receivedY} width={barWidth - 10} height={receivedHeight} fill="var(--purple-primary)" rx="3" />
+                                  <text x={startX + barWidth / 2} y="172" fill="#475569" fontSize="10" fontWeight="700" textAnchor="middle">
+                                    {stat.key}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                            <line x1="50" y1="150" x2="520" y2="150" stroke="#CBD5E1" strokeWidth="1" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* RECENT ORDERS TABLE */}
-            <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FileText size={18} style={{ color: 'var(--purple-primary)' }} />
-                  Đơn hàng gần đây
-                </h4>
-                <button 
-                  onClick={() => setActiveTab('orders')}
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: 'var(--purple-primary)',
-                    border: 'none',
-                    fontSize: '0.88rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Xem tất cả đơn hàng &rarr;
-                </button>
+                {/* Right 4 Cols: Quick Calculator & Rate Controller */}
+                <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '20px' }} className="admin-grid-span4">
+
+                  {/* BỘ TÍNH TỶ GIÁ NHANH (QUICK CONVERTER) */}
+                  <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                      <div style={{ backgroundColor: '#FAF5FF', color: 'var(--purple-primary)', padding: '6px', borderRadius: '8px' }}>
+                        <Calculator size={18} />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                          Tính Nhanh Giá Won ➔ VNĐ
+                        </h3>
+                        <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                          Áp dụng tỷ giá {krwRate}đ + {serviceFee}% phí dịch vụ
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Giá Store Hàn (Won ₩):</label>
+                        <input
+                          type="text"
+                          value={calcWon}
+                          onChange={(e) => setCalcWon(e.target.value)}
+                          placeholder="VD: 25000"
+                          style={{
+                            width: '100%',
+                            padding: '9px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #CBD5E1',
+                            fontSize: '0.95rem',
+                            fontWeight: 700,
+                            color: '#0F172A',
+                            marginTop: '4px',
+                            outline: 'none'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ padding: '12px', backgroundColor: '#FAF5FF', borderRadius: '10px', border: '1px solid #E9D5FF' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#7E22CE', fontWeight: 700, textTransform: 'uppercase' }}>
+                          Giá Bán Khách Nhận (VNĐ):
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--purple-primary)', marginTop: '2px' }}>
+                          {calcVnd} VNĐ
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${calcVnd} VNĐ`);
+                          if (showToast) showToast('📋 Đã sao chép giá VNĐ!', 'success');
+                        }}
+                        style={{
+                          backgroundColor: '#F1F5F9',
+                          color: '#334155',
+                          border: '1px solid #CBD5E1',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Sao chép giá báo khách
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* QUICK RATE ADJUSTER */}
+                  <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+                    <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', marginBottom: '12px' }}>
+                      Điều Chỉnh Tỷ Giá Nhanh
+                    </h3>
+                    <form onSubmit={handleUpdateKrw} style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        value={krwRateInput}
+                        onChange={(e) => setKrwRateInput(e.target.value)}
+                        placeholder="19.5"
+                        style={{
+                          flex: 1,
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          border: '1px solid #CBD5E1',
+                          fontSize: '0.9rem',
+                          fontWeight: 800,
+                          color: '#0F172A'
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        style={{
+                          backgroundColor: 'var(--purple-primary)',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Lưu tỷ giá
+                      </button>
+                    </form>
+                  </div>
+
+                </div>
               </div>
 
-              {recentOrders.length === 0 ? (
-                <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)', fontSize: '0.9rem' }}>
-                  Chưa có đơn hàng nào trong danh sách.
+              {/* RECENT ORDERS TABLE QUICK GLANCE */}
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FileText size={18} style={{ color: 'var(--purple-primary)' }} />
+                    Đơn Hàng Mới Cập Nhật
+                  </h3>
+                  <button
+                    onClick={() => setActiveTab('orders')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--purple-primary)',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    Xem tất cả {orders.length} đơn <ChevronRight size={16} />
+                  </button>
                 </div>
-              ) : (
+
+                {orders.length === 0 ? (
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#94A3B8', fontSize: '0.85rem' }}>
+                    Chưa có đơn hàng nào trong hệ thống.
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', textAlign: 'left' }}>
+                          <th style={{ padding: '10px 12px', fontWeight: 700 }}>Mã Đơn</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700 }}>Khách Hàng</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700 }}>Sản Phẩm</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700 }}>Trạng Thái</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'right' }}>Tổng Tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.slice(0, 5).map(o => (
+                          <tr key={o.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 800, color: 'var(--purple-primary)' }}>{o.id}</td>
+                            <td style={{ padding: '10px 12px' }}>
+                              <div style={{ fontWeight: 700, color: '#1E293B' }}>{o.customerName || 'Khách'}</div>
+                              <div style={{ fontSize: '0.72rem', color: '#64748B' }}>{o.customerPhone || ''}</div>
+                            </td>
+                            <td style={{ padding: '10px 12px', maxWidth: '240px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#334155' }}>
+                              {o.productName || (o.items ? o.items.map(i => i.name).join(', ') : 'Đơn hàng')}
+                            </td>
+                            <td style={{ padding: '10px 12px' }}>
+                              <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, backgroundColor: '#FAF5FF', color: 'var(--purple-primary)', border: '1px solid #E9D5FF' }}>
+                                {o.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, color: '#0F172A' }}>
+                              {((o.quote?.totalVnd || o.foreignPrice * krwRate) || 0).toLocaleString('vi-VN')} ₫
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 2: ORDERS 8-STEPS */}
+          {activeTab === 'orders' && (
+            <AdminOrderManager />
+          )}
+
+          {/* TAB 3: PRODUCTS OLIVE YOUNG */}
+          {activeTab === 'products' && (
+            <AdminProductManager />
+          )}
+
+          {/* TAB 4: PAYMENTS */}
+          {activeTab === 'payments' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <div style={{ background: '#FFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, color: '#F59E0B' }}>{orders.filter(o => o.paymentStatus === 'unpaid').length}</div>
+                  <div style={{ color: '#64748B', fontSize: '0.82rem', fontWeight: 600 }}>Chờ thanh toán</div>
+                </div>
+                <div style={{ background: '#FFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, color: '#10B981' }}>{orders.filter(o => o.paymentStatus === 'paid').length}</div>
+                  <div style={{ color: '#64748B', fontSize: '0.82rem', fontWeight: 600 }}>Đã thanh toán</div>
+                </div>
+                <div style={{ background: '#FFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, color: '#EF4444' }}>{orders.filter(o => o.status === 'on_hold').length}</div>
+                  <div style={{ color: '#64748B', fontSize: '0.82rem', fontWeight: 600 }}>Tạm dừng (on_hold)</div>
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>Danh sách cần xác nhận thanh toán</h3>
+                </div>
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
                     <thead>
-                      <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                        <th style={{ padding: '12px 8px', fontWeight: 600 }}>Mã Đơn</th>
-                        <th style={{ padding: '12px 8px', fontWeight: 600 }}>Khách Hàng</th>
-                        <th style={{ padding: '12px 8px', fontWeight: 600 }}>Sản Phẩm</th>
-                        <th style={{ padding: '12px 8px', fontWeight: 600 }}>Ngày Đặt</th>
-                        <th style={{ padding: '12px 8px', fontWeight: 600 }}>Trạng Thế</th>
-                        <th style={{ padding: '12px 8px', fontWeight: 600, textAlign: 'right' }}>Tổng Tiền (₫)</th>
+                      <tr style={{ backgroundColor: '#F8FAFC', color: '#64748B', textAlign: 'left' }}>
+                        <th style={{ padding: '12px 16px' }}>Mã đơn</th>
+                        <th style={{ padding: '12px 16px' }}>Khách hàng</th>
+                        <th style={{ padding: '12px 16px' }}>Ngân hàng</th>
+                        <th style={{ padding: '12px 16px' }}>Trạng thái</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center' }}>Hành động</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {recentOrders.map(order => {
-                        const rateInfo = rates[order.country] || rates.KRW;
-                        const displayTotal = order.quote 
-                          ? order.quote.totalVnd 
-                          : Math.round((order.foreignPrice || 0) * (rateInfo?.rate || 19.5) * (order.qty || 1));
-
-                        // Status styling helper
-                        let statusColor = '#374151';
-                        let statusBg = '#F3F4F6';
-                        let statusText = order.status;
-
-                        if (order.status === 'pending') {
-                          statusBg = '#FEF3C7';
-                          statusColor = '#D97706';
-                          statusText = 'Chờ xử lý';
-                        } else if (order.status === 'quoted') {
-                          statusBg = '#DBEAFE';
-                          statusColor = '#2563EB';
-                          statusText = 'Đã báo giá';
-                        } else if (order.status === 'paid') {
-                          statusBg = '#D1FAE5';
-                          statusColor = '#059669';
-                          statusText = 'Đã thanh toán';
-                        } else if (order.status === 'completed') {
-                          statusBg = '#ECFDF5';
-                          statusColor = '#10B981';
-                          statusText = 'Hoàn thành';
-                        } else if (order.status === 'cancelled') {
-                          statusBg = '#FEE2E2';
-                          statusColor = '#EF4444';
-                          statusText = 'Đã hủy';
-                        }
-
-                        return (
-                          <tr key={order.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td style={{ padding: '12px 8px', fontWeight: 700, color: 'var(--text-dark)' }}>{order.id}</td>
-                            <td style={{ padding: '12px 8px' }}>
-                              <div style={{ fontWeight: 600 }}>{order.customerName}</div>
-                              <div style={{ fontSize: '0.78rem', color: 'var(--text-light)' }}>{order.customerPhone}</div>
-                            </td>
-                            <td style={{ padding: '12px 8px', maxWidth: '220px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={order.productName}>
-                              {order.productName}
-                            </td>
-                            <td style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>
-                              {new Date(order.createdAt).toLocaleDateString('vi-VN')}
-                            </td>
-                            <td style={{ padding: '12px 8px' }}>
-                              <span style={{ 
-                                display: 'inline-block',
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.78rem',
-                                fontWeight: 700,
-                                color: statusColor,
-                                backgroundColor: statusBg
-                              }}>
-                                {statusText}
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 700, color: 'var(--text-dark)' }}>
-                              {displayTotal.toLocaleString('vi-VN')}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-          </div>
-        )}
-
-        {/* TAB 2: ORDERS */}
-        {activeTab === 'orders' && (
-          <AdminOrderManager />
-        )}
-
-        {/* TAB 3: PRODUCTS */}
-        {activeTab === 'products' && (
-          <AdminProductManager />
-        )}
-
-        {/* TAB: PAYMENTS */}
-        {activeTab === 'payments' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-              <div style={{ background: '#FFF', padding: '20px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>
-                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#F59E0B' }}>{orders.filter(o => o.paymentStatus === 'unpaid').length}</div>
-                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Chờ thanh toán</div>
-              </div>
-              <div style={{ background: '#FFF', padding: '20px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>
-                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#10B981' }}>{orders.filter(o => o.paymentStatus === 'paid').length}</div>
-                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Đã thanh toán</div>
-              </div>
-              <div style={{ background: '#FFF', padding: '20px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>
-                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#EF4444' }}>{orders.filter(o => o.status === 'on_hold').length}</div>
-                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Tạm dừng (on_hold)</div>
-              </div>
-            </div>
-
-            {/* Orders table */}
-            <div style={{ background: '#FFF', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1a1a2e', margin: 0 }}>Danh sách đơn cần xử lý</h3>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
-                  <thead>
-                    <tr style={{ background: '#F9FAFB' }}>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Mã đơn</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Khách hàng</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Ngân hàng</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Thời hạn</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Trạng thái</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Bằng chứng</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center', color: '#6b7280', fontWeight: 600 }}>Hành động</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.filter(o => o.paymentMethod).sort((a, b) => {
-                      const order = { unpaid: 0, on_hold: 1, paid: 2, failed: 3 };
-                      return (order[a.paymentStatus] || 0) - (order[b.paymentStatus] || 0);
-                    }).map(o => {
-                      const isExpired = o.paymentDue && new Date(o.paymentDue) < new Date();
-                      const statusColor = o.paymentStatus === 'paid' ? '#10B981' : o.status === 'on_hold' ? '#EF4444' : isExpired ? '#F59E0B' : '#3B82F6';
-                      const statusText = o.paymentStatus === 'paid' ? 'Đã TT' : o.status === 'on_hold' ? 'Tạm dừng' : isExpired ? 'Quá hạn' : 'Chờ TT';
-                      return (
-                        <tr key={o.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                          <td style={{ padding: '12px 16px', fontWeight: 600 }}>{o.id}</td>
-                          <td style={{ padding: '12px 16px' }}>{o.customerName || 'N/A'}</td>
-                          <td style={{ padding: '12px 16px' }}>{o.bankName || '-'}</td>
-                          <td style={{ padding: '12px 16px', fontSize: '0.82rem', color: isExpired ? '#EF4444' : '#374151' }}>
-                            {o.paymentDue ? new Date(o.paymentDue).toLocaleString('vi-VN') : '-'}
-                          </td>
+                      {orders.map(o => (
+                        <tr key={o.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--purple-primary)' }}>{o.id}</td>
+                          <td style={{ padding: '12px 16px' }}>{o.customerName || 'Khách'} ({o.customerPhone})</td>
+                          <td style={{ padding: '12px 16px' }}>{o.bankName || 'VietQR'}</td>
                           <td style={{ padding: '12px 16px' }}>
-                            <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 600, background: statusColor + '18', color: statusColor }}>{statusText}</span>
-                          </td>
-                          <td style={{ padding: '12px 16px' }}>
-                            {o.paymentProofUrl ? (
-                              <button onClick={() => setProofModal(o.paymentProofUrl)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: '#3B82F6' }}>
-                                <Eye size={14} /> Xem
-                              </button>
-                            ) : (
-                              <span style={{ color: '#9ca3af', fontSize: '0.82rem' }}>Chưa có</span>
-                            )}
+                            <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, backgroundColor: o.paymentStatus === 'paid' ? '#ECFDF5' : '#FEF3C7', color: o.paymentStatus === 'paid' ? '#059669' : '#D97706' }}>
+                              {o.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chờ chuyển khoản'}
+                            </span>
                           </td>
                           <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                            {o.paymentStatus !== 'paid' && (
-                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                                <button onClick={() => handleConfirmPayment(o.id)} title="Xác nhận đã nhận tiền" style={{ background: '#10B981', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
-                                  <CheckCircle size={14} /> Xác nhận
-                                </button>
-                                <button onClick={() => handleRejectPayment(o.id)} title="Từ chối / Tạm dừng" style={{ background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
-                                  <XCircle size={14} /> Từ chối
-                                </button>
-                              </div>
-                            )}
-                            {o.paymentStatus === 'paid' && (
-                              <span style={{ color: '#10B981', fontWeight: 600, fontSize: '0.82rem' }}>✓ Hoàn tất</span>
+                            {o.paymentStatus !== 'paid' ? (
+                              <button
+                                onClick={async () => {
+                                  await updateDoc(doc(db, 'orders', o.id), {
+                                    paymentStatus: 'paid',
+                                    status: 'paid',
+                                    paidAt: new Date().toISOString(),
+                                    updatedAt: serverTimestamp()
+                                  });
+                                  if (showToast) showToast(`✅ Đã duyệt thanh toán cho đơn ${o.id}!`, 'success');
+                                }}
+                                style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                Xác nhận đã nhận tiền
+                              </button>
+                            ) : (
+                              <span style={{ color: '#10B981', fontWeight: 700, fontSize: '0.8rem' }}>✓ Đã hoàn tất</span>
                             )}
                           </td>
                         </tr>
-                      );
-                    })}
-                    {orders.filter(o => o.paymentMethod).length === 0 && (
-                      <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>Chưa có đơn nào có thông tin thanh toán</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Proof modal */}
-            {proofModal && (
-              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setProofModal(null)}>
-                <div style={{ background: '#FFF', borderRadius: '16px', padding: '24px', maxWidth: '520px', maxHeight: '80vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
-                  <h3 style={{ marginBottom: '16px', fontSize: '1.1rem', fontWeight: 700 }}>Bằng chứng chuyển khoản</h3>
-                  <img src={proofModal} alt="Payment proof" style={{ width: '100%', borderRadius: '8px' }} />
-                  <button onClick={() => setProofModal(null)} className="btn-outline" style={{ marginTop: '16px', width: '100%' }}>Đóng</button>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* TAB 4: SETTINGS */}
-        {activeTab === 'settings' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            
-            {/* KRW Rate Card */}
-            <div style={{ maxWidth: '500px' }}>
-              <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
-                <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '14px' }}>₩ Tỷ giá Won Hàn Quốc (KRW/VND)</h4>
-                <form onSubmit={handleUpdateKrw} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* TAB 5: SETTINGS */}
+          {activeTab === 'settings' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', margin: '0 auto' }}>
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '24px' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '16px' }}>
+                  Cấu Hình Tỷ Giá & Phí Dịch Vụ
+                </h3>
+                <form onSubmit={handleUpdateKrw} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div>
-                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Giá trị quy đổi (1 KRW = x VND):</label>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
+                      Tỷ giá Won Hàn Quốc (1 KRW = x VNĐ):
+                    </label>
                     <input
                       type="text"
                       value={krwRateInput}
                       onChange={(e) => setKrwRateInput(e.target.value)}
-                      placeholder="Ví dụ: 19.5 hoặc 19,5"
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', marginTop: '4px', fontSize: '1.1rem', fontWeight: 700, color: 'var(--purple-primary)' }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '1rem', fontWeight: 800, marginTop: '4px' }}
                     />
                   </div>
-                  <button 
-                    type="submit" 
-                    style={{ 
-                      backgroundColor: 'var(--purple-primary)', 
-                      color: '#FFF', 
-                      border: 'none', 
-                      padding: '12px', 
-                      borderRadius: '6px', 
-                      cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      fontWeight: 700,
-                      marginTop: '4px'
-                    }}
+                  <button
+                    type="submit"
+                    style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
                   >
-                    Cập nhật tỷ giá KRW
+                    Lưu cài đặt tỷ giá
                   </button>
                 </form>
               </div>
-            </div>
 
-            {/* Sync & Maintenance Actions */}
-            <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '14px' }}>🔄 Đồng bộ & Bảo trì dữ liệu Website</h4>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
-                Khi bạn chỉnh sửa, thêm, xóa sản phẩm trong Quản lý sản phẩm, dữ liệu sẽ được lưu nháp cục bộ. Để áp dụng các thay đổi này cho người dùng ngoài Website, bạn cần đồng bộ. Hoặc bạn có thể khôi phục lại dữ liệu từ Website.
-              </p>
-              
-              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                <button 
-                  onClick={() => {
-                    if (window.confirm('Khôi phục lại dữ liệu gốc (bản backup gần nhất đang chạy trên Website)? Các chỉnh sửa nháp sẽ bị xóa.')) {
-                      revertFromWeb();
-                      if (showToast) showToast('Đã khôi phục dữ liệu gần nhất!', 'info');
-                    }
-                  }}
-                  style={{
-                    backgroundColor: 'rgba(31, 41, 55, 0.05)', 
-                    color: '#374151', 
-                    border: '1px solid #D1D5DB',
-                    padding: '12px 20px', 
-                    borderRadius: '8px', 
-                    fontSize: '0.88rem', 
-                    fontWeight: 700, 
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <RefreshCw size={16} />
-                  Khôi phục lần đăng nhập gần nhất
-                </button>
-                
-                <button 
-                  onClick={() => {
-                    if (window.confirm('Bạn có chắc chắn muốn đẩy tất cả dữ liệu kho này lên Website cho khách hàng xem?')) {
+              <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '24px' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+                  Đồng Bộ Dữ Liệu Lên Website Khách
+                </h3>
+                <p style={{ fontSize: '0.82rem', color: '#64748B', marginBottom: '16px' }}>
+                  Khi hoàn tất sửa đổi kho hàng hoặc tỷ giá, bấm đồng bộ để áp dụng tức thì cho khách truy cập website.
+                </p>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Khôi phục dữ liệu gần nhất?')) {
+                        revertFromWeb();
+                        if (showToast) showToast('Đã khôi phục dữ liệu gốc!', 'info');
+                      }
+                    }}
+                    style={{ padding: '10px 16px', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Khôi phục bản lưu trước
+                  </button>
+                  <button
+                    onClick={() => {
                       publishToWeb();
                       if (showToast) showToast('Đã đồng bộ lên Website thành công!', 'success');
-                    }
-                  }}
-                  style={{
-                    backgroundColor: '#10B981', 
-                    color: '#FFF', 
-                    border: 'none',
-                    padding: '12px 24px', 
-                    borderRadius: '8px', 
-                    fontSize: '0.88rem', 
-                    fontWeight: 700, 
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  Đồng bộ lên Website
-                </button>
+                    }}
+                    style={{ padding: '10px 20px', borderRadius: '8px', backgroundColor: '#10B981', color: '#FFF', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Đồng bộ lên Website ngay
+                  </button>
+                </div>
               </div>
             </div>
+          )}
 
-          </div>
-        )}
+        </div>
+      </div>
 
-      </main>
+      <style>{`
+        @media (min-width: 1024px) {
+          .admin-sidebar-responsive {
+            left: 0 !important;
+          }
+          .admin-main-wrapper {
+            margin-left: 260px;
+          }
+          .admin-hamburger-btn {
+            display: none !important;
+          }
+          .admin-close-mobile-btn {
+            display: none !important;
+          }
+        }
+        @media (max-width: 1023px) {
+          .admin-grid-span8 {
+            grid-column: span 12 !important;
+          }
+          .admin-grid-span4 {
+            grid-column: span 12 !important;
+          }
+          .admin-close-mobile-btn {
+            display: block !important;
+          }
+        }
+      `}</style>
 
     </div>
   );

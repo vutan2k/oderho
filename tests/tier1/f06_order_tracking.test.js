@@ -5,24 +5,24 @@ import {
   assertDeepEquals,
   assertContains,
 } from '../framework/assert.js';
-import { ORDER_STATUSES, getStatusConfig } from '../../src/data/orderStatuses.js';
+import { ORDER_STATUSES, getStatusConfig, ORDER_STEPS } from '../../src/data/orderStatuses.js';
 
 setTier('Tier 1: Feature Coverage');
 
-test('[F6-1] 9-step enum progression sequence validation', () => {
+test('[F6-1] 8-step transparent overseas fulfillment sequence validation', () => {
   const expectedSteps = [
     'pending',
-    'quoted',
     'deposit_paid',
+    'confirmed',
     'purchased',
-    'in_kr_warehouse',
-    'transit',
-    'in_vn_warehouse',
-    'delivering',
+    'packed_kr',
+    'in_transit_air',
+    'customs_cleared',
     'completed'
   ];
 
-  assertEquals(expectedSteps.length, 9, 'Enum progression must have exactly 9 steps');
+  assertEquals(expectedSteps.length, 8, 'Workflow progression must have exactly 8 steps');
+  assertEquals(ORDER_STEPS.length, 8, 'ORDER_STEPS must have exactly 8 steps');
 
   expectedSteps.forEach((statusKey, index) => {
     const config = ORDER_STATUSES[statusKey];
@@ -34,7 +34,7 @@ test('[F6-1] 9-step enum progression sequence validation', () => {
 test('[F6-2] Order tracking lookup by order ID', () => {
   const ordersDatabase = [
     { id: 'ORD-100001', customerName: 'Nguyen Van A', status: 'pending', totalVnd: 500000 },
-    { id: 'ORD-100002', customerName: 'Tran Thi B', status: 'transit', totalVnd: 1200000 },
+    { id: 'ORD-100002', customerName: 'Tran Thi B', status: 'in_transit_air', totalVnd: 1200000 },
   ];
 
   const lookupOrder = (orderId) => {
@@ -45,7 +45,7 @@ test('[F6-2] Order tracking lookup by order ID', () => {
   const found = lookupOrder('ORD-100002');
   assert(found !== null, 'Order ORD-100002 should be found');
   assertEquals(found.customerName, 'Tran Thi B', 'Customer name should match');
-  assertEquals(found.status, 'transit', 'Order status should be transit');
+  assertEquals(found.status, 'in_transit_air', 'Order status should be in_transit_air');
 
   const notFound = lookupOrder('ORD-999999');
   assertEquals(notFound, null, 'Non-existent order should return null');
@@ -91,7 +91,7 @@ test('[F6-5] Order status badge visual tokens rendering', () => {
 
   const completedConfig = getStatusConfig('completed');
   assertEquals(completedConfig.color, '#059669', 'Completed color token matches');
-  assertEquals(completedConfig.stepIndex, 8, 'Completed step index is 8');
+  assertEquals(completedConfig.stepIndex, 7, 'Completed step index is 7 in 8-step workflow');
 
   const fallbackConfig = getStatusConfig('unknown_status');
   assertEquals(fallbackConfig.id, 'unknown_status', 'Fallback status ID should preserve key');

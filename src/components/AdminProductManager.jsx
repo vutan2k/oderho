@@ -4,7 +4,9 @@ import { useToast } from '../components/Toast';
 import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
 import { getPriceSyncConfig, savePriceSyncConfig, executeAutoPriceSync } from '../services/autoScraperBotService';
 import {
-  Plus, Trash2, X, Globe, Check, Edit3, Link2, Download, Play, Square, Eye, RefreshCw, Zap, Clock, ShieldCheck
+  Plus, Trash2, X, Globe, Check, Edit3, Link2, Download,
+  Eye, RefreshCw, Zap, Clock, ShieldCheck, Search, Filter,
+  ExternalLink, Sparkles, CheckCircle2, ArrowUpDown
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -19,18 +21,21 @@ export default function AdminProductManager() {
   const {
     products, addProduct, updateProduct, deleteProduct, deleteAllProducts,
     pendingProducts, addPendingProduct, updatePendingProduct,
-    approvePendingProduct, approveSelectedPendingProducts, approveAllPendingProducts, rejectPendingProduct
+    approvePendingProduct, approveSelectedPendingProducts, approveAllPendingProducts, rejectPendingProduct,
+    rates
   } = useContext(AppContext);
   const showToast = useToast();
 
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'pending'
+  const krwRate = rates?.KRW?.rate || 19.5;
+
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'pending' | 'price_logs'
 
   // --- Inventory State ---
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCat, setFilterCat] = useState('all');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  
+
   // --- Edit Modal State ---
   const [editModal, setEditModal] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -43,28 +48,39 @@ export default function AdminProductManager() {
   const [loadingScrape, setLoadingScrape] = useState(false);
   const [scrapeError, setScrapeError] = useState(null);
 
-  // --- AI Price Sync Bot (Method 3: Periodic Price Anchoring) ---
+  // --- AI Price Sync Bot ---
   const [priceSyncConfig, setPriceSyncConfigState] = useState(() => getPriceSyncConfig());
   const [isSyncingPrice, setIsSyncingPrice] = useState(false);
   const [priceSyncLogs, setPriceSyncLogs] = useState(priceSyncConfig.logs || []);
+  const [zoomImage, setZoomImage] = useState(null);
+
+  // Auto Timer for Price Sync Bot
+  useEffect(() => {
+    if (!priceSyncConfig.enabled) return;
+    const intervalMs = (priceSyncConfig.intervalMins || 60) * 60 * 1000;
+    const timer = setInterval(() => {
+      handleRunManualPriceSync();
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [priceSyncConfig.enabled, priceSyncConfig.intervalMins, products]);
 
   const handleTogglePriceSync = () => {
     const updated = { ...priceSyncConfig, enabled: !priceSyncConfig.enabled };
     savePriceSyncConfig(updated);
     setPriceSyncConfigState(updated);
-    if (showToast) showToast(updated.enabled ? '🟢 Đã BẬT AI Bot Neo Giá Tự Động Định Kỳ!' : '⚪ Đã TẮT AI Bot Neo Giá Tự Động.', updated.enabled ? 'success' : 'info');
+    if (showToast) showToast(updated.enabled ? '🟢 Đã BẬT AI Bot Neo Giá Tự Động!' : '⚪ Đã TẮT AI Bot Neo Giá Tự Động.', updated.enabled ? 'success' : 'info');
   };
 
   const handleChangePriceSyncInterval = (newMins) => {
     const updated = { ...priceSyncConfig, intervalMins: newMins };
     savePriceSyncConfig(updated);
     setPriceSyncConfigState(updated);
-    if (showToast) showToast(`Đã đổi tần suất cào giá thành ${newMins} phút / lần.`, 'success');
+    if (showToast) showToast(`Đã đổi tần suất quét giá thành ${newMins} phút / lần.`, 'success');
   };
 
   const handleRunManualPriceSync = async () => {
     setIsSyncingPrice(true);
-    if (showToast) showToast('🤖 AI đang quét & so sánh giá với Olive Young...', 'info');
+    if (showToast) showToast('🤖 AI đang quét & so sánh giá với Olive Young Hàn Quốc...', 'info');
     try {
       const res = await executeAutoPriceSync(products, (goodsNo, updatedProduct) => {
         updateProduct(goodsNo, updatedProduct);
@@ -83,6 +99,7 @@ export default function AdminProductManager() {
       if (showToast) showToast(`Lỗi quét giá: ${err.message}`, 'error');
     }
   };
+
   const handleAnchorPendingPrice = (prod) => {
     if (!prod) return;
     const salePrcMap = {
@@ -117,120 +134,7 @@ export default function AdminProductManager() {
     if (showToast) showToast('⚡ Đã neo giá Olive Young thành công cho tất cả sản phẩm chờ duyệt!', 'success');
   };
 
-  // Automatic Timer Interval Effect for Price Sync Bot
-  useEffect(() => {
-    if (!priceSyncConfig.enabled) return;
-    const intervalMs = (priceSyncConfig.intervalMins || 60) * 60 * 1000;
-    const timer = setInterval(() => {
-      console.log('🤖 [AI PRICE SYNC BOT] Chạy cào định kỳ neo giá Olive Young...');
-      handleRunManualPriceSync();
-    }, intervalMs);
-    return () => clearInterval(timer);
-  }, [priceSyncConfig.enabled, priceSyncConfig.intervalMins, products]);
-
-  // --- Playwright Visual Browser Live Controls ---
-  const [isPlaywrightLive, setIsPlaywrightLive] = useState(false);
-  const [playwrightLogs, setPlaywrightLogs] = useState([]);
-  const [maxProductsInput, setMaxProductsInput] = useState(10);
-  const [headlessInput, setHeadlessInput] = useState(true);
-  const [zoomImage, setZoomImage] = useState(null);
-
-  const handleLocalImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result;
-        setEditForm(prev => {
-          const currentImages = prev.images || [];
-          const updatedImages = [...currentImages, base64];
-          const mainImg = prev.productImage || base64;
-          return { ...prev, images: updatedImages, productImage: mainImg };
-        });
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-
-
-  // ----------------------------------------------------
-  // INVENTORY LOGIC
-  // ----------------------------------------------------
-  const filtered = useMemo(() => {
-    return products.filter(p => {
-      const matchCat = filterCat === 'all' || p.category === filterCat;
-      const term = searchTerm.toLowerCase();
-      const matchSearch = !term ||
-        (p.name || '').toLowerCase().includes(term) ||
-        (p.nameKr || '').toLowerCase().includes(term) ||
-        (p.brand || '').toLowerCase().includes(term) ||
-        (p.brandKr || '').toLowerCase().includes(term) ||
-        (p.goodsNo || '').toLowerCase().includes(term);
-      return matchCat && matchSearch;
-    });
-  }, [products, filterCat, searchTerm]);
-
-  const toggleSelectProduct = (goodsNo) => {
-    setSelectedProducts(prev => 
-      prev.includes(goodsNo) ? prev.filter(id => id !== goodsNo) : [...prev, goodsNo]
-    );
-  };
-  const toggleSelectAll = () => {
-    if (selectedProducts.length === filtered.length && filtered.length > 0) setSelectedProducts([]);
-    else setSelectedProducts(filtered.map(p => p.goodsNo));
-  };
-  const handleDeleteSelected = () => {
-    if (selectedProducts.length === 0) return;
-    if (window.confirm(`Xóa vĩnh viễn ${selectedProducts.length} sản phẩm?`)) {
-      selectedProducts.forEach(id => deleteProduct(id));
-      setSelectedProducts([]);
-      if (showToast) showToast(`Đã xóa ${selectedProducts.length} sản phẩm`, 'success');
-    }
-  };
-  const handleDelete = (goodsNo) => {
-    deleteProduct(goodsNo);
-    setDeleteConfirm(null);
-    if (showToast) showToast('Đã xoá sản phẩm', 'info');
-  };
-
-  const handleExportProductCSV = () => {
-    if (!products || products.length === 0) {
-      if (showToast) showToast('Kho hàng hiện đang trống!', 'warning');
-      return;
-    }
-    const headers = ['Mã SP', 'Tên Tiếng Việt', 'Tên Tiếng Hàn', 'Thương Hiệu', 'Danh Mục', 'Giá Won (₩)', 'Nguồn Gốc', 'Link Olive Young'];
-    const rows = products.map(p => {
-      let catLabel = p.category;
-      const foundCat = CATEGORIES.find(c => c.value === p.category);
-      if (foundCat) catLabel = foundCat.label;
-
-      return [
-        p.goodsNo || '',
-        p.name || '',
-        p.nameKr || '',
-        p.brand || p.brandKr || '',
-        catLabel,
-        p.foreignPrice || 0,
-        p.origin || 'Korea',
-        p.productUrl || ''
-      ];
-    });
-
-    const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Kho_Hang_TAVY_KOREA_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    if (showToast) showToast(`Đã xuất báo cáo ${products.length} sản phẩm sang CSV thành công!`, 'success');
-  };
-
-  // --- Helper Sanitize Product Admin ---
+  // Helper Translate Korean Names
   const translateKoreanToVi = (krTitle) => {
     if (!krTitle) return 'Sản phẩm Olive Young Korea';
     let vi = krTitle;
@@ -282,7 +186,6 @@ export default function AdminProductManager() {
       vietnameseName = translateKoreanToVi(prod.nameKr || prod.name);
     }
 
-    // Lọc loại bỏ ảnh rác (logo, icon, banner, quà tặng kèm /item/, category /display/)
     const isJunkImg = (u) => /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_/i.test(u);
     const isRealWorkingUrl = (u) => u && typeof u === 'string' && u.startsWith('http') && !isJunkImg(u);
 
@@ -302,7 +205,87 @@ export default function AdminProductManager() {
     };
   };
 
-  // --- Edit/Add Logic ---
+  // Filtered Products
+  const filtered = useMemo(() => {
+    return products.filter(p => {
+      const matchCat = filterCat === 'all' || p.category === filterCat;
+      const term = searchTerm.toLowerCase();
+      const matchSearch = !term ||
+        (p.name || '').toLowerCase().includes(term) ||
+        (p.nameKr || '').toLowerCase().includes(term) ||
+        (p.brand || '').toLowerCase().includes(term) ||
+        (p.brandKr || '').toLowerCase().includes(term) ||
+        (p.goodsNo || '').toLowerCase().includes(term);
+      return matchCat && matchSearch;
+    });
+  }, [products, filterCat, searchTerm]);
+
+  // Inventory Selection
+  const toggleSelectProduct = (goodsNo) => {
+    setSelectedProducts(prev =>
+      prev.includes(goodsNo) ? prev.filter(id => id !== goodsNo) : [...prev, goodsNo]
+    );
+  };
+  const toggleSelectAll = () => {
+    if (selectedProducts.length === filtered.length && filtered.length > 0) setSelectedProducts([]);
+    else setSelectedProducts(filtered.map(p => p.goodsNo));
+  };
+  const handleDeleteSelected = () => {
+    if (selectedProducts.length === 0) return;
+    if (window.confirm(`Xóa vĩnh viễn ${selectedProducts.length} sản phẩm đã chọn?`)) {
+      selectedProducts.forEach(id => deleteProduct(id));
+      setSelectedProducts([]);
+      if (showToast) showToast(`Đã xóa ${selectedProducts.length} sản phẩm`, 'success');
+    }
+  };
+  const handleDelete = (goodsNo) => {
+    deleteProduct(goodsNo);
+    setDeleteConfirm(null);
+    if (showToast) showToast('Đã xoá sản phẩm', 'info');
+  };
+
+  // Export CSV
+  const handleExportProductCSV = () => {
+    if (!products || products.length === 0) {
+      if (showToast) showToast('Kho hàng hiện đang trống!', 'warning');
+      return;
+    }
+    const headers = ['Mã SP', 'Tên Tiếng Việt', 'Tên Tiếng Hàn', 'Thương Hiệu', 'Danh Mục', 'Giá Won (₩)', 'Giá Ước Tính VNĐ', 'Nguồn Gốc', 'Link Olive Young'];
+    const rows = products.map(p => {
+      let catLabel = p.category;
+      const foundCat = CATEGORIES.find(c => c.value === p.category);
+      if (foundCat) catLabel = foundCat.label;
+
+      const fPrice = p.foreignPrice || p.price || 0;
+      const approxVnd = Math.round(fPrice * krwRate * 1.05);
+
+      return [
+        p.goodsNo || '',
+        p.name || '',
+        p.nameKr || '',
+        p.brand || p.brandKr || '',
+        catLabel,
+        fPrice,
+        approxVnd,
+        p.origin || 'Store Olive Young Seoul, Hàn Quốc',
+        p.productUrl || ''
+      ];
+    });
+
+    const csvContent = "﻿" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Kho_Hang_TAVY_KOREA_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    if (showToast) showToast(`Đã xuất báo cáo ${products.length} sản phẩm sang CSV thành công!`, 'success');
+  };
+
+  // Add & Edit Handlers
   const handleAddNew = () => {
     const newProd = {
       goodsNo: `SP-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -313,16 +296,19 @@ export default function AdminProductManager() {
     setEditForm(newProd);
     setEditModal({ isNew: true, ...newProd });
   };
+
   const openEdit = (prod) => {
     const cleanProd = sanitizeProductForAdmin(prod);
     setEditForm({ ...cleanProd });
     setEditModal({ isPending: false, ...cleanProd });
   };
+
   const openEditPending = (prod) => {
     const cleanProd = sanitizeProductForAdmin(prod);
     setEditForm({ ...cleanProd });
     setEditModal({ isPending: true, ...cleanProd });
   };
+
   const handleEditChange = (field, value) => {
     let cleanVal = value;
     if (field === 'foreignPrice') {
@@ -333,30 +319,29 @@ export default function AdminProductManager() {
       [field]: ['rating', 'reviewsCount'].includes(field) ? (parseFloat(value) || 0) : cleanVal
     }));
   };
+
   const handleSaveEdit = () => {
-    if (!editForm.name?.trim()) { 
-      if (showToast) showToast('Tên sản phẩm không được trống!', 'error'); 
-      return; 
+    if (!editForm.name?.trim()) {
+      if (showToast) showToast('Tên sản phẩm không được để trống!', 'error');
+      return;
     }
     const cleanForm = sanitizeProductForAdmin(editForm);
     if (editModal.isPending) {
       updatePendingProduct(editModal.goodsNo, cleanForm);
       if (showToast) showToast('Đã cập nhật thông tin hàng chờ!', 'success');
-    } else if (editModal.isNew) { 
-      addProduct(cleanForm); 
-      if (showToast) showToast('Đã thêm sản phẩm!', 'success'); 
-    } else { 
-      updateProduct(editModal.goodsNo, cleanForm); 
-      if (showToast) showToast('Đã cập nhật sản phẩm!', 'success'); 
+    } else if (editModal.isNew) {
+      addProduct(cleanForm);
+      if (showToast) showToast('Đã thêm sản phẩm mới vào kho!', 'success');
+    } else {
+      updateProduct(editModal.goodsNo, cleanForm);
+      if (showToast) showToast('Đã cập nhật sản phẩm thành công!', 'success');
     }
     setEditModal(null);
   };
 
-  // ----------------------------------------------------
-  // PENDING LOGIC
-  // ----------------------------------------------------
+  // Pending Actions
   const toggleSelectPending = (goodsNo) => {
-    setSelectedPending(prev => 
+    setSelectedPending(prev =>
       prev.includes(goodsNo) ? prev.filter(id => id !== goodsNo) : [...prev, goodsNo]
     );
   };
@@ -366,7 +351,7 @@ export default function AdminProductManager() {
   };
   const handleApproveSelected = () => {
     if (selectedPending.length === 0) return;
-    if (window.confirm(`Duyệt ${selectedPending.length} sản phẩm lên Website?`)) {
+    if (window.confirm(`Duyệt ${selectedPending.length} sản phẩm lên Website chính thức?`)) {
       approveSelectedPendingProducts(selectedPending);
       setSelectedPending([]);
       if (showToast) showToast('Đã duyệt sản phẩm thành công!', 'success');
@@ -374,41 +359,52 @@ export default function AdminProductManager() {
   };
   const handleDeleteSelectedPending = () => {
     if (selectedPending.length === 0) return;
-    if (window.confirm(`Xóa ${selectedPending.length} sản phẩm chờ?`)) {
+    if (window.confirm(`Xóa ${selectedPending.length} sản phẩm chờ duyệt?`)) {
       selectedPending.forEach(id => rejectPendingProduct(id));
       setSelectedPending([]);
       if (showToast) showToast('Đã xóa danh sách chờ!', 'success');
     }
   };
 
-  // ----------------------------------------------------
-  // SCRAPER LOGIC
-  // ----------------------------------------------------
+  // AI Link Scraper
   const handleScrape = async (e) => {
     e.preventDefault();
     if (!quickLink.trim()) return;
     setLoadingScrape(true);
     setScrapeError(null);
-    if (showToast) showToast('🤖 AI đang bóc tách dữ liệu từ link...', 'info');
+    if (showToast) showToast('🤖 AI đang bóc tách dữ liệu từ Olive Young...', 'info');
     const res = await runAIScraperAgent(quickLink.trim());
     setLoadingScrape(false);
     if (res.success && res.product) {
       addPendingProduct(res.product);
       setQuickLink('');
-      setActiveTab('pending'); // Chuyển sang Hàng Chờ để review
-      if (showToast) showToast(`🤖 Đã bóc tách thành công: "${res.product.name}"! Dữ liệu đã được thêm vào Hàng Chờ.`, 'success');
+      setActiveTab('pending');
+      if (showToast) showToast(`🤖 Đã bóc tách thành công: "${res.product.name}"! Dữ liệu đã chuyển sang mục Chờ Duyệt.`, 'success');
     } else {
       setScrapeError({ message: res.error, url: quickLink.trim(), openPage: !!res.openProductPage });
       if (showToast) showToast(`Lỗi bóc tách: ${res.error}`, 'error');
     }
   };
 
-  const handleOpenProductPage = () => {
-    if (scrapeError?.url) window.open(scrapeError.url, '_blank');
+  const handleLocalImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result;
+        setEditForm(prev => {
+          const currentImages = prev.images || [];
+          const updatedImages = [...currentImages, base64];
+          const mainImg = prev.productImage || base64;
+          return { ...prev, images: updatedImages, productImage: mainImg };
+        });
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
-  // Chrome Extension Receive
-  React.useEffect(() => {
+  // Chrome Extension Receive Listener
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const autoFill = params.get('autoFill');
     if (autoFill) {
@@ -439,303 +435,686 @@ export default function AdminProductManager() {
         };
 
         addPendingProduct(extProduct);
-        setActiveTab('pending'); // Chuyển sang Hàng Chờ để review
-        if (showToast) showToast(`🚀 Đã nhận dữ liệu từ Chrome Extension: "${extProduct.name}"! Dữ liệu đã được thêm vào Hàng Chờ.`, 'success');
+        setActiveTab('pending');
+        if (showToast) showToast(`🚀 Đã nhận sản phẩm từ Chrome Extension: "${extProduct.name}"! Đã thêm vào Chờ Duyệt.`, 'success');
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (err) {
         console.error('Lỗi nhận dữ liệu từ Chrome Extension:', err);
       }
     }
-  }, [addPendingProduct, addProduct, showToast]);
-
-  // ----------------------------------------------------
-  // STYLES (Minimalist)
-  // ----------------------------------------------------
-  const styles = {
-    container: { backgroundColor: '#F9FAFB', padding: '24px', minHeight: '100vh', fontFamily: 'Inter, sans-serif' },
-    card: { backgroundColor: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
-    topBanner: { backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '16px 20px', marginBottom: '24px' },
-    tabList: { display: 'flex', gap: '16px', borderBottom: '1px solid #E5E7EB', marginBottom: '24px' },
-    tabBtn: (active) => ({ padding: '12px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: active ? '#2563EB' : '#6B7280', borderBottom: active ? '2px solid #2563EB' : '2px solid transparent' }),
-    table: { width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' },
-    th: { padding: '12px 16px', borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB', color: '#4B5563', fontWeight: 600, textAlign: 'left' },
-    td: { padding: '12px 16px', borderBottom: '1px solid #F3F4F6', color: '#111827', verticalAlign: 'middle' },
-    input: { padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: '4px', outline: 'none', fontSize: '0.85rem' },
-    btnPrimary: { backgroundColor: '#2563EB', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' },
-    btnDanger: { backgroundColor: '#DC2626', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' },
-    btnOutline: { backgroundColor: '#FFF', color: '#374151', border: '1px solid #D1D5DB', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' },
-  };
+  }, [addPendingProduct, showToast]);
 
   return (
-    <div style={styles.container}>
-      <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0 0 20px 0', color: '#111827' }}>Quản Trị Kho Sản Phẩm</h2>
-      
-      {/* ================= TOP SCRAPER BANNER ================= */}
-      <div style={styles.topBanner}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E40AF', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Globe size={18} /> 🎭 Playwright AI Autonomous Scraper (Giả Lập Người Dùng & AI Vision)
-          </div>
-          {/* Tool Status Badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E', boxShadow: '0 0 8px #22C55E', display: 'inline-block' }}></span>
-            <span style={{ color: '#1E40AF', fontWeight: 600 }}>Playwright + Chromium AI Scraper v1.0: Sẵn Sàng (CLI & Web Sync)</span>
-          </div>
-        </div>
-        <div style={{ fontSize: '0.82rem', color: '#3B82F6', marginBottom: '12px', lineHeight: 1.5 }}>
-          🤖 <b>Bật/Tắt Xem Trực Tiếp Trình Duyệt Playwright AI:</b> Bấm nút bên dưới để Bật/Tắt trình duyệt chạy tự động cuộn trang, rê chuột, soi hình ảnh HD bằng AI và đẩy sản phẩm trực tiếp về Admin.
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1400px', margin: '0 auto' }}>
 
-        {/* ================= LIVE BROWSER CONTROL BUTTONS ================= */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '14px', background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-          {/* Cấu hình cào */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151' }}>Số sản phẩm:</label>
-            <select 
-              value={maxProductsInput} 
-              onChange={e => setMaxProductsInput(parseInt(e.target.value, 10))}
-              style={{ ...styles.input, padding: '6px 10px', width: '70px' }}
-            >
-              <option value={2}>2 (Test)</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <input 
-              type="checkbox" 
-              id="headlessMode" 
-              checked={!headlessInput} 
-              onChange={e => setHeadlessInput(!e.target.checked)} 
-              style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-            />
-            <label htmlFor="headlessMode" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151', cursor: 'pointer' }}>
-              Hiện trình duyệt (Visual Mode)
-            </label>
-          </div>
-
-          {!isPlaywrightLive ? (
-            <button 
-              type="button" 
-              onClick={() => {
-                setIsPlaywrightLive(true);
-                setPlaywrightLogs([
-                  "🚀 [Vite Backend Engine] Gửi lệnh khởi chạy Playwright Scraper...",
-                  `📦 Cấu hình: Số lượng = ${maxProductsInput} sản phẩm | Chế độ = ${headlessInput ? 'Không màn hình (Chạy ngầm)' : 'Mở màn hình (Visual)'}`,
-                  "⏳ Đang chạy tiến trình cào ngầm. Dữ liệu sẽ tự động đồng bộ realtime vào bảng Hàng Chờ...",
-                  "📊 Bạn có thể theo dõi tiến trình cào trên Terminal đang chạy Vite dev server."
-                ]);
-                fetch('/api/run-scraper', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ maxProducts: maxProductsInput, headless: headlessInput })
-                })
-                  .then(async r => {
-                    const text = await r.text();
-                    try {
-                      return JSON.parse(text);
-                    } catch {
-                      return { isHtmlResponse: true };
-                    }
-                  })
-                  .then(data => {
-                    if (data.isHtmlResponse) {
-                      setPlaywrightLogs(prev => [
-                        ...prev,
-                        "💡 THÔNG BÁO MÔI TRƯỜNG CHẠY:",
-                        "1. Trình cào Playwright CLI tự động yêu cầu môi trường Node.js Server cục bộ (chạy lệnh 'npm run dev' trên máy tính).",
-                        "2. Trên trang Web Hosting Live, vui lòng dùng ngay Tiện ích Chrome Extension TAVY AI Scraper v17.0 PRO góc trên trình duyệt để Cào 1-Click 100% sản phẩm & 30+ Ảnh Review thực tế về Admin!"
-                      ]);
-                      setIsPlaywrightLive(false);
-                    } else if (data.success) {
-                      setPlaywrightLogs(prev => [...prev, "⚡ Lệnh cào đã được tiếp nhận thành công. Trình duyệt bắt đầu chạy..."]);
-                    } else {
-                      setPlaywrightLogs(prev => [...prev, `❌ Thất bại: ${data.message}`]);
-                      setIsPlaywrightLive(false);
-                    }
-                  })
-                  .catch(err => {
-                    setPlaywrightLogs(prev => [...prev, `❌ Lỗi kết nối: ${err.message}`]);
-                    setIsPlaywrightLive(false);
-                  });
-              }}
-              style={{ ...styles.btnPrimary, background: 'linear-gradient(135deg, #2563EB, #7C3AED)', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 18px', fontWeight: 700, fontSize: '0.88rem' }}
-            >
-              <Play size={16} /> ▶️ BẮT ĐẦU CÀO SẢN PHẨM
-            </button>
-          ) : (
-            <button 
-              type="button" 
-              onClick={() => {
-                setIsPlaywrightLive(false);
-                setPlaywrightLogs(prev => [...prev, "🛑 Đã ngừng hiển thị logs. Tiến trình cào ngầm vẫn tiếp tục chạy trên Server."]);
-                if (showToast) showToast('Đã dừng theo dõi logs.', 'info');
-              }}
-              style={{ ...styles.btnDanger, background: '#DC2626', display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 18px', fontWeight: 700, fontSize: '0.88rem' }}
-            >
-              <Square size={16} /> ⏹️ NGỪNG THEO DÕI LOGS
-            </button>
-          )}
-
-          {/* Status Badge Indicator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 700, padding: '6px 12px', borderRadius: '8px', backgroundColor: isPlaywrightLive ? '#DCFCE7' : '#F1F5F9', color: isPlaywrightLive ? '#15803D' : '#64748B' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: isPlaywrightLive ? '#22C55E' : '#94A3B8', boxShadow: isPlaywrightLive ? '0 0 8px #22C55E' : 'none' }}></span>
-            <span>{isPlaywrightLive ? '🟢 ĐANG CÀO DỮ LIỆU' : '⚪ TRÌNH CÀO ĐANG TẮT'}</span>
-          </div>
-        </div>
-
-        {/* Live Logs Console Output Box */}
-        {playwrightLogs.length > 0 && (
-          <div style={{ background: '#0F172A', color: '#38BDF8', padding: '12px 16px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.8rem', marginBottom: '14px', maxHeight: '160px', overflowY: 'auto', border: '1px solid #1E293B' }}>
-            <div style={{ fontWeight: 700, color: '#F8FAFC', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Eye size={14} color="#38BDF8" /> 📊 Bảng Nhật Ký Tiến Trình Playwright Live:
+      {/* 📊 KPI SUMMARY CARDS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '14px', padding: '16px 18px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              KHO SẢN PHẨM LIVE
+            </span>
+            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--purple-primary)', marginTop: '2px' }}>
+              {products.length} SP
             </div>
-            {playwrightLogs.map((log, idx) => (
-              <div key={idx} style={{ marginBottom: '3px' }}>{log}</div>
-            ))}
           </div>
-        )}
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--purple-primary)' }}>
+            <Globe size={20} />
+          </div>
+        </div>
 
-        <form onSubmit={handleScrape} style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Link2 size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
-            <input 
-              type="url" 
-              required 
-              placeholder="Dán đường dẫn sản phẩm Olive Young (https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=...)" 
-              value={quickLink} 
-              onChange={e => setQuickLink(e.target.value)} 
-              style={{ ...styles.input, width: '100%', paddingLeft: '36px', backgroundColor: '#FFF' }} 
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '14px', padding: '16px 18px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              HÀNG CHỜ DUYỆT (PENDING)
+            </span>
+            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: pendingProducts?.length > 0 ? '#D97706' : '#059669', marginTop: '2px' }}>
+              {pendingProducts?.length || 0} SP
+            </div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: pendingProducts?.length > 0 ? '#FEF3C7' : '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: pendingProducts?.length > 0 ? '#D97706' : '#059669' }}>
+            <Clock size={20} />
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '14px', padding: '16px 18px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              BOT NEO GIÁ OLIVE YOUNG
+            </span>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: priceSyncConfig.enabled ? '#059669' : '#64748B', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: priceSyncConfig.enabled ? '#22C55E' : '#94A3B8', display: 'inline-block' }}></span>
+              {priceSyncConfig.enabled ? `Bật (${priceSyncConfig.intervalMins || 60}p/lần)` : 'Đang Tắt'}
+            </div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: priceSyncConfig.enabled ? '#DCFCE7' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: priceSyncConfig.enabled ? '#059669' : '#64748B' }}>
+            <Zap size={20} />
+          </div>
+        </div>
+      </div>
+
+      {/* 🚀 QUICK SCRAPER & PRICE ANCHOR TOOLBAR */}
+      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#FAF5FF', color: 'var(--purple-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={16} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>
+                Bóc Tách & Cào Link Olive Young Hàn Quốc
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B' }}>
+                Dán URL chi tiết sản phẩm Olive Young để tự động lấy tên, giá Won, phân loại và hình ảnh
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={handleTogglePriceSync}
+              style={{
+                backgroundColor: priceSyncConfig.enabled ? '#DCFCE7' : '#F1F5F9',
+                color: priceSyncConfig.enabled ? '#15803D' : '#475569',
+                border: priceSyncConfig.enabled ? '1px solid #86EFAC' : '1px solid #CBD5E1',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <Zap size={13} color={priceSyncConfig.enabled ? '#16A34A' : '#64748B'} />
+              {priceSyncConfig.enabled ? 'Bot Neo Giá: ĐANG BẬT' : 'Bot Neo Giá: TẮT'}
+            </button>
+
+            <button
+              disabled={isSyncingPrice}
+              onClick={handleRunManualPriceSync}
+              style={{
+                backgroundColor: '#FAF5FF',
+                color: 'var(--purple-primary)',
+                border: '1px solid #E9D5FF',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <RefreshCw size={13} className={isSyncingPrice ? 'spin-animation' : ''} />
+              {isSyncingPrice ? 'Đang quét...' : 'Quét Giá Olive Young'}
+            </button>
+          </div>
+        </div>
+
+        {/* Form Scrape Link */}
+        <form onSubmit={handleScrape} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '280px' }}>
+            <Link2 size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            <input
+              type="url"
+              required
+              placeholder="Dán link sản phẩm Olive Young (https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=...)"
+              value={quickLink}
+              onChange={(e) => setQuickLink(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px 10px 36px',
+                borderRadius: '10px',
+                border: '1px solid #CBD5E1',
+                fontSize: '0.84rem',
+                outline: 'none'
+              }}
             />
           </div>
-          <button type="submit" disabled={loadingScrape} style={{ ...styles.btnPrimary, whiteSpace: 'nowrap' }}>
-            {loadingScrape ? 'Đang bóc...' : 'Bóc Tách & Đẩy Vào Chờ Duyệt'}
+          <button
+            type="submit"
+            disabled={loadingScrape}
+            style={{
+              backgroundColor: 'var(--purple-primary)',
+              color: '#FFFFFF',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '10px',
+              fontWeight: 800,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Plus size={16} />
+            {loadingScrape ? 'Đang bóc tách...' : 'Bóc Tách & Đưa Vào Hàng Chờ'}
           </button>
         </form>
+
         {scrapeError && (
-          <div style={{ marginTop: '12px', padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.85rem', color: '#991B1B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ marginTop: '10px', padding: '10px 14px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.8rem', color: '#991B1B', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>⚠️ {scrapeError.message}</span>
             {scrapeError.openPage && (
-              <button onClick={handleOpenProductPage} style={{ ...styles.btnPrimary, background: '#2563EB', padding: '6px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                Mở Trang Sản Phẩm
+              <button
+                type="button"
+                onClick={() => window.open(scrapeError.url, '_blank')}
+                style={{ backgroundColor: '#2563EB', color: '#FFF', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+              >
+                Mở link gốc
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* ================= METHOD 3: AI PERIODIC PRICE SYNC BOT PANEL ================= */}
-      <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '8px', padding: '18px 20px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '10px' }}>
-          <div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#166534', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Zap size={20} color="#16A34A" /> 🤖 BOT AI NEO GIÁ OLIVE YOUNG TỰ ĐỘNG ĐỊNH KỲ (METHOD 3)
-            </div>
-            <div style={{ fontSize: '0.82rem', color: '#15803D', marginTop: '4px', lineHeight: 1.4 }}>
-              Tự động quét kho sản phẩm theo lịch định kỳ, so sánh giá trực tiếp trên web Olive Young Hàn Quốc & tự động neo lại giá bán VNĐ khi Olive Young có biến động tăng/giảm giá.
-            </div>
-          </div>
+      {/* 🧭 TABS NAVIGATION */}
+      <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #E2E8F0', paddingBottom: '2px' }}>
+        <button
+          onClick={() => setActiveTab('inventory')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: activeTab === 'inventory' ? 800 : 600,
+            color: activeTab === 'inventory' ? 'var(--purple-primary)' : '#64748B',
+            borderBottom: activeTab === 'inventory' ? '3px solid var(--purple-primary)' : '3px solid transparent',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <span>Kho Sản Phẩm Live</span>
+          <span style={{ backgroundColor: activeTab === 'inventory' ? 'var(--purple-primary)' : '#F1F5F9', color: activeTab === 'inventory' ? '#FFFFFF' : '#64748B', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+            {products.length}
+          </span>
+        </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            {/* Toggle switch */}
-            <button 
-              type="button" 
-              onClick={handleTogglePriceSync}
-              style={{
-                backgroundColor: priceSyncConfig.enabled ? '#16A34A' : '#9CA3AF',
-                color: '#FFF',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '20px',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: priceSyncConfig.enabled ? '0 0 10px rgba(22, 163, 74, 0.4)' : 'none'
-              }}
-            >
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#FFF', display: 'inline-block' }}></span>
-              {priceSyncConfig.enabled ? '🟢 BOT NEO GIÁ: ĐANG BẬT' : '⚪ BOT NEO GIÁ: ĐANG TẮT'}
-            </button>
+        <button
+          onClick={() => setActiveTab('pending')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: activeTab === 'pending' ? 800 : 600,
+            color: activeTab === 'pending' ? 'var(--purple-primary)' : '#64748B',
+            borderBottom: activeTab === 'pending' ? '3px solid var(--purple-primary)' : '3px solid transparent',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <span>Chờ Duyệt (Pending)</span>
+          {pendingProducts?.length > 0 && (
+            <span style={{ backgroundColor: '#D97706', color: '#FFFFFF', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+              {pendingProducts.length}
+            </span>
+          )}
+        </button>
 
-            {/* Interval Selector */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: '#166534' }}>
-              <Clock size={16} /> Tần suất:
-              <select 
-                value={priceSyncConfig.intervalMins || 60} 
-                onChange={e => handleChangePriceSyncInterval(parseInt(e.target.value, 10))}
-                style={{ ...styles.input, padding: '6px 10px', backgroundColor: '#FFF', fontWeight: 700, borderColor: '#86EFAC', color: '#166534' }}
+        <button
+          onClick={() => setActiveTab('price_logs')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: activeTab === 'price_logs' ? 800 : 600,
+            color: activeTab === 'price_logs' ? 'var(--purple-primary)' : '#64748B',
+            borderBottom: activeTab === 'price_logs' ? '3px solid var(--purple-primary)' : '3px solid transparent',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <span>Nhật Ký Biến Động Giá Olive Young</span>
+          <span style={{ backgroundColor: '#F1F5F9', color: '#64748B', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+            {priceSyncLogs?.length || 0}
+          </span>
+        </button>
+      </div>
+
+      {/* ═══════════ TAB 1: KHO SẢN PHẨM (INVENTORY) ═══════════ */}
+      {activeTab === 'inventory' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* Search & Bulk Control Bar */}
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '16px 20px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '280px', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                <input
+                  type="text"
+                  placeholder="Tìm theo Tên SP, Mã hàng, Thương hiệu..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', outline: 'none' }}
+                />
+              </div>
+
+              <select
+                value={filterCat}
+                onChange={(e) => setFilterCat(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 600, color: '#334155' }}
               >
-                <option value={15}>Mỗi 15 Phút</option>
-                <option value={30}>Mỗi 30 Phút</option>
-                <option value={60}>Mỗi 1 Giờ</option>
-                <option value={360}>Mỗi 6 Giờ</option>
-                <option value={720}>Mỗi 12 Giờ</option>
-                <option value={1440}>Mỗi 24 Giờ</option>
+                <option value="all">Tất cả danh mục ({products.length})</option>
+                {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </div>
 
-            {/* Run Manual Sync Button */}
-            <button 
-              type="button"
-              disabled={isSyncingPrice}
-              onClick={handleRunManualPriceSync}
-              style={{
-                ...styles.btnPrimary,
-                backgroundColor: isSyncingPrice ? '#9CA3AF' : '#059669',
-                padding: '8px 16px',
-                fontSize: '0.85rem'
-              }}
-            >
-              <RefreshCw size={16} className={isSyncingPrice ? 'spin-animation' : ''} />
-              {isSyncingPrice ? 'Đang quét giá...' : '⚡ QUÉT & NEO GIÁ NGAY'}
-            </button>
-          </div>
-        </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {selectedProducts.length > 0 && (
+                <button
+                  onClick={handleDeleteSelected}
+                  style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Trash2 size={14} /> Xóa {selectedProducts.length} mục đã chọn
+                </button>
+              )}
 
-        {/* Sync Status Banner */}
-        <div style={{ fontSize: '0.78rem', color: '#166534', backgroundColor: '#DCFCE7', padding: '6px 12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-          <span>
-            🕒 <strong>Lần quét gần nhất:</strong> {priceSyncConfig.lastSyncTime ? new Date(priceSyncConfig.lastSyncTime).toLocaleString('vi-VN') : 'Chưa chạy lần nào'}
-          </span>
-          <span>
-            🛡️ <strong>Trạng thái:</strong> {priceSyncConfig.enabled ? `Đang hoạt động (Tự động cào lại mỗi ${priceSyncConfig.intervalMins || 60} phút)` : 'Tắt tự động (Bạn vẫn có thể bấm nút Quét thủ công ở bên cạnh)'}
-          </span>
-        </div>
+              <button
+                onClick={handleExportProductCSV}
+                style={{ backgroundColor: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Download size={14} /> Xuất CSV
+              </button>
 
-        {/* Price Change Logs History Table */}
-        {priceSyncLogs && priceSyncLogs.length > 0 && (
-          <div style={{ marginTop: '12px' }}>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#166534', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <ShieldCheck size={16} /> 📊 Nhật Ký Biến Động Giá AI Phát Hiện & Tự Động Neo Theo Olive Young:
+              <button
+                onClick={handleAddNew}
+                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFFFFF', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Plus size={15} /> Thêm Sản Phẩm Mới
+              </button>
             </div>
-            <div style={{ maxHeight: '140px', overflowY: 'auto', backgroundColor: '#FFF', borderRadius: '6px', border: '1px solid #86EFAC' }}>
-              <table style={{ ...styles.table, fontSize: '0.78rem' }}>
+          </div>
+
+          {/* Product Table */}
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
                 <thead>
-                  <tr>
-                    <th style={{ ...styles.th, backgroundColor: '#F0FDF4', color: '#166534' }}>Thời gian</th>
-                    <th style={{ ...styles.th, backgroundColor: '#F0FDF4', color: '#166534' }}>Tên Sản Phẩm</th>
-                    <th style={{ ...styles.th, backgroundColor: '#F0FDF4', color: '#166534', textAlign: 'right' }}>Giá Cũ (Won)</th>
-                    <th style={{ ...styles.th, backgroundColor: '#F0FDF4', color: '#166534', textAlign: 'right' }}>Giá Mới Olive Young</th>
-                    <th style={{ ...styles.th, backgroundColor: '#F0FDF4', color: '#166534', textAlign: 'center' }}>Biến Động (%)</th>
+                  <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <th style={{ padding: '12px 14px', width: '36px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={filtered.length > 0 && selectedProducts.length === filtered.length}
+                        onChange={toggleSelectAll}
+                      />
+                    </th>
+                    <th style={{ padding: '12px 14px', width: '70px', textAlign: 'center' }}>Ảnh</th>
+                    <th style={{ padding: '12px 14px', width: '120px' }}>Mã / Link Gốc</th>
+                    <th style={{ padding: '12px 14px' }}>Tên Sản Phẩm (Việt / Hàn)</th>
+                    <th style={{ padding: '12px 14px', width: '140px' }}>Thương Hiệu</th>
+                    <th style={{ padding: '12px 14px', width: '150px' }}>Phân Loại</th>
+                    <th style={{ padding: '12px 14px', width: '130px', textAlign: 'right' }}>Giá Won (₩)</th>
+                    <th style={{ padding: '12px 14px', width: '100px', textAlign: 'right' }}>Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {priceSyncLogs.map((log, idx) => (
-                    <tr key={idx}>
-                      <td style={{ ...styles.td, color: '#6B7280' }}>{new Date(log.timestamp).toLocaleString('vi-VN')}</td>
-                      <td style={{ ...styles.td, fontWeight: 600 }}>{log.name}</td>
-                      <td style={{ ...styles.td, textAlign: 'right', textDecoration: 'line-through', color: '#9CA3AF' }}>₩{Number(log.oldPrice).toLocaleString()}</td>
-                      <td style={{ ...styles.td, textAlign: 'right', fontWeight: 700, color: '#059669' }}>₩{Number(log.newPrice).toLocaleString()}</td>
-                      <td style={{ ...styles.td, textAlign: 'center' }}>
-                        <span style={{ 
-                          padding: '2px 6px', 
-                          borderRadius: '10px', 
-                          fontWeight: 700, 
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                        Không có sản phẩm nào khớp với tìm kiếm.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((prod) => {
+                      const isSelected = selectedProducts.includes(prod.goodsNo);
+                      const fPrice = prod.foreignPrice || prod.price || 0;
+                      return (
+                        <tr
+                          key={prod.goodsNo}
+                          style={{
+                            borderBottom: '1px solid #F1F5F9',
+                            backgroundColor: isSelected ? '#FAF5FF' : '#FFFFFF',
+                            transition: 'background-color 0.15s ease'
+                          }}
+                        >
+                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelectProduct(prod.goodsNo)}
+                            />
+                          </td>
+
+                          {/* Image */}
+                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                            <img
+                              src={prod.productImage || (prod.images && prod.images[0])}
+                              alt=""
+                              onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}
+                              style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E2E8F0', cursor: 'pointer' }}
+                            />
+                          </td>
+
+                          {/* Code & Olive Young Link */}
+                          <td style={{ padding: '12px 14px' }}>
+                            <div style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--purple-primary)', fontSize: '0.8rem' }}>
+                              {prod.goodsNo}
+                            </div>
+                            <a
+                              href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ fontSize: '0.72rem', color: '#0284C7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '3px', fontWeight: 600 }}
+                            >
+                              <span>Olive Young</span> <ExternalLink size={10} />
+                            </a>
+                          </td>
+
+                          {/* Name */}
+                          <td style={{ padding: '12px 14px' }}>
+                            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.84rem' }}>
+                              {prod.name}
+                            </div>
+                            {prod.nameKr && (
+                              <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
+                                🇰🇷 {prod.nameKr}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Brand */}
+                          <td style={{ padding: '12px 14px' }}>
+                            <input
+                              type="text"
+                              defaultValue={prod.brand || ''}
+                              onBlur={(e) => {
+                                const val = e.target.value.trim();
+                                if (val !== prod.brand) {
+                                  updateProduct(prod.goodsNo, { ...prod, brand: val, brandKr: val });
+                                  if (showToast) showToast(`Đã đổi hãng: ${val}`, 'success');
+                                }
+                              }}
+                              style={{ width: '100%', padding: '4px 8px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', fontWeight: 600 }}
+                            />
+                          </td>
+
+                          {/* Category */}
+                          <td style={{ padding: '12px 14px' }}>
+                            <select
+                              value={prod.category || 'skincare'}
+                              onChange={(e) => {
+                                updateProduct(prod.goodsNo, { ...prod, category: e.target.value });
+                                if (showToast) showToast('Đã cập nhật phân loại!', 'success');
+                              }}
+                              style={{ width: '100%', padding: '4px 8px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.78rem', fontWeight: 600 }}
+                            >
+                              {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                            </select>
+                          </td>
+
+                          {/* Price */}
+                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.88rem' }}>
+                              ₩{fPrice.toLocaleString('vi-VN')}
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
+                              ≈ {Math.round(fPrice * krwRate).toLocaleString('vi-VN')} đ
+                            </div>
+                          </td>
+
+                          {/* Action */}
+                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => openEdit(prod)}
+                                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                Sửa
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`Xóa sản phẩm ${prod.goodsNo}?`)) {
+                                    deleteProduct(prod.goodsNo);
+                                    if (showToast) showToast('Đã xóa sản phẩm', 'info');
+                                  }
+                                }}
+                                style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '5px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ═══════════ TAB 2: HÀNG CHỜ DUYỆT (PENDING) ═══════════ */}
+      {activeTab === 'pending' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '16px 20px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ fontSize: '0.85rem', color: '#475569' }}>
+              Danh sách <strong>{pendingProducts?.length || 0}</strong> sản phẩm bóc tách từ Olive Young chờ kiểm duyệt.
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {selectedPending.length > 0 && (
+                <>
+                  <button onClick={handleDeleteSelectedPending} style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
+                    Từ chối ({selectedPending.length})
+                  </button>
+                  <button onClick={handleApproveSelected} style={{ backgroundColor: '#059669', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}>
+                    Duyệt {selectedPending.length} SP Lên Web
+                  </button>
+                </>
+              )}
+              {pendingProducts?.length > 0 && (
+                <>
+                  <button onClick={handleAnchorAllPendingPrices} style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Zap size={14} /> Neo Giá Olive Young Tất Cả
+                  </button>
+                  <button onClick={approveAllPendingProducts} style={{ backgroundColor: 'var(--purple-primary)', color: '#FFFFFF', border: 'none', padding: '8px 18px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}>
+                    Duyệt Tất Cả ({pendingProducts.length})
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <th style={{ padding: '12px 14px', width: '36px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={pendingProducts?.length > 0 && selectedPending.length === pendingProducts.length}
+                        onChange={toggleSelectAllPending}
+                      />
+                    </th>
+                    <th style={{ padding: '12px 14px', width: '70px', textAlign: 'center' }}>Ảnh</th>
+                    <th style={{ padding: '12px 14px', width: '120px' }}>Mã SP</th>
+                    <th style={{ padding: '12px 14px' }}>Tên Sản Phẩm</th>
+                    <th style={{ padding: '12px 14px', width: '130px' }}>Thương Hiệu</th>
+                    <th style={{ padding: '12px 14px', width: '120px', textAlign: 'right' }}>Giá Won (₩)</th>
+                    <th style={{ padding: '12px 14px', width: '220px', textAlign: 'right' }}>Hành Động 1-Click</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!pendingProducts || pendingProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                        Hàng chờ hiện đang trống. Hãy dán URL Olive Young ở ô phía trên để bóc tách!
+                      </td>
+                    </tr>
+                  ) : (
+                    pendingProducts.map((prod) => {
+                      const isSelected = selectedPending.includes(prod.goodsNo);
+                      const fPrice = prod.foreignPrice || prod.price || 0;
+                      return (
+                        <tr
+                          key={prod.goodsNo}
+                          style={{
+                            borderBottom: '1px solid #F1F5F9',
+                            backgroundColor: isSelected ? '#FAF5FF' : '#FFFFFF'
+                          }}
+                        >
+                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelectPending(prod.goodsNo)}
+                            />
+                          </td>
+
+                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                            <img
+                              src={prod.productImage || (prod.images && prod.images[0])}
+                              alt=""
+                              onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}
+                              style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E2E8F0', cursor: 'pointer' }}
+                            />
+                          </td>
+
+                          <td style={{ padding: '12px 14px' }}>
+                            <div style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--purple-primary)', fontSize: '0.8rem' }}>
+                              {prod.goodsNo}
+                            </div>
+                            <a
+                              href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ fontSize: '0.72rem', color: '#0284C7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}
+                            >
+                              <span>Olive Young</span> <ExternalLink size={10} />
+                            </a>
+                          </td>
+
+                          <td style={{ padding: '12px 14px' }}>
+                            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.84rem' }}>
+                              {prod.name}
+                            </div>
+                            {prod.nameKr && (
+                              <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
+                                🇰🇷 {prod.nameKr}
+                              </div>
+                            )}
+                          </td>
+
+                          <td style={{ padding: '12px 14px', fontWeight: 600, color: '#334155' }}>
+                            {prod.brand || 'Korea Brand'}
+                          </td>
+
+                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.88rem' }}>
+                              ₩{fPrice.toLocaleString('vi-VN')}
+                            </div>
+                          </td>
+
+                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => openEditPending(prod)}
+                                style={{ backgroundColor: '#F1F5F9', color: '#334155', border: '1px solid #CBD5E1', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                Sửa
+                              </button>
+                              <button
+                                onClick={() => handleAnchorPendingPrice(prod)}
+                                style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                              >
+                                <Zap size={11} /> Neo Giá
+                              </button>
+                              <button
+                                onClick={() => approvePendingProduct(prod.goodsNo)}
+                                style={{ backgroundColor: '#059669', color: '#FFF', border: 'none', padding: '5px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+                              >
+                                Duyệt
+                              </button>
+                              <button
+                                onClick={() => rejectPendingProduct(prod.goodsNo)}
+                                style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '5px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ═══════════ TAB 3: NHẬT KÝ BIẾN ĐỘNG GIÁ ═══════════ */}
+      {activeTab === 'price_logs' && (
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', overflow: 'hidden', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>
+                Lịch Sử Quét & Tự Động Neo Giá Theo Olive Young
+              </h3>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#64748B' }}>
+                AI tự động phát hiện khi Olive Young có đợt Flash Sale hoặc tăng giá
+              </p>
+            </div>
+            <button
+              disabled={isSyncingPrice}
+              onClick={handleRunManualPriceSync}
+              style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <RefreshCw size={13} className={isSyncingPrice ? 'spin-animation' : ''} />
+              Quét Giá Ngay
+            </button>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '10px 14px' }}>Thời Gian</th>
+                  <th style={{ padding: '10px 14px' }}>Tên Sản Phẩm</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'right' }}>Giá Cũ</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'right' }}>Giá Mới Olive Young</th>
+                  <th style={{ padding: '10px 14px', textAlign: 'center' }}>Biến Động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(!priceSyncLogs || priceSyncLogs.length === 0) ? (
+                  <tr>
+                    <td colSpan={5} style={{ padding: '30px', textAlign: 'center', color: '#94A3B8' }}>
+                      Chưa có biến động giá nào được ghi nhận.
+                    </td>
+                  </tr>
+                ) : (
+                  priceSyncLogs.map((log, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                      <td style={{ padding: '10px 14px', color: '#64748B' }}>{new Date(log.timestamp).toLocaleString('vi-VN')}</td>
+                      <td style={{ padding: '10px 14px', fontWeight: 600 }}>{log.name}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'right', textDecoration: 'line-through', color: '#94A3B8' }}>₩{Number(log.oldPrice).toLocaleString()}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 800, color: '#059669' }}>₩{Number(log.newPrice).toLocaleString()}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontWeight: 800,
+                          fontSize: '0.72rem',
                           backgroundColor: Number(log.diffWon) < 0 ? '#DCFCE7' : '#FEE2E2',
                           color: Number(log.diffWon) < 0 ? '#15803D' : '#DC2626'
                         }}>
@@ -743,663 +1122,144 @@ export default function AdminProductManager() {
                         </span>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ================= TABS NAVIGATION ================= */}
-      <div style={styles.tabList}>
-        <button style={styles.tabBtn(activeTab === 'inventory')} onClick={() => setActiveTab('inventory')}>Kho Sản Phẩm ({products.length})</button>
-        <button style={styles.tabBtn(activeTab === 'pending')} onClick={() => setActiveTab('pending')}>
-          Chờ Duyệt {pendingProducts?.length > 0 && <span style={{ background: '#DC2626', color: '#FFF', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', marginLeft: '6px' }}>{pendingProducts.length}</span>}
-        </button>
-      </div>
-
-      <div style={styles.card}>
-        {/* ================= TAB 1: INVENTORY ================= */}
-        {activeTab === 'inventory' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <input type="text" placeholder="Tìm kiếm sản phẩm..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ ...styles.input, width: '250px' }} />
-                <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)} style={styles.input}>
-                  <option value="all">Tất cả danh mục</option>
-                  {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                {selectedProducts.length > 0 && (
-                  <button onClick={handleDeleteSelected} style={styles.btnDanger}><Trash2 size={16}/> Xóa {selectedProducts.length} mục</button>
+                  ))
                 )}
-                {products.length > 0 && (
-                  <button 
-                    onClick={() => {
-                      if (window.confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn XÓA TẤT CẢ ${products.length} sản phẩm trong kho không?`)) {
-                        deleteAllProducts();
-                        setSelectedProducts([]);
-                        if (showToast) showToast('Đã xóa sạch toàn bộ kho sản phẩm!', 'success');
-                      }
-                    }} 
-                    style={{ ...styles.btnDanger, backgroundColor: '#991B1B' }}
-                  >
-                    <Trash2 size={16}/> Xóa Tất Cả Kho ({products.length})
-                  </button>
-                )}
-                {products.length > 0 && (
-                  <button 
-                    onClick={handleExportProductCSV} 
-                    style={{ ...styles.btnPrimary, backgroundColor: '#059669' }}
-                  >
-                    <Download size={16}/> Xuất CSV Kho
-                  </button>
-                )}
-                <button onClick={handleAddNew} style={styles.btnPrimary}><Plus size={16}/> Thêm mới</button>
-              </div>
-            </div>
-
-            <div style={{ overflowX: 'auto', border: '1px solid #E5E7EB', borderRadius: '6px' }}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={{ ...styles.th, width: '40px', textAlign: 'center' }}><input type="checkbox" checked={filtered.length > 0 && selectedProducts.length === filtered.length} onChange={toggleSelectAll} style={{ cursor: 'pointer' }} /></th>
-                    <th style={{ ...styles.th, width: '105px', textAlign: 'center' }}>Ảnh (HD)</th>
-                    <th style={{ ...styles.th, width: '130px', textAlign: 'center' }}>Link Olive Young</th>
-                    <th style={styles.th}>Tên sản phẩm (Việt / Hàn)</th>
-                    <th style={{ ...styles.th, width: '140px' }}>Thương hiệu</th>
-                    <th style={{ ...styles.th, width: '145px' }}>Phân loại</th>
-                    <th style={{ ...styles.th, width: '130px', textAlign: 'right' }}>Giá (₩)</th>
-                    <th style={{ ...styles.th, width: '90px', textAlign: 'center' }}>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 ? (
-                    <tr><td colSpan={8} style={{ ...styles.td, textAlign: 'center', color: '#6B7280', padding: '40px' }}>Không có dữ liệu</td></tr>
-                  ) : (
-                    filtered.map(prod => (
-                      <tr key={prod.goodsNo} style={{ backgroundColor: selectedProducts.includes(prod.goodsNo) ? '#F3F4F6' : '#FFF' }}>
-                        <td style={{ ...styles.td, textAlign: 'center' }}><input type="checkbox" checked={selectedProducts.includes(prod.goodsNo)} onChange={() => toggleSelectProduct(prod.goodsNo)} style={{ cursor: 'pointer' }} /></td>
-                        <td style={{ ...styles.td, width: '105px', textAlign: 'center', cursor: 'pointer' }} onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}>
-                          <img 
-                            src={prod.productImage || (prod.images && prod.images[0])} 
-                            alt="" 
-                            style={{ 
-                              width: '85px', 
-                              height: '85px', 
-                              objectFit: 'cover', 
-                              borderRadius: '8px', 
-                              border: '2px solid #E5E7EB',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                              transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                            }} 
-                            onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.18)'; }}
-                            onMouseOut={e => { e.currentTarget.style.transform = 'scale(1.0)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)'; }}
-                          />
-                        </td>
-                        <td style={{ ...styles.td, width: '130px', textAlign: 'center' }}>
-                          <a 
-                            href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              gap: '4px', 
-                              padding: '5px 9px', 
-                              borderRadius: '6px', 
-                              backgroundColor: '#EFF6FF', 
-                              color: '#2563EB', 
-                              fontWeight: 700, 
-                              fontSize: '0.78rem',
-                              textDecoration: 'none',
-                              border: '1px solid #BFDBFE'
-                            }}
-                            title="Bấm để mở trang sản phẩm gốc trên Olive Young"
-                          >
-                            <span>Olive Young</span>
-                            <Globe size={13} />
-                          </a>
-                          <div style={{ fontSize: '0.7rem', color: '#9CA3AF', fontFamily: 'monospace', marginTop: '3px' }}>
-                            {prod.goodsNo}
-                          </div>
-                        </td>
-                        <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEdit(prod)}>
-                          <div style={{ fontWeight: 600, color: '#111827' }}>{prod.name}</div>
-                          {prod.nameKr && <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
-                        </td>
-                        <td style={{ ...styles.td, width: '140px' }}>
-                          <input 
-                            type="text" 
-                            defaultValue={prod.brand || ''} 
-                            onBlur={(e) => {
-                              const val = e.target.value.trim();
-                              if (val !== prod.brand) {
-                                const updated = { ...prod, brand: val, brandKr: val };
-                                updateProduct(prod.goodsNo, updated);
-                                if (showToast) showToast(`Đã sửa hãng: ${val}`, 'success');
-                              }
-                            }}
-                            style={{ 
-                              width: '100%', 
-                              padding: '4px 8px', 
-                              borderRadius: '6px', 
-                              border: '1px solid #D1D5DB', 
-                              fontSize: '0.82rem',
-                              fontWeight: 600,
-                              color: '#1F2937',
-                              backgroundColor: '#FAFAFA'
-                            }}
-                            title="Nhấp để chỉnh sửa nhanh thương hiệu"
-                          />
-                        </td>
-                        <td style={{ ...styles.td, width: '145px' }}>
-                          <select 
-                            value={prod.category || 'skincare'} 
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const updated = { ...prod, category: val };
-                              updateProduct(prod.goodsNo, updated);
-                              if (showToast) showToast('Đã đổi phân loại!', 'success');
-                            }}
-                            style={{ 
-                              width: '100%', 
-                              padding: '4px 6px', 
-                              borderRadius: '6px', 
-                              border: '1px solid #C7D2FE', 
-                              backgroundColor: '#EEF2FF', 
-                              color: '#3730A3', 
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              cursor: 'pointer'
-                            }}
-                            title="Nhấp để đổi nhanh danh mục"
-                          >
-                            {CATEGORIES.map(c => (
-                              <option key={c.value} value={c.value}>{c.label}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td style={{ ...styles.td, width: '130px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6B7280' }}>₩</span>
-                            <input 
-                              type="number" 
-                              defaultValue={prod.foreignPrice || prod.price || 0} 
-                              onBlur={(e) => {
-                                const val = parseInt(e.target.value, 10) || 0;
-                                if (val !== prod.foreignPrice) {
-                                  const updated = { ...prod, foreignPrice: val, price: val };
-                                  updateProduct(prod.goodsNo, updated);
-                                  if (showToast) showToast(`Đã sửa giá: ₩${val.toLocaleString()}`, 'success');
-                                }
-                              }}
-                              style={{ 
-                                width: '85px', 
-                                padding: '4px 6px', 
-                                borderRadius: '6px', 
-                                border: '1px solid #D1D5DB', 
-                                fontSize: '0.82rem',
-                                fontWeight: 700,
-                                color: '#111827',
-                                textAlign: 'right',
-                                backgroundColor: '#FAFAFA'
-                              }}
-                              title="Nhấp để sửa nhanh giá Won"
-                            />
-                          </div>
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center' }}>
-                          <button onClick={() => openEdit(prod)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563EB', padding: '4px' }}>Sửa</button>
-                          <button onClick={() => setDeleteConfirm(prod.goodsNo)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: '4px', marginLeft: '6px' }}>Xóa</button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ================= TAB 2: PENDING ================= */}
-        {activeTab === 'pending' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#4B5563', paddingTop: '8px' }}>
-                Danh sách <strong>{pendingProducts?.length || 0}</strong> sản phẩm bóc tách từ link chờ Admin xem lại & chỉnh sửa trước khi Duyệt.
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                {selectedPending.length > 0 && (
-                  <>
-                    <button onClick={handleDeleteSelectedPending} style={styles.btnDanger}><X size={16}/> Từ chối ({selectedPending.length})</button>
-                    <button onClick={handleApproveSelected} style={{...styles.btnPrimary, backgroundColor: '#059669'}}><Check size={16}/> Duyệt lên Web ({selectedPending.length})</button>
-                  </>
-                )}
-                {pendingProducts?.length > 0 && (
-                  <>
-                    <button onClick={handleAnchorAllPendingPrices} style={{ ...styles.btnPrimary, backgroundColor: '#D97706', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <Zap size={14} /> Neo Giá Olive Young Tất Cả
-                    </button>
-                    <button onClick={approveAllPendingProducts} style={styles.btnOutline}>Duyệt tất cả</button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div style={{ overflowX: 'auto', border: '1px solid #E5E7EB', borderRadius: '6px' }}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={{ ...styles.th, width: '40px', textAlign: 'center' }}><input type="checkbox" checked={pendingProducts?.length > 0 && selectedPending.length === pendingProducts.length} onChange={toggleSelectAllPending} style={{ cursor: 'pointer' }} /></th>
-                    <th style={{ ...styles.th, width: '105px', textAlign: 'center' }}>Ảnh (HD)</th>
-                    <th style={{ ...styles.th, width: '130px', textAlign: 'center' }}>Link Olive Young</th>
-                    <th style={styles.th}>Tên sản phẩm (Việt / Hàn)</th>
-                    <th style={{ ...styles.th, width: '140px' }}>Thương hiệu</th>
-                    <th style={{ ...styles.th, width: '145px' }}>Phân loại</th>
-                    <th style={{ ...styles.th, width: '130px', textAlign: 'right' }}>Giá (₩)</th>
-                    <th style={{ ...styles.th, width: '200px', textAlign: 'center' }}>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!pendingProducts || pendingProducts.length === 0 ? (
-                    <tr><td colSpan={8} style={{ ...styles.td, textAlign: 'center', color: '#6B7280', padding: '40px' }}>Hàng chờ trống. Bạn hãy dán Link sản phẩm Olive Young ở thanh trên để bóc tách!</td></tr>
-                  ) : (
-                    pendingProducts.map(prod => (
-                      <tr key={prod.goodsNo} style={{ backgroundColor: selectedPending.includes(prod.goodsNo) ? '#F3F4F6' : '#FFF' }}>
-                        <td style={{ ...styles.td, textAlign: 'center' }}><input type="checkbox" checked={selectedPending.includes(prod.goodsNo)} onChange={() => toggleSelectPending(prod.goodsNo)} style={{ cursor: 'pointer' }} /></td>
-                        <td style={{ ...styles.td, width: '105px', textAlign: 'center', cursor: 'pointer' }} onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}>
-                          <img 
-                            src={prod.productImage || (prod.images && prod.images[0])} 
-                            alt="" 
-                            style={{ 
-                              width: '85px', 
-                              height: '85px', 
-                              objectFit: 'cover', 
-                              borderRadius: '8px', 
-                              border: '2px solid #E5E7EB',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                              transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                            }} 
-                            onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.18)'; }}
-                            onMouseOut={e => { e.currentTarget.style.transform = 'scale(1.0)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)'; }}
-                          />
-                        </td>
-                        <td style={{ ...styles.td, width: '130px', textAlign: 'center' }}>
-                          <a 
-                            href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              gap: '4px', 
-                              padding: '5px 9px', 
-                              borderRadius: '6px', 
-                              backgroundColor: '#EFF6FF', 
-                              color: '#2563EB', 
-                              fontWeight: 700, 
-                              fontSize: '0.78rem',
-                              textDecoration: 'none',
-                              border: '1px solid #BFDBFE'
-                            }}
-                            title="Bấm để mở trang sản phẩm gốc trên Olive Young"
-                          >
-                            <span>Olive Young</span>
-                            <Globe size={13} />
-                          </a>
-                          <div style={{ fontSize: '0.7rem', color: '#9CA3AF', fontFamily: 'monospace', marginTop: '3px' }}>
-                            {prod.goodsNo}
-                          </div>
-                        </td>
-                        <td style={{ ...styles.td, cursor: 'pointer' }} onClick={() => openEditPending(prod)}>
-                          <div style={{ fontWeight: 600, color: '#111827' }}>{prod.name}</div>
-                          {prod.nameKr && <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
-                        </td>
-                        <td style={{ ...styles.td, width: '140px' }}>
-                          <input 
-                            type="text" 
-                            defaultValue={prod.brand || ''} 
-                            onBlur={(e) => {
-                              const val = e.target.value.trim();
-                              if (val !== prod.brand) {
-                                const updated = { ...prod, brand: val, brandKr: val };
-                                updatePendingProduct(prod.goodsNo, updated);
-                                if (showToast) showToast(`Đã sửa hãng: ${val}`, 'success');
-                              }
-                            }}
-                            style={{ 
-                              width: '100%', 
-                              padding: '4px 8px', 
-                              borderRadius: '6px', 
-                              border: '1px solid #D1D5DB', 
-                              fontSize: '0.82rem',
-                              fontWeight: 600,
-                              color: '#1F2937',
-                              backgroundColor: '#FAFAFA'
-                            }}
-                            title="Nhấp để chỉnh sửa nhanh thương hiệu"
-                          />
-                        </td>
-                        <td style={{ ...styles.td, width: '145px' }}>
-                          <select 
-                            value={prod.category || 'skincare'} 
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const updated = { ...prod, category: val };
-                              updatePendingProduct(prod.goodsNo, updated);
-                              if (showToast) showToast('Đã đổi phân loại!', 'success');
-                            }}
-                            style={{ 
-                              width: '100%', 
-                              padding: '4px 6px', 
-                              borderRadius: '6px', 
-                              border: '1px solid #C7D2FE', 
-                              backgroundColor: '#EEF2FF', 
-                              color: '#3730A3', 
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              cursor: 'pointer'
-                            }}
-                            title="Nhấp để đổi nhanh danh mục"
-                          >
-                            {CATEGORIES.map(c => (
-                              <option key={c.value} value={c.value}>{c.label}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td style={{ ...styles.td, width: '130px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6B7280' }}>₩</span>
-                            <input 
-                              type="number" 
-                              defaultValue={prod.foreignPrice || prod.price || 0} 
-                              onBlur={(e) => {
-                                const val = parseInt(e.target.value, 10) || 0;
-                                if (val !== prod.foreignPrice) {
-                                  const updated = { ...prod, foreignPrice: val, price: val };
-                                  updatePendingProduct(prod.goodsNo, updated);
-                                  if (showToast) showToast(`Đã sửa giá: ₩${val.toLocaleString()}`, 'success');
-                                }
-                              }}
-                              style={{ 
-                                width: '85px', 
-                                padding: '4px 6px', 
-                                borderRadius: '6px', 
-                                border: '1px solid #D1D5DB', 
-                                fontSize: '0.82rem',
-                                fontWeight: 700,
-                                color: '#111827',
-                                textAlign: 'right',
-                                backgroundColor: '#FAFAFA'
-                              }}
-                              title="Nhấp để sửa nhanh giá Won"
-                            />
-                          </div>
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center' }}>
-                          <button onClick={() => openEditPending(prod)} style={{ background: '#2563EB', color: '#FFF', border: 'none', borderRadius: '4px', padding: '6px 9px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, marginRight: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                            <Edit3 size={11}/> Sửa
-                          </button>
-                          <button onClick={() => handleAnchorPendingPrice(prod)} style={{ background: '#D97706', color: '#FFF', border: 'none', borderRadius: '4px', padding: '6px 9px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, marginRight: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }} title="Neo giá theo giá sale thực tế trên Olive Young">
-                            <Zap size={11}/> Neo Giá
-                          </button>
-                          <button onClick={() => approvePendingProduct(prod.goodsNo)} style={{ background: '#059669', color: '#FFF', border: 'none', borderRadius: '4px', padding: '6px 9px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, marginRight: '4px' }}>
-                            Duyệt
-                          </button>
-                          <button onClick={() => rejectPendingProduct(prod.goodsNo)} style={{ background: '#DC2626', color: '#FFF', border: 'none', borderRadius: '4px', padding: '6px 9px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>
-                            Xóa
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ================= MODALS ================= */}
-      {deleteConfirm && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
-          <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '8px', width: '400px', maxWidth: '90%' }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem' }}>Xác nhận xóa</h3>
-            <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', color: '#4B5563' }}>Bạn có chắc muốn xóa mã <b>{deleteConfirm}</b> vĩnh viễn?</p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setDeleteConfirm(null)} style={styles.btnOutline}>Hủy</button>
-              <button onClick={() => handleDelete(deleteConfirm)} style={styles.btnDanger}>Xóa vĩnh viễn</button>
-            </div>
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
+      {/* ═══════════ MODAL SỬA SẢN PHẨM CHI TIẾT ═══════════ */}
       {editModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
-          <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '8px', width: '600px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem' }}>
-                {editModal.isPending ? `Chỉnh sửa sản phẩm hàng chờ: ${editModal.goodsNo}` : (editModal.isNew ? 'Thêm Sản Phẩm Mới' : `Sửa SP: ${editModal.goodsNo}`)}
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '40px', paddingBottom: '40px', zIndex: 99999, overflowY: 'auto' }} onClick={() => setEditModal(null)}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', width: '100%', maxWidth: '720px', padding: '24px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>
+                {editModal.isPending ? `Sửa hàng chờ: ${editModal.goodsNo}` : (editModal.isNew ? 'Thêm Sản Phẩm Mới' : `Sửa SP: ${editModal.goodsNo}`)}
               </h3>
-              <button onClick={() => setEditModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20}/></button>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Mã sản phẩm</label>
-                <input value={editForm.goodsNo || ''} onChange={e => handleEditChange('goodsNo', e.target.value)} style={{ ...styles.input, width: '100%' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Thương hiệu (Brand)</label>
-                <input value={editForm.brand || ''} onChange={e => handleEditChange('brand', e.target.value)} style={{ ...styles.input, width: '100%' }} />
-              </div>
+              <button onClick={() => setEditModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+                <X size={20} />
+              </button>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Tên sản phẩm (Tiếng Việt) *</label>
-              <input value={editForm.name || ''} onChange={e => handleEditChange('name', e.target.value)} style={{ ...styles.input, width: '100%' }} />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Tên sản phẩm (Tiếng Hàn gốc)</label>
-              <input value={editForm.nameKr || ''} onChange={e => handleEditChange('nameKr', e.target.value)} style={{ ...styles.input, width: '100%' }} />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Danh mục</label>
-                <select value={editForm.category || 'skincare'} onChange={e => handleEditChange('category', e.target.value)} style={{ ...styles.input, width: '100%' }}>
-                  {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Giá Won (₩)</label>
-                <input type="number" value={editForm.foreignPrice || 0} onChange={e => handleEditChange('foreignPrice', e.target.value)} style={{ ...styles.input, width: '100%' }} />
-                <div style={{ fontSize: '0.78rem', color: '#059669', marginTop: '4px', fontWeight: 600 }}>
-                  ≈ {((editForm.foreignPrice || 0) * 19.5).toLocaleString('vi-VN')} VNĐ
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Mã sản phẩm</label>
+                  <input
+                    value={editForm.goodsNo || ''}
+                    onChange={(e) => handleEditChange('goodsNo', e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Thương hiệu (Brand)</label>
+                  <input
+                    value={editForm.brand || ''}
+                    onChange={(e) => handleEditChange('brand', e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px' }}
+                  />
                 </div>
               </div>
-            </div>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Ảnh đại diện sản phẩm (URL hoặc tự nạp khi chọn file)</label>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <input value={editForm.productImage || ''} onChange={e => handleEditChange('productImage', e.target.value)} style={{ ...styles.input, flex: 1 }} placeholder="Đường dẫn URL ảnh hoặc tự nạp khi tải file bên dưới" />
-                {editForm.productImage && (
-                  <img 
-                    src={editForm.productImage} 
-                    alt="Preview" 
-                    onClick={() => setZoomImage(editForm.productImage)}
-                    style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #2563EB', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }} 
-                  />
-                )}
-              </div>
-            </div>
 
-            {/* TRÌNH QUẢN LÝ ALBUM ẢNH & UPLOAD FILE */}
-            <div style={{ marginBottom: '16px', background: '#F9FAFB', padding: '16px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#374151' }}>
-                  📸 Bộ sưu tập ảnh hiển thị ({((editForm.images || []).length)} ảnh)
-                </span>
-                <label style={{ ...styles.btnOutline, cursor: 'pointer', padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px', background: '#FFF' }}>
-                  <Plus size={14} /> Tải ảnh lên từ máy tính
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    multiple 
-                    onChange={handleLocalImageUpload} 
-                    style={{ display: 'none' }} 
-                  />
-                </label>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Tên sản phẩm (Tiếng Việt) *</label>
+                <input
+                  value={editForm.name || ''}
+                  onChange={(e) => handleEditChange('name', e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px' }}
+                />
               </div>
 
-              {(editForm.images && editForm.images.length > 0) ? (
-                <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', paddingTop: '4px' }}>
-                  {(editForm.images || []).map((imgUrl, i) => {
-                    const isMain = editForm.productImage === imgUrl;
-                    return (
-                      <div 
-                        key={`album-edit-${i}`} 
-                        style={{ 
-                          position: 'relative', 
-                          width: '95px', 
-                          height: '95px', 
-                          borderRadius: '8px', 
-                          overflow: 'hidden', 
-                          border: isMain ? '3px solid #2563EB' : '1px solid #D1D5DB', 
-                          flexShrink: 0,
-                          cursor: 'pointer',
-                          boxShadow: isMain ? '0 0 8px rgba(37,99,235,0.5)' : 'none'
-                        }}
-                      >
-                        <img 
-                          src={imgUrl} 
-                          alt="" 
-                          onClick={() => setZoomImage(imgUrl)}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        />
-                        {/* Nút đặt làm ảnh chính */}
-                        <button
-                          type="button"
-                          onClick={() => handleEditChange('productImage', imgUrl)}
-                          title="Đặt làm ảnh đại diện"
-                          style={{ position: 'absolute', bottom: '2px', left: '2px', background: isMain ? '#2563EB' : 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '4px', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, color: isMain ? '#FFF' : '#374151', cursor: 'pointer' }}
-                        >
-                          ★
-                        </button>
-                        {/* Nút xóa ảnh */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = (editForm.images || []).filter((_, idx) => idx !== i);
-                            let newMain = editForm.productImage;
-                            if (isMain) newMain = updated.length > 0 ? updated[0] : '';
-                            setEditForm(prev => ({ ...prev, images: updated, productImage: newMain }));
-                          }}
-                          title="Xóa ảnh này"
-                          style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(220,38,38,0.85)', color: '#FFF', border: 'none', borderRadius: '4px', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontWeight: 'bold', fontSize: '0.65rem', cursor: 'pointer' }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    );
-                  })}
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Tên tiếng Hàn gốc (Olive Young)</label>
+                <input
+                  value={editForm.nameKr || ''}
+                  onChange={(e) => handleEditChange('nameKr', e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Danh mục</label>
+                  <select
+                    value={editForm.category || 'skincare'}
+                    onChange={(e) => handleEditChange('category', e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px' }}
+                  >
+                    {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
                 </div>
-              ) : (
-                <div style={{ fontSize: '0.8rem', color: '#6B7280', textAlign: 'center', padding: '10px 0', border: '1px dashed #D1D5DB', borderRadius: '6px' }}>
-                  Chưa có hình ảnh nào. Hãy nhấn nút phía trên để tải ảnh lên.
-                </div>
-              )}
-            </div>
-
-            {/* TRÌNH QUẢN LÝ ÁNH ĐÁNH GIÁ THỰC TẾ GDAS */}
-            <div style={{ marginBottom: '16px', background: '#F0FDF4', padding: '16px', borderRadius: '8px', border: '1px solid #BBF7D0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534' }}>
-                  📸 Bộ sưu tập Ảnh Đánh Giá Thực Tế GDAS ({((editForm.photoReviews || []).length)} ảnh)
-                </span>
-                <label style={{ ...styles.btnOutline, cursor: 'pointer', padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px', background: '#FFF', color: '#166534', borderColor: '#86EFAC' }}>
-                  <Plus size={14} /> Thêm ảnh đánh giá
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    multiple 
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      files.forEach(file => {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                          const base64Url = ev.target?.result;
-                          if (base64Url) {
-                            setEditForm(prev => ({
-                              ...prev,
-                              photoReviews: [...(prev.photoReviews || []), base64Url]
-                            }));
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      });
-                    }} 
-                    style={{ display: 'none' }} 
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Giá Won (₩)</label>
+                  <input
+                    type="number"
+                    value={editForm.foreignPrice || 0}
+                    onChange={(e) => handleEditChange('foreignPrice', e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px', fontWeight: 700 }}
                   />
-                </label>
+                  <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
+                    ≈ {Math.round((editForm.foreignPrice || 0) * krwRate).toLocaleString('vi-VN')} VNĐ
+                  </div>
+                </div>
               </div>
 
-              {(editForm.photoReviews && editForm.photoReviews.length > 0) ? (
-                <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', paddingTop: '4px' }}>
-                  {(editForm.photoReviews || []).map((imgUrl, i) => (
-                    <div 
-                      key={`review-edit-${i}`} 
-                      style={{ 
-                        position: 'relative', 
-                        width: '95px', 
-                        height: '95px', 
-                        borderRadius: '8px', 
-                        overflow: 'hidden', 
-                        border: '2px solid #16A34A', 
-                        flexShrink: 0,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <img 
-                        src={imgUrl} 
-                        alt="" 
-                        onClick={() => setZoomImage(imgUrl)}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                      />
+              {/* Album ảnh & Tải từ máy */}
+              <div style={{ backgroundColor: '#F8FAFC', padding: '14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155' }}>
+                    📸 Album Ảnh Sản Phẩm ({((editForm.images || []).length)} ảnh)
+                  </span>
+                  <label style={{ backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', padding: '4px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Plus size={12} /> Tải ảnh từ máy tính
+                    <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} style={{ display: 'none' }} />
+                  </label>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                  {(editForm.images || []).map((imgUrl, i) => (
+                    <div key={i} style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '6px', overflow: 'hidden', border: editForm.productImage === imgUrl ? '2px solid var(--purple-primary)' : '1px solid #CBD5E1', flexShrink: 0 }}>
+                      <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       <button
                         type="button"
                         onClick={() => {
-                          const updated = (editForm.photoReviews || []).filter((_, idx) => idx !== i);
-                          setEditForm(prev => ({ ...prev, photoReviews: updated }));
+                          const updated = (editForm.images || []).filter((_, idx) => idx !== i);
+                          setEditForm(prev => ({ ...prev, images: updated, productImage: updated[0] || '' }));
                         }}
-                        title="Xóa ảnh đánh giá này"
-                        style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(220,38,38,0.85)', color: '#FFF', border: 'none', borderRadius: '4px', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontWeight: 'bold', fontSize: '0.65rem', cursor: 'pointer' }}
+                        style={{ position: 'absolute', top: '2px', right: '2px', backgroundColor: 'rgba(220,38,38,0.9)', color: '#FFF', border: 'none', borderRadius: '4px', width: '16px', height: '16px', fontSize: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         ✕
                       </button>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div style={{ fontSize: '0.8rem', color: '#166534', textAlign: 'center', padding: '10px 0', border: '1px dashed #86EFAC', borderRadius: '6px' }}>
-                  Chưa có ảnh đánh giá thực tế nào. Khi cào sản phẩm, tiện ích sẽ tự nạp 10 ảnh GDAS thật vào đây.
-                </div>
-              )}
-            </div>
+              </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>Mô tả sản phẩm</label>
-              <textarea value={editForm.description || ''} onChange={e => handleEditChange('description', e.target.value)} style={{ ...styles.input, width: '100%', height: '70px', resize: 'vertical' }} />
-            </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Mô tả sản phẩm</label>
+                <textarea
+                  value={editForm.description || ''}
+                  onChange={(e) => handleEditChange('description', e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px', height: '60px', resize: 'vertical' }}
+                />
+              </div>
 
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
-              <button onClick={() => setEditModal(null)} style={styles.btnOutline}>Hủy</button>
-              <button onClick={handleSaveEdit} style={styles.btnPrimary}>Lưu thông tin</button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #E2E8F0' }}>
+                <button
+                  onClick={() => setEditModal(null)}
+                  style={{ padding: '8px 14px', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  style={{ padding: '8px 20px', borderRadius: '8px', backgroundColor: 'var(--purple-primary)', color: '#FFFFFF', border: 'none', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Lưu Sản Phẩm
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1407,15 +1267,15 @@ export default function AdminProductManager() {
 
       {/* Lightbox Phóng To Ảnh */}
       {zoomImage && (
-        <div 
+        <div
           onClick={() => setZoomImage(null)}
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, cursor: 'zoom-out' }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100000, cursor: 'zoom-out' }}
         >
           <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
             <img src={zoomImage} alt="Zoom" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }} />
-            <button 
+            <button
               onClick={() => setZoomImage(null)}
-              style={{ position: 'absolute', top: '-40px', right: '0px', background: 'none', border: 'none', color: '#FFF', fontSize: '1.2rem', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '-36px', right: '0px', background: 'none', border: 'none', color: '#FFF', fontSize: '1rem', cursor: 'pointer', fontWeight: 700 }}
             >
               ✕ Đóng
             </button>

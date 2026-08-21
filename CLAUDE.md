@@ -1,34 +1,61 @@
-# TAVY KOREA - CLAUDE CODE NATIVE CONFIGURATION & AI ARCHITECTURE
+# TAVY KOREA - QUY CHUẨN CÔNG TY & QUY TRÌNH PHÒNG BAN CHUYÊN TRÁCH
 
-Nền tảng thương mại điện tử / mua hộ mỹ phẩm Olive Young, thực phẩm chức năng & thuốc nội địa Hàn Quốc chính hãng 100% (TAVY Korea).
+Hệ thống vận hành theo mô hình **Software Engineering Team tiêu chuẩn Công ty Công nghệ**, phối hợp nhịp nhàng giữa các vai trò chuyên biệt. Nguyên tắc cốt lõi: **Làm chậm mà chắc, code ra là phải pass kiểm thử 100% (Zero-Defect Policy).**
 
-## 🚀 Công Nghệ Chính (Tech Stack)
-- **Frontend**: React 19, Vite 8, React Router v7, Tailwind CSS, Lucide Icons, Canvas Confetti.
-- **Backend / Serverless**: Firebase Cloud Functions v2 (Node.js 20), Cloud Firestore (với offline persistence), Firebase Authentication (Google & Password).
-- **Thanh toán**: Cổng thanh toán QR Code VietQR (VND) & Woori Bank (KRW) kết hợp Webhook tự động PayOS (`@payos/node`).
+---
+
+## 🏢 1. Sơ Đồ Phòng Ban Chuyên Trách (Agent Roles)
+
+```
+[1. Task Planner (BA / Solution Architect)]
+               │
+               ▼  (Kế hoạch rõ ràng, định danh file)
+[2. Frontend & UI/UX Designer] / [Fullstack Dev]
+               │
+               ▼  (Code tuần tự, đúng bảng màu Ivory/Purple)
+[3. Security & Code Reviewer]
+               │
+               ▼  (Kiểm tra logic, signature PayOS, schema)
+[4. QC Automation Engineer (Quality Control Gatekeeper)]
+               │
+               ├──> [npm run build] -> PASS?
+               ├──> [node tests/run_all_tests.js (180/180)] -> PASS?
+               │
+               ▼
+[5. Release & Production Deploy]
+```
+
+### Chi tiết nhiệm vụ từng vị trí:
+1. **`task-planner` (Solution Architect / BA)**: 
+   - Khảo sát mã nguồn, phân tích tác động, lập kế hoạch chi tiết (Step-by-step) trước khi bắt tay vào code.
+   - Ghi nhớ trạng thái vào Memory (`active-task-state.md`) để không bao giờ bị quên khi gián đoạn phiên.
+2. **`ui-designer` & Developer**:
+   - Viết code sạch, đúng chuẩn Responsive, bám sát Design System Ivory & Gold/Purple.
+3. **`code-reviewer` (Security & Logic Auditor)**:
+   - Rà soát lỗ hổng bảo mật, tính toàn vẹn Firestore rules, logic thanh toán Webhook.
+4. **`qc-automation-engineer` (QA/QC Gatekeeper ⭐)**:
+   - Chạy toàn bộ 180 bài test E2E.
+   - Chạy `npm run build` xác nhận zero-error.
+   - Thử nghiệm các ca biên (Boundary/Corner cases) trước khi xác nhận bàn giao.
+
+---
+
+## 🛡️ 2. Quy Tắc Bất Di Bất Dịch (Zero-Defect Pipeline)
+
+Mỗi khi phát triển một tính năng hoặc chỉnh sửa bất kỳ file nào:
+1. **Lên Kế Hoạch & Phân Tích Trước**: Không code bừa, luôn ghi chép vào `active-task-state.md`.
+2. **Thực Hiện Tuần Tự & Tiết Kiệm Tài Nguyên (Lightweight Execution)**:
+   - Thao tác từng file một, nhẹ nhàng, tránh gây giật lag máy.
+   - **CẤM DÙNG Playwright / Headless Browser / Chụp ảnh màn hình để inspect UI**: Tiết kiệm tối đa API tokens và CPU/RAM của người dùng. Thay vào đó, phân tích code JSX/CSS tĩnh, chạy test logic và hướng dẫn người dùng tự mở trình duyệt xem trực tiếp.
+3. **Kiểm Thử Nghiệm Thu (QC Phase)**:
+   - `npm run build` -> Đạt.
+   - `node tests/run_all_tests.js` -> 180/180 PASS.
+4. **Lưu Vết Ký Ức (Memory Sync)**: Cập nhật `active-task-state.md` và `MEMORY.md` ngay sau mỗi bước hoàn thành.
+
+---
+
+## 🚀 3. Tech Stack & Công Nghệ
+- **Frontend**: React 19, Vite 8, React Router v7, Tailwind CSS, Lucide Icons.
+- **Backend**: Firebase Cloud Functions v2 (Node.js 20), Cloud Firestore.
+- **Thanh toán**: VietQR tự động & Woori Bank (KRW) kết hợp Webhook PayOS.
 - **Testing Suite**: 180 bài test tự động phủ 4 Tiers (`node tests/run_all_tests.js`).
-
----
-
-## 🤖 Cấu Trúc AI & Agent Kiến Trúc Chuẩn Claude Code
-
-### 1. Phân Tầng AI Scraper Engine (`src/services/aiScraperAgentEngine.js`)
-- **Tầng 1 (Extractor)**: Sử dụng Jina AI Reader (`https://r.jina.ai/`) để vượt WAF và lấy Markdown thật từ Olive Young / Musinsa.
-- **Tầng 2 (LLM Extraction)**:
-  - Gọi LLM để trích xuất JSON: tên Việt chuẩn SEO, tên Hàn, Brand, phân loại danh mục, giá sale làm tròn, danh sách ảnh sản phẩm HD (loại bỏ ảnh rác/banner).
-  - Sử dụng chuỗi Fallback thông minh: Custom Endpoint -> Google Gemini (`gemini-3.5-flash`, `gemini-3.6-flash`, `gemini-3.7-flash`).
-- **Tầng 3 (Data Validation)**: Xác thực không sinh dữ liệu ảo (No Fake Data).
-
----
-
-## 🛠️ Nguyên Tắc Làm Việc Dành Cho Claude Code (Pacing & Workflow)
-1. **Làm tuần tự, nhẹ nhàng (Pacing Rule)**:
-   - Tuyệt đối không chạy ồ ạt nhiều sub-agents song song cùng lúc để tránh làm nóng / đơ máy người dùng.
-   - Thao tác từng bước một, kiểm tra kỹ lưỡng trước khi chuyển bước tiếp theo.
-2. **Kiểm tra chất lượng trước khi bàn giao**:
-   - Chạy `npm run build` để đảm bảo không lỗi biên dịch.
-   - Chạy `node tests/run_all_tests.js` (180/180 PASS).
-   - Kiểm tra giao diện qua Playwright khi có thay đổi lớn về layout.
-3. **Triển khai & Backup**:
-   - Luôn commit sạch sẽ lên GitHub: `git push origin main`.
-   - Deploy trực tiếp lên Firebase Hosting: `npx firebase deploy --only hosting,firestore`.
