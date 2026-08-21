@@ -4,19 +4,8 @@ import {
   ShoppingBag,
   RotateCcw,
   CreditCard,
-  ShieldCheck,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  HelpCircle,
-  Truck,
-  ArrowRight,
   Video,
-  PackageCheck,
-  Plane,
-  Gift,
-  Search,
-  Sparkles
+  ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Footer from '../components/Footer';
@@ -26,64 +15,58 @@ export default function PolicyPage() {
   const [activeTab, setActiveTab] = useState('workflow'); // 'workflow' | 'order' | 'refund' | 'payment'
 
   const tabs = [
-    { id: 'workflow', label: '1. Quy trình 8 bước mua hàng', icon: Video, badge: 'Minh bạch' },
+    { id: 'workflow', label: '1. Quy trình 8 bước', icon: Video },
     { id: 'order', label: '2. Quy định & Tỷ giá', icon: ShoppingBag },
     { id: 'refund', label: '3. Đổi trả & Hoàn tiền', icon: RotateCcw },
     { id: 'payment', label: '4. Hướng dẫn thanh toán', icon: CreditCard },
   ];
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#FAF8F5' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#FAF9F6' }}>
       <Helmet>
         <title>Quy trình & Chính sách mua hàng - TAVY KOREA</title>
         <meta name="description" content="Quy trình 8 bước mua hàng hộ Hàn Quốc minh bạch có video POV và video đóng hàng, chính sách đổi trả, hoàn tiền và thanh toán tại TAVY Korea." />
       </Helmet>
 
-      {/* Header Banner */}
+      {/* Header Banner Thanh Lịch */}
       <div style={{
-        background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%)',
+        background: '#1E1B4B',
         color: '#FFFFFF',
-        padding: '50px 20px',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden'
+        padding: '45px 20px',
+        textAlign: 'center'
       }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(255,255,255,0.12)',
-            padding: '6px 16px',
-            borderRadius: '20px',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            marginBottom: '16px',
-            letterSpacing: '1px'
+        <div style={{ maxWidth: '750px', margin: '0 auto' }}>
+          <span style={{
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            letterSpacing: '1.5px',
+            color: '#E0E7FF',
+            textTransform: 'uppercase',
+            display: 'block',
+            marginBottom: '10px'
           }}>
-            <ShieldCheck size={16} color="#FBBF24" />
-            <span>CAM KẾT MINH BẠCH & UY TÍN 100%</span>
-          </div>
-          <h1 style={{ fontSize: '2.2rem', fontFamily: 'var(--font-serif)', fontWeight: 800, marginBottom: '12px', letterSpacing: '-0.5px' }}>
+            TAVY KOREA • MINH BẠCH & UY TÍN
+          </span>
+          <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-serif)', fontWeight: 700, marginBottom: '10px' }}>
             Quy Trình & Chính Sách Dịch Vụ
           </h1>
-          <p style={{ fontSize: '1rem', color: '#E0E7FF', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto' }}>
-            Trải nghiệm mua sắm hàng Hàn Quốc yên tâm tuyệt đối với video POV mua hàng tại Store, video đóng gói từng kiện hàng và chính sách bồi hoàn minh bạch.
+          <p style={{ fontSize: '0.95rem', color: '#C7D2FE', lineHeight: 1.6, maxWidth: '600px', margin: '0 auto' }}>
+            Quy trình mua hàng hộ minh bạch với video POV mua hàng tại Store Hàn Quốc, video đóng gói từng kiện và chính sách bồi hoàn rõ ràng.
           </p>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div style={{ maxWidth: '1000px', margin: '-24px auto 60px', width: '100%', padding: '0 20px', flex: 1, zIndex: 10 }}>
+      <div style={{ maxWidth: '980px', margin: '30px auto 60px', width: '100%', padding: '0 20px', flex: 1 }}>
 
         {/* Navigation Tabs */}
         <div style={{
           display: 'flex',
           background: '#FFFFFF',
-          borderRadius: '16px',
-          padding: '8px',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
-          gap: '8px',
+          borderRadius: '12px',
+          padding: '6px',
+          border: '1px solid #E5E7EB',
+          gap: '6px',
           marginBottom: '24px',
           flexWrap: 'wrap'
         }}>
@@ -95,48 +78,42 @@ export default function PolicyPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
-                  flex: '1 1 200px',
+                  flex: '1 1 180px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  padding: '14px 16px',
-                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '0.92rem',
+                  fontSize: '0.9rem',
                   fontWeight: 700,
-                  transition: 'all 0.25s ease',
+                  transition: 'all 0.2s ease',
                   backgroundColor: isActive ? 'var(--purple-primary)' : 'transparent',
                   color: isActive ? '#FFFFFF' : '#4B5563',
-                  boxShadow: isActive ? '0 4px 14px rgba(124, 58, 237, 0.25)' : 'none',
-                  position: 'relative'
                 }}
               >
-                <Icon size={18} color={isActive ? '#FFFFFF' : 'var(--purple-primary)'} />
+                <Icon size={17} color={isActive ? '#FFFFFF' : 'var(--purple-primary)'} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Tab 1: QUY TRÌNH 8 BƯỚC MUA HÀNG MINH BẠCH */}
+        {/* Tab 1: QUY TRÌNH 8 BƯỚC */}
         {activeTab === 'workflow' && (
-          <div style={{ background: '#FFFFFF', borderRadius: '20px', padding: '36px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-            <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-              <span style={{ color: 'var(--purple-primary)', fontSize: '0.85rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>
-                TIÊU CHUẨN MINH BẠCH ĐỘC QUYỀN
-              </span>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1E1B4B', margin: '6px 0 10px 0' }}>
-                Quy Trình 8 Bước Mua Hàng & Vận Chuyển Hàn Quốc
+          <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '32px', border: '1px solid #E5E7EB' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#111827', margin: '0 0 6px 0' }}>
+                Quy Trình 8 Bước Mua Hàng & Vận Chuyển
               </h2>
-              <p style={{ color: '#64748B', fontSize: '0.95rem', margin: 0 }}>
-                Giúp quý khách có cái nhìn khách quan và theo dõi trạng thái đơn hàng theo thời gian thực (Realtime).
+              <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: 0 }}>
+                Hệ thống cập nhật trạng thái đơn hàng theo thời gian thực (Realtime) để quý khách tiện theo dõi.
               </p>
             </div>
 
-            {/* Timeline View */}
-            <div style={{ display: 'grid', gap: '20px', position: 'relative' }}>
+            <div style={{ display: 'grid', gap: '14px' }}>
               {ORDER_WORKFLOW_STEPS.map((step) => {
                 const Icon = step.icon;
                 return (
@@ -144,49 +121,46 @@ export default function PolicyPage() {
                     key={step.step}
                     style={{
                       display: 'flex',
-                      gap: '20px',
-                      padding: '20px',
-                      borderRadius: '16px',
-                      background: step.highlight ? '#FAF5FF' : '#F8FAFC',
-                      border: step.highlight ? '2px solid var(--purple-primary)' : '1px solid #E2E8F0',
+                      gap: '16px',
+                      padding: '16px 20px',
+                      borderRadius: '12px',
+                      background: step.highlight ? '#FAF5FF' : '#F9FAFB',
+                      border: step.highlight ? '1px solid var(--purple-primary)' : '1px solid #E5E7EB',
                       alignItems: 'flex-start'
                     }}
                   >
-                    {/* Step Icon */}
                     <div style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '14px',
-                      backgroundColor: step.bgColor,
-                      color: step.color,
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      backgroundColor: step.highlight ? 'var(--purple-primary)' : '#E5E7EB',
+                      color: step.highlight ? '#FFFFFF' : '#374151',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flexShrink: 0,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                      flexShrink: 0
                     }}>
-                      <Icon size={24} />
+                      <Icon size={19} />
                     </div>
 
-                    {/* Step Info */}
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                          <span style={{ color: step.color, marginRight: '8px' }}>Bước {step.step}:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '6px' }}>
+                        <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+                          <span style={{ color: 'var(--purple-primary)', marginRight: '6px' }}>#{step.step}</span>
                           {step.title}
                         </h3>
                         <span style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 800,
-                          padding: '3px 10px',
-                          borderRadius: '12px',
-                          backgroundColor: step.highlight ? 'var(--purple-primary)' : '#E2E8F0',
-                          color: step.highlight ? '#FFF' : '#475569'
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          backgroundColor: step.highlight ? 'var(--purple-primary)' : '#E5E7EB',
+                          color: step.highlight ? '#FFF' : '#4B5563'
                         }}>
                           {step.badge}
                         </span>
                       </div>
-                      <p style={{ fontSize: '0.92rem', color: '#475569', lineHeight: 1.6, margin: 0 }}>
+                      <p style={{ fontSize: '0.88rem', color: '#4B5563', lineHeight: 1.5, margin: 0 }}>
                         {step.desc}
                       </p>
                     </div>
@@ -197,195 +171,148 @@ export default function PolicyPage() {
           </div>
         )}
 
-        {/* Tab 2: Quy định mua hàng & Tỷ giá */}
+        {/* Tab 2: Quy định & Tỷ giá */}
         {activeTab === 'order' && (
-          <div style={{ background: '#FFFFFF', borderRadius: '20px', padding: '36px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1E1B4B', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ShoppingBag size={24} color="var(--purple-primary)" />
+          <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '32px', border: '1px solid #E5E7EB' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#111827', marginBottom: '20px' }}>
               Quy Định Đặt Mua & Cách Tính Cước Phí
             </h2>
 
-            <div style={{ display: 'grid', gap: '20px', color: '#374151', lineHeight: '1.7', fontSize: '0.95rem' }}>
-              <div style={{ background: '#F8FAFC', padding: '20px', borderRadius: '12px', borderLeft: '4px solid var(--purple-primary)' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>1. Nguồn hàng mua hộ</h3>
-                <p>
-                  TAVY Korea nhận order trực tiếp tại hệ thống bán lẻ chính hãng: <strong>Olive Young, Musinsa, Kakao Gift, Coupang, các hiệu thuốc và trung tâm thương mại tại Seoul</strong> (Đầy đủ bill mua hàng điện tử hoặc hóa đơn giấy tại store).
+            <div style={{ display: 'grid', gap: '16px', color: '#374151', lineHeight: '1.6', fontSize: '0.9rem' }}>
+              <div style={{ background: '#F9FAFB', padding: '18px', borderRadius: '10px', borderLeft: '3px solid var(--purple-primary)' }}>
+                <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>1. Nguồn hàng mua hộ</h3>
+                <p style={{ margin: 0 }}>
+                  TAVY Korea nhận order trực tiếp tại hệ thống bán lẻ chính hãng: <strong>Olive Young, Musinsa, Kakao Gift, Coupang, các hiệu thuốc và trung tâm thương mại tại Seoul</strong> (Đầy đủ bill mua hàng điện tử hoặc hóa đơn tại store).
                 </p>
               </div>
 
-              <div style={{ background: '#F8FAFC', padding: '20px', borderRadius: '12px', borderLeft: '4px solid #3B82F6' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>2. Quy định về giá bán & Tỷ giá Won (KRW)</h3>
-                <ul style={{ paddingLeft: '20px', margin: 0 }}>
-                  <li><strong>Giá sản phẩm:</strong> Tính theo giá thực tế trên website Hàn Quốc (ưu tiên giá sale tại thời điểm đặt cọc).</li>
-                  <li><strong>Tỷ giá Won (KRW):</strong> Tỷ giá được niêm yết công khai và cập nhật minh bạch theo hệ thống (thường dao động 19.0 - 20.0đ/Won).</li>
-                  <li><strong>Công thức tính trọn gói:</strong> <code>Giá về tay (VND) = [Giá Won x Tỷ giá] + Phí mua hộ (0-5%) + Cước vận chuyển Hàn - Việt</code>.</li>
+              <div style={{ background: '#F9FAFB', padding: '18px', borderRadius: '10px', borderLeft: '3px solid #3B82F6' }}>
+                <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>2. Quy định về giá bán & Tỷ giá Won (KRW)</h3>
+                <ul style={{ paddingLeft: '18px', margin: 0 }}>
+                  <li><strong>Giá sản phẩm:</strong> Tính theo giá niêm yết trên website Hàn Quốc (ưu tiên giá sale tại thời điểm đặt cọc).</li>
+                  <li><strong>Tỷ giá Won (KRW):</strong> Niêm yết công khai và cập nhật minh bạch theo hệ thống (dao động 19.0 - 20.0đ/Won).</li>
+                  <li><strong>Công thức tính trọn gói:</strong> <code>Giá về tay (VND) = [Giá Won x Tỷ giá] + Phí dịch vụ (nếu có) + Cước vận chuyển Hàn - Việt</code>.</li>
                 </ul>
               </div>
 
-              <div style={{ background: '#F8FAFC', padding: '20px', borderRadius: '12px', borderLeft: '4px solid #10B981' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>3. Thời gian giao hàng (Hàn Quốc ✈️ Việt Nam)</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '10px' }}>
-                  <div style={{ background: '#FFF', padding: '12px 16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                    <div style={{ fontWeight: 700, color: '#0F172A' }}>✈️ Bay nhanh (Đường bay):</div>
-                    <div style={{ color: '#059669', fontWeight: 800 }}>3 - 5 ngày làm việc</div>
-                  </div>
-                  <div style={{ background: '#FFF', padding: '12px 16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                    <div style={{ fontWeight: 700, color: '#0F172A' }}>🚢 Đường biển (Hàng nặng/cồng kềnh):</div>
-                    <div style={{ color: '#2563EB', fontWeight: 800 }}>10 - 15 ngày làm việc</div>
-                  </div>
-                </div>
+              <div style={{ background: '#F9FAFB', padding: '18px', borderRadius: '10px', borderLeft: '3px solid #10B981' }}>
+                <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>3. Thời gian giao hàng (Hàn Quốc ✈️ Việt Nam)</h3>
+                <p style={{ margin: 0 }}>
+                  - <strong>Đường bay nhanh (Air):</strong> 3 - 5 ngày làm việc kể từ khi xuất kho Seoul.<br />
+                  - <strong>Đường biển (Hàng nặng/cồng kềnh):</strong> 10 - 15 ngày làm việc.
+                </p>
               </div>
 
-              <div style={{ background: '#FFFBEB', padding: '20px', borderRadius: '12px', border: '1px solid #FDE68A' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#B45309', marginBottom: '6px' }}>
-                  <AlertCircle size={18} /> Lưu ý quan trọng:
-                </div>
-                <p style={{ margin: 0, color: '#92400E' }}>
-                  Sau khi đơn hàng đã được TAVY tiến hành mua tại cửa hàng Hàn Quốc, quý khách sẽ không thể thay đổi thông tin sản phẩm hoặc hủy đơn do chính sách không hoàn hủy của các hệ thống bán lẻ tại Hàn Quốc.
+              <div style={{ background: '#FFFBEB', padding: '16px', borderRadius: '10px', border: '1px solid #FDE68A' }}>
+                <p style={{ margin: 0, color: '#92400E', fontSize: '0.88rem' }}>
+                  <strong>Lưu ý:</strong> Sau khi đơn hàng đã được TAVY tiến hành mua tại cửa hàng Hàn Quốc, quý khách vui lòng không thay đổi hoặc hủy đơn do chính sách không hoàn hủy của các hệ thống bán lẻ tại Hàn.
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 3: Chính sách đổi trả & Hoàn tiền */}
+        {/* Tab 3: Đổi trả & Hoàn tiền */}
         {activeTab === 'refund' && (
-          <div style={{ background: '#FFFFFF', borderRadius: '20px', padding: '36px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1E1B4B', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <RotateCcw size={24} color="#EF4444" />
+          <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '32px', border: '1px solid #E5E7EB' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#111827', marginBottom: '20px' }}>
               Chính Sách Đổi Trả, Đền Bù & Hoàn Tiền
             </h2>
 
-            <div style={{ display: 'grid', gap: '20px', color: '#374151', lineHeight: '1.7', fontSize: '0.95rem' }}>
-
-              <div style={{ background: '#ECFDF5', padding: '20px', borderRadius: '12px', border: '1px solid #A7F3D0' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#065F46', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <CheckCircle2 size={18} color="#059669" /> Trường hợp được ĐỀN BÙ 100% hoặc HOÀN TIỀN
+            <div style={{ display: 'grid', gap: '16px', color: '#374151', lineHeight: '1.6', fontSize: '0.9rem' }}>
+              <div style={{ background: '#F0FDF4', padding: '18px', borderRadius: '10px', border: '1px solid #BBF7D0' }}>
+                <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#166534', marginBottom: '6px' }}>
+                  Trường hợp được ĐỀN BÙ 100% hoặc HOÀN TIỀN
                 </h3>
-                <ul style={{ paddingLeft: '20px', margin: 0, color: '#047857' }}>
+                <ul style={{ paddingLeft: '18px', margin: 0, color: '#15803D' }}>
                   <li>Sản phẩm bị phát hiện là <strong>hàng không chính hãng</strong> (Cam kết đền gấp 10 lần giá trị).</li>
-                  <li>Hàng bị <strong>thất lạc, mất mát</strong> trong quá trình vận chuyển từ Hàn Quốc về Việt Nam.</li>
-                  <li>Sản phẩm bị <strong>vỡ, bể, hư hỏng nặng</strong> do quá trình vận chuyển (Quý khách vui lòng quay video khi mở hộp hàng).</li>
-                  <li>TAVY mua <strong>sai màu sắc, sai phân loại hoặc sai dung tích</strong> so với đơn đặt hàng đã xác nhận.</li>
-                  <li>Shop tại Hàn Quốc <strong>báo hết hàng hoặc hủy đơn</strong>: TAVY hoàn lại 100% tiền cọc trong vòng 24 giờ làm việc.</li>
+                  <li>Hàng bị <strong>thất lạc, mất mát</strong> trong quá trình vận chuyển.</li>
+                  <li>Sản phẩm bị <strong>vỡ bể, hư hỏng nặng</strong> do vận chuyển (Quý khách vui lòng quay video khi khui kiện hàng).</li>
+                  <li>TAVY mua <strong>sai phân loại hoặc dung tích</strong> so với đơn đặt hàng đã xác nhận.</li>
+                  <li>Shop Hàn Quốc <strong>báo hết hàng hoặc hủy đơn</strong>: Hoàn lại 100% tiền cọc trong vòng 24 giờ.</li>
                 </ul>
               </div>
 
-              <div style={{ background: '#FEF2F2', padding: '20px', borderRadius: '12px', border: '1px solid #FECACA' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#991B1B', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <AlertCircle size={18} color="#DC2626" /> Trường hợp KHÔNG hỗ trợ đổi trả
+              <div style={{ background: '#FEF2F2', padding: '18px', borderRadius: '10px', border: '1px solid #FECACA' }}>
+                <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#991B1B', marginBottom: '6px' }}>
+                  Trường hợp KHÔNG hỗ trợ đổi trả
                 </h3>
-                <ul style={{ paddingLeft: '20px', margin: 0, color: '#B91C1C' }}>
-                  <li>Khách hàng tự đổi ý hoặc không ưng ý sản phẩm sau khi hàng đã mua tại Hàn.</li>
-                  <li>Hộp ngoài sản phẩm bị móp nhẹ trong quá trình vận chuyển quốc tế nhưng <strong>chất lượng bên trong nguyên vẹn</strong>.</li>
+                <ul style={{ paddingLeft: '18px', margin: 0, color: '#B91C1C' }}>
+                  <li>Khách hàng tự đổi ý sau khi hàng đã được mua thành công tại Hàn Quốc.</li>
+                  <li>Hộp ngoài sản phẩm bị móp nhẹ trong quá trình vận chuyển nhưng <strong>chất lượng bên trong nguyên vẹn</strong>.</li>
                   <li>Sản phẩm đã bị bóc seal, mở nắp hoặc qua sử dụng sau khi nhận tại Việt Nam.</li>
-                  <li>Quý khách không cung cấp được video đồng kiểm khi mở kiện hàng.</li>
                 </ul>
               </div>
-
-              <div style={{ background: '#F8FAFC', padding: '20px', borderRadius: '12px', borderLeft: '4px solid #8B5CF6' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>Thời gian & Phương thức hoàn tiền</h3>
-                <p style={{ margin: 0 }}>
-                  Tiền hoàn sẽ được chuyển trực tiếp về tài khoản ngân hàng của quý khách trong vòng <strong>24h - 48h</strong> kể từ khi nhận được xác nhận bồi hoàn từ bộ phận chăm sóc khách hàng TAVY.
-                </p>
-              </div>
-
             </div>
           </div>
         )}
 
         {/* Tab 4: Hướng dẫn thanh toán */}
         {activeTab === 'payment' && (
-          <div style={{ background: '#FFFFFF', borderRadius: '20px', padding: '36px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1E1B4B', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <CreditCard size={24} color="var(--purple-primary)" />
+          <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '32px', border: '1px solid #E5E7EB' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#111827', marginBottom: '20px' }}>
               Hướng Dẫn Thanh Toán & Đặt Cọc
             </h2>
 
-            <div style={{ display: 'grid', gap: '24px', color: '#374151', lineHeight: '1.7', fontSize: '0.95rem' }}>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-
-                {/* Phương thức 1: VietQR */}
-                <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '20px', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '1.4rem' }}>🇻🇳</span>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E40AF', margin: 0 }}>Chuyển khoản VND (VietQR)</h3>
-                  </div>
-                  <p style={{ fontSize: '0.88rem', color: '#1E3A8A', marginBottom: '12px' }}>
-                    Hệ thống tạo mã VietQR tự động điền sẵn số tiền và mã đơn hàng, tích hợp xác nhận giao dịch qua cổng PayOS.
-                  </p>
-                  <div style={{ background: '#FFF', padding: '12px', borderRadius: '8px', fontSize: '0.85rem' }}>
-                    <div><strong>Ngân hàng:</strong> MBBank (Quân Đội)</div>
-                    <div><strong>Số tài khoản:</strong> 34966778899</div>
-                    <div><strong>Chủ TK:</strong> VU VAN TAN</div>
-                    <div><strong>Nội dung:</strong> Mã đơn hàng (VD: ORD-123456)</div>
-                  </div>
-                </div>
-
-                {/* Phương thức 2: Woori Bank */}
-                <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '20px', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '1.4rem' }}>🇰🇷</span>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#166534', margin: 0 }}>Chuyển khoản KRW (Woori Bank)</h3>
-                  </div>
-                  <p style={{ fontSize: '0.88rem', color: '#14532D', marginBottom: '12px' }}>
-                    Dành cho khách hàng đang sinh sống/làm việc tại Hàn Quốc chuyển khoản trực tiếp qua ngân hàng Hàn.
-                  </p>
-                  <div style={{ background: '#FFF', padding: '12px', borderRadius: '8px', fontSize: '0.85rem' }}>
-                    <div><strong>Ngân hàng:</strong> Woori Bank (우리은행)</div>
-                    <div><strong>Số tài khoản:</strong> 1002959863658</div>
-                    <div><strong>Chủ TK:</strong> VU VAN TAN</div>
-                    <div><strong>Nội dung:</strong> Mã đơn hàng</div>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Quy trình đặt cọc 2 bước */}
-              <div style={{ background: '#F8FAFC', padding: '24px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '16px' }}>
-                  ⏱️ Quy định đặt cọc đơn hàng:
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+              {/* VietQR */}
+              <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '18px', borderRadius: '12px' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>
+                  1. Chuyển khoản VND (VietQR)
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-                  <div style={{ background: '#FFF', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                    <div style={{ color: 'var(--purple-primary)', fontWeight: 800, fontSize: '0.9rem', marginBottom: '4px' }}>BƯỚC 1: ĐẶT CỌC (100% TIỀN HÀNG)</div>
-                    <p style={{ fontSize: '0.85rem', color: '#64748B', margin: 0 }}>
-                      Để TAVY tiến hành xuất kho và thanh toán với nhà cung cấp tại Hàn Quốc.
-                    </p>
-                  </div>
-                  <div style={{ background: '#FFF', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                    <div style={{ color: '#059669', fontWeight: 800, fontSize: '0.9rem', marginBottom: '4px' }}>BƯỚC 2: THANH TOÁN SHIP KHI NHẬN HÀNG</div>
-                    <p style={{ fontSize: '0.85rem', color: '#64748B', margin: 0 }}>
-                      Phí vận chuyển cân nặng tính khi hàng về kho VN và giao đến tận tay quý khách.
-                    </p>
-                  </div>
+                <div style={{ fontSize: '0.88rem', color: '#374151', lineHeight: '1.6' }}>
+                  <div><strong>Ngân hàng:</strong> MBBank (Quân Đội)</div>
+                  <div><strong>Số tài khoản:</strong> 34966778899</div>
+                  <div><strong>Chủ TK:</strong> VU VAN TAN</div>
+                  <div><strong>Nội dung:</strong> Mã đơn hàng (VD: ORD-123456)</div>
                 </div>
               </div>
 
+              {/* Woori Bank */}
+              <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '18px', borderRadius: '12px' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>
+                  2. Chuyển khoản KRW (Woori Bank)
+                </h3>
+                <div style={{ fontSize: '0.88rem', color: '#374151', lineHeight: '1.6' }}>
+                  <div><strong>Ngân hàng:</strong> Woori Bank (우리은행)</div>
+                  <div><strong>Số tài khoản:</strong> 1002959863658</div>
+                  <div><strong>Chủ TK:</strong> VU VAN TAN</div>
+                  <div><strong>Nội dung:</strong> Mã đơn hàng</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: '#F9FAFB', padding: '18px', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>
+                Quy định cọc đơn:
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.88rem', color: '#4B5563', lineHeight: '1.5' }}>
+                - <strong>Bước 1:</strong> Đặt cọc 100% tiền hàng để TAVY tiến hành thanh toán với nhà cung cấp tại Hàn Quốc.<br />
+                - <strong>Bước 2:</strong> Thanh toán cước vận chuyển cân nặng thực tế khi hàng về kho Việt Nam và giao tận tay quý khách.
+              </p>
             </div>
           </div>
         )}
 
-        {/* Bottom CTA Box */}
+        {/* Bottom CTA */}
         <div style={{
-          marginTop: '30px',
-          background: 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)',
-          borderRadius: '20px',
-          padding: '24px 32px',
-          border: '1px solid #E9D5FF',
+          marginTop: '24px',
+          background: '#FFFFFF',
+          borderRadius: '14px',
+          padding: '20px 24px',
+          border: '1px solid #E5E7EB',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '16px'
+          gap: '12px'
         }}>
           <div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#581C87', margin: '0 0 4px 0' }}>
-              Bạn cần tư vấn hoặc giải đáp thêm thắc mắc?
-            </h4>
-            <p style={{ fontSize: '0.9rem', color: '#7E22CE', margin: 0 }}>
-              Đội ngũ chăm sóc khách hàng của TAVY Korea sẵn sàng hỗ trợ bạn 24/7.
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#111827' }}>
+              Cần hỗ trợ hoặc gửi link sản phẩm báo giá?
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#6B7280', margin: '2px 0 0 0' }}>
+              Đội ngũ TAVY Korea sẵn sàng tư vấn trực tiếp 24/7.
             </p>
           </div>
           <Link
@@ -393,19 +320,18 @@ export default function PolicyPage() {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '6px',
               backgroundColor: 'var(--purple-primary)',
               color: '#FFFFFF',
-              padding: '12px 24px',
-              borderRadius: '12px',
+              padding: '10px 20px',
+              borderRadius: '8px',
               fontWeight: 700,
               textDecoration: 'none',
-              fontSize: '0.9rem',
-              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)'
+              fontSize: '0.88rem'
             }}
           >
-            <span>Bắt đầu mua hàng ngay</span>
-            <ArrowRight size={16} />
+            <span>Mua hàng ngay</span>
+            <ArrowRight size={15} />
           </Link>
         </div>
 
