@@ -90,7 +90,7 @@ export default function AdminOrderManager() {
       updateOrderStatus(id, bulkStatus);
     });
 
-    if (showToast) showToast(`✅ Đã cập nhật ${selectedOrderIds.length} đơn sang "${ORDER_STATUSES[bulkStatus]?.label || bulkStatus}"`, 'success');
+    if (showToast) showToast(`Đã cập nhật ${selectedOrderIds.length} đơn sang "${ORDER_STATUSES[bulkStatus]?.label || bulkStatus}"`, 'success');
     setSelectedOrderIds([]);
     setBulkStatus('');
   };
@@ -171,7 +171,7 @@ export default function AdminOrderManager() {
       totalVnd: totalCalc
     });
 
-    if (showToast) showToast(`✅ Đã lưu cập nhật đơn hàng ${activeModalOrder.id}!`, 'success');
+    if (showToast) showToast(`Đã lưu cập nhật đơn hàng ${activeModalOrder.id}!`, 'success');
     setActiveModalOrder(null);
   };
 
@@ -207,7 +207,7 @@ export default function AdminOrderManager() {
       ...quickProofForm,
       packageWeightKg: quickProofForm.packageWeightKg ? Number(quickProofForm.packageWeightKg) : null
     });
-    if (showToast) showToast(`✅ Đã cập nhật bằng chứng minh bạch cho đơn ${quickProofOrder.id}!`, 'success');
+    if (showToast) showToast(`Đã cập nhật bằng chứng minh bạch cho đơn ${quickProofOrder.id}!`, 'success');
     setQuickProofOrder(null);
   };
 
@@ -249,10 +249,10 @@ export default function AdminOrderManager() {
             <div
               key={idx}
               style={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'var(--bg-white)',
                 borderRadius: '14px',
                 padding: '16px 18px',
-                border: '1px solid #E2E8F0',
+                border: '1px solid var(--border-color)',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
                 display: 'flex',
                 alignItems: 'center',
@@ -260,7 +260,7 @@ export default function AdminOrderManager() {
               }}
             >
               <div>
-                <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                   {kpi.title}
                 </span>
                 <div style={{ fontSize: '1.45rem', fontWeight: 900, color: kpi.color, marginTop: '2px' }}>
@@ -276,18 +276,18 @@ export default function AdminOrderManager() {
       </div>
 
       {/* 🔍 FILTER BAR & CONTROLS */}
-      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '18px 20px', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+      <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', padding: '18px 20px', border: '1px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
 
         {/* 8-Step Filter Pills */}
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '14px', borderBottom: '1px solid #F1F5F9' }}>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '14px', borderBottom: '1px solid var(--bg-ivory)' }}>
           <button
             onClick={() => setFilterStatus('all')}
             style={{
               padding: '7px 14px',
               borderRadius: '20px',
-              border: filterStatus === 'all' ? '2px solid var(--purple-primary)' : '1px solid #E2E8F0',
-              backgroundColor: filterStatus === 'all' ? 'var(--purple-primary)' : '#FFFFFF',
-              color: filterStatus === 'all' ? '#FFFFFF' : '#475569',
+              border: filterStatus === 'all' ? '2px solid var(--purple-primary)' : '1px solid var(--border-color)',
+              backgroundColor: filterStatus === 'all' ? 'var(--purple-primary)' : 'var(--bg-white)',
+              color: filterStatus === 'all' ? 'var(--bg-white)' : 'var(--text-muted)',
               fontWeight: filterStatus === 'all' ? 800 : 600,
               fontSize: '0.78rem',
               cursor: 'pointer',
@@ -308,9 +308,9 @@ export default function AdminOrderManager() {
                 style={{
                   padding: '7px 12px',
                   borderRadius: '20px',
-                  border: isSelected ? `2px solid ${st.borderColor}` : '1px solid #E2E8F0',
-                  backgroundColor: isSelected ? st.color : '#FFFFFF',
-                  color: isSelected ? '#FFFFFF' : '#475569',
+                  border: isSelected ? `2px solid ${st.borderColor}` : '1px solid var(--border-color)',
+                  backgroundColor: isSelected ? st.color : 'var(--bg-white)',
+                  color: isSelected ? 'var(--bg-white)' : 'var(--text-muted)',
                   fontWeight: isSelected ? 800 : 600,
                   fontSize: '0.78rem',
                   cursor: 'pointer',
@@ -321,7 +321,7 @@ export default function AdminOrderManager() {
                 }}
               >
                 <span>{st.shortLabel}</span>
-                <span style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : '#F1F5F9', color: isSelected ? '#FFFFFF' : '#64748B', padding: '1px 6px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800 }}>
+                <span style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--bg-ivory)', color: isSelected ? 'var(--bg-white)' : 'var(--text-muted)', padding: '1px 6px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800 }}>
                   {cnt}
                 </span>
               </button>
@@ -332,19 +332,19 @@ export default function AdminOrderManager() {
         {/* Search, View Mode Toggle & Bulk Actions */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ position: 'relative', minWidth: '280px', flex: 1 }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
             <input
               type="text"
               placeholder="Tìm kiếm Mã đơn (ORD-...), Tên khách, SĐT, Mã AWB Air, Vận đơn VN..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.84rem', outline: 'none' }}
+              style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.84rem', outline: 'none' }}
             />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             {/* View Mode Toggle: Cards (Web-like) vs Table */}
-            <div style={{ display: 'flex', backgroundColor: '#F1F5F9', padding: '3px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', backgroundColor: 'var(--bg-ivory)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
               <button
                 onClick={() => setViewMode('cards')}
                 style={{
@@ -354,8 +354,8 @@ export default function AdminOrderManager() {
                   padding: '6px 12px',
                   borderRadius: '6px',
                   border: 'none',
-                  backgroundColor: viewMode === 'cards' ? '#FFFFFF' : 'transparent',
-                  color: viewMode === 'cards' ? 'var(--purple-primary)' : '#64748B',
+                  backgroundColor: viewMode === 'cards' ? 'var(--bg-white)' : 'transparent',
+                  color: viewMode === 'cards' ? 'var(--purple-primary)' : 'var(--text-muted)',
                   fontWeight: viewMode === 'cards' ? 800 : 600,
                   fontSize: '0.78rem',
                   cursor: 'pointer',
@@ -373,8 +373,8 @@ export default function AdminOrderManager() {
                   padding: '6px 12px',
                   borderRadius: '6px',
                   border: 'none',
-                  backgroundColor: viewMode === 'table' ? '#FFFFFF' : 'transparent',
-                  color: viewMode === 'table' ? 'var(--purple-primary)' : '#64748B',
+                  backgroundColor: viewMode === 'table' ? 'var(--bg-white)' : 'transparent',
+                  color: viewMode === 'table' ? 'var(--purple-primary)' : 'var(--text-muted)',
                   fontWeight: viewMode === 'table' ? 800 : 600,
                   fontSize: '0.78rem',
                   cursor: 'pointer',
@@ -386,14 +386,14 @@ export default function AdminOrderManager() {
             </div>
 
             {selectedOrderIds.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#FAF5FF', padding: '5px 10px', borderRadius: '8px', border: '1px solid #E9D5FF' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-subtle-purple)', padding: '5px 10px', borderRadius: '8px', border: '1px solid var(--purple-light)' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--purple-primary)' }}>
                   Chọn {selectedOrderIds.length} đơn
                 </span>
                 <select
                   value={bulkStatus}
                   onChange={(e) => setBulkStatus(e.target.value)}
-                  style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.78rem', fontWeight: 600 }}
+                  style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.78rem', fontWeight: 600 }}
                 >
                   <option value="">-- Đổi trạng thái hàng loạt --</option>
                   {['pending', 'deposit_paid', 'confirmed', 'purchased', 'packed_kr', 'in_transit_air', 'customs_cleared', 'completed', 'cancelled'].map((k) => (
@@ -411,7 +411,7 @@ export default function AdminOrderManager() {
 
             <button
               onClick={handleExportOrdersCSV}
-              style={{ backgroundColor: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              style={{ backgroundColor: 'var(--bg-white)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
               <Download size={15} /> Xuất CSV
             </button>
@@ -424,9 +424,9 @@ export default function AdminOrderManager() {
       {viewMode === 'cards' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {filteredOrders.length === 0 ? (
-            <div style={{ backgroundColor: '#FFF', border: '1px dashed #CBD5E1', borderRadius: '16px', padding: '60px 20px', textAlign: 'center', color: '#64748B' }}>
+            <div style={{ backgroundColor: '#FFF', border: '1px dashed var(--border-color)', borderRadius: '16px', padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
               <ShieldCheck size={48} style={{ color: 'var(--purple-primary)', marginBottom: '12px' }} />
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>Không tìm thấy đơn hàng nào</h3>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '6px' }}>Không tìm thấy đơn hàng nào</h3>
               <p style={{ fontSize: '0.85rem' }}>Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm phía trên.</p>
             </div>
           ) : (
@@ -440,9 +440,9 @@ export default function AdminOrderManager() {
                 <div
                   key={order.id}
                   style={{
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: 'var(--bg-white)',
                     borderRadius: '16px',
-                    border: '1px solid #E2E8F0',
+                    border: '1px solid var(--border-color)',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
                     overflow: 'hidden'
                   }}
@@ -484,20 +484,20 @@ export default function AdminOrderManager() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Khách hàng:</span>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Khách hàng:</span>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-dark)' }}>
                           {order.customerName || 'Khách Vãng Lai'} ({order.customerPhone || 'Không có SĐT'})
                         </div>
                       </div>
 
-                      <div style={{ textAlign: 'right', paddingLeft: '16px', borderLeft: '1px solid #CBD5E1' }}>
-                        <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Tổng thanh toán:</span>
-                        <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A' }}>
+                      <div style={{ textAlign: 'right', paddingLeft: '16px', borderLeft: '1px solid var(--border-color)' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Tổng thanh toán:</span>
+                        <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-dark)' }}>
                           {formatVnd(totalVndVal)}
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '6px', paddingLeft: '16px', borderLeft: '1px solid #CBD5E1' }}>
+                      <div style={{ display: 'flex', gap: '6px', paddingLeft: '16px', borderLeft: '1px solid var(--border-color)' }}>
                         <button
                           onClick={() => handleOpenEditModal(order, false)}
                           style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -507,7 +507,7 @@ export default function AdminOrderManager() {
                         <button
                           onClick={() => handleOpenEditModal(order, true)}
                           title="In phiếu giao nhận"
-                          style={{ backgroundColor: '#F1F5F9', color: '#334155', border: '1px solid #CBD5E1', padding: '6px 10px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
+                          style={{ backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 10px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
                         >
                           <Printer size={13} />
                         </button>
@@ -532,10 +532,10 @@ export default function AdminOrderManager() {
                           <div
                             key={st.key}
                             style={{
-                              backgroundColor: isCurrent ? '#FFFFFF' : (isCompleted ? '#F9F6FC' : '#F9FAFB'),
+                              backgroundColor: isCurrent ? 'var(--bg-white)' : (isCompleted ? '#F9F6FC' : 'var(--bg-ivory)'),
                               borderRadius: '12px',
                               padding: '12px 8px',
-                              border: isCurrent ? '2px solid var(--purple-primary)' : (isCompleted ? '1.5px solid #D8B4FE' : '1px solid #E2E8F0'),
+                              border: isCurrent ? '2px solid var(--purple-primary)' : (isCompleted ? '1.5px solid var(--purple-light)' : '1px solid var(--border-color)'),
                               boxShadow: isCurrent ? '0 4px 12px rgba(122, 75, 158, 0.15)' : 'none',
                               textAlign: 'center',
                               display: 'flex',
@@ -550,8 +550,8 @@ export default function AdminOrderManager() {
                                 width: '26px',
                                 height: '26px',
                                 borderRadius: '50%',
-                                backgroundColor: isCompleted ? 'var(--purple-primary)' : '#E2E8F0',
-                                color: isCompleted ? '#FFFFFF' : '#64748B',
+                                backgroundColor: isCompleted ? 'var(--purple-primary)' : 'var(--border-color)',
+                                color: isCompleted ? 'var(--bg-white)' : 'var(--text-muted)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -567,7 +567,7 @@ export default function AdminOrderManager() {
                               style={{
                                 fontSize: '0.75rem',
                                 fontWeight: isCurrent ? 800 : (isCompleted ? 700 : 500),
-                                color: isCompleted ? 'var(--purple-primary)' : '#64748B',
+                                color: isCompleted ? 'var(--purple-primary)' : 'var(--text-muted)',
                                 lineHeight: 1.25
                               }}
                             >
@@ -594,7 +594,7 @@ export default function AdminOrderManager() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <ShieldCheck size={18} style={{ color: 'var(--purple-primary)' }} />
-                      <strong style={{ fontSize: '0.84rem', color: '#1E293B' }}>
+                      <strong style={{ fontSize: '0.84rem', color: 'var(--bg-dark-accent)' }}>
                         Minh bạch 100% từ TAVY Korea:
                       </strong>
                     </div>
@@ -604,7 +604,7 @@ export default function AdminOrderManager() {
                       {order.povVideoUrl ? (
                         <button
                           onClick={() => setActiveMediaModal({ type: 'video', url: order.povVideoUrl, title: `Video POV Mua Hàng Store Hàn - Đơn ${order.id}` })}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '8px', backgroundColor: '#FFFFFF', border: '1px solid var(--purple-primary)', color: 'var(--purple-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-white)', border: '1px solid var(--purple-primary)', color: 'var(--purple-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                         >
                           <Video size={13} /> Video POV Store
                         </button>
@@ -614,7 +614,7 @@ export default function AdminOrderManager() {
                       {order.receiptImageUrl ? (
                         <button
                           onClick={() => setActiveMediaModal({ type: 'image', url: order.receiptImageUrl, title: `Hóa Đơn / Bill Mua Hàng - Đơn ${order.id}` })}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '8px', backgroundColor: '#FFFFFF', border: '1px solid #475569', color: '#334155', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-white)', border: '1px solid var(--text-muted)', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                         >
                           <FileText size={13} /> Xem Bill Store
                         </button>
@@ -624,7 +624,7 @@ export default function AdminOrderManager() {
                       {order.packingVideoUrl ? (
                         <button
                           onClick={() => setActiveMediaModal({ type: 'video', url: order.packingVideoUrl, title: `Video Đóng Kiện & Bọc Bubble - Đơn ${order.id}` })}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '8px', backgroundColor: '#FFFFFF', border: '1px solid #DB2777', color: '#DB2777', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-white)', border: '1px solid #DB2777', color: '#DB2777', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                         >
                           <PackageCheck size={13} /> Video Đóng Kiện
                         </button>
@@ -632,21 +632,21 @@ export default function AdminOrderManager() {
 
                       {/* Weight */}
                       {order.packageWeightKg ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', fontSize: '0.75rem', fontWeight: 700, color: '#047857' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-white)', border: '1px solid var(--border-color)', fontSize: '0.75rem', fontWeight: 700, color: '#047857' }}>
                           <Scale size={13} /> {order.packageWeightKg} kg
                         </span>
                       ) : null}
 
                       {/* Air AWB */}
                       {order.trackingCode ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', backgroundColor: '#FFFFFF', border: '1px solid #BAE6FD', fontSize: '0.75rem', fontWeight: 700, color: '#0284C7', fontFamily: 'monospace' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-white)', border: '1px solid #BAE6FD', fontSize: '0.75rem', fontWeight: 700, color: '#0284C7', fontFamily: 'monospace' }}>
                           <Plane size={13} /> {order.trackingCode}
                         </span>
                       ) : null}
 
                       {/* Domestic Tracking */}
                       {order.domesticTrackingCode ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', backgroundColor: '#FFFFFF', border: '1px solid #BBF7D0', fontSize: '0.75rem', fontWeight: 700, color: '#15803D', fontFamily: 'monospace' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-white)', border: '1px solid #BBF7D0', fontSize: '0.75rem', fontWeight: 700, color: '#15803D', fontFamily: 'monospace' }}>
                           <Truck size={13} /> {order.domesticTrackingCode}
                         </span>
                       ) : null}
@@ -655,7 +655,7 @@ export default function AdminOrderManager() {
                       <button
                         onClick={() => handleOpenQuickProof(order)}
                         style={{
-                          backgroundColor: '#FAF5FF',
+                          backgroundColor: 'var(--bg-subtle-purple)',
                           color: 'var(--purple-primary)',
                           border: '1px dashed var(--purple-primary)',
                           padding: '5px 12px',
@@ -682,18 +682,18 @@ export default function AdminOrderManager() {
                           <img
                             src={getOrderImage(order)}
                             alt=""
-                            style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E2E8F0', flexShrink: 0 }}
+                            style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', flexShrink: 0 }}
                           />
                         )}
                         <div>
-                          <div style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.88rem', lineHeight: 1.35 }}>
+                          <div style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.88rem', lineHeight: 1.35 }}>
                             {getOrderProductName(order)}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '3px' }}>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '3px' }}>
                             Số lượng: <strong>x{getOrderQty(order)}</strong> | Giá Won: <strong>{formatWon(getOrderForeignPrice(order))}</strong>
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                            <MapPin size={12} style={{ color: '#94A3B8', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                            <MapPin size={12} style={{ color: 'var(--text-light)', flexShrink: 0 }} />
                             <span>{order.customerAddress || 'Chưa nhập địa chỉ giao'}</span>
                           </div>
                         </div>
@@ -703,7 +703,7 @@ export default function AdminOrderManager() {
                     {/* Điều khiển Admin 1-Click */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'flex-end' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>
                           Trạng thái:
                         </span>
                         <select
@@ -734,7 +734,7 @@ export default function AdminOrderManager() {
                           onClick={() => handleQuickNextStatus(order)}
                           style={{
                             backgroundColor: 'var(--purple-primary)',
-                            color: '#FFFFFF',
+                            color: 'var(--bg-white)',
                             border: 'none',
                             padding: '7px 16px',
                             borderRadius: '8px',
@@ -763,11 +763,11 @@ export default function AdminOrderManager() {
 
       {/* ═══════════ VIEW MODE 2: BẢNG DANH SÁCH GỌN (TABLE VIEW) ═══════════ */}
       {viewMode === 'table' && (
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+        <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
               <thead>
-                <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   <th style={{ padding: '12px 14px', width: '36px', textAlign: 'center' }}>
                     <input
                       type="checkbox"
@@ -787,7 +787,7 @@ export default function AdminOrderManager() {
               <tbody>
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                    <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)' }}>
                       Chưa có đơn hàng nào khớp với tìm kiếm.
                     </td>
                   </tr>
@@ -802,8 +802,8 @@ export default function AdminOrderManager() {
                       <tr
                         key={order.id}
                         style={{
-                          borderBottom: '1px solid #F1F5F9',
-                          backgroundColor: isSelected ? '#FAF5FF' : '#FFFFFF',
+                          borderBottom: '1px solid var(--bg-ivory)',
+                          backgroundColor: isSelected ? 'var(--bg-subtle-purple)' : 'var(--bg-white)',
                           transition: 'background-color 0.15s ease'
                         }}
                       >
@@ -819,30 +819,30 @@ export default function AdminOrderManager() {
                           <div style={{ fontWeight: 800, color: 'var(--purple-primary)', fontFamily: 'monospace', fontSize: '0.88rem' }}>
                             {order.id}
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                             {new Date(order.createdAt).toLocaleDateString('vi-VN')}
                           </div>
                         </td>
 
                         <td style={{ padding: '12px 14px' }}>
-                          <div style={{ fontWeight: 700, color: '#0F172A' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--text-dark)' }}>
                             {order.customerName || 'Khách Mua Hàng'}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                            <Phone size={11} style={{ color: '#94A3B8' }} /> {order.customerPhone || 'Chưa có SĐT'}
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                            <Phone size={11} style={{ color: 'var(--text-light)' }} /> {order.customerPhone || 'Chưa có SĐT'}
                           </div>
                         </td>
 
                         <td style={{ padding: '12px 14px' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             {getOrderImage(order) && (
-                              <img src={getOrderImage(order)} alt="" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #E2E8F0', flexShrink: 0 }} />
+                              <img src={getOrderImage(order)} alt="" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)', flexShrink: 0 }} />
                             )}
                             <div>
-                              <div style={{ fontWeight: 600, color: '#1E293B', fontSize: '0.8rem', lineHeight: 1.3, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={getOrderProductName(order)}>
+                              <div style={{ fontWeight: 600, color: 'var(--bg-dark-accent)', fontSize: '0.8rem', lineHeight: 1.3, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={getOrderProductName(order)}>
                                 {getOrderProductName(order)}
                               </div>
-                              <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                                 SL: x{getOrderQty(order)} | {formatWon(getOrderForeignPrice(order))}
                               </div>
                             </div>
@@ -850,7 +850,7 @@ export default function AdminOrderManager() {
                         </td>
 
                         <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                          <div style={{ fontWeight: 900, color: '#0F172A', fontSize: '0.9rem' }}>
+                          <div style={{ fontWeight: 900, color: 'var(--text-dark)', fontSize: '0.9rem' }}>
                             {formatVnd(totalVndVal)}
                           </div>
                         </td>
@@ -882,7 +882,7 @@ export default function AdminOrderManager() {
                             {stepIndex < 7 && order.status !== 'cancelled' && (
                               <button
                                 onClick={() => handleQuickNextStatus(order)}
-                                style={{ background: '#FAF5FF', border: '1px solid #E9D5FF', color: 'var(--purple-primary)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.68rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 700 }}
+                                style={{ background: 'var(--bg-subtle-purple)', border: '1px solid var(--purple-light)', color: 'var(--purple-primary)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.68rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 700 }}
                               >
                                 <span>Bước {stepIndex + 2}/8</span> <ChevronRight size={11} />
                               </button>
@@ -892,7 +892,7 @@ export default function AdminOrderManager() {
 
                         <td style={{ padding: '12px 14px' }}>
                           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                            {order.povVideoUrl && <span style={{ fontSize: '0.65rem', backgroundColor: '#F3E8FF', color: '#7E22CE', padding: '1px 4px', borderRadius: '4px', fontWeight: 700 }}>POV Store</span>}
+                            {order.povVideoUrl && <span style={{ fontSize: '0.65rem', backgroundColor: '#F3E8FF', color: 'var(--purple-primary)', padding: '1px 4px', borderRadius: '4px', fontWeight: 700 }}>POV Store</span>}
                             {order.packingVideoUrl && <span style={{ fontSize: '0.65rem', backgroundColor: '#FCE7F3', color: '#DB2777', padding: '1px 4px', borderRadius: '4px', fontWeight: 700 }}>Đóng Kiện</span>}
                             {order.packageWeightKg && <span style={{ fontSize: '0.65rem', backgroundColor: '#D1FAE5', color: '#047857', padding: '1px 4px', borderRadius: '4px', fontWeight: 700 }}>{order.packageWeightKg}kg</span>}
                           </div>
@@ -908,7 +908,7 @@ export default function AdminOrderManager() {
                             </button>
                             <button
                               onClick={() => handleOpenEditModal(order, true)}
-                              style={{ backgroundColor: '#F1F5F9', color: '#334155', border: '1px solid #CBD5E1', padding: '5px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                              style={{ backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '5px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
                             >
                               <Printer size={12} />
                             </button>
@@ -943,11 +943,11 @@ export default function AdminOrderManager() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', width: '100%', maxWidth: '640px', overflow: 'hidden', position: 'relative', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}
+            style={{ backgroundColor: 'var(--bg-white)', borderRadius: '18px', width: '100%', maxWidth: '640px', overflow: 'hidden', position: 'relative', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid #E2E8F0', backgroundColor: '#F8FAFC' }}>
-              <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>{activeMediaModal.title}</strong>
-              <button onClick={() => setActiveMediaModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-ivory)' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>{activeMediaModal.title}</strong>
+              <button onClick={() => setActiveMediaModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <X size={20} />
               </button>
             </div>
@@ -967,24 +967,24 @@ export default function AdminOrderManager() {
       {/* ═══════════ MODAL CẬP NHẬT BẰNG CHỨNG PROOF NHANH (1-CLICK) ═══════════ */}
       {quickProofOrder && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999, padding: '20px' }} onClick={() => setQuickProofOrder(null)}>
-          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', width: '100%', maxWidth: '560px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px' }}>
+          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '18px', width: '100%', maxWidth: '560px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, backgroundColor: '#FAF5FF', color: 'var(--purple-primary)', padding: '3px 8px', borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, backgroundColor: 'var(--bg-subtle-purple)', color: 'var(--purple-primary)', padding: '3px 8px', borderRadius: '6px' }}>
                   PROOF HUB 8 BƯỚC
                 </span>
-                <h3 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>
+                <h3 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-dark)' }}>
                   Cập Nhật Bằng Chứng: {quickProofOrder.id}
                 </h3>
               </div>
-              <button onClick={() => setQuickProofOrder(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+              <button onClick={() => setQuickProofOrder(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <X size={20} />
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Video size={13} style={{ color: '#7C3AED' }} /> Link Video POV Mua Hàng Store Hàn (Bước 4)
                 </label>
                 <input
@@ -992,25 +992,25 @@ export default function AdminOrderManager() {
                   placeholder="https://drive.google.com/... hoặc link video"
                   value={quickProofForm.povVideoUrl}
                   onChange={(e) => setQuickProofForm({ ...quickProofForm, povVideoUrl: e.target.value })}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px' }}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <FileText size={13} style={{ color: '#334155' }} /> Link Ảnh Hóa Đơn / Bill Store (Bước 4)
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <FileText size={13} style={{ color: 'var(--text-muted)' }} /> Link Ảnh Hóa Đơn / Bill Store (Bước 4)
                 </label>
                 <input
                   type="text"
                   placeholder="https://... link ảnh bill mua hàng"
                   value={quickProofForm.receiptImageUrl}
                   onChange={(e) => setQuickProofForm({ ...quickProofForm, receiptImageUrl: e.target.value })}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px' }}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <PackageCheck size={13} style={{ color: '#DB2777' }} /> Link Video Đóng Kiện & Bọc Bubble (Bước 5)
                 </label>
                 <input
@@ -1018,13 +1018,13 @@ export default function AdminOrderManager() {
                   placeholder="https://... link video đóng gói tại kho Seoul"
                   value={quickProofForm.packingVideoUrl}
                   onChange={(e) => setQuickProofForm({ ...quickProofForm, packingVideoUrl: e.target.value })}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px' }}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Scale size={13} style={{ color: '#059669' }} /> Cân Nặng Thực Tế (kg)
                   </label>
                   <input
@@ -1033,11 +1033,11 @@ export default function AdminOrderManager() {
                     placeholder="VD: 1.25"
                     value={quickProofForm.packageWeightKg}
                     onChange={(e) => setQuickProofForm({ ...quickProofForm, packageWeightKg: e.target.value })}
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px', fontWeight: 700 }}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px', fontWeight: 700 }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Plane size={13} style={{ color: '#0284C7' }} /> Mã Vận Đơn Air (AWB)
                   </label>
                   <input
@@ -1045,13 +1045,13 @@ export default function AdminOrderManager() {
                     placeholder="VD: AWB-78921"
                     value={quickProofForm.trackingCode}
                     onChange={(e) => setQuickProofForm({ ...quickProofForm, trackingCode: e.target.value })}
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px', fontFamily: 'monospace' }}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px', fontFamily: 'monospace' }}
                   />
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Truck size={13} style={{ color: '#059669' }} /> Mã Vận Đơn Nội Địa Giao Đến Khách
                 </label>
                 <input
@@ -1059,20 +1059,20 @@ export default function AdminOrderManager() {
                   placeholder="VD: VTP-928172918"
                   value={quickProofForm.domesticTrackingCode}
                   onChange={(e) => setQuickProofForm({ ...quickProofForm, domesticTrackingCode: e.target.value })}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', marginTop: '3px', fontFamily: 'monospace' }}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px', fontFamily: 'monospace' }}
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #E2E8F0' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
                 <button
                   onClick={() => setQuickProofOrder(null)}
-                  style={{ padding: '8px 14px', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                  style={{ padding: '8px 14px', borderRadius: '8px', backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
                 >
                   Đóng
                 </button>
                 <button
                   onClick={handleSaveQuickProof}
-                  style={{ padding: '8px 18px', borderRadius: '8px', backgroundColor: 'var(--purple-primary)', color: '#FFFFFF', border: 'none', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                  style={{ padding: '8px 18px', borderRadius: '8px', backgroundColor: 'var(--purple-primary)', color: 'var(--bg-white)', border: 'none', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
                 >
                   Lưu Bằng Chứng
                 </button>
@@ -1085,55 +1085,55 @@ export default function AdminOrderManager() {
       {/* ═══════════ MODAL SỬA ĐƠN HÀNG CHI TIẾT & IN HÓA ĐƠN ═══════════ */}
       {activeModalOrder && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '40px', paddingBottom: '40px', zIndex: 99999, overflowY: 'auto' }} onClick={() => setActiveModalOrder(null)}>
-          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', width: '100%', maxWidth: '840px', padding: '28px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '20px', width: '100%', maxWidth: '840px', padding: '28px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
 
             {/* Header Modal */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #E2E8F0', paddingBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: '#FAF5FF', color: 'var(--purple-primary)', padding: '3px 8px', borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: 'var(--bg-subtle-purple)', color: 'var(--purple-primary)', padding: '3px 8px', borderRadius: '6px' }}>
                   {isPrintMode ? '🖨️ IN PHIẾU GIAO NHẬN' : '✏️ QUẢN TRỊ TOÀN DIỆN ĐƠN HÀNG'}
                 </span>
-                <h3 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', color: '#0F172A', fontWeight: 800 }}>
+                <h3 style={{ margin: '4px 0 0 0', fontSize: '1.2rem', color: 'var(--text-dark)', fontWeight: 800 }}>
                   ĐƠN HÀNG: {activeModalOrder.id}
                 </h3>
               </div>
-              <button onClick={() => setActiveModalOrder(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+              <button onClick={() => setActiveModalOrder(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <X size={22} />
               </button>
             </div>
 
             {/* Print View vs Edit Form View */}
             {isPrintMode ? (
-              <div id="printable-invoice" style={{ backgroundColor: '#F8FAFC', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #0F172A', paddingBottom: '12px' }}>
+              <div id="printable-invoice" style={{ backgroundColor: 'var(--bg-ivory)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid var(--text-dark)', paddingBottom: '12px' }}>
                   <div>
                     <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: 'var(--purple-primary)' }}>TAVY KOREA</h2>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#475569' }}>Dịch Vụ Mua Hộ Mỹ Phẩm & Thực Phẩm Chức Năng Chuẩn Hàn</p>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>Dịch Vụ Mua Hộ Mỹ Phẩm & Thực Phẩm Chức Năng Chuẩn Hàn</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <h3 style={{ margin: 0, fontSize: '0.95rem', color: '#0F172A' }}>PHIẾU GIAO HÀNG</h3>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#64748B' }}>Ngày: {new Date().toLocaleDateString('vi-VN')}</p>
+                    <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-dark)' }}>PHIẾU GIAO HÀNG</h3>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ngày: {new Date().toLocaleDateString('vi-VN')}</p>
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                   <div>
-                    <strong style={{ fontSize: '0.8rem', color: '#334155' }}>KHÁCH HÀNG NHẬN:</strong>
+                    <strong style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>KHÁCH HÀNG NHẬN:</strong>
                     <div style={{ fontSize: '0.88rem', fontWeight: 800, marginTop: '2px' }}>{orderForm.customerName}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#475569' }}>SĐT: {orderForm.customerPhone}</div>
-                    <div style={{ fontSize: '0.78rem', color: '#475569' }}>Đ/C: {orderForm.customerAddress}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>SĐT: {orderForm.customerPhone}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Đ/C: {orderForm.customerAddress}</div>
                   </div>
                   <div>
-                    <strong style={{ fontSize: '0.8rem', color: '#334155' }}>THÔNG TIN GIAO VẬN:</strong>
-                    <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '2px' }}>Trạng thái: <strong>{getStatusConfig(orderForm.status).label}</strong></div>
-                    <div style={{ fontSize: '0.8rem', color: '#475569' }}>Mã AWB: <strong>{orderForm.trackingCode || '-'}</strong></div>
-                    <div style={{ fontSize: '0.8rem', color: '#475569' }}>Vận đơn VN: <strong>{orderForm.domesticTrackingCode || '-'}</strong></div>
+                    <strong style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>THÔNG TIN GIAO VẬN:</strong>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>Trạng thái: <strong>{getStatusConfig(orderForm.status).label}</strong></div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mã AWB: <strong>{orderForm.trackingCode || '-'}</strong></div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Vận đơn VN: <strong>{orderForm.domesticTrackingCode || '-'}</strong></div>
                   </div>
                 </div>
 
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '0.82rem' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#E2E8F0', color: '#0F172A' }}>
+                    <tr style={{ backgroundColor: 'var(--border-color)', color: 'var(--text-dark)' }}>
                       <th style={{ padding: '8px 10px', textAlign: 'left' }}>Sản phẩm</th>
                       <th style={{ padding: '8px 10px', textAlign: 'right' }}>Giá Won</th>
                       <th style={{ padding: '8px 10px', textAlign: 'center' }}>SL</th>
@@ -1142,12 +1142,12 @@ export default function AdminOrderManager() {
                   </thead>
                   <tbody>
                     <tr>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #E2E8F0', fontWeight: 600 }}>{orderForm.productName}</td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #E2E8F0', textAlign: 'right' }}>{formatWon(orderForm.foreignPrice)}</td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #E2E8F0', textAlign: 'center' }}>x{orderForm.qty}</td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #E2E8F0', textAlign: 'right', fontWeight: 700 }}>{formatVnd(orderForm.rawVnd)}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid var(--border-color)', fontWeight: 600 }}>{orderForm.productName}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid var(--border-color)', textAlign: 'right' }}>{formatWon(orderForm.foreignPrice)}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid var(--border-color)', textAlign: 'center' }}>x{orderForm.qty}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid var(--border-color)', textAlign: 'right', fontWeight: 700 }}>{formatVnd(orderForm.rawVnd)}</td>
                     </tr>
-                    <tr style={{ backgroundColor: '#FAF5FF', fontWeight: 900, fontSize: '0.95rem' }}>
+                    <tr style={{ backgroundColor: 'var(--bg-subtle-purple)', fontWeight: 900, fontSize: '0.95rem' }}>
                       <td colSpan={3} style={{ padding: '10px', textAlign: 'right', color: 'var(--purple-primary)' }}>TỔNG THANH TOÁN:</td>
                       <td style={{ padding: '10px', textAlign: 'right', color: 'var(--purple-primary)' }}>
                         {formatVnd(Number(orderForm.rawVnd) + Number(orderForm.taxWebVnd) + Number(orderForm.serviceFeeVnd) + Number(orderForm.shippingWeightFeeVnd))}
@@ -1160,27 +1160,27 @@ export default function AdminOrderManager() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
                 {/* Khách hàng */}
-                <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <div style={{ backgroundColor: 'var(--bg-ivory)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: 'var(--purple-primary)', fontWeight: 800 }}>
                     1. THÔNG TIN KHÁCH HÀNG & GIAO HÀNG
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Họ & Tên Khách Hàng</label>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px' }}>Họ & Tên Khách Hàng</label>
                       <input
                         type="text"
                         value={orderForm.customerName}
                         onChange={(e) => setOrderForm({ ...orderForm, customerName: e.target.value })}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem' }}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>Số Điện Thoại</label>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px' }}>Số Điện Thoại</label>
                       <input
                         type="text"
                         value={orderForm.customerPhone}
                         onChange={(e) => setOrderForm({ ...orderForm, customerPhone: e.target.value.replace(/[^0-9]/g, '') })}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem' }}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
                       />
                     </div>
                   </div>
@@ -1192,71 +1192,71 @@ export default function AdminOrderManager() {
                 </div>
 
                 {/* Proof Hub */}
-                <div style={{ backgroundColor: '#FAF5FF', padding: '16px', borderRadius: '12px', border: '1.5px solid #D8B4FE' }}>
+                <div style={{ backgroundColor: 'var(--bg-subtle-purple)', padding: '16px', borderRadius: '12px', border: '1.5px solid var(--purple-light)' }}>
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: 'var(--purple-primary)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <ShieldCheck size={16} /> 2. BẰNG CHỨNG MINH BẠCH 8 BƯỚC
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Video POV Store (Bước 4)</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>Video POV Store (Bước 4)</label>
                       <input
                         type="text"
                         value={orderForm.povVideoUrl}
                         onChange={(e) => setOrderForm({ ...orderForm, povVideoUrl: e.target.value })}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Video Đóng Kiện (Bước 5)</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>Video Đóng Kiện (Bước 5)</label>
                       <input
                         type="text"
                         value={orderForm.packingVideoUrl}
                         onChange={(e) => setOrderForm({ ...orderForm, packingVideoUrl: e.target.value })}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem' }}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}
                       />
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Cân nặng (kg)</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>Cân nặng (kg)</label>
                       <input
                         type="number"
                         step="0.05"
                         value={orderForm.packageWeightKg}
                         onChange={(e) => setOrderForm({ ...orderForm, packageWeightKg: e.target.value })}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', fontWeight: 700 }}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem', fontWeight: 700 }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Mã AWB Air</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>Mã AWB Air</label>
                       <input
                         type="text"
                         value={orderForm.trackingCode}
                         onChange={(e) => setOrderForm({ ...orderForm, trackingCode: e.target.value })}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', fontFamily: 'monospace' }}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem', fontFamily: 'monospace' }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Vận đơn VN</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>Vận đơn VN</label>
                       <input
                         type="text"
                         value={orderForm.domesticTrackingCode}
                         onChange={(e) => setOrderForm({ ...orderForm, domesticTrackingCode: e.target.value })}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', fontFamily: 'monospace' }}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem', fontFamily: 'monospace' }}
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Trạng thái 8 bước */}
-                <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                <div style={{ backgroundColor: 'var(--bg-ivory)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
                     Trạng thái quy trình 8 bước
                   </label>
                   <select
                     value={orderForm.status}
                     onChange={(e) => setOrderForm({ ...orderForm, status: e.target.value })}
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.85rem', fontWeight: 800 }}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem', fontWeight: 800 }}
                   >
                     {['pending', 'deposit_paid', 'confirmed', 'purchased', 'packed_kr', 'in_transit_air', 'customs_cleared', 'completed', 'cancelled'].map((k) => (
                       <option key={k} value={k}>{ORDER_STATUSES[k]?.label || k}</option>
@@ -1268,17 +1268,17 @@ export default function AdminOrderManager() {
             )}
 
             {/* Modal Action Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px', paddingTop: '14px', borderTop: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px', paddingTop: '14px', borderTop: '1px solid var(--border-color)' }}>
               <button
                 onClick={() => setActiveModalOrder(null)}
-                style={{ padding: '9px 16px', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '9px 16px', borderRadius: '8px', backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}
               >
                 Đóng
               </button>
               {!isPrintMode && (
                 <button
                   onClick={handleSaveOrderChanges}
-                  style={{ padding: '9px 22px', borderRadius: '8px', backgroundColor: 'var(--purple-primary)', color: '#FFFFFF', border: 'none', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
+                  style={{ padding: '9px 22px', borderRadius: '8px', backgroundColor: 'var(--purple-primary)', color: 'var(--bg-white)', border: 'none', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
                 >
                   Lưu Tất Cả Thay Đổi
                 </button>

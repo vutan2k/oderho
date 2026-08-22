@@ -52,13 +52,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (scrapeBtn) {
     scrapeBtn.addEventListener('click', async () => {
       if (!hasKey) {
-        alert("⚠️ Bạn chưa cài đặt Gemini API Key!\nVui lòng bấm vào '⚙️ Cài đặt API Key Gemini' bên dưới.");
+        alert("Bạn chưa cài đặt Gemini API Key!\nVui lòng bấm vào 'Cài đặt API Key Gemini' bên dưới.");
         chrome.runtime.openOptionsPage();
         return;
       }
 
       if (!isOliveYoung) {
-        alert("⚠️ Vui lòng mở trang sản phẩm chi tiết trên Olive Young (oliveyoung.co.kr) trước khi bấm cào!");
+        alert("Vui lòng mở trang sản phẩm chi tiết trên Olive Young (oliveyoung.co.kr) trước khi bấm cào!");
         return;
       }
 
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (progressBox) {
         progressBox.style.display = 'block';
-        progressTitle.textContent = '⚡ Đang cào Album Ảnh HD & Đánh Giá...';
+        progressTitle.textContent = 'Đang cào Album Ảnh HD & Đánh Giá...';
         progressDetail.textContent = 'Hệ thống đang bóc tách 100% dữ liệu và truyền trực tiếp về Web Admin.';
       }
 
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (resetCacheBtn) {
     resetCacheBtn.addEventListener('click', () => {
       chrome.storage.local.set({ scrapedGoodsList: [] }, () => {
-        alert('♻️ Đã làm sạch bộ nhớ đệm thành công!');
+        alert('Đã làm sạch bộ nhớ đệm thành công!');
       });
     });
   }
