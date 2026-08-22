@@ -32,7 +32,8 @@ export default function AdminOrderManager() {
   const [quickProofForm, setQuickProofForm] = useState({});
 
   // Media Preview Lightbox Modal (Video / Bill Photo)
-  const [activeMediaModal, setActiveMediaModal] = useState(null); // { type: 'video' | 'image', url: string, title: string }
+  const [activeMediaModal, setActiveMediaModal] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const krwRate = rates?.KRW?.rate || 19.5;
   const formatVnd = (n) => (n || n === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VNĐ` : '0 VNĐ';
@@ -76,7 +77,8 @@ export default function AdminOrderManager() {
     );
   };
 
-  const handleBulkStatusChange = () => {
+  const handleBulkStatusChange = async () => {
+    setIsSaving(true);
     if (!bulkStatus) {
       if (showToast) showToast('Vui lòng chọn trạng thái cần đổi!', 'error');
       return;
@@ -86,13 +88,12 @@ export default function AdminOrderManager() {
       return;
     }
 
-    selectedOrderIds.forEach((id) => {
-      updateOrderStatus(id, bulkStatus);
-    });
+    await Promise.all(selectedOrderIds.map(id => updateOrderStatus(id, bulkStatus)));
 
     if (showToast) showToast(`Đã cập nhật ${selectedOrderIds.length} đơn sang "${ORDER_STATUSES[bulkStatus]?.label || bulkStatus}"`, 'success');
     setSelectedOrderIds([]);
     setBulkStatus('');
+    setIsSaving(false);
   };
 
   const handleOpenEditModal = (order, print = false) => {
@@ -131,7 +132,8 @@ export default function AdminOrderManager() {
     setActiveModalOrder(order);
   };
 
-  const handleSaveOrderChanges = () => {
+  const handleSaveOrderChanges = async () => {
+    setIsSaving(true);
     if (!activeModalOrder) return;
 
     if (!orderForm.customerName || !orderForm.customerName.trim()) {
@@ -145,8 +147,8 @@ export default function AdminOrderManager() {
       Number(orderForm.serviceFeeVnd) +
       Number(orderForm.shippingWeightFeeVnd);
 
-    updateOrderStatus(activeModalOrder.id, orderForm.status);
-    updateOrderTracking(activeModalOrder.id, {
+    await updateOrderStatus(activeModalOrder.id, orderForm.status);
+    await updateOrderTracking(activeModalOrder.id, {
       status: orderForm.status,
       trackingCode: orderForm.trackingCode,
       note: orderForm.adminNote,
@@ -162,7 +164,7 @@ export default function AdminOrderManager() {
       domesticTrackingCode: orderForm.domesticTrackingCode
     });
 
-    updateOrderQuote(activeModalOrder.id, {
+    await updateOrderQuote(activeModalOrder.id, {
       rawVnd: Number(orderForm.rawVnd),
       taxWebVnd: Number(orderForm.taxWebVnd),
       serviceFeeVnd: Number(orderForm.serviceFeeVnd),
@@ -173,6 +175,7 @@ export default function AdminOrderManager() {
 
     if (showToast) showToast(`Đã lưu cập nhật đơn hàng ${activeModalOrder.id}!`, 'success');
     setActiveModalOrder(null);
+    setIsSaving(false);
   };
 
   // Quick 1-Click Stepper Advance
@@ -401,8 +404,9 @@ export default function AdminOrderManager() {
                   ))}
                 </select>
                 <button
-                  onClick={handleBulkStatusChange}
-                  style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '5px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                    disabled={isSaving}
+                    onClick={handleBulkStatusChange}
+                    style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '5px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
                 >
                   Áp Dụng
                 </button>
@@ -1277,6 +1281,7 @@ export default function AdminOrderManager() {
               </button>
               {!isPrintMode && (
                 <button
+                  disabled={isSaving}
                   onClick={handleSaveOrderChanges}
                   style={{ padding: '9px 22px', borderRadius: '8px', backgroundColor: 'var(--purple-primary)', color: 'var(--bg-white)', border: 'none', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
                 >
