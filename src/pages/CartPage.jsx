@@ -26,6 +26,7 @@ export default function CartPage() {
   const [note, setNote] = useState('');
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (currentUser) {
@@ -46,6 +47,12 @@ export default function CartPage() {
     e.preventDefault();
     if (cart.length === 0 || isSubmitting) return;
 
+    if (!name.trim() || !phone.trim() || !address.trim()) {
+      setErrorMsg('Vui lòng điền đầy đủ Họ Tên, Số điện thoại và Địa chỉ giao hàng.');
+      return;
+    }
+    setErrorMsg('');
+
     setIsSubmitting(true);
     try {
       const country = 'KRW';
@@ -63,6 +70,7 @@ export default function CartPage() {
         paymentMethod: country === 'KRW' ? 'bank_kr' : 'bank_vn',
         bankAccount: bankInfo.accountNumber,
         bankName: bankInfo.bankName,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 phút
       };
 
       const res = await createOrder(orderData);
@@ -234,59 +242,40 @@ export default function CartPage() {
                   </p>
                 </div>
 
-                {currentUser ? (
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="btn-primary"
-                    style={{
-                      width: '100%',
-                      padding: '16px',
-                      fontSize: '1.1rem',
-                      fontWeight: 700,
-                      borderRadius: '14px',
-                      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)',
-                      opacity: isSubmitting ? 0.6 : 1,
-                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="lucide-spin" size={20} />
-                        Đang xử lý...
-                      </>
-                    ) : (
-                      'Xác Nhận Đặt Hàng & Thanh Toán'
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => navigate('/login')}
-                    className="btn-primary"
-                    style={{
-                      width: '100%',
-                      padding: '16px',
-                      fontSize: '1.1rem',
-                      fontWeight: 700,
-                      borderRadius: '14px',
-                      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      backgroundColor: '#1F2937'
-                    }}
-                  >
-                    <User size={20} />
-                    Vui lòng Đăng nhập để Đặt hàng
-                  </button>
+                {errorMsg && (
+                  <div style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '12px', textAlign: 'center' }}>
+                    {errorMsg}
+                  </div>
                 )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-primary"
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    borderRadius: '14px',
+                    boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)',
+                    opacity: isSubmitting ? 0.6 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="lucide-spin" size={20} />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    'Xác Nhận Đặt Hàng & Thanh Toán'
+                  )}
+                </button>
               </form>
             </div>
           </div>

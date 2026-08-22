@@ -238,6 +238,23 @@ export const AppProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  // Worker chạy ngầm mỗi phút kiểm tra và hủy các đơn hàng chưa cọc quá 15 phút
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      orders.forEach(o => {
+        if (o.status === 'pending' && o.expiresAt) {
+          const expDate = new Date(o.expiresAt);
+          if (now > expDate) {
+            updateOrderStatusInDB(o.id, { status: 'cancelled', cancelReason: 'Hết hạn thanh toán cọc 15 phút' })
+              .catch(err => console.warn('Lỗi tự động hủy đơn:', err));
+          }
+        }
+      });
+    }, 60000); // Check mỗi 1 phút
+    return () => clearInterval(interval);
+  }, [orders]);
+
   const [rates, setRates] = useState(() => {
     const saved = localStorage.getItem('beauty_rates');
     return saved ? JSON.parse(saved) : defaultRates;
