@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { Helmet } from 'react-helmet-async';
 import paymentService from '../services/paymentService';
-import { Trash2, Plus, Minus, CheckCircle, Globe, Zap, CreditCard, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Minus, CheckCircle, Globe, Zap, CreditCard, Loader2, User } from 'lucide-react';
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 import Footer from '../components/Footer';
 import confetti from 'canvas-confetti';
@@ -234,34 +234,59 @@ export default function CartPage() {
                   </p>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn-primary"
-                  style={{
-                    width: '100%',
-                    padding: '16px',
-                    fontSize: '1.1rem',
-                    fontWeight: 700,
-                    borderRadius: '14px',
-                    boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)',
-                    opacity: isSubmitting ? 0.6 : 1,
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="lucide-spin" size={20} />
-                      Đang xử lý...
-                    </>
-                  ) : (
-                    'Gửi Yêu Cầu Đặt Hộ'
-                  )}
-                </button>
+                {currentUser ? (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="btn-primary"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      fontSize: '1.1rem',
+                      fontWeight: 700,
+                      borderRadius: '14px',
+                      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)',
+                      opacity: isSubmitting ? 0.6 : 1,
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="lucide-spin" size={20} />
+                        Đang xử lý...
+                      </>
+                    ) : (
+                      'Xác Nhận Đặt Hàng & Thanh Toán'
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="btn-primary"
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      fontSize: '1.1rem',
+                      fontWeight: 700,
+                      borderRadius: '14px',
+                      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      backgroundColor: '#1F2937'
+                    }}
+                  >
+                    <User size={20} />
+                    Vui lòng Đăng nhập để Đặt hàng
+                  </button>
+                )}
               </form>
             </div>
           </div>
