@@ -243,8 +243,8 @@ export const AppProvider = ({ children }) => {
     const interval = setInterval(() => {
       const now = new Date();
       orders.forEach(o => {
-        if (o.status === 'pending' && o.expiresAt) {
-          const expDate = new Date(o.expiresAt);
+        if (o.status === 'pending' && o.paymentDue) {
+          const expDate = new Date(o.paymentDue);
           if (now > expDate) {
             updateOrderStatusInDB(o.id, { status: 'cancelled', cancelReason: 'Hết hạn thanh toán cọc 15 phút' })
               .catch(err => console.warn('Lỗi tự động hủy đơn:', err));

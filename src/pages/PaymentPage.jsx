@@ -184,8 +184,8 @@ export default function PaymentPage() {
 
   const qrVnUrl = getVndQRUrl(transferVnd, orderId);
   const qrKrUrl = getKrwQRUrl(orderId);
-  const isExpired = timeLeft <= 0;
-  const isUrgent = timeLeft > 0 && timeLeft < 3 * 60 * 1000;
+  const isExpired = timeLeft <= 0 || order.status === 'cancelled';
+  const isUrgent = timeLeft > 0 && timeLeft < 3 * 60 * 1000 && order.status !== 'cancelled';
 
   const s = {
     page: { minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9F6FA' },
@@ -223,33 +223,11 @@ export default function PaymentPage() {
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={s.timer}>
             <Clock size={20} />
-            {isExpired ? 'Đã quá 15 phút!' : formatTime(timeLeft)}
+            {isExpired ? 'Đơn hàng đã bị hủy do quá hạn 15 phút!' : formatTime(timeLeft)}
           </div>
           <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '8px' }}>
-            {isExpired ? 'Đơn hàng đang ở trạng thái Chờ Cọc. Bấm nút gia hạn để tiếp tục cọc đơn hàng này.' : 'Vui lòng chuyển khoản trong thời gian trên'}
+            {isExpired ? 'Đơn hàng đã tự động hủy. Vui lòng tạo đơn hàng mới nếu bạn vẫn muốn mua sản phẩm.' : 'Vui lòng chuyển khoản trong thời gian trên'}
           </p>
-          {isExpired && (
-            <button
-              onClick={handleRenewPayment}
-              style={{
-                marginTop: '12px',
-                backgroundColor: 'var(--purple-primary)',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <RefreshCw size={16} /> Gia hạn 15 phút & Tiếp tục chuyển khoản cọc
-            </button>
-          )}
         </div>
 
         {/* HAI BẢNG CHUYỂN KHOẢN NẰM NGANG NHAU (SIDE-BY-SIDE GRID) */}
