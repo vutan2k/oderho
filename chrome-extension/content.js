@@ -141,7 +141,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         return src && src.startsWith('http') && !isJunkImage(src);
       });
 
-      console.log(`⚡ [TAVY Scraper v18.0] Tìm thấy ${validThumbs.length} thumbnail ảnh đánh giá.`);
+      console.log(`[TAVY Scraper v18.0] Tìm thấy ${validThumbs.length} thumbnail ảnh đánh giá.`);
 
       if (validThumbs.length > 0) {
         // Tìm element có thể click (thẻ <a>, <li>, <button> hoặc div bọc ngoài)
@@ -282,7 +282,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         line-height: 1.4;
         pointer-events: none;
       ">
-        <span>${type === 'success' ? '⚡' : type === 'error' ? '❌' : '🤖'}</span>
+        <span>${type === 'success' ? '✓' : type === 'error' ? '×' : '•'}</span>
         <span>${text}</span>
       </div>
     `;
@@ -378,7 +378,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         line-height: 1.4;
         pointer-events: none;
       ">
-        <span>${type === 'success' ? '⚡' : type === 'error' ? '❌' : '🤖'}</span>
+        <span>${type === 'success' ? '✓' : type === 'error' ? '×' : '•'}</span>
         <span>${text}</span>
       </div>
     `;

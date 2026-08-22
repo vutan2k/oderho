@@ -139,12 +139,12 @@ const saveProductToFirestoreRest = async (product) => {
     
     if (!res.ok) {
       const errTxt = await res.text();
-      console.warn("⚠️ [Background] Firestore REST sync status:", res.status, errTxt);
+      console.warn("[Background] Firestore REST sync status:", res.status, errTxt);
     } else {
-      console.log("⚡ [Background] Đã đồng bộ Firestore REST thành công cho:", goodsNo);
+      console.log("[Background] Đã đồng bộ Firestore REST thành công cho:", goodsNo);
     }
   } catch (err) {
-    console.warn("⚠️ [Background] Lỗi Firestore REST sync:", err);
+    console.warn("[Background] Lỗi Firestore REST sync:", err);
   }
 };
 
@@ -284,7 +284,7 @@ const runBackgroundRankingScrape = async () => {
       autoScrapeStatus: {
         isRunning: true,
         step: 'FETCHING_RANKING_PAGE',
-        message: '🔄 Đang tải dữ liệu 50 sản phẩm Ranking Olive Young...',
+        message: 'Đang tải dữ liệu 50 sản phẩm Ranking Olive Young...',
         processedCount: 0,
         totalCount: 0
       }
@@ -335,7 +335,7 @@ const runBackgroundRankingScrape = async () => {
         autoScrapeStatus: {
           isRunning: false,
           step: 'DONE',
-          message: `✅ Đã bỏ qua ${skippedCount} mã đã trùng trong hệ thống! Không phát sinh cào thừa.`,
+          message: `Đã bỏ qua ${skippedCount} mã đã trùng trong hệ thống! Không phát sinh cào thừa.`,
           processedCount: skippedCount,
           totalCount: allFound.length
         }
@@ -351,7 +351,7 @@ const runBackgroundRankingScrape = async () => {
           autoScrapeStatus: {
             isRunning: false,
             step: 'STOPPED',
-            message: `🛑 Đã dừng cào ngầm thành công (Đã cào ${completed}/${newItems.length} sản phẩm).`
+            message: `Đã dừng cào ngầm thành công (Đã cào ${completed}/${newItems.length} sản phẩm).`
           }
         });
         return;
@@ -479,7 +479,7 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
       autoScrapeStatus: {
         isRunning: false,
         step: 'DONE',
-        message: `🎉 Đã hoàn tất cào ngầm ${newItems.length} sản phẩm mới về Admin!`,
+        message: `Đã hoàn tất cào ngầm ${newItems.length} sản phẩm mới về Admin!`,
         processedCount: newItems.length,
         totalCount: newItems.length
       }
@@ -490,7 +490,7 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
       autoScrapeStatus: {
         isRunning: false,
         step: 'ERROR',
-        message: `❌ Lỗi cào ngầm: ${err.message}`
+        message: `Lỗi cào ngầm: ${err.message}`
       }
     });
   }
@@ -499,7 +499,7 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "RESET_SCRAPED_CACHE") {
     chrome.storage.local.set({ scrapedGoodsList: [] }, () => {
-      sendResponse({ success: true, message: '♻️ Đã làm sạch bộ nhớ đệm mã trùng! Giờ đây bạn có thể cào lại từ đầu.' });
+      sendResponse({ success: true, message: 'Đã làm sạch bộ nhớ đệm mã trùng! Giờ đây bạn có thể cào lại từ đầu.' });
     });
     return true;
   }
