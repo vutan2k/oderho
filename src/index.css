@@ -17,10 +17,24 @@
   --purple-dark: #583377;
   --purple-light: #F0E8F5;
 
+  /* Typography Colors - WCAG Contrast Adjusted */
   --text-dark: #1F2937;
   --text-muted: #4B5563;
-  --text-light: #9CA3AF;
+  --text-light: #6B7280; /* Tăng độ đậm từ #9CA3AF lên #6B7280 để đảm bảo Contrast Ratio > 4.5:1 trên nền #FAF8F5 */
   --border-color: #E5E7EB;
+
+  /* Spacing Scale (4px / 8px baseline) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
 
   --font-serif: 'Plus Jakarta Sans', 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-sans: 'Be Vietnam Pro', 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -81,7 +95,7 @@ h1, h2, h3, h4, .font-serif {
 .container {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--space-6);
 }
 
 /* Top Announcement Bar */
@@ -93,7 +107,7 @@ h1, h2, h3, h4, .font-serif {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   text-align: center;
-  padding: 10px 16px;
+  padding: var(--space-3) var(--space-4);
 }
 
 .top-announcement-bar span {
@@ -227,11 +241,11 @@ h1, h2, h3, h4, .font-serif {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-3);
   background: var(--purple-primary);
   color: #FFFFFF;
   border: none;
-  padding: 14px 32px;
+  padding: 14px var(--space-8);
   border-radius: 30px;
   font-family: var(--font-sans);
   font-size: 0.82rem;
@@ -382,7 +396,7 @@ h1, h2, h3, h4, .font-serif {
 .product-img-wrap {
   position: relative;
   width: 100%;
-  padding-top: 110%;
+  aspect-ratio: 1 / 1;
   background: #FAF7FB;
   overflow: hidden;
 }
@@ -869,7 +883,97 @@ textarea.input {
   }
 }
 
-/* Mobile Responsiveness for 2 Products Per Row & Product Detail Modal */
+.order-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-left: 12px;
+}
+
+.order-timeline::before {
+  content: '';
+  position: absolute;
+  left: 26px; /* Canh giữa dot (12px padding + 14px nửa width của dot) */
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background-color: #E5E7EB;
+  z-index: 1;
+}
+
+.timeline-item {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  gap: 16px !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 8px 0 !important;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-item > div:first-child {
+  margin-bottom: 0 !important;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4px #FDFBFF !important; /* Xóa khoảng trống đè lên line */
+}
+
+.timeline-item span {
+  font-size: 0.95rem !important;
+}
+
+/* Kích hoạt Vertical Timeline trên thiết bị di động (< 768px) */
+@media (min-width: 768px) {
+  .order-timeline {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 12px;
+    padding-left: 0;
+  }
+
+  .order-timeline::before {
+    display: none; /* Ẩn vạch dọc trên Desktop */
+  }
+
+  .timeline-item {
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 12px 10px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Khôi phục lại border và background cho thẻ ngang Desktop */
+  .timeline-item[data-completed="true"] {
+    background-color: #F9F6FC !important;
+    border: 1px solid #D8B4FE !important;
+  }
+  .timeline-item[data-completed="false"] {
+    background-color: #F9FAFB !important;
+    border: 1px solid #E5E7EB !important;
+  }
+  .timeline-item[data-current="true"] {
+    background-color: #FFFFFF !important;
+    border: 2px solid var(--purple-primary) !important;
+    box-shadow: 0 4px 12px rgba(122, 75, 158, 0.15) !important;
+  }
+
+  .timeline-item > div:first-child {
+    margin-bottom: 6px !important;
+    box-shadow: none !important;
+  }
+
+  .timeline-item span {
+    font-size: 0.78rem !important;
+  }
+}
+
 @media (max-width: 640px) {
   .product-grid-container {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -899,3 +1003,5 @@ textarea.input {
     padding: 18px !important;
   }
 }
+
+/* Mobile Responsiveness for 2 Products Per Row & Product Detail Modal */

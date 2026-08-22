@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { Helmet } from 'react-helmet-async';
 import paymentService from '../services/paymentService';
-import { Trash2, Plus, Minus, CheckCircle } from 'lucide-react';
+import { Trash2, Plus, Minus, CheckCircle, Globe, Zap, CreditCard, Loader2 } from 'lucide-react';
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 import Footer from '../components/Footer';
 import confetti from 'canvas-confetti';
@@ -25,6 +25,7 @@ export default function CartPage() {
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
   const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -43,37 +44,43 @@ export default function CartPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (cart.length === 0) return;
+    if (cart.length === 0 || isSubmitting) return;
 
-    const country = 'KRW';
-    const bankInfo = country === 'KRW'
-      ? { bankName: '우라은행', accountNumber: '1002959863658' }
-      : { bankName: 'MBbank', accountNumber: '34966778899' };
+    setIsSubmitting(true);
+    try {
+      const country = 'KRW';
+      const bankInfo = country === 'KRW'
+        ? { bankName: '우라은행', accountNumber: '1002959863658' }
+        : { bankName: 'MBbank', accountNumber: '34966778899' };
 
-    const orderData = {
-      customerName: name,
-      customerPhone: phone,
-      customerAddress: address,
-      customerNote: note,
-      country,
-      items: cart,
-      paymentMethod: country === 'KRW' ? 'bank_kr' : 'bank_vn',
-      bankAccount: bankInfo.accountNumber,
-      bankName: bankInfo.bankName,
-    };
+      const orderData = {
+        customerName: name,
+        customerPhone: phone,
+        customerAddress: address,
+        customerNote: note,
+        country,
+        items: cart,
+        paymentMethod: country === 'KRW' ? 'bank_kr' : 'bank_vn',
+        bankAccount: bankInfo.accountNumber,
+        bankName: bankInfo.bankName,
+      };
 
-    const res = await createOrder(orderData);
-    
-    confetti({
-      particleCount: 150,
-      spread: 80,
-      origin: { y: 0.6 },
-      colors: ['#7A4B9E', '#FFD1DC', '#F4EAD3'],
-    });
+      const res = await createOrder(orderData);
 
-    // Navigate tới trang thanh toán cọc 100%
-    const newOrderId = res?.id || activePendingOrder?.id || orderData.id || 'unknown';
-    navigate(`/payment/${newOrderId}`);
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#7A4B9E', '#FFD1DC', '#F4EAD3'],
+      });
+
+      // Navigate tới trang thanh toán cọc 100%
+      const newOrderId = res?.id || activePendingOrder?.id || orderData.id || 'unknown';
+      navigate(`/payment/${newOrderId}`);
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      setIsSubmitting(false);
+    }
   };
   const handleCheckout = async () => {
     if (cart.length === 0) return;
@@ -122,20 +129,23 @@ export default function CartPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.4rem', color: 'var(--purple-dark)', margin: 0 }}>Giỏ Hàng Của Bạn</h1>
           <div style={{ backgroundColor: '#F3EFF6', border: '1px solid #E9D5FF', borderRadius: '20px', padding: '8px 18px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--purple-primary)', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 8px rgba(122, 75, 158, 0.08)' }}>
-            🌐 Tỷ giá áp dụng: <strong>1 KRW = {krwRate} VNĐ</strong>
+            <Globe size={16} /> Tỷ giá áp dụng: <strong>1 KRW = {krwRate} VNĐ</strong>
           </div>
         </div>
         
         {activePendingOrder && (
           <div style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '14px', padding: '14px 20px', marginBottom: '24px', color: '#92400E', fontSize: '0.88rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              ⚡ Bạn đang có <strong>1 Giỏ Hàng Chờ Cọc (Mã: {activePendingOrder.id})</strong>. Mọi sản phẩm bạn thêm/xóa sẽ tự động cập nhật giỏ hàng này. Giỏ hàng sẽ chính thức chuyển thành Đơn hàng hoàn chỉnh sau khi bạn cọc 100%!
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <Zap size={18} style={{ marginTop: '2px', flexShrink: 0 }} />
+              <div>
+                Bạn đang có <strong>1 Giỏ Hàng Chờ Cọc (Mã: {activePendingOrder.id})</strong>. Mọi sản phẩm bạn thêm/xóa sẽ tự động cập nhật giỏ hàng này. Giỏ hàng sẽ chính thức chuyển thành Đơn hàng hoàn chỉnh sau khi bạn cọc 100%!
+              </div>
             </div>
-            <button 
+            <button
               onClick={() => navigate(`/payment/${activePendingOrder.id}`)}
-              style={{ backgroundColor: '#D97706', color: '#FFF', border: 'none', padding: '6px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ backgroundColor: '#D97706', color: '#FFF', border: 'none', padding: '6px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              💳 Thanh toán cọc ngay
+              <CreditCard size={14} /> Thanh toán cọc ngay
             </button>
           </div>
         )}
@@ -152,7 +162,7 @@ export default function CartPage() {
             <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
               {cart.map((item, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: '20px', padding: '20px 0', borderBottom: idx < cart.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
-                  <img src={item.productImage} alt={item.name} loading="lazy" style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px' }} />
+                  <img src={item.productImage} alt={item.name} loading="lazy" style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, aspectRatio: '1/1' }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
@@ -224,8 +234,33 @@ export default function CartPage() {
                   </p>
                 </div>
 
-                <button type="submit" className="btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 700, borderRadius: '14px', boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)' }}>
-                  Gửi Yêu Cầu Đặt Hộ
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-primary"
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    borderRadius: '14px',
+                    boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)',
+                    opacity: isSubmitting ? 0.6 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="lucide-spin" size={20} />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    'Gửi Yêu Cầu Đặt Hộ'
+                  )}
                 </button>
               </form>
             </div>

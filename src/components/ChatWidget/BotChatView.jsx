@@ -151,9 +151,9 @@ export default function BotChatView({ onSwitchToFacebook, isMobile }) {
               </div>
               <span
                 style={{
-                  fontSize: isMobile ? '0.68rem' : '0.72rem',
-                  fontWeight: 700,
-                  color: '#374151',
+                  fontSize: isMobile ? '0.75rem' : '0.8rem',
+                  fontWeight: 600,
+                  color: '#4B5563',
                   textAlign: 'center',
                   lineHeight: 1.2
                 }}
@@ -184,26 +184,27 @@ export default function BotChatView({ onSwitchToFacebook, isMobile }) {
               key={msg.id}
               style={{
                 display: 'flex',
-                gap: '8px',
-                alignItems: 'flex-start',
-                justifyContent: isBot ? 'flex-start' : 'flex-end'
+                gap: '10px',
+                alignItems: 'flex-end',
+                justifyContent: isBot ? 'flex-start' : 'flex-end',
+                animation: 'fadeIn 0.3s ease'
               }}
             >
               {isBot && (
                 <div
                   style={{
-                    width: '24px',
-                    height: '24px',
+                    width: '28px',
+                    height: '28px',
                     borderRadius: '50%',
                     backgroundColor: 'var(--purple-primary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    marginTop: '2px'
+                    boxShadow: '0 2px 5px rgba(122, 75, 158, 0.2)'
                   }}
                 >
-                  <Bot size={13} color="#FFFFFF" />
+                  <Bot size={15} color="#FFFFFF" />
                 </div>
               )}
 
@@ -212,17 +213,17 @@ export default function BotChatView({ onSwitchToFacebook, isMobile }) {
                   maxWidth: isMobile ? '88%' : '85%',
                   backgroundColor: isBot ? '#FFFFFF' : 'var(--purple-primary)',
                   color: isBot ? '#1F2937' : '#FFFFFF',
-                  padding: isMobile ? '8px 10px' : '9px 12px',
-                  borderRadius: isBot ? '4px 12px 12px 12px' : '12px 4px 12px 12px',
+                  padding: isMobile ? '10px 14px' : '12px 16px',
+                  borderRadius: isBot ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
                   border: isBot ? '1px solid #E5E7EB' : 'none',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  fontSize: isMobile ? '0.78rem' : '0.8rem',
-                  lineHeight: 1.45,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  fontSize: isMobile ? '0.85rem' : '0.88rem',
+                  lineHeight: 1.5,
                   whiteSpace: 'pre-line'
                 }}
               >
                 {msg.title && (
-                  <div style={{ fontWeight: 800, marginBottom: '4px', color: isBot ? 'var(--purple-primary)' : '#FFFFFF' }}>
+                  <div style={{ fontWeight: 800, marginBottom: '6px', color: isBot ? 'var(--purple-primary)' : '#FFFFFF', fontSize: '0.9rem' }}>
                     {msg.title}
                   </div>
                 )}
@@ -232,18 +233,18 @@ export default function BotChatView({ onSwitchToFacebook, isMobile }) {
               {!isBot && (
                 <div
                   style={{
-                    width: '24px',
-                    height: '24px',
+                    width: '28px',
+                    height: '28px',
                     borderRadius: '50%',
                     backgroundColor: '#1E1B4B',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    marginTop: '2px'
+                    boxShadow: '0 2px 5px rgba(30, 27, 75, 0.2)'
                   }}
                 >
-                  <User size={13} color="#FFFFFF" />
+                  <User size={15} color="#FFFFFF" />
                 </div>
               )}
             </div>
@@ -259,19 +260,19 @@ export default function BotChatView({ onSwitchToFacebook, isMobile }) {
             background: 'none',
             border: 'none',
             color: '#9CA3AF',
-            fontSize: '0.72rem',
+            fontSize: '0.75rem',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
+            gap: '6px',
             padding: '4px 6px',
             touchAction: 'manipulation'
           }}
           onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--purple-primary)')}
           onMouseLeave={(e) => (e.currentTarget.style.color = '#9CA3AF')}
         >
-          <RotateCcw size={11} />
-          <span>Làm mới hội thoại</span>
+          <RotateCcw size={12} />
+          <span>Làm mới</span>
         </button>
       </div>
     </div>

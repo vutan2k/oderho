@@ -20,27 +20,45 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Khởi tạo Firebase App
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider();
-export { onAuthStateChanged };
+// Khởi tạo Firebase App an toàn
+let app;
+let authObj = {};
+let dbObj = {};
+let googleProviderObj = {};
 
-// Đặt thêm tham số lựa chọn tài khoản Google
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+try {
+  app = initializeApp(firebaseConfig);
+  // Chỉ gọi các hàm Firebase thật nếu có API Key
+  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'dummy') {
+    authObj = getAuth(app);
+    dbObj = getFirestore(app);
+    googleProviderObj = new GoogleAuthProvider();
+    googleProviderObj.setCustomParameters({
+      prompt: 'select_account'
+    });
+  } else {
+    console.warn("Dùng Firebase Mock vì thiếu API Key");
+  }
+} catch (error) {
+  console.warn("Khởi tạo Firebase thất bại. Dùng cấu hình mock cho môi trường dev:", error);
+}
+
+export const auth = authObj;
+export const db = dbObj;
+export const googleProvider = googleProviderObj;
+export { onAuthStateChanged };
 
 // Bật Offline Data Persistence
 try {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn('Firestore persistence failed: Multiple tabs open');
-    } else if (err.code === 'unimplemented') {
-      console.warn('Firestore persistence not supported by browser');
-    }
-  });
+  if (dbObj && dbObj.type) { // Kiểm tra xem dbObj có phải là Firestore instance thật không
+    enableIndexedDbPersistence(dbObj).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Firestore persistence failed: Multiple tabs open');
+      } else if (err.code === 'unimplemented') {
+        console.warn('Firestore persistence not supported by browser');
+      }
+    });
+  }
 } catch {
   // Ignore in SSR/unsupported env
 }

@@ -4,7 +4,7 @@ import { AppContext } from '../context/AppContext';
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Helmet } from 'react-helmet-async';
-import { Clock, Upload, CheckCircle, AlertTriangle, Copy, CreditCard } from 'lucide-react';
+import { Clock, Upload, CheckCircle, AlertTriangle, Copy, CreditCard, RefreshCw } from 'lucide-react';
 import Footer from '../components/Footer';
 
 const BANK_ACCOUNTS = {
@@ -13,14 +13,14 @@ const BANK_ACCOUNTS = {
     accountNumber: '34966778899',
     accountHolder: 'VU VAN TAN',
     currency: 'VND',
-    flag: '🇻🇳',
+    flag: 'vn', // Will render an icon instead
   },
   KR: {
     bankName: '우라은행 (Woori Bank)',
     accountNumber: '1002959863658',
     accountHolder: 'VU VAN TAN',
     currency: 'KRW',
-    flag: '🇰🇷',
+    flag: 'kr', // Will render an icon instead
   },
 };
 
@@ -241,10 +241,13 @@ export default function PaymentPage() {
                 fontWeight: 700,
                 fontSize: '0.9rem',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)'
+                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
-              🔄 Gia hạn 15 phút & Tiếp tục chuyển khoản cọc
+              <RefreshCw size={16} /> Gia hạn 15 phút & Tiếp tục chuyển khoản cọc
             </button>
           )}
         </div>
@@ -256,7 +259,12 @@ export default function PaymentPage() {
           <div style={s.card}>
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1a1a2e' }}>
-                {bankVn.flag} Chuyển khoản VND
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: '24px', height: '24px', borderRadius: '50%',
+                  backgroundColor: '#E11D48', color: 'white', fontSize: '10px', fontWeight: 'bold'
+                }}>VN</span>
+                Chuyển khoản VND
               </h3>
 
               <div style={s.qrWrap}>
@@ -308,18 +316,23 @@ export default function PaymentPage() {
           <div style={s.card}>
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1a1a2e' }}>
-                {bankKr.flag} Hoặc chuyển khoản KRW
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: '24px', height: '24px', borderRadius: '50%',
+                  backgroundColor: '#2563EB', color: 'white', fontSize: '10px', fontWeight: 'bold'
+                }}>KR</span>
+                Hoặc chuyển khoản KRW
               </h3>
 
               <div style={s.qrWrap}>
                 <img src={qrKrUrl} alt="QR Code Woori Bank KRW" width={200} height={200} style={{ borderRadius: '12px' }} />
                 <p style={{ color: '#6b7280', fontSize: '0.82rem', marginTop: '8px', fontWeight: 600 }}>Tự động đọc số TK Woori Bank</p>
                 <div style={{ marginTop: '8px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                  <button 
-                    style={{ ...s.copyBtn, background: '#3182F6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '8px', fontWeight: 600 }}
+                  <button
+                    style={{ ...s.copyBtn, background: '#3182F6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '8px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     onClick={() => copyToClipboard('1002959863658', 'stk_kr_main')}
                   >
-                    {copied === 'stk_kr_main' ? '✓ Đã sao chép' : '📋 계좌번호 복사 (Copy STK)'}
+                    {copied === 'stk_kr_main' ? <><CheckCircle size={14} /> Đã sao chép</> : <><Copy size={14} /> 계좌번호 복사 (Copy STK)</>}
                   </button>
                 </div>
               </div>

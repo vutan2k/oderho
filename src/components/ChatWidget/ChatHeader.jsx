@@ -7,21 +7,23 @@ export default function ChatHeader({ activeTab, setActiveTab, onClose, onReset, 
       style={{
         backgroundColor: '#1E1B4B',
         color: '#FFFFFF',
-        padding: isMobile ? '12px 14px' : '14px 16px',
+        padding: isMobile ? '12px 14px' : '16px 18px',
         display: 'flex',
         flexDirection: 'column',
-        gap: isMobile ? '8px' : '10px',
+        gap: isMobile ? '10px' : '14px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        userSelect: 'none'
+        userSelect: 'none',
+        borderTopLeftRadius: isMobile ? '0' : '16px',
+        borderTopRightRadius: isMobile ? '0' : '16px',
       }}
     >
       {/* Top Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: isMobile ? '28px' : '32px',
-              height: isMobile ? '28px' : '32px',
+              width: isMobile ? '32px' : '36px',
+              height: isMobile ? '32px' : '36px',
               borderRadius: '50%',
               backgroundColor: 'var(--purple-primary)',
               display: 'flex',
@@ -30,16 +32,13 @@ export default function ChatHeader({ activeTab, setActiveTab, onClose, onReset, 
               boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
             }}
           >
-            <Bot size={isMobile ? 16 : 18} color="#FFFFFF" />
+            <Bot size={isMobile ? 18 : 20} color="#FFFFFF" />
           </div>
-          <div>
-            <div style={{ fontSize: isMobile ? '0.85rem' : '0.92rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.3px' }}>
-              TAVY KOREA ASSISTANT
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ fontSize: isMobile ? '0.95rem' : '1rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.5px' }}>
+              TAVY ASSISTANT
             </div>
-            <div style={{ fontSize: isMobile ? '0.68rem' : '0.72rem', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
-              <span>Trực tuyến 24/7 • Minh bạch 8 bước</span>
-            </div>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)' }} title="Trực tuyến" />
           </div>
         </div>
 
@@ -98,16 +97,16 @@ export default function ChatHeader({ activeTab, setActiveTab, onClose, onReset, 
           onClick={() => setActiveTab('bot')}
           style={{
             flex: 1,
-            padding: isMobile ? '8px 10px' : '6px 10px',
+            padding: isMobile ? '8px 10px' : '8px 10px',
             borderRadius: '6px',
             border: 'none',
-            fontSize: isMobile ? '0.8rem' : '0.78rem',
+            fontSize: isMobile ? '0.8rem' : '0.8rem',
             fontWeight: 700,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '6px',
+            gap: '8px',
             transition: 'all 0.2s ease',
             backgroundColor: activeTab === 'bot' ? 'var(--purple-primary)' : 'transparent',
             color: activeTab === 'bot' ? '#FFFFFF' : '#C7D2FE',
@@ -122,16 +121,16 @@ export default function ChatHeader({ activeTab, setActiveTab, onClose, onReset, 
           onClick={() => setActiveTab('facebook')}
           style={{
             flex: 1,
-            padding: isMobile ? '8px 10px' : '6px 10px',
+            padding: isMobile ? '8px 10px' : '8px 10px',
             borderRadius: '6px',
             border: 'none',
-            fontSize: isMobile ? '0.8rem' : '0.78rem',
+            fontSize: isMobile ? '0.8rem' : '0.8rem',
             fontWeight: 700,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '6px',
+            gap: '8px',
             transition: 'all 0.2s ease',
             backgroundColor: activeTab === 'facebook' ? '#0084FF' : 'transparent',
             color: activeTab === 'facebook' ? '#FFFFFF' : '#C7D2FE',

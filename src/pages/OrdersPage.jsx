@@ -5,7 +5,7 @@ import {
   Package, ArrowLeft, ShoppingBag,
   Copy, Check, CreditCard, ExternalLink,
   Video, PackageCheck, FileText, Plane, ShieldCheck,
-  Truck, Scale, Info, Play, X
+  Truck, Scale, Info, Play, X, Zap, MessageSquare
 } from 'lucide-react';
 import ProductDetailModal from '../components/ProductDetailModal';
 import { ORDER_STEPS, getOrderStepIndex, getStatusConfig } from '../data/orderStatuses';
@@ -189,9 +189,12 @@ export default function OrdersPage() {
                       color: isPaidOrAdvanced ? statusCfg.color || '#059669' : '#D97706',
                       fontWeight: 700,
                       textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
+                      letterSpacing: '0.5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
                     }}>
-                      {isPaidOrAdvanced ? `✅ ${statusCfg.label.toUpperCase()}` : '⚡ GIỎ HÀNG CHỜ CỌC 100%'}
+                      {isPaidOrAdvanced ? <><Check size={14}/> {statusCfg.label.toUpperCase()}</> : <><Zap size={14}/> GIỎ HÀNG CHỜ CỌC 100%</>}
                     </span>
                     <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--purple-primary)' }}>{order.id}</h4>
                   </div>
@@ -242,12 +245,7 @@ export default function OrdersPage() {
 
                 {/* Progress Bar 8 Bước Minh Bạch */}
                 <div style={{ padding: '24px 20px', backgroundColor: '#FDFBFF', borderBottom: '1px solid #EAE6DF' }}>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                    gap: '12px',
-                    position: 'relative'
-                  }}>
+                  <div className="order-timeline">
                     {steps.map((st, idx) => {
                       const isCompleted = idx <= currentStepIdx;
                       const isCurrent = idx === currentStepIdx;
@@ -255,19 +253,9 @@ export default function OrdersPage() {
                       return (
                         <div
                           key={st.key}
-                          style={{
-                            backgroundColor: isCurrent ? '#FFFFFF' : (isCompleted ? '#F9F6FC' : '#F9FAFB'),
-                            borderRadius: '12px',
-                            padding: '12px 10px',
-                            border: isCurrent ? '2px solid var(--purple-primary)' : (isCompleted ? '1px solid #D8B4FE' : '1px solid #E5E7EB'),
-                            boxShadow: isCurrent ? '0 4px 12px rgba(122, 75, 158, 0.15)' : 'none',
-                            textAlign: 'center',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.3s ease'
-                          }}
+                          className="timeline-item"
+                          data-completed={isCompleted}
+                          data-current={isCurrent}
                         >
                           <div style={{
                             width: '28px',
@@ -280,13 +268,12 @@ export default function OrdersPage() {
                             justifyContent: 'center',
                             fontWeight: 700,
                             fontSize: '0.75rem',
-                            marginBottom: '6px'
+                            transition: 'all 0.3s ease'
                           }}>
                             {isCompleted ? <Check size={16} /> : idx + 1}
                           </div>
 
                           <span style={{
-                            fontSize: '0.78rem',
                             fontWeight: isCurrent ? 800 : (isCompleted ? 700 : 500),
                             color: isCompleted ? 'var(--purple-primary)' : '#6B7280',
                             lineHeight: 1.3
@@ -481,8 +468,9 @@ export default function OrdersPage() {
                     )}
                     {order.adminNote && (
                       <div style={{ marginTop: '8px' }}>
-                        <p style={{ fontSize: '0.8rem', color: '#D97706', backgroundColor: '#FEF3C7', padding: '6px 12px', borderRadius: '8px', display: 'inline-block' }}>
-                          💬 Ghi chú từ Admin: {order.adminNote}
+                        <p style={{ fontSize: '0.8rem', color: '#D97706', backgroundColor: '#FEF3C7', padding: '6px 12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'flex-start', gap: '6px' }}>
+                          <MessageSquare size={14} style={{ marginTop: '2px', flexShrink: 0 }} />
+                          <span>Ghi chú từ Admin: {order.adminNote}</span>
                         </p>
                       </div>
                     )}

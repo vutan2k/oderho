@@ -97,9 +97,9 @@ export default function ChatWidget() {
                 right: '0',
                 backgroundColor: '#1E1B4B',
                 color: '#FFFFFF',
-                padding: '7px 12px',
+                padding: '7px 14px',
                 borderRadius: '12px',
-                fontSize: isMobile ? '0.72rem' : '0.78rem',
+                fontSize: isMobile ? '0.75rem' : '0.85rem',
                 fontWeight: 600,
                 boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
                 whiteSpace: 'nowrap',
@@ -107,12 +107,12 @@ export default function ChatWidget() {
                 animation: 'bounce 2s infinite',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '8px',
                 maxWidth: 'calc(100vw - 40px)'
               }}
             >
-              <Sparkles size={13} color="#A78BFA" />
-              <span>Cần hỗ trợ? <strong>Chat ngay</strong></span>
+              <Sparkles size={14} color="#A78BFA" />
+              <span><strong>Chat ngay</strong></span>
             </div>
           )}
 
@@ -167,18 +167,19 @@ export default function ChatWidget() {
                   flexDirection: 'column'
                 }
               : {
-                  width: '370px',
+                  width: '380px',
                   maxWidth: 'calc(100vw - 32px)',
-                  height: '540px',
+                  height: '600px',
                   maxHeight: 'calc(100vh - 120px)',
                   backgroundColor: '#FAF9F6',
                   borderRadius: '16px',
-                  boxShadow: '0 15px 40px rgba(0,0,0,0.25)',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
                   border: '1px solid #E5E7EB',
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  animation: 'fadeIn 0.2s ease'
+                  animation: 'fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  transformOrigin: 'bottom right'
                 }
           }
         >
