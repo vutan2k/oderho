@@ -12,6 +12,15 @@ export const ORDER_STATUSES = {
     borderColor: '#F59E0B',
     stepIndex: 0
   },
+  quoted: {
+    id: 'quoted',
+    label: 'Đã báo giá & Chờ cọc',
+    shortLabel: 'Đã báo giá',
+    color: '#0284C7',
+    bgColor: '#E0F2FE',
+    borderColor: '#38BDF8',
+    stepIndex: 1
+  },
   deposit_paid: {
     id: 'deposit_paid',
     label: 'Đã cọc 100%',
@@ -19,7 +28,7 @@ export const ORDER_STATUSES = {
     color: '#4F46E5',
     bgColor: '#EEF2FF',
     borderColor: '#6366F1',
-    stepIndex: 1
+    stepIndex: 2
   },
   purchased: {
     id: 'purchased',
@@ -28,7 +37,7 @@ export const ORDER_STATUSES = {
     color: '#7C3AED',
     bgColor: '#F3E8FF',
     borderColor: '#8B5CF6',
-    stepIndex: 2
+    stepIndex: 3
   },
   in_kr_warehouse: {
     id: 'in_kr_warehouse',
@@ -37,7 +46,7 @@ export const ORDER_STATUSES = {
     color: '#DB2777',
     bgColor: '#FCE7F3',
     borderColor: '#EC4899',
-    stepIndex: 3
+    stepIndex: 4
   },
   transit: {
     id: 'transit',
@@ -46,7 +55,7 @@ export const ORDER_STATUSES = {
     color: '#0891B2',
     bgColor: '#CFFAFE',
     borderColor: '#06B6D4',
-    stepIndex: 4
+    stepIndex: 5
   },
   in_vn_warehouse: {
     id: 'in_vn_warehouse',
@@ -55,7 +64,7 @@ export const ORDER_STATUSES = {
     color: '#0D9488',
     bgColor: '#CCFBF1',
     borderColor: '#14B8A6',
-    stepIndex: 5
+    stepIndex: 6
   },
   delivering: {
     id: 'delivering',
@@ -64,7 +73,7 @@ export const ORDER_STATUSES = {
     color: '#EA580C',
     bgColor: '#FFEDD5',
     borderColor: '#F97316',
-    stepIndex: 6
+    stepIndex: 7
   },
   completed: {
     id: 'completed',
@@ -73,7 +82,7 @@ export const ORDER_STATUSES = {
     color: '#059669',
     bgColor: '#D1FAE5',
     borderColor: '#10B981',
-    stepIndex: 7
+    stepIndex: 8
   },
   cancelled: {
     id: 'cancelled',
@@ -100,13 +109,14 @@ export const getStatusConfig = (statusKey) => {
 
 export const ORDER_STEPS = [
   { key: 'pending', title: 'Chờ cọc', stepIndex: 0 },
-  { key: 'deposit_paid', title: 'Đã cọc 100%', stepIndex: 1 },
-  { key: 'purchased', title: 'Đang mua hộ', stepIndex: 2 },
-  { key: 'in_kr_warehouse', title: 'Kho Seoul', stepIndex: 3 },
-  { key: 'transit', title: 'Shipping Air', stepIndex: 4 },
-  { key: 'in_vn_warehouse', title: 'Kho VN', stepIndex: 5 },
-  { key: 'delivering', title: 'Đang giao', stepIndex: 6 },
-  { key: 'completed', title: 'Đã giao', stepIndex: 7 }
+  { key: 'quoted', title: 'Đã báo giá', stepIndex: 1 },
+  { key: 'deposit_paid', title: 'Đã cọc 100%', stepIndex: 2 },
+  { key: 'purchased', title: 'Đang mua hộ', stepIndex: 3 },
+  { key: 'in_kr_warehouse', title: 'Kho Seoul', stepIndex: 4 },
+  { key: 'transit', title: 'Shipping Air', stepIndex: 5 },
+  { key: 'in_vn_warehouse', title: 'Kho VN', stepIndex: 6 },
+  { key: 'delivering', title: 'Đang giao', stepIndex: 7 },
+  { key: 'completed', title: 'Đã giao', stepIndex: 8 }
 ];
 
 export const getOrderStepIndex = (orderObj) => {

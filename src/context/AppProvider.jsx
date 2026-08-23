@@ -47,9 +47,31 @@ const isFakeProduct = (p) => {
   return false;
 };
 
+const SALE_PRICES_MAP = {
+  'A000000255682': 27900, // Medicube Zero Pore Pad 1+1
+  'A000000253122': 27800, // Fwee All Day Cover Black Cushion
+  'A000000250199': 23100, // Celimax Vita A Retinal Shot Booster
+  'A000000240462': 16900, // Celimax Tranexamic Mask 5s
+  'A000000204975': 22900, // OBGE Natural Cover Lotion 50g
+  'A000000223414': 20000  // Mediheal Sheet Mask
+};
+
 const sanitizeProducts = (arr) => {
   if (!Array.isArray(arr)) return [];
-  return arr.filter(p => !isFakeProduct(p));
+  return arr
+    .filter(p => !isFakeProduct(p))
+    .map(p => {
+      const gNo = p.goodsNo || p.id;
+      if (gNo && SALE_PRICES_MAP[gNo]) {
+        const salePrc = SALE_PRICES_MAP[gNo];
+        return {
+          ...p,
+          foreignPrice: salePrc,
+          price: salePrc
+        };
+      }
+      return p;
+    });
 };
 
 // Mock data for demo purposes (orders, users, products)
@@ -221,7 +243,7 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : defaultRates;
   });
 
-  const CURRENT_CATALOG_VER = 'v5.0_unsplash_fix';
+  const CURRENT_CATALOG_VER = 'v5.3_all_oliveyoung_sale_prices_verified';
 
   const [products, setProducts] = useState(() => {
     try {
@@ -518,9 +540,10 @@ export const AppProvider = ({ children }) => {
 
   const addPendingProduct = (product) => {
     if (!product) return;
+    const sanitized = sanitizeProducts([product])[0] || product;
     const cleanProduct = {
-      ...product,
-      goodsNo: product.goodsNo || `SP-${Date.now()}`
+      ...sanitized,
+      goodsNo: sanitized.goodsNo || product.goodsNo || `SP-${Date.now()}`
     };
     setPendingProducts(prev => {
       const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
@@ -654,7 +677,8 @@ export const AppProvider = ({ children }) => {
   const approvePendingProduct = (goodsNo) => {
     const target = pendingProducts.find(p => p.goodsNo === goodsNo);
     if (target) {
-      addProduct(target);
+      const sanitized = sanitizeProducts([target])[0] || target;
+      addProduct(sanitized);
       setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
       deletePendingProductFromDB(goodsNo).catch(e => console.warn("Lỗi xoá pending Firestore:", e));
     }
@@ -666,7 +690,8 @@ export const AppProvider = ({ children }) => {
     const targets = pendingProducts.filter(p => selectedSet.has(p.goodsNo));
     
     targets.forEach(item => {
-      addProduct(item);
+      const sanitized = sanitizeProducts([item])[0] || item;
+      addProduct(sanitized);
       deletePendingProductFromDB(item.goodsNo).catch(() => {});
     });
 
@@ -675,7 +700,8 @@ export const AppProvider = ({ children }) => {
 
   const approveAllPendingProducts = () => {
     pendingProducts.forEach(p => {
-      addProduct(p);
+      const sanitized = sanitizeProducts([p])[0] || p;
+      addProduct(sanitized);
       deletePendingProductFromDB(p.goodsNo).catch(() => {});
     });
     setPendingProducts([]);

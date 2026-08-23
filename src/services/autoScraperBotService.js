@@ -56,6 +56,111 @@ export const saveBotStateToStorage = (state) => {
   if (state.intervalMins) localStorage.setItem('tavy_bot_interval_mins', state.intervalMins.toString());
 };
 
+// =========================================================================
+// AI PRICE SYNC BOT (METHOD 3: Periodic Price Anchoring to Olive Young)
+// =========================================================================
+export const getPriceSyncConfig = () => {
+  try {
+    const enabled = localStorage.getItem('tavy_price_sync_enabled') === 'true';
+    const intervalMins = parseInt(localStorage.getItem('tavy_price_sync_interval')) || 60;
+    const lastSyncTime = localStorage.getItem('tavy_price_sync_last_time') || null;
+    const logsJson = localStorage.getItem('tavy_price_sync_logs');
+    const logs = logsJson ? JSON.parse(logsJson) : [];
+    return { enabled, intervalMins, lastSyncTime, logs };
+  } catch (e) {
+    return { enabled: false, intervalMins: 60, lastSyncTime: null, logs: [] };
+  }
+};
+
+export const savePriceSyncConfig = (config) => {
+  if (config.enabled !== undefined) localStorage.setItem('tavy_price_sync_enabled', config.enabled ? 'true' : 'false');
+  if (config.intervalMins !== undefined) localStorage.setItem('tavy_price_sync_interval', config.intervalMins.toString());
+  if (config.lastSyncTime !== undefined) localStorage.setItem('tavy_price_sync_last_time', config.lastSyncTime);
+  if (config.logs) localStorage.setItem('tavy_price_sync_logs', JSON.stringify(config.logs.slice(-100))); // Keep last 100 logs
+};
+
+/**
+ * Execute Auto Price Sync across inventory products anchored to Olive Young
+ * @param {Array} products Current products list
+ * @param {Function} updateProductFn Callback function to update product in DB
+ */
+export const executeAutoPriceSync = async (products = [], updateProductFn = null) => {
+  if (!products || products.length === 0) {
+    return { success: false, message: 'Kho hàng trống, không có sản phẩm nào để neo giá!' };
+  }
+
+  const validProducts = products.filter(p => p.productUrl || p.goodsNo);
+  if (validProducts.length === 0) {
+    return { success: false, message: 'Không tìm thấy sản phẩm nào có link Olive Young gốc.' };
+  }
+
+  const priceChanges = [];
+  let scannedCount = 0;
+  let updatedCount = 0;
+
+  for (const prod of validProducts) {
+    scannedCount++;
+    const url = prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`;
+    
+    // Check metadata / price from Olive Young
+    const res = await scrapeProductMetadata(url);
+    if (res.success && res.product) {
+      const livePrice = Number(res.product.foreignPrice || res.product.price) || 0;
+      const currentPrice = Number(prod.foreignPrice || prod.price) || 0;
+
+      if (livePrice > 0 && livePrice !== currentPrice) {
+        updatedCount++;
+        const diffWon = livePrice - currentPrice;
+        const diffPercent = currentPrice > 0 ? ((diffWon / currentPrice) * 100).toFixed(1) : '0';
+        
+        const changeRecord = {
+          goodsNo: prod.goodsNo,
+          name: prod.name,
+          brand: prod.brand || 'Korea',
+          oldPrice: currentPrice,
+          newPrice: livePrice,
+          diffWon: diffWon,
+          diffPercent: diffPercent,
+          productUrl: url,
+          timestamp: new Date().toISOString()
+        };
+        priceChanges.push(changeRecord);
+
+        // Call update if callback provided
+        if (updateProductFn && typeof updateProductFn === 'function') {
+          updateProductFn(prod.goodsNo, {
+            ...prod,
+            foreignPrice: livePrice,
+            price: livePrice,
+            priceLastSyncedAt: new Date().toISOString(),
+            priceSyncStatus: 'synced_oliveyoung'
+          });
+        }
+      }
+    }
+  }
+
+  const syncTime = new Date().toISOString();
+  const existingConfig = getPriceSyncConfig();
+  const newLogs = [...priceChanges, ...(existingConfig.logs || [])].slice(0, 100);
+
+  savePriceSyncConfig({
+    enabled: existingConfig.enabled,
+    intervalMins: existingConfig.intervalMins,
+    lastSyncTime: syncTime,
+    logs: newLogs
+  });
+
+  return {
+    success: true,
+    scannedCount,
+    updatedCount,
+    priceChanges,
+    timestamp: syncTime,
+    message: `Đã quét ${scannedCount} sản phẩm, phát hiện & tự động neo lại giá cho ${updatedCount} sản phẩm theo Olive Young!`
+  };
+};
+
 /**
  * Execute a single auto-scrape run — chỉ dùng URL thực, KHÔNG tạo fake data
  */

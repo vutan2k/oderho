@@ -80,6 +80,66 @@ const KNOWN_KOREAN_GOODS_DB = {
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
   },
+  'A000000255682': {
+    name: 'Miếng pad se khít lỗ chân lông Medicube Zero Pore Pad 1+1 (본품70매+리필 70매)',
+    nameKr: '[1등/아이돌 모공패드] 메디큐브 제로 모공 패드 1+1 140매 리필 기획 (본품70매+리필 70매)',
+    brand: 'Medicube',
+    brandKr: '메디큐브',
+    category: 'skincare',
+    foreignPrice: 27900,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025568254ko.jpg',
+    description: 'Miếng pad se khít lỗ chân lông Medicube Zero Pore Pad TOP 1 Olive Young Hàn Quốc. Giá gốc 33.000₩, giảm còn 27.900₩.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9
+  },
+  'A000000253122': {
+    name: 'Phấn Nước Che Phủ Lâu Trôi Fwee All Day Cover Black Cushion (Kèm Lõi)',
+    nameKr: '[민스코공동개발] 퓌 올데이 커버 블랙 쿠션 리필기획(본품+리필) 5종',
+    brand: 'fwee',
+    brandKr: '퓌',
+    category: 'makeup',
+    foreignPrice: 27800,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025312239ko.jpg',
+    description: 'Phấn Nước Che Phủ Lâu Trôi Fwee All Day Cover Black Cushion. Giá gốc 38.000₩, giảm còn 27.800₩.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9
+  },
+  'A000000250199': {
+    name: 'Celimax The Vita A Retinal Shot Tightening Booster 15ml',
+    nameKr: '[단독기획/모공탄력] 셀리맥스 더 비타 A 레티날 샷 타이트닝 부스터 15ml 기획(+3ml)',
+    brand: 'Celimax',
+    brandKr: '셀리맥스',
+    category: 'skincare',
+    foreignPrice: 23100,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025019901ko.jpg',
+    description: 'Tinh chất se khít lỗ chân lông Celimax Vita A Retinal Shot Booster 15ml. Giá gốc 33.000₩, giảm còn 23.100₩.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9
+  },
+  'A000000240462': {
+    name: 'Mặt Nạ Dưỡng Sáng Celimax Tranexamic Acid Brightening Cream Wrapping Mask',
+    nameKr: '[잡티미백/TXA] 셀리맥스 트라넥삼산 브라이트닝 크림 랩핑 마스크 5매 기획 (+1매)',
+    brand: 'Celimax',
+    brandKr: '셀리맥스',
+    category: 'skincare',
+    foreignPrice: 16900,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0024/A00000024046219ko.jpg',
+    description: 'Mặt Nạ Dưỡng Sáng Celimax Tranexamic Acid Cream Wrapping Mask. Giá gốc 26.800₩, giảm còn 16.900₩.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9
+  },
+  'A000000204975': {
+    name: 'Lotion che khuyết điểm tự nhiên OBGE 50g',
+    nameKr: '[NEW 보송버전 출시] [덱스PICK] 오브제 내추럴 커버 로션 50g 단품/기획(+미니어처 10ml)',
+    brand: 'OBGE',
+    brandKr: '오브제',
+    category: 'makeup',
+    foreignPrice: 22900,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0020/A00000020497522ko.jpg',
+    description: 'Lotion che khuyết điểm tự nhiên OBGE 50g. Giá gốc 29.800₩, giảm còn 22.900₩.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9
+  },
   'A000000259615': {
     name: 'Bộ chăm sóc tóc Orara X The Wish Hair Market (Dầu gội 460g / Dầu xả 200ml)',
     nameKr: '오라라 X 더위시 헤어마켓 (샴푸 460g / 트리트먼트 200ml)',
@@ -105,10 +165,11 @@ const cleanKoreanTitle = (raw) => {
     .trim();
 };
 
-/** Parse Korean price formats: 29,900원, ₩29900, "price":"29900" */
+/** Parse Korean price formats: Prioritize Discounted Sale Price over Original Price */
 const parseKoreanPrice = (html) => {
   const patterns = [
-    /"(?:sale[Pp]rice|price|finalPrice)"\s*:\s*"?([0-9,]+)"?/,
+    /"(?:salePrc|dispSalePrc|finalPrc|salePrice|finalPrice)"\s*:\s*"?([0-9,]+)"?/i,
+    /class=["'](?:price-2|tx_cur|total_price)["'][^>]*>.*?([0-9]{1,3}(?:,[0-9]{3})+)\s*원/is,
     /property=["'](?:og:price:amount|product:price:amount)["'][^>]*content=["']([0-9,]+)["']/i,
     /([0-9]{1,3}(?:,[0-9]{3})+)\s*원/,
     /₩\s*([0-9,]+)/,

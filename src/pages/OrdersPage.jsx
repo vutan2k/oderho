@@ -63,7 +63,7 @@ export default function OrdersPage() {
     return order.status === activeTab;
   });
 
-  const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+  const formatVnd = (n) => (n || n === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VNĐ` : '0 VNĐ';
 
   const handleCopyCode = (code) => {
     navigator.clipboard.writeText(code);

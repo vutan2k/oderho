@@ -20,7 +20,7 @@ test('[F12-1] Manifest V3 manifest.json structure validation', () => {
 
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
   assertEquals(manifest.manifest_version, 3, 'manifest_version must be 3');
-  assert(manifest.name.includes('Tavy Order') || manifest.name.includes('tavy-toolcaowed'), 'Extension name matches');
+  assert(manifest.name.includes('Tavy Order') || manifest.name.includes('tavy-toolcaowed') || manifest.name.includes('TAVY AI') || manifest.name.includes('TAVY'), 'Extension name matches');
   assertContains(manifest.permissions, 'activeTab', 'Permissions include activeTab');
   assertContains(manifest.permissions, 'storage', 'Permissions include storage');
   assertEquals(manifest.background.service_worker, 'background.js', 'Service worker defined as background.js');

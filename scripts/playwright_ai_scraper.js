@@ -412,15 +412,21 @@ async function runPlaywrightAIScraper() {
               nameKr = document.title.split('|')[0].trim();
             }
 
-            // Find all elements containing '원', grab the first one that has a number
-            const elementsWithWon = Array.from(document.querySelectorAll('*'))
-              .filter(el => el.children.length === 0 && el.textContent.includes('원'));
+            // 🎯 Smart Olive Young Price Extraction (Ưu tiên lấy Giá Giảm/Khuyến Mãi trước Giá Niêm Yết Cũ)
             let priceTxt = '25000';
-            for (const el of elementsWithWon) {
-              const match = el.textContent.match(/[\d,]+원/);
-              if (match) {
-                priceTxt = match[0];
-                break;
+            const salePriceEl = document.querySelector('.price-2 .tx_cur, .price-2 .num, .price-2, .tx_cur, span.total_price, p.price-2, strong.total_price');
+            if (salePriceEl) {
+              const match = salePriceEl.textContent.match(/[\d,]+/);
+              if (match) priceTxt = match[0].replace(/,/g, '');
+            } else {
+              const elementsWithWon = Array.from(document.querySelectorAll('*'))
+                .filter(el => el.children.length === 0 && el.textContent.includes('원') && !el.closest('.price-1, .tx_org, del, strike'));
+              for (const el of elementsWithWon) {
+                const match = el.textContent.match(/[\d,]+/);
+                if (match) {
+                  const val = parseInt(match[0].replace(/,/g, ''), 10);
+                  if (val > 100) { priceTxt = String(val); break; }
+                }
               }
             }
 

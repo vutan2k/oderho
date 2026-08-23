@@ -10,7 +10,7 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
   }, [products]);
 
   const formatVnd = (num) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+    (num || num === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(num))} VNĐ` : '0 VNĐ';
 
   const formatKrw = (num) =>
     '₩' + new Intl.NumberFormat('ko-KR').format(num || 0);
@@ -113,19 +113,13 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
               </div>
 
               <div>
-                {/* Song song Won & VND */}
-                <div style={{ marginBottom: '15px', background: '#F8F6FA', padding: '10px 14px', borderRadius: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap', gap: '6px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>Giá Hàn Quốc:</span>
-                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-dark)', whiteSpace: 'nowrap' }}>
-                      {formatKrw(product.foreignPrice)}
-                    </strong>
+                {/* 2 Dòng Giá Won & Giá VNĐ xếp chồng căn giữa */}
+                <div style={{ marginBottom: '14px', background: '#F8F6FA', padding: '10px 12px', borderRadius: '12px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.82rem', color: '#6B7280', fontWeight: 600, letterSpacing: '0.2px' }}>
+                    {formatKrw(product.foreignPrice)}
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', flexWrap: 'nowrap', gap: '6px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>Quy đổi VNĐ:</span>
-                    <strong style={{ fontSize: '1.05rem', color: 'var(--purple-primary)', whiteSpace: 'nowrap' }}>
-                      {formatVnd(calculatedVnd)}
-                    </strong>
+                  <div style={{ fontSize: '1.12rem', color: 'var(--purple-primary)', fontFamily: "'Be Vietnam Pro', 'Inter', sans-serif", fontWeight: 800, letterSpacing: '-0.3px', marginTop: '2px' }}>
+                    {formatVnd(calculatedVnd)}
                   </div>
                 </div>
 

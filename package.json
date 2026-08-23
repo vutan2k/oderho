@@ -10,6 +10,7 @@
     "test": "node tests/run_all_tests.js",
     "scrape:playwright": "node scripts/playwright_ai_scraper.js",
     "scrape:playwright:headful": "HEADLESS=false MAX_PRODUCTS=10 node scripts/playwright_ai_scraper.js",
+    "sync:prices": "node scripts/cron_price_sync_bot.js",
     "self-check": "oxlint && vite build",
     "preview": "vite preview"
   },

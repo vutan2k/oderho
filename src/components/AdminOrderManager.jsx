@@ -25,7 +25,7 @@ export default function AdminOrderManager() {
   const [orderForm, setOrderForm] = useState({});
 
   const krwRate = rates?.KRW?.rate || 19.5;
-  const formatVnd = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0);
+  const formatVnd = (n) => (n || n === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VNĐ` : '0 VNĐ';
   const formatWon = (n) => `₩${(n || 0).toLocaleString('vi-VN')}`;
 
   const getOrderProductName = (o) => o.items ? `[${o.items.length} món] ` + o.items.map(i => i.name).join(' + ') : (o.productName || '');

@@ -312,7 +312,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
             url: window.location.href,
             title: document.title,
             brandText: getText('.prd_brand, .brand, .brand_name, [class*=brand]'),
-            priceText: getText('.price-2, .sale_price, .total, [class*=price]')
+            priceText: getText('.price-2 .tx_cur, .price-2, .sale_price, .total_price, .tx_cur') || getText('[class*=price]')
           };
 
           let hasResponded = false;
