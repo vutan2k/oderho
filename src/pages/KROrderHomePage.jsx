@@ -262,32 +262,22 @@ export default function KROrderHomePage() {
               onViewDetail={setDetailProduct}
             />
 
-            {/* Banner Thông Báo Hỗ Trợ Đặt Hàng Ngoài Hệ Thống */}
+            {/* Banner Tối Giản Mua Hộ Ngoài Web */}
             <div style={{
-              marginTop: '48px',
-              padding: '24px 28px',
-              borderRadius: '20px',
-              background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 100%)',
-              border: '1.5px dashed var(--purple-primary)',
+              marginTop: '36px',
+              padding: '14px 22px',
+              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: '1px dashed var(--purple-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               flexWrap: 'wrap',
-              gap: '20px',
-              boxShadow: '0 4px 16px rgba(122, 75, 158, 0.06)'
+              gap: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
             }}>
-              <div style={{ flex: '1 1 500px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--purple-primary)', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: 'rgba(122, 75, 158, 0.1)', padding: '3px 10px', borderRadius: '20px' }}>
-                    DỊCH VỤ MUA HỘ THEO YÊU CẦU
-                  </span>
-                </div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-dark)', margin: '0 0 6px 0' }}>
-                  Không tìm thấy sản phẩm mong muốn hoặc muốn order hàng ngoài hệ thống?
-                </h3>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.5' }}>
-                  TAVY Korea nhận mua hộ mọi sản phẩm từ Olive Young, hiệu thuốc và các Store nội địa Hàn Quốc. Hãy gửi ảnh hoặc link sản phẩm cho nhân viên để được hỗ trợ báo giá và đặt hàng trực tiếp!
-                </p>
+              <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-dark)' }}>
+                Cần tìm mua sản phẩm khác từ Hàn Quốc?
               </div>
 
               <a
@@ -297,21 +287,21 @@ export default function KROrderHomePage() {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '6px',
                   backgroundColor: '#0084FF',
                   color: '#FFFFFF',
-                  padding: '12px 24px',
+                  padding: '8px 18px',
                   borderRadius: '30px',
                   fontWeight: 700,
-                  fontSize: '0.9rem',
+                  fontSize: '0.84rem',
                   textDecoration: 'none',
-                  boxShadow: '0 4px 14px rgba(0, 132, 255, 0.3)',
+                  boxShadow: '0 2px 8px rgba(0, 132, 255, 0.25)',
                   transition: 'all 0.2s ease',
                   flexShrink: 0
                 }}
               >
-                <span>Chat với nhân viên tư vấn</span>
-                <span style={{ fontSize: '1.1rem' }}>💬</span>
+                <span>Gửi ảnh / Chat báo giá ngay</span>
+                <span>💬</span>
               </a>
             </div>
           </div>
