@@ -231,7 +231,7 @@ export default function PaymentPage() {
           </p>
         </div>
 
-        {/* Thông báo giải thích rõ ràng về 2 loại giá */}
+        {/* Thông báo giải thích rõ ràng về giá & thanh toán 1 lần */}
         <div style={{
           backgroundColor: '#FAF5FF',
           border: '1px solid #E9D5FF',
@@ -240,15 +240,15 @@ export default function PaymentPage() {
           marginBottom: '24px',
           fontSize: '0.86rem',
           color: '#581C87',
-          lineHeight: '1.5',
+          lineHeight: '1.55',
           boxShadow: '0 2px 8px rgba(122, 75, 158, 0.05)'
         }}>
-          <div style={{ fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}>
-            <span>💡</span> <span>Lưu ý về quy đổi giá & Thanh toán:</span>
+          <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '0.9rem' }}>
+            Thông tin thanh toán & Giá về tay:
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <div>• <strong>Giá tại Hàn (Won ₩):</strong> Là giá gốc niêm yết khi mua trực tiếp tại Store Olive Young / Hàn Quốc.</div>
-            <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá niêm yết và phí dịch vụ mua hộ trọn gói. Quý khách thanh toán để TAVY tiến hành đi mua hàng tại Store Hàn.</div>
+            <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá và phí dịch vụ mua hộ trọn gói (toàn bộ tiền vận chuyển 2 đầu đã nằm tất cả trong phí dịch vụ, quý khách chỉ thanh toán 1 lần duy nhất).</div>
           </div>
         </div>
 

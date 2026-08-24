@@ -213,13 +213,12 @@ export default function CartPage() {
                   lineHeight: '1.55',
                   boxShadow: '0 2px 8px rgba(122, 75, 158, 0.05)'
                 }}>
-                  <div style={{ fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem' }}>
-                    <span>💡</span> <strong>Thông tin giá & Vận chuyển:</strong>
+                  <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '0.92rem' }}>
+                    Thông tin thanh toán & Giá về tay:
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     <div>• <strong>Giá tại Hàn (Won ₩):</strong> Giá gốc niêm yết tại Store Olive Young / Hàn Quốc.</div>
-                    <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá niêm yết và phí dịch vụ mua hộ trọn gói.</div>
-                    <div>• <strong>Vận chuyển bay:</strong> Cước cân nặng vận chuyển bay thực tế sẽ thanh toán khi hàng về đến kho Việt Nam.</div>
+                    <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá và phí dịch vụ trọn gói (toàn bộ tiền vận chuyển 2 đầu đã nằm tất cả trong phí dịch vụ, quý khách chỉ thanh toán 1 lần duy nhất).</div>
                   </div>
                 </div>
               </div>
