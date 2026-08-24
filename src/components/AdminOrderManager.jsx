@@ -1531,7 +1531,8 @@ export default function AdminOrderManager() {
                       required
                       placeholder="0988888888"
                       value={manualForm.customerPhone}
-                      onChange={(e) => setManualForm({ ...manualForm, customerPhone: e.target.value })}
+                      onChange={(e) => setManualForm({ ...manualForm, customerPhone: e.target.value.replace(/\D/g, '') })}
+                      maxLength={11}
                       style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}
                     />
                   </div>

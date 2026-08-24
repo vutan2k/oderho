@@ -213,7 +213,15 @@ export default function CartPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Số điện thoại</label>
-                  <input type="tel" required className="input" placeholder="Ví dụ: 0912345678" value={phone} onChange={e => setPhone(e.target.value)} />
+                  <input
+                    type="tel"
+                    required
+                    className="input"
+                    placeholder="Ví dụ: 0912345678"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                    maxLength={11}
+                  />
                 </div>
                 
                 <div className="form-group">

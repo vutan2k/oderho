@@ -26,8 +26,8 @@ const BANK_ACCOUNTS = {
 
 const PAYMENT_DEADLINE_MS = 15 * 60 * 1000; // 15 phút
 
-function getVndQRUrl(amount, orderId) {
-  return `https://img.vietqr.io/image/MBBANK-34966778899-compact2.png?amount=${amount || 0}&addInfo=${encodeURIComponent(orderId)}&accountName=VU%20VAN%20TAN`;
+function getVndQRUrl(amount, _orderId) {
+  return `https://img.vietqr.io/image/MBBANK-34966778899-compact2.png?amount=${amount || 0}&accountName=VU%20VAN%20TAN`;
 }
 
 function getKrwQRUrl(orderId) {
@@ -275,18 +275,9 @@ export default function PaymentPage() {
                   </button>
                 </span>
               </div>
-              <div style={s.bankRow}>
+              <div style={{ ...s.bankRow, borderBottom: 'none' }}>
                 <span style={s.bankLabel}>Chủ tài khoản</span>
                 <span style={s.bankValue}>{bankVn.accountHolder}</span>
-              </div>
-              <div style={{ ...s.bankRow, borderBottom: 'none' }}>
-                <span style={s.bankLabel}>Nội dung CK</span>
-                <span style={s.bankValue}>
-                  {orderId}
-                  <button style={s.copyBtn} onClick={() => copyToClipboard(orderId, 'nd_vn')}>
-                    <Copy size={12} /> {copied === 'nd_vn' ? 'Đã copy!' : 'Copy'}
-                  </button>
-                </span>
               </div>
             </div>
           </div>
@@ -342,18 +333,9 @@ export default function PaymentPage() {
                   </button>
                 </span>
               </div>
-              <div style={s.bankRow}>
+              <div style={{ ...s.bankRow, borderBottom: 'none' }}>
                 <span style={s.bankLabel}>Chủ tài khoản</span>
                 <span style={s.bankValue}>{bankKr.accountHolder}</span>
-              </div>
-              <div style={{ ...s.bankRow, borderBottom: 'none' }}>
-                <span style={s.bankLabel}>Nội dung CK</span>
-                <span style={s.bankValue}>
-                  {orderId}
-                  <button style={s.copyBtn} onClick={() => copyToClipboard(orderId, 'nd_kr')}>
-                    <Copy size={12} /> {copied === 'nd_kr' ? 'Đã copy!' : 'Copy'}
-                  </button>
-                </span>
               </div>
             </div>
           </div>
