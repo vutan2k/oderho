@@ -317,15 +317,6 @@ export default function PaymentPage() {
 
               <div style={s.qrWrap}>
                 <img src={qrKrUrl} alt="QR Code Woori Bank KRW" width={200} height={200} style={{ borderRadius: '12px' }} />
-                <p style={{ color: '#6b7280', fontSize: '0.82rem', marginTop: '8px', fontWeight: 600 }}>Tự động đọc số TK Woori Bank</p>
-                <div style={{ marginTop: '8px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                  <button
-                    style={{ ...s.copyBtn, background: '#3182F6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '8px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                    onClick={() => copyToClipboard('1002959863658', 'stk_kr_main')}
-                  >
-                    {copied === 'stk_kr_main' ? <><CheckCircle size={14} /> Đã sao chép</> : <><Copy size={14} /> 계좌번호 복사 (Copy STK)</>}
-                  </button>
-                </div>
               </div>
             </div>
 
