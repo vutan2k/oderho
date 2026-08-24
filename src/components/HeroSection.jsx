@@ -1,7 +1,60 @@
-import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const BANNER_IMAGES = [
+  {
+    url: '/banner/banner-1.jpg',
+    alt: 'Store Olive Young Hàn Quốc chính hãng'
+  },
+  {
+    url: '/banner/banner-2.jpg',
+    alt: 'Kệ sản phẩm mỹ phẩm nội địa Hàn Quốc tại Store'
+  },
+  {
+    url: '/banner/banner-3.jpg',
+    alt: 'Kiện hàng đóng gói thực tế gửi từ Seoul về Việt Nam'
+  }
+];
 
 export default function HeroSection() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const timerRef = useRef(null);
+
+  // Tự động chuyển ảnh sau mỗi 3.5 giây (tạm dừng khi rê chuột)
+  useEffect(() => {
+    if (isHovered) return;
+    timerRef.current = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % BANNER_IMAGES.length);
+    }, 3500);
+    return () => clearInterval(timerRef.current);
+  }, [isHovered]);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + BANNER_IMAGES.length) % BANNER_IMAGES.length);
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % BANNER_IMAGES.length);
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchEndX - touchStartX;
+    if (diff > 35) {
+      handlePrev();
+    } else if (diff < -35) {
+      handleNext();
+    }
+    setTouchStartX(null);
+  };
+
   return (
     <section style={{
       background: 'linear-gradient(135deg, #FAF8F5 0%, #F3EFF6 100%)',
@@ -72,18 +125,137 @@ export default function HeroSection() {
             </a>
           </div>
 
-          {/* Compact visual banner image */}
-          <div style={{ flex: '1 1 340px', maxWidth: '420px', minWidth: '260px' }}>
-            <div style={{
-              width: '100%',
-              height: '240px',
-              borderRadius: '20px',
-              backgroundImage: 'url("https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              boxShadow: '0 8px 24px rgba(122, 75, 158, 0.12)',
-              border: '4px solid #FFFFFF'
-            }} />
+          {/* Interactive Visual Banner Slider */}
+          <div 
+            style={{ flex: '1 1 360px', maxWidth: '440px', minWidth: '280px', position: 'relative' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div 
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              style={{
+                width: '100%',
+                height: '260px',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                position: 'relative',
+                boxShadow: '0 10px 30px rgba(122, 75, 158, 0.15)',
+                border: '4px solid #FFFFFF',
+                backgroundColor: '#F3F4F6'
+              }}
+            >
+              {BANNER_IMAGES.map((img, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundImage: `url("${img.url}")`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    opacity: idx === currentIndex ? 1 : 0,
+                    transform: idx === currentIndex ? 'scale(1)' : 'scale(1.04)',
+                    transition: 'opacity 0.6s ease, transform 0.6s ease',
+                    pointerEvents: idx === currentIndex ? 'auto' : 'none'
+                  }}
+                  title={img.alt}
+                />
+              ))}
+
+              {/* Nút Xem Ảnh Trước */}
+              <button
+                onClick={handlePrev}
+                aria-label="Ảnh trước"
+                style={{
+                  position: 'absolute',
+                  left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.88)',
+                  backdropFilter: 'blur(4px)',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'var(--text-dark)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  transition: 'background-color 0.2s',
+                  zIndex: 2
+                }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              {/* Nút Xem Ảnh Tiếp Theo */}
+              <button
+                onClick={handleNext}
+                aria-label="Ảnh tiếp theo"
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.88)',
+                  backdropFilter: 'blur(4px)',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'var(--text-dark)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  transition: 'background-color 0.2s',
+                  zIndex: 2
+                }}
+              >
+                <ChevronRight size={18} />
+              </button>
+
+              {/* Dãy chấm nhỏ hiển thị tổng số ảnh & ảnh đang chọn */}
+              <div style={{
+                position: 'absolute',
+                bottom: '12px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                backgroundColor: 'rgba(0, 0, 0, 0.38)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 2
+              }}>
+                {BANNER_IMAGES.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    aria-label={`Chuyển đến ảnh ${idx + 1}`}
+                    style={{
+                      width: idx === currentIndex ? '18px' : '6px',
+                      height: '6px',
+                      borderRadius: '4px',
+                      backgroundColor: idx === currentIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
