@@ -456,7 +456,7 @@ export default function UserProfilePage() {
                       className="input-field"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Nguyễn Văn A"
+                      placeholder="Nhập họ và tên của bạn..."
                       required
                     />
                   </div>
@@ -468,7 +468,7 @@ export default function UserProfilePage() {
                       className="input-field"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="0912345678"
+                      placeholder="Nhập số điện thoại (10 số)..."
                       required
                     />
                   </div>

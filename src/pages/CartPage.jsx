@@ -209,7 +209,7 @@ export default function CartPage() {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label className="form-label">Họ và tên</label>
-                  <input type="text" required className="input" placeholder="Ví dụ: Nguyễn Văn A" value={name} onChange={e => setName(e.target.value)} />
+                  <input type="text" required className="input" placeholder="Nhập họ và tên người nhận..." value={name} onChange={e => setName(e.target.value)} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Số điện thoại</label>
@@ -217,7 +217,7 @@ export default function CartPage() {
                     type="tel"
                     required
                     className="input"
-                    placeholder="Ví dụ: 0912345678"
+                    placeholder="Nhập số điện thoại (10 số)..."
                     value={phone}
                     onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
                     maxLength={11}
