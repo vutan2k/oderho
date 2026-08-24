@@ -266,17 +266,17 @@ export default function KROrderHomePage() {
             <div style={{
               marginTop: '36px',
               padding: '14px 22px',
-              borderRadius: '16px',
+              borderRadius: '14px',
               backgroundColor: '#FFFFFF',
-              border: '1px dashed var(--purple-primary)',
+              border: '1px solid var(--border-color)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               flexWrap: 'wrap',
               gap: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
             }}>
-              <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-dark)' }}>
+              <div style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-dark)' }}>
                 Cần tìm mua sản phẩm khác từ Hàn Quốc?
               </div>
 
@@ -287,21 +287,20 @@ export default function KROrderHomePage() {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  backgroundColor: '#0084FF',
+                  justifyContent: 'center',
+                  backgroundColor: 'var(--purple-primary)',
                   color: '#FFFFFF',
-                  padding: '8px 18px',
-                  borderRadius: '30px',
+                  padding: '8px 20px',
+                  borderRadius: '24px',
                   fontWeight: 700,
                   fontSize: '0.84rem',
                   textDecoration: 'none',
-                  boxShadow: '0 2px 8px rgba(0, 132, 255, 0.25)',
+                  boxShadow: '0 2px 6px rgba(122, 75, 158, 0.25)',
                   transition: 'all 0.2s ease',
                   flexShrink: 0
                 }}
               >
-                <span>Gửi ảnh / Chat báo giá ngay</span>
-                <span>💬</span>
+                Nhận tư vấn
               </a>
             </div>
           </div>
