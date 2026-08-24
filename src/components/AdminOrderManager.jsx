@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminOrderManager() {
-  const { orders, rates, updateOrderStatus, updateOrderQuote, updateOrderTracking, deleteOrder } = useContext(AppContext);
+  const { orders, rates, updateOrderStatus, updateOrderQuote, updateOrderTracking, deleteOrder, createManualOrder } = useContext(AppContext);
   const showToast = useToast();
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -34,6 +34,152 @@ export default function AdminOrderManager() {
   // Media Preview Lightbox Modal (Video / Bill Photo)
   const [activeMediaModal, setActiveMediaModal] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Manual Order Creation State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    customerName: '',
+    customerPhone: '',
+    customerAddress: '',
+    customerNote: '',
+    adminNote: 'Đơn hàng mua hộ trực tiếp theo yêu cầu khách.',
+    status: 'deposit_paid',
+    paymentStatus: 'paid',
+    items: [
+      {
+        name: '',
+        foreignPrice: '',
+        qty: 1,
+        options: '',
+        productImage: '',
+        productUrl: ''
+      }
+    ],
+    customTotalVnd: ''
+  });
+
+  const handleAddManualItem = () => {
+    setManualForm(prev => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        { name: '', foreignPrice: '', qty: 1, options: '', productImage: '', productUrl: '' }
+      ]
+    }));
+  };
+
+  const handleRemoveManualItem = (idx) => {
+    if (manualForm.items.length <= 1) return;
+    setManualForm(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const handleManualItemChange = (idx, field, value) => {
+    setManualForm(prev => {
+      const updated = [...prev.items];
+      updated[idx] = { ...updated[idx], [field]: value };
+      return { ...prev, items: updated };
+    });
+  };
+
+  const calculateManualTotals = () => {
+    const totalKrw = manualForm.items.reduce((sum, item) => {
+      const p = parseFloat(String(item.foreignPrice || '').replace(/,/g, '')) || 0;
+      const q = parseInt(item.qty) || 1;
+      return sum + (p * q);
+    }, 0);
+    const serviceFeePercent = rates?.serviceFeePercent ?? 5;
+    const calculatedVnd = Math.round(totalKrw * krwRate * (1 + serviceFeePercent / 100));
+    const finalVnd = manualForm.customTotalVnd !== '' ? (parseFloat(String(manualForm.customTotalVnd).replace(/,/g, '')) || 0) : calculatedVnd;
+    return { totalKrw, calculatedVnd, finalVnd };
+  };
+
+  const handleSaveManualOrder = async (e) => {
+    e.preventDefault();
+    if (!manualForm.customerName.trim()) {
+      if (showToast) showToast('Vui lòng nhập tên khách hàng!', 'error');
+      return;
+    }
+    if (!manualForm.customerPhone.trim()) {
+      if (showToast) showToast('Vui lòng nhập số điện thoại khách!', 'error');
+      return;
+    }
+    const validItems = manualForm.items.filter(i => i.name.trim());
+    if (validItems.length === 0) {
+      if (showToast) showToast('Vui lòng nhập ít nhất 1 sản phẩm!', 'error');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { totalKrw, finalVnd } = calculateManualTotals();
+      const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+      const serviceFeePercent = rates?.serviceFeePercent ?? 5;
+      
+      const formattedItems = validItems.map((item, idx) => {
+        const fPrice = parseFloat(String(item.foreignPrice || '').replace(/,/g, '')) || 0;
+        return {
+          goodsNo: `MANUAL-${Date.now()}-${idx + 1}`,
+          name: item.name.trim(),
+          foreignPrice: fPrice,
+          price: Math.round(fPrice * krwRate * (1 + serviceFeePercent / 100)),
+          qty: parseInt(item.qty) || 1,
+          options: item.options.trim() || 'Hàng mua hộ ngoài hệ thống',
+          productImage: item.productImage.trim() || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80',
+          productUrl: item.productUrl.trim() || ''
+        };
+      });
+
+      const payload = {
+        id: orderId,
+        customerName: manualForm.customerName.trim(),
+        customerPhone: manualForm.customerPhone.trim(),
+        customerAddress: manualForm.customerAddress.trim() || 'Địa chỉ nhận hàng cập nhật sau',
+        customerNote: manualForm.customerNote.trim(),
+        adminNote: manualForm.adminNote.trim(),
+        country: 'KRW',
+        foreignPrice: totalKrw,
+        totalAmountKrw: totalKrw,
+        totalVnd: finalVnd,
+        status: manualForm.status,
+        paymentStatus: manualForm.paymentStatus,
+        paymentMethod: 'manual',
+        items: formattedItems,
+        productName: formattedItems.map(i => i.name).join(' + '),
+        productImage: formattedItems[0].productImage,
+        qty: formattedItems.reduce((sum, i) => sum + i.qty, 0),
+        quote: {
+          rawVnd: Math.round(totalKrw * krwRate),
+          serviceFeeVnd: Math.round(totalKrw * krwRate * (serviceFeePercent / 100)),
+          totalVnd: finalVnd
+        }
+      };
+
+      if (createManualOrder) {
+        await createManualOrder(payload);
+      }
+      if (showToast) showToast(`Đã tạo đơn hàng ${orderId} thành công!`, 'success');
+      setIsCreateModalOpen(false);
+      setManualForm({
+        customerName: '',
+        customerPhone: '',
+        customerAddress: '',
+        customerNote: '',
+        adminNote: 'Đơn hàng mua hộ trực tiếp theo yêu cầu khách.',
+        status: 'deposit_paid',
+        paymentStatus: 'paid',
+        items: [{ name: '', foreignPrice: '', qty: 1, options: '', productImage: '', productUrl: '' }],
+        customTotalVnd: ''
+      });
+    } catch (err) {
+      console.error(err);
+      if (showToast) showToast('Lỗi khi tạo đơn hàng thủ công!', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const krwRate = rates?.KRW?.rate || 19.5;
   const formatVnd = (n) => (n || n === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VNĐ` : '0 VNĐ';
@@ -413,6 +559,26 @@ export default function AdminOrderManager() {
                 </button>
               </div>
             )}
+
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              style={{
+                backgroundColor: 'var(--purple-primary)',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 8px rgba(122, 75, 158, 0.3)'
+              }}
+            >
+              <Plus size={16} /> Tạo Đơn Thủ Công
+            </button>
 
             <button
               onClick={handleExportOrdersCSV}
@@ -1291,6 +1457,300 @@ export default function AdminOrderManager() {
               )}
             </div>
 
+          </div>
+        </div>
+      )}
+
+
+      {/* ═══════════ MODAL: TẠO ĐƠN HÀNG THỦ CÔNG (MANUAL ORDER CREATION) ═══════════ */}
+      {isCreateModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, padding: '16px'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-white)', borderRadius: '18px',
+            width: '850px', maxWidth: '100%', maxHeight: '90vh',
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.25)', border: '1px solid var(--border-color)'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '18px 24px', backgroundColor: 'var(--bg-ivory)',
+              borderBottom: '1px solid var(--border-color)', display: 'flex',
+              alignItems: 'center', justifyContent: 'space-between'
+            }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-dark)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Plus size={20} style={{ color: 'var(--purple-primary)' }} />
+                  Tạo Đơn Hàng Mua Hộ Ngoài Hệ Thống
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                  Nhập thông tin khách hàng và danh sách sản phẩm cần mua hộ trực tiếp tại Store Hàn Quốc.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSaveManualOrder} style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              {/* KHỐI 1: THÔNG TIN KHÁCH HÀNG */}
+              <div style={{ backgroundColor: '#F9FAFB', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Phone size={16} style={{ color: 'var(--purple-primary)' }} />
+                  1. Thông Tin Khách Hàng
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Tên khách hàng (*):
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Nguyễn Văn A"
+                      value={manualForm.customerName}
+                      onChange={(e) => setManualForm({ ...manualForm, customerName: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Số điện thoại (*):
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="0988888888"
+                      value={manualForm.customerPhone}
+                      onChange={(e) => setManualForm({ ...manualForm, customerPhone: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    Địa chỉ nhận hàng tại Việt Nam:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Số nhà, tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành..."
+                    value={manualForm.customerAddress}
+                    onChange={(e) => setManualForm({ ...manualForm, customerAddress: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* KHỐI 2: DANH SÁCH SẢN PHẨM NGOÀI HỆ THỐNG */}
+              <div style={{ backgroundColor: '#F9FAFB', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-dark)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sparkles size={16} style={{ color: 'var(--purple-primary)' }} />
+                    2. Danh Sách Món Hàng Cần Mua Hộ ({manualForm.items.length})
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={handleAddManualItem}
+                    style={{
+                      backgroundColor: 'var(--bg-subtle-purple)', color: 'var(--purple-primary)',
+                      border: '1px solid var(--purple-light)', padding: '5px 12px',
+                      borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer'
+                    }}
+                  >
+                    + Thêm Món
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {manualForm.items.map((item, idx) => (
+                    <div key={idx} style={{ backgroundColor: '#FFFFFF', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--purple-primary)' }}>
+                          Sản phẩm #{idx + 1}
+                        </span>
+                        {manualForm.items.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveManualItem(idx)}
+                            style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                          >
+                            Xóa món này
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                        <div style={{ gridColumn: 'span 2' }}>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            Tên sản phẩm (*):
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="VD: Kem Dưỡng Phục Hồi Aestura Atobarrier 365 Cream 80ml"
+                            value={item.name}
+                            onChange={(e) => handleManualItemChange(idx, 'name', e.target.value)}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            Giá gốc Store Hàn (Won ₩):
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="VD: 31000"
+                            value={item.foreignPrice}
+                            onChange={(e) => handleManualItemChange(idx, 'foreignPrice', e.target.value)}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 700 }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            Số lượng:
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.qty}
+                            onChange={(e) => handleManualItemChange(idx, 'qty', e.target.value)}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            Phân loại / Màu sắc / Size:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="VD: Tuýp 80ml, Màu #01"
+                            value={item.options}
+                            onChange={(e) => handleManualItemChange(idx, 'options', e.target.value)}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            URL Ảnh sản phẩm (tùy chọn):
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://..."
+                            value={item.productImage}
+                            onChange={(e) => handleManualItemChange(idx, 'productImage', e.target.value)}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* KHỐI 3: TỔNG KẾT TIỀN & TRẠNG THÁI KHỞI TẠO */}
+              <div style={{ backgroundColor: '#F9FAFB', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <CreditCard size={16} style={{ color: 'var(--purple-primary)' }} />
+                  3. Tổng Kết Tiền & Trạng Thái
+                </h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+                  <div style={{ backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>TỔNG TIỀN GỐC WON:</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-dark)', marginTop: '2px' }}>
+                      ₩{calculateManualTotals().totalKrw.toLocaleString('vi-VN')}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '2px' }}>
+                      Tỷ giá: {krwRate}đ + {rates?.serviceFeePercent ?? 5}% Phí DV
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>TỔNG VNĐ QUY ĐỔI GỢI Ý:</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--purple-primary)', marginTop: '2px' }}>
+                      {formatVnd(calculateManualTotals().calculatedVnd)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Tuỳ chỉnh Tổng VNĐ chốt với khách:
+                    </label>
+                    <input
+                      type="number"
+                      placeholder={`Mặc định: ${calculateManualTotals().calculatedVnd}`}
+                      value={manualForm.customTotalVnd}
+                      onChange={(e) => setManualForm({ ...manualForm, customTotalVnd: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.9rem', fontWeight: 800, color: 'var(--purple-primary)' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Trạng thái đơn hàng khởi tạo:
+                    </label>
+                    <select
+                      value={manualForm.status}
+                      onChange={(e) => setManualForm({ ...manualForm, status: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem', fontWeight: 700 }}
+                    >
+                      {['deposit_paid', 'pending', 'confirmed', 'purchased', 'packed_kr', 'in_transit_air', 'customs_cleared', 'completed'].map((k) => (
+                        <option key={k} value={k}>{ORDER_STATUSES[k]?.label || k}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Tình trạng thanh toán:
+                    </label>
+                    <select
+                      value={manualForm.paymentStatus}
+                      onChange={(e) => setManualForm({ ...manualForm, paymentStatus: e.target.value })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem', fontWeight: 700 }}
+                    >
+                      <option value="paid">Đã thanh toán / Đã cọc 100%</option>
+                      <option value="unpaid">Chưa thanh toán</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  style={{ padding: '10px 18px', borderRadius: '8px', backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  style={{ padding: '10px 24px', borderRadius: '8px', backgroundColor: 'var(--purple-primary)', color: '#FFFFFF', border: 'none', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(122, 75, 158, 0.3)' }}
+                >
+                  {isSaving ? 'Đang Lưu Đơn...' : '✓ Tạo & Đồng Bộ Lên Hệ Thống'}
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}

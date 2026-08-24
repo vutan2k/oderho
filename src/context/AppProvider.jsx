@@ -423,6 +423,35 @@ export const AppProvider = ({ children }) => {
     return res;
   };
 
+  const createManualOrder = async (orderData) => {
+    const orderId = orderData.id || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+    const payload = {
+      id: orderId,
+      ...orderData,
+      createdAt: orderData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      userEmail: orderData.userEmail || 'admin_manual@tavykorea.vn',
+      status: orderData.status || 'deposit_paid',
+      country: orderData.country || 'KRW',
+    };
+
+    try {
+      await createOrderInDB(payload);
+    } catch (err) {
+      console.warn("createOrderInDB fallback:", err);
+    }
+
+    const newOrder = { id: orderId, ...payload };
+    setOrders(prev => [newOrder, ...prev.filter(o => o.id !== orderId)]);
+    try {
+      const saved = localStorage.getItem('beauty_orders');
+      const parsed = saved ? JSON.parse(saved) : [];
+      localStorage.setItem('beauty_orders', JSON.stringify([newOrder, ...parsed.filter(o => o.id !== orderId)]));
+    } catch {}
+
+    return { success: true, id: orderId, order: newOrder };
+  };
+
   const deleteOrder = async (orderId) => {
     const res = await deleteOrderFromDB(orderId);
     const updated = orders.filter(o => o.id !== orderId);
@@ -1028,6 +1057,7 @@ export const AppProvider = ({ children }) => {
     updateCartQty,
     clearCart,
     createOrder,
+    createManualOrder,
     deleteOrder,
     // DB service functions (exposed for other components)
     subscribeToOrders,

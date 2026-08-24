@@ -261,6 +261,59 @@ export default function KROrderHomePage() {
               onSelectProduct={handleAddToCart}
               onViewDetail={setDetailProduct}
             />
+
+            {/* Banner Thông Báo Hỗ Trợ Đặt Hàng Ngoài Hệ Thống */}
+            <div style={{
+              marginTop: '48px',
+              padding: '24px 28px',
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, #FAF5FF 0%, #F0FDF4 100%)',
+              border: '1.5px dashed var(--purple-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '20px',
+              boxShadow: '0 4px 16px rgba(122, 75, 158, 0.06)'
+            }}>
+              <div style={{ flex: '1 1 500px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--purple-primary)', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: 'rgba(122, 75, 158, 0.1)', padding: '3px 10px', borderRadius: '20px' }}>
+                    DỊCH VỤ MUA HỘ THEO YÊU CẦU
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-dark)', margin: '0 0 6px 0' }}>
+                  Không tìm thấy sản phẩm mong muốn hoặc muốn order hàng ngoài hệ thống?
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.5' }}>
+                  TAVY Korea nhận mua hộ mọi sản phẩm từ Olive Young, hiệu thuốc và các Store nội địa Hàn Quốc. Hãy gửi ảnh hoặc link sản phẩm cho nhân viên để được hỗ trợ báo giá và đặt hàng trực tiếp!
+                </p>
+              </div>
+
+              <a
+                href="https://m.me/100062954372060"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  backgroundColor: '#0084FF',
+                  color: '#FFFFFF',
+                  padding: '12px 24px',
+                  borderRadius: '30px',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(0, 132, 255, 0.3)',
+                  transition: 'all 0.2s ease',
+                  flexShrink: 0
+                }}
+              >
+                <span>Chat với nhân viên tư vấn</span>
+                <span style={{ fontSize: '1.1rem' }}>💬</span>
+              </a>
+            </div>
           </div>
         </section>
 
