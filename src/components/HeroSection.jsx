@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 const BANNER_IMAGES = [
   {
@@ -71,7 +71,7 @@ export default function HeroSection() {
           gap: '24px'
         }}>
           {/* Headline & CTA */}
-          <div style={{ flex: '1 1 480px', minWidth: '280px' }}>
+          <div style={{ flex: '1 1 440px', minWidth: '280px' }}>
             <span style={{
               fontSize: '0.78rem',
               fontWeight: 800,
@@ -125,9 +125,9 @@ export default function HeroSection() {
             </a>
           </div>
 
-          {/* Interactive Visual Banner Slider */}
+          {/* Interactive Visual Banner Slider (Mở rộng thêm 20%) */}
           <div 
-            style={{ flex: '1 1 360px', maxWidth: '440px', minWidth: '280px', position: 'relative' }}
+            style={{ flex: '1 1 420px', maxWidth: '530px', minWidth: '280px', position: 'relative' }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
@@ -136,11 +136,11 @@ export default function HeroSection() {
               onTouchEnd={handleTouchEnd}
               style={{
                 width: '100%',
-                height: '260px',
-                borderRadius: '20px',
+                height: '315px',
+                borderRadius: '22px',
                 overflow: 'hidden',
                 position: 'relative',
-                boxShadow: '0 10px 30px rgba(122, 75, 158, 0.15)',
+                boxShadow: '0 12px 36px rgba(122, 75, 158, 0.16)',
                 border: '4px solid #FFFFFF',
                 backgroundColor: '#F3F4F6'
               }}
@@ -166,72 +166,16 @@ export default function HeroSection() {
                 />
               ))}
 
-              {/* Nút Xem Ảnh Trước */}
-              <button
-                onClick={handlePrev}
-                aria-label="Ảnh trước"
-                style={{
-                  position: 'absolute',
-                  left: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.88)',
-                  backdropFilter: 'blur(4px)',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: 'var(--text-dark)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  transition: 'background-color 0.2s',
-                  zIndex: 2
-                }}
-              >
-                <ChevronLeft size={18} />
-              </button>
-
-              {/* Nút Xem Ảnh Tiếp Theo */}
-              <button
-                onClick={handleNext}
-                aria-label="Ảnh tiếp theo"
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.88)',
-                  backdropFilter: 'blur(4px)',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: 'var(--text-dark)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  transition: 'background-color 0.2s',
-                  zIndex: 2
-                }}
-              >
-                <ChevronRight size={18} />
-              </button>
-
               {/* Dãy chấm nhỏ hiển thị tổng số ảnh & ảnh đang chọn */}
               <div style={{
                 position: 'absolute',
-                bottom: '12px',
+                bottom: '14px',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '4px 10px',
+                padding: '5px 12px',
                 borderRadius: '20px',
                 backgroundColor: 'rgba(0, 0, 0, 0.38)',
                 backdropFilter: 'blur(4px)',
@@ -243,7 +187,7 @@ export default function HeroSection() {
                     onClick={() => setCurrentIndex(idx)}
                     aria-label={`Chuyển đến ảnh ${idx + 1}`}
                     style={{
-                      width: idx === currentIndex ? '18px' : '6px',
+                      width: idx === currentIndex ? '20px' : '6px',
                       height: '6px',
                       borderRadius: '4px',
                       backgroundColor: idx === currentIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
