@@ -221,7 +221,7 @@ export default function PaymentPage() {
         </div>
 
         {/* Timer & Renew Button */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={s.timer}>
             <Clock size={20} />
             {isExpired ? 'Đơn hàng đã bị hủy do quá hạn 15 phút!' : formatTime(timeLeft)}
@@ -229,6 +229,27 @@ export default function PaymentPage() {
           <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '8px' }}>
             {isExpired ? 'Đơn hàng đã tự động hủy. Vui lòng tạo đơn hàng mới nếu bạn vẫn muốn mua sản phẩm.' : 'Vui lòng chuyển khoản trong thời gian trên'}
           </p>
+        </div>
+
+        {/* Thông báo giải thích rõ ràng về 2 loại giá */}
+        <div style={{
+          backgroundColor: '#FAF5FF',
+          border: '1px solid #E9D5FF',
+          borderRadius: '14px',
+          padding: '14px 18px',
+          marginBottom: '24px',
+          fontSize: '0.86rem',
+          color: '#581C87',
+          lineHeight: '1.5',
+          boxShadow: '0 2px 8px rgba(122, 75, 158, 0.05)'
+        }}>
+          <div style={{ fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}>
+            <span>💡</span> <span>Lưu ý về quy đổi giá & Thanh toán:</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div>• <strong>Giá tại Hàn (Won ₩):</strong> Là giá gốc niêm yết khi mua trực tiếp tại Store Olive Young / Hàn Quốc.</div>
+            <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá niêm yết và phí dịch vụ mua hộ trọn gói. Quý khách thanh toán để TAVY tiến hành đi mua hàng tại Store Hàn.</div>
+          </div>
         </div>
 
         {/* HAI BẢNG CHUYỂN KHOẢN NẰM NGANG NHAU (SIDE-BY-SIDE GRID) */}

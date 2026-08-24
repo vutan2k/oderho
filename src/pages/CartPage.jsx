@@ -237,17 +237,17 @@ export default function CartPage() {
                   <textarea className="input" placeholder="Ví dụ: Giao hàng trong giờ hành chính..." value={note} onChange={e => setNote(e.target.value)} />
                 </div>
 
-                <div style={{ backgroundColor: '#F3EFF6', padding: '16px', borderRadius: '12px', marginTop: '24px', marginBottom: '24px' }}>
+                <div style={{ backgroundColor: '#F3EFF6', padding: '16px 18px', borderRadius: '14px', marginTop: '24px', marginBottom: '24px', border: '1px solid #E9D5FF' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Tổng tạm tính (Hàn):</span>
-                    <strong style={{ fontSize: '1.1rem' }}>{formatKrw(subTotalKrw)}</strong>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>1. Tổng giá gốc tại Hàn (Won):</span>
+                    <strong style={{ fontSize: '1.05rem', color: '#374151' }}>{formatKrw(subTotalKrw)}</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Tạm tính (VNĐ):</span>
-                    <strong style={{ fontSize: '1.1rem', color: 'var(--purple-dark)' }}>~ {formatVnd(subTotalVnd)}</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: '8px', borderTop: '1px dashed #D8B4FE' }}>
+                    <span style={{ color: 'var(--text-dark)', fontWeight: 700, fontSize: '0.92rem' }}>2. Tổng tiền về tay (VNĐ):</span>
+                    <strong style={{ fontSize: '1.25rem', color: 'var(--purple-primary)' }}>{formatVnd(subTotalVnd)}</strong>
                   </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '8px', fontStyle: 'italic' }}>
-                    * Giá chưa bao gồm Thuế, Công Mua và Phí Vận Chuyển Cân Nặng. Admin sẽ báo giá chi tiết sau.
+                  <p style={{ fontSize: '0.76rem', color: '#6B7280', marginTop: '10px', lineHeight: '1.45', margin: '10px 0 0 0' }}>
+                    * <em>Giá VNĐ đã bao gồm tỷ giá niêm yết và phí dịch vụ mua hộ trọn gói. Cước cân nặng bay Air thực tế thanh toán khi hàng về đến kho Việt Nam.</em>
                   </p>
                 </div>
 

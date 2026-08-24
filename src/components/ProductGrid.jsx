@@ -113,13 +113,15 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
               </div>
 
               <div>
-                {/* 2 Dòng Giá Won & Giá VNĐ xếp chồng căn giữa */}
-                <div style={{ marginBottom: '14px', background: '#F8F6FA', padding: '10px 12px', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.82rem', color: '#6B7280', fontWeight: 600, letterSpacing: '0.2px' }}>
-                    {formatKrw(product.foreignPrice)}
+                {/* 2 Dòng Giá Rõ Ràng: Giá tại Hàn & Giá về tay */}
+                <div style={{ marginBottom: '14px', background: '#F8F6FA', padding: '10px 14px', borderRadius: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: '#6B7280', marginBottom: '4px' }}>
+                    <span>Giá tại Hàn:</span>
+                    <strong style={{ color: '#374151', fontWeight: 700 }}>{formatKrw(product.foreignPrice)}</strong>
                   </div>
-                  <div style={{ fontSize: '1.12rem', color: 'var(--purple-primary)', fontFamily: "'Be Vietnam Pro', 'Inter', sans-serif", fontWeight: 800, letterSpacing: '-0.3px', marginTop: '2px' }}>
-                    {formatVnd(calculatedVnd)}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)' }}>Giá về tay:</span>
+                    <strong style={{ fontSize: '1.08rem', color: 'var(--purple-primary)', fontWeight: 800 }}>{formatVnd(calculatedVnd)}</strong>
                   </div>
                 </div>
 

@@ -231,13 +231,23 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
             {/* Nút Thêm Vào Giỏ Hàng & Khối Giá Rõ Ràng */}
             {!hideAddToCart && onOrderNow && (
               <div style={{ paddingTop: '16px', borderTop: '1px solid #F3F4F6', marginTop: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                    Giá gốc Hàn: <strong style={{ color: 'var(--text-dark)' }}>{formatKrw(product.foreignPrice)}</strong>
-                  </span>
-                  <span style={{ fontSize: '1.25rem', color: 'var(--purple-primary)', fontWeight: 800 }}>
-                    {formatVnd(calculatedVnd)}
-                  </span>
+                <div style={{ background: '#F8F6FA', padding: '12px 16px', borderRadius: '12px', marginBottom: '14px', border: '1px solid #E5E7EB' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      1. Giá tại Hàn (Won gốc):
+                    </span>
+                    <strong style={{ fontSize: '0.95rem', color: '#374151', fontWeight: 700 }}>
+                      {formatKrw(product.foreignPrice)}
+                    </strong>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px dashed #E5E7EB' }}>
+                    <span style={{ fontSize: '0.88rem', color: 'var(--text-dark)', fontWeight: 700 }}>
+                      2. Giá về tay (VNĐ):
+                    </span>
+                    <strong style={{ fontSize: '1.25rem', color: 'var(--purple-primary)', fontWeight: 800 }}>
+                      {formatVnd(calculatedVnd)}
+                    </strong>
+                  </div>
                 </div>
                 <button
                   onClick={(e) => {
