@@ -64,8 +64,8 @@ export const ORDER_STATUSES = {
   in_transit_air: {
     id: 'in_transit_air',
     stepNumber: 6,
-    label: 'Bước 6: Bay Air Hàn - Việt',
-    shortLabel: 'Shipping Air',
+    label: 'Bước 6: Vận chuyển bay Hàn - Việt',
+    shortLabel: 'Đang bay',
     color: '#0891B2',
     bgColor: '#CFFAFE',
     borderColor: '#06B6D4',
@@ -132,8 +132,8 @@ export const ORDER_STATUSES = {
   transit: {
     id: 'transit',
     stepNumber: 6,
-    label: 'Shipping Air',
-    shortLabel: 'Shipping Air',
+    label: 'Vận chuyển bay',
+    shortLabel: 'Đang bay',
     color: '#0891B2',
     bgColor: '#CFFAFE',
     borderColor: '#06B6D4',
@@ -184,7 +184,7 @@ export const ORDER_STEPS = [
   { key: 'confirmed', step: 3, title: 'TAVY Xác Nhận Đơn', shortLabel: 'Đã duyệt', stepIndex: 2 },
   { key: 'purchased', step: 4, title: 'TAVY Mua Hàng (Video POV)', shortLabel: 'Mua hàng', stepIndex: 3, hasPovVideo: true },
   { key: 'packed_kr', step: 5, title: 'TAVY Đóng Hàng (Video Kiện)', shortLabel: 'Đóng kiện', stepIndex: 4, hasPackingVideo: true },
-  { key: 'in_transit_air', step: 6, title: 'Bay Air Hàn - Việt', shortLabel: 'Bay Air', stepIndex: 5 },
+  { key: 'in_transit_air', step: 6, title: 'Vận Chuyển Bay Hàn - Việt', shortLabel: 'Đang bay', stepIndex: 5 },
   { key: 'customs_cleared', step: 7, title: 'Thông Quan & Kho VN', shortLabel: 'Kho VN', stepIndex: 6 },
   { key: 'completed', step: 8, title: 'Giao Hàng & Hoàn Tất', shortLabel: 'Đã giao', stepIndex: 7 }
 ];

@@ -85,7 +85,7 @@ export default function OrdersPage() {
     { id: 'confirmed', label: 'Đã xác nhận' },
     { id: 'purchased', label: 'Mua hàng (POV)' },
     { id: 'packed_kr', label: 'Đóng kiện' },
-    { id: 'in_transit_air', label: 'Bay Air' },
+    { id: 'in_transit_air', label: 'Đang bay' },
     { id: 'customs_cleared', label: 'Kho VN' },
     { id: 'completed', label: 'Hoàn tất' }
   ];

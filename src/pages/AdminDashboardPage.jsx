@@ -644,14 +644,14 @@ export default function AdminDashboardPage() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: urgentQueue.needFlight.length > 0 ? '#0369A1' : 'var(--text-muted)' }}>
-                        3. Gửi Air Incheon ➔ VN
+                        3. Gửi bay Incheon ➔ VN
                       </span>
                       <span style={{ fontSize: '1.1rem', fontWeight: 900, color: urgentQueue.needFlight.length > 0 ? '#0284C7' : 'var(--text-light)' }}>
                         {urgentQueue.needFlight.length}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '6px 0 0 0' }}>
-                      Kiện đã đóng, cần nhập mã AWB & ngày bay Air.
+                      Kiện đã đóng, cần nhập mã vận đơn & ngày bay.
                     </p>
                   </div>
 

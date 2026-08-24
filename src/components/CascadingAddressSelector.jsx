@@ -15,11 +15,15 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
   const [streetAddress, setStreetAddress] = useState('');
 
   const isInitialParsedRef = useRef(false);
+  const lastEmittedAddressRef = useRef('');
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
-  // Reset parsed flag if initialAddress changes externally
+  // Reset parsed flag ONLY if initialAddress changes externally (not from own emission)
   useEffect(() => {
+    if (initialAddress && initialAddress === lastEmittedAddressRef.current) {
+      return;
+    }
     isInitialParsedRef.current = false;
   }, [initialAddress]);
 
@@ -163,6 +167,7 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
     });
 
     const fullAddress = uniqueParts.join(', ');
+    lastEmittedAddressRef.current = fullAddress;
 
     if (onChangeRef.current) {
       onChangeRef.current({

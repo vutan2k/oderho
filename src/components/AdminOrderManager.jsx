@@ -485,7 +485,7 @@ export default function AdminOrderManager() {
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
             <input
               type="text"
-              placeholder="Tìm kiếm Mã đơn (ORD-...), Tên khách, SĐT, Mã AWB Air, Vận đơn VN..."
+              placeholder="Tìm kiếm Mã đơn (ORD-...), Tên khách, SĐT, Mã vận đơn bay, Vận đơn VN..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.84rem', outline: 'none' }}
@@ -1209,7 +1209,7 @@ export default function AdminOrderManager() {
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Plane size={13} style={{ color: '#0284C7' }} /> Mã Vận Đơn Air (AWB)
+                    <Plane size={13} style={{ color: '#0284C7' }} /> Mã Vận Đơn Bay
                   </label>
                   <input
                     type="text"
@@ -1399,7 +1399,7 @@ export default function AdminOrderManager() {
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>Mã AWB Air</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>Mã vận đơn bay</label>
                       <input
                         type="text"
                         value={orderForm.trackingCode}

@@ -206,7 +206,7 @@ export default function PolicyPage() {
               <div style={{ background: '#F9FAFB', padding: '18px', borderRadius: '10px', borderLeft: '3px solid #10B981' }}>
                 <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>3. Thời gian giao hàng (Hàn Quốc ✈️ Việt Nam)</h3>
                 <p style={{ margin: 0 }}>
-                  - <strong>Đường bay nhanh (Air):</strong> 3 - 5 ngày làm việc kể từ khi xuất kho Seoul.<br />
+                  - <strong>Đường bay nhanh:</strong> 3 - 5 ngày làm việc kể từ khi xuất kho Seoul.<br />
                   - <strong>Đường biển (Hàng nặng/cồng kềnh):</strong> 10 - 15 ngày làm việc.
                 </p>
               </div>

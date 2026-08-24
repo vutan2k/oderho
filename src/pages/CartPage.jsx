@@ -200,6 +200,28 @@ export default function CartPage() {
                     </div>
                   </div>
                 ))}
+
+                {/* Banner Thông Báo Giải Thích Giá Nằm Dưới Danh Sách Sản Phẩm */}
+                <div style={{
+                  marginTop: '20px',
+                  backgroundColor: '#FAF5FF',
+                  border: '1px solid #E9D5FF',
+                  borderRadius: '14px',
+                  padding: '16px 20px',
+                  fontSize: '0.88rem',
+                  color: '#581C87',
+                  lineHeight: '1.55',
+                  boxShadow: '0 2px 8px rgba(122, 75, 158, 0.05)'
+                }}>
+                  <div style={{ fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem' }}>
+                    <span>💡</span> <strong>Thông tin giá & Vận chuyển:</strong>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div>• <strong>Giá tại Hàn (Won ₩):</strong> Giá gốc niêm yết tại Store Olive Young / Hàn Quốc.</div>
+                    <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá niêm yết và phí dịch vụ mua hộ trọn gói.</div>
+                    <div>• <strong>Vận chuyển bay:</strong> Cước cân nặng vận chuyển bay thực tế sẽ thanh toán khi hàng về đến kho Việt Nam.</div>
+                  </div>
+                </div>
               </div>
 
             {/* Cột phải: Form Đặt Hàng */}
@@ -227,7 +249,7 @@ export default function CartPage() {
                 <div className="form-group">
                   <label className="form-label">Tỉnh/Thành, Quận/Huyện, Phường/Xã</label>
                   <CascadingAddressSelector 
-                    initialAddress={currentUser?.address || address}
+                    initialAddress={currentUser?.address || ''}
                     onChange={(addrInfo) => setAddress(addrInfo.fullAddress)}
                   />
                 </div>
@@ -247,7 +269,7 @@ export default function CartPage() {
                     <strong style={{ fontSize: '1.25rem', color: 'var(--purple-primary)' }}>{formatVnd(subTotalVnd)}</strong>
                   </div>
                   <p style={{ fontSize: '0.76rem', color: '#6B7280', marginTop: '10px', lineHeight: '1.45', margin: '10px 0 0 0' }}>
-                    * <em>Giá VNĐ đã bao gồm tỷ giá niêm yết và phí dịch vụ mua hộ trọn gói. Cước cân nặng bay Air thực tế thanh toán khi hàng về đến kho Việt Nam.</em>
+                    * <em>Giá VNĐ đã bao gồm tỷ giá niêm yết và phí dịch vụ mua hộ trọn gói. Cước cân nặng vận chuyển bay thực tế thanh toán khi hàng về đến kho Việt Nam.</em>
                   </p>
                 </div>
 
