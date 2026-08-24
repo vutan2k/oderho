@@ -50,10 +50,12 @@ export default function Navbar({ logoSrc: _logoSrc } = {}) {
             {cart && cart.length > 0 && (
               <span style={{
                 position: 'absolute', top: '-8px', right: '-12px',
-                backgroundColor: '#3B82F6', color: '#FFF', fontSize: '0.75rem',
+                backgroundColor: 'var(--purple-primary)', color: '#FFF', fontSize: '0.75rem',
                 fontWeight: 800, width: '22px', height: '22px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                borderRadius: '50%'
+                borderRadius: '50%',
+                border: '2px solid #FFFFFF',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
               }}>
                 {cart.length > 99 ? '99+' : cart.length}
               </span>

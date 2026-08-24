@@ -1,95 +1,93 @@
 import React from 'react';
-import { ArrowRight, ShieldCheck, Pill, CreditCard } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export default function HeroSection() {
   return (
     <section style={{
-      background: 'linear-gradient(135deg, #F9F6FA 0%, #EDE6F2 100%)',
-      padding: '70px 0',
-      position: 'relative',
-      overflow: 'hidden'
+      background: 'linear-gradient(135deg, #FAF8F5 0%, #F3EFF6 100%)',
+      padding: '48px 0 36px 0',
+      borderBottom: '1px solid var(--border-color)',
+      position: 'relative'
     }}>
       <div className="container">
-        <div className="hero-grid">
-          {/* Hero Content */}
-          <div className="animate-fade-up">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '24px'
+        }}>
+          {/* Headline & CTA */}
+          <div style={{ flex: '1 1 480px', minWidth: '280px' }}>
             <span style={{
-              fontSize: '0.85rem',
-              fontWeight: 700,
+              fontSize: '0.78rem',
+              fontWeight: 800,
               letterSpacing: '2px',
-              color: 'var(--purple-dark)',
+              color: 'var(--purple-primary)',
               textTransform: 'uppercase',
               display: 'block',
-              marginBottom: '16px'
+              marginBottom: '10px'
             }}>
-              CHUYÊN MỸ PHẨM & THỰC PHẨM CHỨC NĂNG HÀN QUỐC
+              MUA HÀNG HÀN QUỐC TRỰC TIẾP TỪ STORE
             </span>
 
-            <h1 className="hero-title" style={{
-              fontSize: '3.2rem',
-              lineHeight: '1.2',
-              fontWeight: 400,
+            <h1 style={{
+              fontSize: '2.4rem',
+              lineHeight: '1.25',
+              fontWeight: 700,
               color: 'var(--text-dark)',
-              marginBottom: '20px',
+              marginBottom: '12px',
               fontFamily: 'var(--font-serif)'
             }}>
-              Hàng Chuẩn Store Hàn, <br />
-              <span className="font-serif-italic" style={{ color: 'var(--purple-primary)' }}>Giá Tốt Cho Người Việt</span>
+              Mỹ Phẩm & Sâm Nấm <br />
+              <span className="font-serif-italic" style={{ color: 'var(--purple-primary)', fontWeight: 600 }}>Nội Địa Hàn Chính Hãng</span>
             </h1>
 
-            <p className="hero-desc" style={{
-              fontSize: '1rem',
-              color: '#333333',
-              maxWidth: '500px',
-              marginBottom: '32px',
-              lineHeight: '1.7',
-              fontWeight: 500
+            <p style={{
+              fontSize: '0.92rem',
+              color: 'var(--text-muted)',
+              maxWidth: '520px',
+              marginBottom: '20px',
+              lineHeight: '1.6'
             }}>
-              Cung cấp các sản phẩm Mỹ phẩm Olive Young, Hồng Sâm, Collagen & Các loại thuốc nội địa Hàn Quốc bán tại nhà thuốc.
+              Phân phối và mua hộ trực tiếp từ Olive Young, hiệu thuốc và các cửa hàng uy tín tại Seoul. Giao tận tay tại Việt Nam.
             </p>
 
-            <div style={{ marginBottom: '40px', display: 'flex', gap: '15px' }}>
-              <a href="#products" className="btn-gold" style={{ display: 'inline-flex' }}>
-                <span>XEM DANH MỤC SẢN PHẨM</span>
-                <ArrowRight size={16} />
-              </a>
-            </div>
-
-            {/* 3 Cam kết */}
-            <div className="commitments-flex">
-              {[
-                { icon: <ShieldCheck size={18} />, label: '100% CHÍNH HÃNG HÀN' },
-                { icon: <Pill size={18} />, label: 'CHUẨN HIỆU THUỐC HÀN' },
-                { icon: <CreditCard size={18} />, label: 'THANH TOÁN VIETQR & BANK HÀN' }
-              ].map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: 'var(--purple-dark)' }}>{item.icon}</span>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.5px',
-                    color: 'var(--purple-dark)'
-                  }}>{item.label}</span>
-                </div>
-              ))}
-            </div>
+            <a
+              href="#products"
+              className="btn-gold"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '11px 22px',
+                borderRadius: '30px',
+                textDecoration: 'none',
+                fontSize: '0.88rem',
+                fontWeight: 700
+              }}
+            >
+              <span>Xem tất cả sản phẩm</span>
+              <ArrowRight size={16} />
+            </a>
           </div>
 
-          {/* Hero Image */}
-          <div style={{ position: 'relative', textAlign: 'center' }}>
+          {/* Compact visual banner image */}
+          <div style={{ flex: '1 1 340px', maxWidth: '420px', minWidth: '260px' }}>
             <div style={{
               width: '100%',
-              height: '460px',
-              borderRadius: '24px',
-              backgroundImage: 'url("https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1000&q=80")',
+              height: '240px',
+              borderRadius: '20px',
+              backgroundImage: 'url("https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80")',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              boxShadow: 'var(--shadow-lg)',
-              border: '8px solid #FFFFFF'
-            }}></div>
+              boxShadow: '0 8px 24px rgba(122, 75, 158, 0.12)',
+              border: '4px solid #FFFFFF'
+            }} />
           </div>
         </div>
       </div>
     </section>
   );
 }
+

@@ -79,8 +79,8 @@ export default function ChatWidget() {
             }
           : {
               position: 'fixed',
-              bottom: isMobile ? '80px' : '100px', // Nâng cao gấp đôi so với ban đầu (100px desktop, 80px mobile)
-              right: isMobile ? '14px' : '20px',
+              bottom: isMobile ? '20px' : '24px',
+              right: isMobile ? '16px' : '24px',
               zIndex: 9995,
               fontFamily: 'system-ui, -apple-system, sans-serif'
             }

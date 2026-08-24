@@ -107,8 +107,8 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
                 >
                   {product.name}
                 </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                  Quy cách: {product.options}
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px', minHeight: '1.2em' }}>
+                  {product.options ? `Quy cách: ${product.options}` : 'Hàng chính hãng nội địa Hàn'}
                 </p>
               </div>
 

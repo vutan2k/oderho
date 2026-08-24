@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
@@ -6,7 +7,7 @@ export default function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div>
-            <a href="#" className="brand-logo" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '16px' }}>
+            <Link to="/" className="brand-logo" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '16px' }}>
               <img
                 src="/tavy-logo.png"
                 alt="TAVY Logo"
@@ -15,7 +16,7 @@ export default function Footer() {
               <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '2px', textTransform: 'uppercase' }}>
                 KOREA
               </span>
-            </a>
+            </Link>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '20px' }}>
               TAVY - Hệ thống mua hộ & phân phối Mỹ phẩm Olive Young, Thực phẩm chức năng & Thuốc nội địa Hàn Quốc chính hãng 100% cho người Việt.
             </p>
@@ -24,9 +25,9 @@ export default function Footer() {
           <div className="footer-col">
             <h5>CHÍNH SÁCH & QUY ĐỊNH</h5>
             <ul className="footer-links">
-              <li><a href="/policy#order">Quy định mua hàng hộ</a></li>
-              <li><a href="/policy#refund">Chính sách đổi trả & Hoàn tiền</a></li>
-              <li><a href="/policy#payment">Hướng dẫn thanh toán</a></li>
+              <li><Link to="/policy#order">Quy định mua hàng hộ</Link></li>
+              <li><Link to="/policy#refund">Chính sách đổi trả & Hoàn tiền</Link></li>
+              <li><Link to="/policy#payment">Hướng dẫn thanh toán</Link></li>
             </ul>
           </div>
 

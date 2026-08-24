@@ -6,7 +6,6 @@ import {
 import { AppContext } from '../context/AppContext';
 import ProductDetailModal from '../components/ProductDetailModal';
 import HeroSection from '../components/HeroSection';
-import WhyChooseUs from '../components/WhyChooseUs';
 import ProductGrid from '../components/ProductGrid';
 import Footer from '../components/Footer';
 import { triggerFlyToCart } from '../utils/flyToCart';
@@ -113,10 +112,12 @@ export default function KROrderHomePage() {
                 {cart && cart.length > 0 && (
                   <span style={{
                     position: 'absolute', top: '-8px', right: '-12px',
-                    backgroundColor: '#3B82F6', color: '#FFF', fontSize: '0.75rem',
+                    backgroundColor: 'var(--purple-primary)', color: '#FFF', fontSize: '0.75rem',
                     fontWeight: 800, width: '22px', height: '22px',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    borderRadius: '50%'
+                    borderRadius: '50%',
+                    border: '2px solid #FFFFFF',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
                   }}>
                     {cart.length > 99 ? '99+' : cart.length}
                   </span>
@@ -179,41 +180,33 @@ export default function KROrderHomePage() {
       </header>
 
       <main style={{ flex: 1 }}>
-        <HeroSection krwRate={krwRate * serviceFeeMultiplier} />
-        <WhyChooseUs />
+        {/* Banner Tối Giản */}
+        <HeroSection />
 
-        {/* Danh mục & Danh sách sản phẩm */}
-        <section id="products" style={{ padding: '70px 0', background: 'var(--bg-ivory)' }}>
+        {/* Khu vực Tìm kiếm & Danh mục & Danh sách sản phẩm tập trung */}
+        <section id="products" style={{ padding: '40px 0 60px 0', background: 'var(--bg-ivory)' }}>
           <div className="container">
-            <div className="section-title-wrap" style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <span style={{ color: 'var(--purple-primary)', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' }}>
-                DANH MỤC HÀNG HÓA SẴN CÓ
-              </span>
-              <h2 className="section-title" style={{ fontSize: '2.4rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark)', marginTop: '6px' }}>
-                Mỹ Phẩm & Thực Phẩm Chức Năng Hàn Quốc
-              </h2>
-            </div>
-
             {/* Search Input Bar */}
-            <div style={{ maxWidth: '540px', margin: '0 auto 30px auto', position: 'relative' }}>
+            <div style={{ maxWidth: '580px', margin: '0 auto 24px auto', position: 'relative' }}>
               <input
+                id="search-input-main"
                 type="text"
-                placeholder="Tìm kiếm sản phẩm theo tên hoặc thương hiệu..."
+                placeholder="Tìm kiếm mỹ phẩm, sâm nấm, thương hiệu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '14px 44px 14px 44px',
+                  padding: '13px 44px 13px 44px',
                   borderRadius: '30px',
                   border: '1px solid var(--border-color)',
-                  fontSize: '0.95rem',
+                  fontSize: '0.92rem',
                   outline: 'none',
-                  boxShadow: 'var(--shadow-sm)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                   backgroundColor: '#FFFFFF',
                   color: 'var(--text-dark)'
                 }}
               />
-              <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
@@ -228,20 +221,32 @@ export default function KROrderHomePage() {
               )}
             </div>
 
-            {/* Filter Tabs */}
-            <div className="filter-btn-group" style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
+            {/* Filter Tabs (Cuộn ngang mượt mà trên Mobile) */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '10px',
+              overflowX: 'auto',
+              paddingBottom: '12px',
+              marginBottom: '28px',
+              WebkitOverflowScrolling: 'touch'
+            }}>
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  className="filter-btn"
                   onClick={() => setActiveCategory(cat.id)}
                   style={{
-                    padding: '10px 22px', borderRadius: '30px',
-                    border: activeCategory === cat.id ? '2px solid var(--purple-primary)' : '1px solid #ddd',
+                    padding: '8px 20px',
+                    borderRadius: '30px',
+                    border: activeCategory === cat.id ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
                     backgroundColor: activeCategory === cat.id ? 'var(--purple-primary)' : '#FFF',
                     color: activeCategory === cat.id ? '#FFF' : 'var(--text-dark)',
                     fontWeight: activeCategory === cat.id ? 700 : 500,
-                    fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s ease'
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}
                 >
                   {cat.name}
@@ -249,6 +254,7 @@ export default function KROrderHomePage() {
               ))}
             </div>
 
+            {/* Lưới sản phẩm */}
             <ProductGrid
               products={filteredProducts}
               krwRate={krwRate * serviceFeeMultiplier}
