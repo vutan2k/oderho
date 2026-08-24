@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
   ShoppingBag,
@@ -7,12 +7,20 @@ import {
   Video,
   ArrowRight
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { ORDER_WORKFLOW_STEPS } from '../components/HowItWorksSection';
 
 export default function PolicyPage() {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('workflow'); // 'workflow' | 'order' | 'refund' | 'payment'
+
+  useEffect(() => {
+    const hash = location.hash.replace('#', '');
+    if (['workflow', 'order', 'refund', 'payment'].includes(hash)) {
+      setActiveTab(hash);
+    }
+  }, [location.hash]);
 
   const tabs = [
     { id: 'workflow', label: '1. Quy trình 8 bước', icon: Video },
@@ -191,7 +199,7 @@ export default function PolicyPage() {
                 <ul style={{ paddingLeft: '18px', margin: 0 }}>
                   <li><strong>Giá sản phẩm:</strong> Tính theo giá niêm yết trên website Hàn Quốc (ưu tiên giá sale tại thời điểm đặt cọc).</li>
                   <li><strong>Tỷ giá Won (KRW):</strong> Niêm yết công khai và cập nhật minh bạch theo hệ thống (dao động 19.0 - 20.0đ/Won).</li>
-                  <li><strong>Công thức tính trọn gói:</strong> <code>Giá về tay (VND) = [Giá Won x Tỷ giá] + Phí dịch vụ (nếu có) + Cước vận chuyển Hàn - Việt</code>.</li>
+                  <li><strong>Công thức tính trọn gói:</strong> <code>Giá về tay (VNĐ) = Giá sản phẩm x Tỷ giá</code>. (Phí dịch vụ đã được tính vào giá của sản phẩm).</li>
                 </ul>
               </div>
 

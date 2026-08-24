@@ -101,7 +101,8 @@ export default function AdminOrderManager() {
     const qty = getOrderQty(order);
     const baseVnd = order.quote ? order.quote.rawVnd : Math.round(fPrice * krwRate * qty);
     const taxVnd = order.quote ? order.quote.taxWebVnd : Math.round(baseVnd * 0.05);
-    const serviceVnd = order.quote ? order.quote.serviceFeeVnd : Math.round(baseVnd * 0.05);
+    const serviceFeePercent = rates?.serviceFeePercent || 5;
+    const serviceVnd = order.quote ? order.quote.serviceFeeVnd : Math.round(baseVnd * (serviceFeePercent / 100));
     const shipFeeVnd = order.quote ? order.quote.shippingWeightFeeVnd : 35000;
 
     setOrderForm({

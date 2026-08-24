@@ -7,7 +7,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 import LoadingSpinner from './components/LoadingSpinner';
 import Navbar from './components/Navbar';
-import VersionBadge from './components/VersionBadge';
 import ChatWidget from './components/ChatWidget/ChatWidget';
 
 // Lazy load pages for code-splitting
@@ -30,7 +29,6 @@ export default function App() {
           <HelmetProvider>
             <BrowserRouter>
             <ScrollToTop />
-            <VersionBadge position="bottom-right" />
             <ChatWidget />
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>

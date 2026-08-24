@@ -214,11 +214,22 @@ export default function AdminDashboardPage() {
 
   const handleUpdateKrw = (e) => {
     e.preventDefault();
-    const cleanStr = String(krwRateInput || '').replace(',', '.').trim();
+    const cleanStr = String(krwRateInput ?? '').replace(',', '.').trim();
     const val = parseFloat(cleanStr);
-    if (!val || val <= 0) return;
-    updateRates({ ...rates, KRW: { ...rates.KRW, rate: val } });
-    if (showToast) showToast(`Đã cập nhật tỷ giá KRW = ${val} ₫/Won!`, 'success');
+    const feeStr = String(serviceFeeInput ?? '').replace(',', '.').trim();
+    const feeVal = parseFloat(feeStr);
+
+    if (!val || val <= 0 || isNaN(feeVal) || feeVal < 0) {
+      if (showToast) showToast('Vui lòng nhập tỷ giá và phí dịch vụ hợp lệ!', 'error');
+      return;
+    }
+
+    updateRates({
+      ...rates,
+      KRW: { ...rates.KRW, rate: val },
+      serviceFeePercent: feeVal
+    });
+    if (showToast) showToast(`Đã lưu Tỷ giá = ${val}đ và Phí dịch vụ = ${feeVal}%!`, 'success');
   };
 
   const handleExportCSV = () => {
@@ -278,7 +289,7 @@ export default function AdminDashboardPage() {
     { id: 'orders', label: 'Quy Trình 8 Bước', icon: ShoppingBag, count: orders.length },
     { id: 'products', label: 'Kho Olive Young', icon: FileSpreadsheet, badge: (pendingProducts?.length || 0) > 0 ? pendingProducts.length : null, badgeColor: 'var(--gold-primary)' },
     { id: 'payments', label: 'Thanh Toán VietQR', icon: CreditCard, count: unpaidOrders.length },
-    { id: 'settings', label: 'Tỷ Giá & Cấu Hình', icon: Settings },
+    
   ];
 
   return (
@@ -398,19 +409,39 @@ export default function AdminDashboardPage() {
           })}
         </nav>
 
-        {/* Quick Rate Indicator in Sidebar */}
-        <div style={{ padding: '14px 18px', backgroundColor: 'var(--bg-dark-accent)', margin: '0 12px 12px 12px', borderRadius: '10px', border: '1px solid var(--text-muted)' }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>
-            Tỷ giá hôm nay
+        {/* Editable Rate Form in Sidebar */}
+        <div style={{ padding: '14px', backgroundColor: 'var(--bg-dark-accent)', margin: '0 12px 12px 12px', borderRadius: '10px', border: '1px solid var(--text-muted)' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>
+            Điều chỉnh Tỷ giá & Phí
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--bg-ivory)' }}>
-              1 ₩ = <strong style={{ color: 'var(--gold-primary)' }}>{krwRate} ₫</strong>
-            </span>
-            <span style={{ fontSize: '0.7rem', color: '#10B981', backgroundColor: 'rgba(16,185,129,0.15)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-              +{serviceFee}% Phí
-            </span>
-          </div>
+          <form onSubmit={handleUpdateKrw} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-light)', flex: 1 }}>Tỷ giá VNĐ:</span>
+              <input
+                type="text"
+                value={krwRateInput}
+                onChange={(e) => setKrwRateInput(e.target.value)}
+                style={{ width: '70px', padding: '6px', borderRadius: '6px', border: 'none', fontSize: '0.8rem', fontWeight: 700, textAlign: 'right', backgroundColor: 'var(--bg-ivory)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-light)', flex: 1 }}>Phí DV (%):</span>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={serviceFeeInput}
+                onChange={(e) => setServiceFeeInput(e.target.value)}
+                style={{ width: '70px', padding: '6px', borderRadius: '6px', border: 'none', fontSize: '0.8rem', fontWeight: 700, textAlign: 'right', backgroundColor: 'var(--bg-ivory)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <button
+              type="submit"
+              style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', marginTop: '4px' }}
+            >
+              {isSavingRates ? 'Đang lưu...' : 'Lưu tỷ giá & phí'}
+            </button>
+          </form>
         </div>
 
         {/* Sidebar Footer / Logout */}
@@ -842,44 +873,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
 
-                  {/* QUICK RATE ADJUSTER */}
-                  <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-                    <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '12px' }}>
-                      Điều Chỉnh Tỷ Giá Nhanh
-                    </h3>
-                    <form onSubmit={handleUpdateKrw} style={{ display: 'flex', gap: '8px' }}>
-                      <input
-                        type="text"
-                        value={krwRateInput}
-                        onChange={(e) => setKrwRateInput(e.target.value)}
-                        placeholder="19.5"
-                        style={{
-                          flex: 1,
-                          padding: '8px 10px',
-                          borderRadius: '8px',
-                          border: '1px solid var(--border-color)',
-                          fontSize: '0.9rem',
-                          fontWeight: 800,
-                          color: 'var(--text-dark)'
-                        }}
-                      />
-                      <button
-                        type="submit"
-                        style={{
-                          backgroundColor: 'var(--purple-primary)',
-                          color: 'var(--bg-white)',
-                          border: 'none',
-                          padding: '8px 14px',
-                          borderRadius: '8px',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {isSavingRates ? 'Đang lưu...' : 'Lưu tỷ giá'}
-                      </button>
-                    </form>
-                  </div>
+                  
 
                 </div>
               </div>
@@ -1033,79 +1027,6 @@ export default function AdminDashboardPage() {
                       ))}
                     </tbody>
                   </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: SETTINGS */}
-          {activeTab === 'settings' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', margin: '0 auto' }}>
-              <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '24px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '16px' }}>
-                  Cấu Hình Tỷ Giá & Phí Dịch Vụ
-                </h3>
-                <form onSubmit={handleUpdateKrw} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div>
-                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-                      Tỷ giá Won Hàn Quốc (1 KRW = x VNĐ):
-                    </label>
-                    <input
-                      type="text"
-                      value={krwRateInput}
-                      onChange={(e) => setKrwRateInput(e.target.value)}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '1rem', fontWeight: 800, marginTop: '4px' }}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    {isSavingRates ? 'Đang lưu...' : 'Lưu cài đặt tỷ giá'}
-                  </button>
-                </form>
-              </div>
-
-              <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '24px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '8px' }}>
-                  Đồng Bộ Dữ Liệu Lên Website Khách
-                </h3>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                  Khi hoàn tất sửa đổi kho hàng hoặc tỷ giá, bấm đồng bộ để áp dụng tức thì cho khách truy cập website.
-                </p>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={async () => {
-                      if (window.confirm('Khôi phục dữ liệu gần nhất?')) {
-                        setIsReverting(true);
-                        try {
-                          await revertFromWeb();
-                          if (showToast) showToast('Đã khôi phục dữ liệu gốc!', 'info');
-                        } finally {
-                          setIsReverting(false);
-                        }
-                      }
-                    }}
-                    disabled={isReverting}
-                    style={{ padding: '10px 16px', borderRadius: '8px', backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    {isReverting ? 'Đang khôi phục...' : 'Khôi phục bản lưu trước'}
-                  </button>
-                  <button
-                    onClick={async () => {
-                      setIsPublishing(true);
-                      try {
-                        await publishToWeb();
-                        if (showToast) showToast('Đã đồng bộ lên Website thành công!', 'success');
-                      } finally {
-                        setIsPublishing(false);
-                      }
-                    }}
-                    disabled={isPublishing}
-                    style={{ padding: '10px 20px', borderRadius: '8px', backgroundColor: '#10B981', color: '#FFF', border: 'none', fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    {isPublishing ? 'Đang đồng bộ...' : 'Đồng bộ lên Website ngay'}
-                  </button>
                 </div>
               </div>
             </div>

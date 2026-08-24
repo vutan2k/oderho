@@ -8,6 +8,7 @@ export default function ProductConsultView({ onBack, isMobile }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const krwRate = rates?.KRW?.rate || 19.5;
+  const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
 
   const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
     if (product.isPublished === false || product.status === 'pending') return false;
@@ -84,7 +85,7 @@ export default function ProductConsultView({ onBack, isMobile }) {
         ) : (
           filteredProducts.map((p) => {
             const priceKrw = p.foreignPrice || p.price || 0;
-            const priceVnd = Math.round(priceKrw * krwRate);
+            const priceVnd = Math.round(priceKrw * krwRate * serviceFeeMultiplier);
             return (
               <div
                 key={p.id}

@@ -19,12 +19,13 @@ export default function KROrderHomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const krwRate = rates?.KRW?.rate || 19.5;
+  const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
 
   const categories = [
     { id: 'all', name: 'Tất cả sản phẩm' },
-    { id: 'skincare', name: 'Mỹ phẩm Dưỡng Da' },
-    { id: 'health', name: 'Thực Phẩm Chức Năng' },
-    { id: 'pharmacy', name: 'Hiệu Thuốc Hàn' }
+    { id: 'cosmetics', name: 'Mỹ phẩm' },
+    { id: 'ginseng', name: 'Sâm nấm' },
+    { id: 'supplements', name: 'Thực phẩm chức năng' }
   ];
 
   const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
@@ -39,11 +40,13 @@ export default function KROrderHomePage() {
 
     if (activeCategory === 'all') return true;
     const cat = (product.category || '').toLowerCase();
-    if (activeCategory === 'skincare') return cat.includes('skin') || cat.includes('dưỡng');
-    if (activeCategory === 'makeup') return cat.includes('make') || cat.includes('trang');
-    if (activeCategory === 'health') return cat.includes('health') || cat.includes('thực phẩm') || cat.includes('sâm') || cat.includes('collagen');
-    if (activeCategory === 'pharmacy') return cat.includes('pharm') || cat.includes('thuốc');
-    return cat === activeCategory;
+    
+    if (cat === activeCategory) return true;
+    if (activeCategory === 'cosmetics') return cat.includes('mỹ phẩm') || cat.includes('skin') || cat.includes('dưỡng') || cat.includes('make') || cat.includes('trang') || cat.includes('hair') || cat.includes('body');
+    if (activeCategory === 'ginseng') return cat.includes('sâm') || cat.includes('nấm');
+    if (activeCategory === 'supplements') return cat.includes('thực phẩm') || cat.includes('chức năng') || cat.includes('health') || cat.includes('collagen') || cat.includes('pharm') || cat.includes('thuốc');
+    
+    return false;
   }) : [];
 
   const handleNavCategoryClick = (e, catId) => {
@@ -93,9 +96,9 @@ export default function KROrderHomePage() {
             <nav>
               <ul className="nav-links">
                 <li><a href="#" onClick={(e) => handleNavCategoryClick(e, 'all')} className={activeCategory === 'all' ? 'active' : ''}>TRANG CHỦ</a></li>
-                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'skincare')} className={activeCategory === 'skincare' ? 'active' : ''}>MỸ PHẨM</a></li>
-                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'health')} className={activeCategory === 'health' ? 'active' : ''}>THỰC PHẨM CHỨC NĂNG</a></li>
-                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'pharmacy')} className={activeCategory === 'pharmacy' ? 'active' : ''}>HIỆU THUỐC HÀN</a></li>
+                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'cosmetics')} className={activeCategory === 'cosmetics' ? 'active' : ''}>MỸ PHẨM</a></li>
+                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'ginseng')} className={activeCategory === 'ginseng' ? 'active' : ''}>SÂM NẤM</a></li>
+                <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'supplements')} className={activeCategory === 'supplements' ? 'active' : ''}>THỰC PHẨM CHỨC NĂNG</a></li>
                 <li><Link to="/policy" style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>QUY ĐỊNH & CHÍNH SÁCH</Link></li>
               </ul>
             </nav>
@@ -158,9 +161,9 @@ export default function KROrderHomePage() {
           }}>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <li><a href="#" onClick={(e) => handleNavCategoryClick(e, 'all')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>TRANG CHỦ</a></li>
-              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'skincare')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>MỸ PHẨM</a></li>
-              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'health')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>THỰC PHẨM CHỨC NĂNG</a></li>
-              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'pharmacy')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>HIỆU THUỐC HÀN</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'cosmetics')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>MỸ PHẨM</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'ginseng')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>SÂM NẤM</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'supplements')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>THỰC PHẨM CHỨC NĂNG</a></li>
               <li><Link to="/policy" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>QUY ĐỊNH & CHÍNH SÁCH</Link></li>
               {currentUser ? (
                 <>
@@ -176,7 +179,7 @@ export default function KROrderHomePage() {
       </header>
 
       <main style={{ flex: 1 }}>
-        <HeroSection krwRate={krwRate} />
+        <HeroSection krwRate={krwRate * serviceFeeMultiplier} />
         <WhyChooseUs />
 
         {/* Danh mục & Danh sách sản phẩm */}
@@ -248,7 +251,7 @@ export default function KROrderHomePage() {
 
             <ProductGrid
               products={filteredProducts}
-              krwRate={krwRate}
+              krwRate={krwRate * serviceFeeMultiplier}
               onSelectProduct={handleAddToCart}
               onViewDetail={setDetailProduct}
             />
@@ -262,7 +265,7 @@ export default function KROrderHomePage() {
       {/* Modal Xem Chi Tiết Sản Phẩm */}
       <ProductDetailModal
         product={detailProduct}
-        krwRate={krwRate}
+        krwRate={krwRate * serviceFeeMultiplier}
         onClose={() => setDetailProduct(null)}
         onOrderNow={handleAddToCart}
       />

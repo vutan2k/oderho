@@ -10,11 +10,9 @@ import {
 } from 'lucide-react';
 
 const CATEGORIES = [
-  { value: 'skincare', label: 'Mỹ phẩm Dưỡng Da' },
-  { value: 'health', label: 'Thực Phẩm Chức Năng' },
-  { value: 'pharmacy', label: 'Hiệu Thuốc Hàn' },
-  { value: 'haircare', label: 'Chăm sóc tóc' },
-  { value: 'bodycare', label: 'Chăm sóc cơ thể' },
+  { value: 'cosmetics', label: 'Mỹ phẩm' },
+  { value: 'ginseng', label: 'Sâm nấm' },
+  { value: 'supplements', label: 'Thực phẩm chức năng' }
 ];
 
 export default function AdminProductManager() {
@@ -27,6 +25,7 @@ export default function AdminProductManager() {
   const showToast = useToast();
 
   const krwRate = rates?.KRW?.rate || 19.5;
+  const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
 
   const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'pending' | 'price_logs'
 
@@ -257,7 +256,7 @@ export default function AdminProductManager() {
       if (foundCat) catLabel = foundCat.label;
 
       const fPrice = p.foreignPrice || p.price || 0;
-      const approxVnd = Math.round(fPrice * krwRate * 1.05);
+      const approxVnd = Math.round(fPrice * krwRate * serviceFeeMultiplier);
 
       return [
         p.goodsNo || '',
@@ -808,7 +807,7 @@ export default function AdminProductManager() {
                               ₩{fPrice.toLocaleString('vi-VN')}
                             </div>
                             <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
-                              ≈ {Math.round(fPrice * krwRate).toLocaleString('vi-VN')} đ
+                              ≈ {Math.round(fPrice * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} đ
                             </div>
                           </td>
 
@@ -1149,7 +1148,7 @@ export default function AdminProductManager() {
                     style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px', fontWeight: 700 }}
                   />
                   <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
-                    ≈ {Math.round((editForm.foreignPrice || 0) * krwRate).toLocaleString('vi-VN')} VNĐ
+                    ≈ {Math.round((editForm.foreignPrice || 0) * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} VNĐ
                   </div>
                 </div>
               </div>

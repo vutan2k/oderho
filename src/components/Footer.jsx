@@ -1,5 +1,4 @@
 import React from 'react';
-import { Phone, Mail } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -25,35 +24,32 @@ export default function Footer() {
           <div className="footer-col">
             <h5>CHÍNH SÁCH & QUY ĐỊNH</h5>
             <ul className="footer-links">
-              <li><a href="/policy">Quy định mua hàng hộ</a></li>
-              <li><a href="/policy">Chính sách đổi trả & Hoàn tiền</a></li>
-              <li><a href="/policy">Hướng dẫn thanh toán</a></li>
+              <li><a href="/policy#order">Quy định mua hàng hộ</a></li>
+              <li><a href="/policy#refund">Chính sách đổi trả & Hoàn tiền</a></li>
+              <li><a href="/policy#payment">Hướng dẫn thanh toán</a></li>
             </ul>
           </div>
 
           <div className="footer-col">
             <h5>DANH MỤC HÀNG</h5>
             <ul className="footer-links">
-              <li><a href="#skincare">Mỹ phẩm Dưỡng da</a></li>
-              <li><a href="#health">Hồng sâm & Collagen</a></li>
-              <li><a href="#pharmacy">Hiệu thuốc Hàn</a></li>
+              <li><a href="/#products">Mỹ phẩm</a></li>
+              <li><a href="/#products">Sâm nấm</a></li>
+              <li><a href="/#products">Thực phẩm chức năng</a></li>
             </ul>
           </div>
 
           <div className="footer-col">
             <h5>LIÊN HỆ TAVY</h5>
-            <ul className="footer-links" style={{ gap: '12px' }}>
-              <li style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <Phone size={14} color="var(--purple-primary)" />
-                <span>Hotline VN: 0988 888 888</span>
+            <ul className="footer-links" style={{ gap: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <li>
+                <strong style={{ color: 'var(--text-dark)', fontWeight: 600 }}>Hotline VN:</strong> 0988 888 888
               </li>
-              <li style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <Phone size={14} color="var(--purple-primary)" />
-                <span>Hotline Korea: +82 10-1234-5678</span>
+              <li>
+                <strong style={{ color: 'var(--text-dark)', fontWeight: 600 }}>Hotline Korea:</strong> +82 10-1234-5678
               </li>
-              <li style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <Mail size={14} color="var(--purple-primary)" />
-                <span>support@tavykorea.vn</span>
+              <li>
+                <strong style={{ color: 'var(--text-dark)', fontWeight: 600 }}>Email:</strong> support@tavykorea.vn
               </li>
             </ul>
           </div>

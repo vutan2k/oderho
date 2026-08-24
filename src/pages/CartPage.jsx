@@ -37,11 +37,12 @@ export default function CartPage() {
   }, [currentUser]);
 
   const krwRate = rates?.KRW?.rate || 19.5;
+  const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
   const formatVnd = (n) => (n || n === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VNĐ` : '0 VNĐ';
   const formatKrw = (n) => new Intl.NumberFormat('ko-KR').format(n) + ' ₩';
 
   const subTotalKrw = cart.reduce((sum, item) => sum + (item.foreignPrice * item.qty), 0);
-  const subTotalVnd = subTotalKrw * krwRate;
+  const subTotalVnd = subTotalKrw * krwRate * serviceFeeMultiplier;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -192,7 +193,7 @@ export default function CartPage() {
                             {formatKrw(item.foreignPrice * item.qty)}
                           </div>
                           <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2563EB', marginTop: '2px' }}>
-                            ~ {formatVnd(Math.round(item.foreignPrice * item.qty * krwRate))}
+                            ~ {formatVnd(Math.round(item.foreignPrice * item.qty * krwRate * serviceFeeMultiplier))}
                           </div>
                         </div>
                       </div>

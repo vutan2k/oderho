@@ -20,6 +20,7 @@ export default function UserProfilePage() {
   const [detailProduct, setDetailProduct] = useState(null);
 
   const krwRate = rates?.KRW?.rate || 19.5;
+  const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
 
   const handleProductClick = (item, order) => {
     const itemName = item?.name || order?.productName;
@@ -581,6 +582,7 @@ export default function UserProfilePage() {
                   {filteredOrders.map((order) => {
                     const currentStepIdx = getStepIndex(order.status);
                     const krwRate = rates?.KRW?.rate || 19.5;
+  const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
 
                     // Tính tổng hóa đơn 100% chuẩn xác
                     let displayTotal = 0;
@@ -590,11 +592,11 @@ export default function UserProfilePage() {
                       displayTotal = order.quote.totalVnd;
                     } else if (Array.isArray(order.items) && order.items.length > 0) {
                       displayTotal = order.items.reduce((sum, item) => {
-                        const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate);
+                        const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate * serviceFeeMultiplier);
                         return sum + itemPrice * (item.qty || 1);
                       }, 0);
                     } else {
-                      displayTotal = Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1));
+                      displayTotal = Math.round((order.foreignPrice || 0) * krwRate * serviceFeeMultiplier * (order.qty || 1));
                     }
 
                     return (
@@ -713,7 +715,7 @@ export default function UserProfilePage() {
                                 {/* Chi tiết sản phẩm */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                   {order.items ? order.items.map((item, idx) => {
-                                    const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate);
+                                    const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate * serviceFeeMultiplier);
                                     const itemTotal = itemPrice * (item.qty || 1);
                                     return (
                                       <div key={idx} style={{ display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'space-between', borderBottom: idx < order.items.length - 1 ? '1px dashed #E5E7EB' : 'none', paddingBottom: idx < order.items.length - 1 ? '12px' : 0 }}>
@@ -765,10 +767,10 @@ export default function UserProfilePage() {
                                       </div>
                                       <div style={{ textAlign: 'right', minWidth: '130px' }}>
                                         <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--purple-primary)' }}>
-                                          {formatVnd(Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1)))}
+                                          {formatVnd(Math.round((order.foreignPrice || 0) * krwRate * serviceFeeMultiplier * (order.qty || 1)))}
                                         </div>
                                         <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>
-                                          {formatVnd(Math.round((order.foreignPrice || 0) * krwRate))} × {order.qty || 1}
+                                          {formatVnd(Math.round((order.foreignPrice || 0) * krwRate * serviceFeeMultiplier))} × {order.qty || 1}
                                         </div>
                                       </div>
                                     </div>
@@ -839,7 +841,7 @@ export default function UserProfilePage() {
       {detailProduct && (
         <ProductDetailModal
           product={detailProduct}
-          krwRate={krwRate}
+          krwRate={krwRate * serviceFeeMultiplier}
           onClose={() => setDetailProduct(null)}
           hideAddToCart={true}
         />

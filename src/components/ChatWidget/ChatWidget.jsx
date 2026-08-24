@@ -89,32 +89,6 @@ export default function ChatWidget() {
       {/* 1. Floating Toggle Button with Pulse Badge */}
       {!isOpen && (
         <div style={{ position: 'relative' }}>
-          {hasNewPrompt && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '68px',
-                right: '0',
-                backgroundColor: '#1E1B4B',
-                color: '#FFFFFF',
-                padding: '7px 14px',
-                borderRadius: '12px',
-                fontSize: isMobile ? '0.75rem' : '0.85rem',
-                fontWeight: 600,
-                boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
-                whiteSpace: 'nowrap',
-                border: '1px solid rgba(255,255,255,0.15)',
-                animation: 'bounce 2s infinite',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                maxWidth: 'calc(100vw - 40px)'
-              }}
-            >
-              <Sparkles size={14} color="#A78BFA" />
-              <span><strong>Chat ngay</strong></span>
-            </div>
-          )}
 
           <button
             onClick={toggleChat}
