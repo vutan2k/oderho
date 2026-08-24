@@ -33,6 +33,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
 
   const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
   const formatVnd = (n) => (n || n === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VNĐ` : '0 VNĐ';
+  const formatKrw = (n) => `₩${(n || 0).toLocaleString('vi-VN')}`;
 
   const handleTouchStart = (e) => {
     setTouchStartX(e.touches[0].clientX);
