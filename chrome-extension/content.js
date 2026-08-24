@@ -299,150 +299,136 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
     }
   };
 
-  chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-    if (request.action === "SCRAPE_PRODUCT") {
-      (async () => {
-        try {
-          const { productImages, reviewCandidates } = await executeStepByStepScrape();
+  const startScrapeProcess = async () => {
+    try {
+      const { productImages, reviewCandidates } = await executeStepByStepScrape();
 
-          let fullText = document.body.innerText || '';
-          if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
+      let fullText = document.body.innerText || '';
+      if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
 
-          const rawData = {
-            fullText,
-            image: productImages[0] || '',
-            images: productImages,
-            reviewCandidates: reviewCandidates,
-            url: window.location.href,
-            title: document.title,
-            brandText: getText('.prd_brand, .brand, .brand_name, [class*=brand]'),
-            priceText: getText('.price-2 .tx_cur, .price-2, .sale_price, .total_price, .tx_cur') || getText('[class*=price]')
-          };
+      // Bóc tách giá sale và giá gốc riêng biệt
+      const saleEl = document.querySelector('span.price-2 strong, span.tx_cur .tx_num, [class*="GoodsDetailInfo_price__"], .price-2, strong.price');
+      const origEl = document.querySelector('span.price-1 strike, span.tx_org .tx_num, [class*="GoodsDetailInfo_price-before__"]');
+      const salePrice = saleEl ? parseInt((saleEl.textContent || '').replace(/[^0-9]/g, '') || '25000', 10) : 25000;
+      const origPrice = origEl ? parseInt((origEl.textContent || '').replace(/[^0-9]/g, '') || String(salePrice), 10) : salePrice;
 
-          let hasResponded = false;
+      const rawData = {
+        fullText,
+        image: productImages[0] || '',
+        images: productImages,
+        reviewCandidates: reviewCandidates,
+        url: window.location.href,
+        title: document.title,
+        brandText: getText('.prd_brand, .brand, .brand_name, [class*=brand]'),
+        priceText: String(salePrice),
+        foreignPrice: salePrice,
+        originalPrice: origPrice >= salePrice ? origPrice : salePrice
+      };
 
-          const safetyTimer = setTimeout(() => {
-            if (!hasResponded) {
-              hasResponded = true;
-              const shortTitle = (document.title || '').split('|')[0].trim().slice(0, 28);
-              showMiniToast(`Đã lưu "${shortTitle}..." vào Admin thành công!`, 'success');
-            }
-          }, 12000);
+      let hasResponded = false;
 
-          chrome.runtime.sendMessage({ action: "PROCESS_SCRAPED_DATA_AI", data: rawData }, (response) => {
-            if (hasResponded) return;
-            hasResponded = true;
-            clearTimeout(safetyTimer);
-
-            if (response && response.error) {
-              showMiniToast(`Lỗi AI: ${response.error}`, 'error');
-            } else if (response && response.success === false) {
-              showMiniToast('Chưa cài API Key!', 'error');
-            } else {
-              showMiniToast(`Thành công! Đã cào ${reviewCandidates.length} Ảnh Đánh Giá Thật về Admin!`, 'success');
-            }
-          });
-        } catch (error) {
-          showMiniToast(`Lỗi bóc tách: ${error.message}`, 'error');
+      const safetyTimer = setTimeout(() => {
+        if (!hasResponded) {
+          hasResponded = true;
+          const shortTitle = (document.title || '').split('|')[0].trim().slice(0, 28);
+          showMiniToast(`Đã lưu "${shortTitle}..." vào Admin thành công!`, 'success');
         }
-      })();
-      return true;
-    }
-  });
-}
+      }, 12000);
 
+      return new Promise((resolve) => {
+        chrome.runtime.sendMessage({ action: "PROCESS_SCRAPED_DATA_AI", data: rawData }, (response) => {
+          if (hasResponded) return resolve(response);
+          hasResponded = true;
+          clearTimeout(safetyTimer);
 
-  const getText = (selector) => document.querySelector(selector)?.textContent?.trim() || '';
-
-  const showMiniToast = (text, type = 'info') => {
-    document.getElementById('tavy-mini-toast')?.remove();
-    const bg = type === 'success' ? '#059669' : type === 'error' ? '#DC2626' : '#1E293B';
-    const html = `
-      <div id="tavy-mini-toast" style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999999;
-        background: ${bg};
-        color: #FFFFFF;
-        padding: 12px 18px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-weight: 700;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        max-width: 380px;
-        line-height: 1.4;
-        pointer-events: none;
-      ">
-        <span>${type === 'success' ? '✓' : type === 'error' ? '×' : '•'}</span>
-        <span>${text}</span>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', html);
-    if (type !== 'info') {
-      setTimeout(() => {
-        const el = document.getElementById('tavy-mini-toast');
-        if (el) {
-          el.style.opacity = '0';
-          el.style.transition = 'opacity 0.3s';
-          setTimeout(() => el.remove(), 300);
-        }
-      }, 4000);
+          if (response && response.error) {
+            showMiniToast(`Lỗi AI: ${response.error}`, 'error');
+          } else if (response && response.success === false) {
+            showMiniToast('Chưa cài API Key!', 'error');
+          } else {
+            showMiniToast(`Thành công! Đã cào ${reviewCandidates.length} ảnh đánh giá thật về Admin!`, 'success');
+          }
+          resolve(response);
+        });
+      });
+    } catch (error) {
+      showMiniToast(`Lỗi bóc tách: ${error.message}`, 'error');
     }
   };
 
   chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     if (request.action === "SCRAPE_PRODUCT") {
       (async () => {
-        try {
-          const { productImages, reviewCandidates } = await executeStepByStepScrape();
-
-          let fullText = document.body.innerText || '';
-          if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
-
-          const rawData = {
-            fullText,
-            image: productImages[0] || '',
-            images: productImages,
-            reviewCandidates: reviewCandidates,
-            url: window.location.href,
-            title: document.title,
-            brandText: getText('.prd_brand, .brand, .brand_name, [class*=brand]'),
-            priceText: getText('.price-2 .tx_cur, .price-2, .sale_price, .total_price, .tx_cur') || getText('[class*=price]')
-          };
-
-          let hasResponded = false;
-
-          const safetyTimer = setTimeout(() => {
-            if (!hasResponded) {
-              hasResponded = true;
-              const shortTitle = (document.title || '').split('|')[0].trim().slice(0, 28);
-              showMiniToast(`Đã lưu "${shortTitle}..." vào Admin thành công!`, 'success');
-            }
-          }, 12000);
-
-          chrome.runtime.sendMessage({ action: "PROCESS_SCRAPED_DATA_AI", data: rawData }, (response) => {
-            if (hasResponded) return;
-            hasResponded = true;
-            clearTimeout(safetyTimer);
-
-            if (response && response.error) {
-              showMiniToast(`Lỗi AI: ${response.error}`, 'error');
-            } else if (response && response.success === false) {
-              showMiniToast('Chưa cài API Key!', 'error');
-            } else {
-              showMiniToast(`Thành công! Đã cào ${reviewCandidates.length} Ảnh Đánh Giá Thật về Admin!`, 'success');
-            }
-          });
-        } catch (error) {
-          showMiniToast(`Lỗi bóc tách: ${error.message}`, 'error');
-        }
+        const res = await startScrapeProcess();
+        sendResponse(res);
       })();
       return true;
     }
   });
+
+  // Tự động chèn Nút Cào Nổi 1-Click (Floating 1-Click Quick Scraper Button)
+  const injectFloatingScrapeButton = () => {
+    if (document.getElementById('tavy-floating-scrape-btn')) return;
+    const isProductPage = /goodsNo=/i.test(window.location.href) || /getGoodsDetail/i.test(window.location.href);
+    if (!isProductPage) return;
+
+    const btn = document.createElement('div');
+    btn.id = 'tavy-floating-scrape-btn';
+    btn.style.cssText = `
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      z-index: 9999998;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #7A4B9E 0%, #4A2368 100%);
+      color: #FFFFFF;
+      padding: 12px 20px;
+      border-radius: 30px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 8px 24px rgba(122, 75, 158, 0.45);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+    `;
+    btn.innerHTML = `<span style="font-size: 16px;">⚡</span><span>Cào Vào TAVY (1-Click)</span>`;
+
+    btn.addEventListener('mouseenter', () => {
+      btn.style.transform = 'translateY(-3px) scale(1.04)';
+      btn.style.boxShadow = '0 12px 28px rgba(122, 75, 158, 0.6)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = 'translateY(0) scale(1)';
+      btn.style.boxShadow = '0 8px 24px rgba(122, 75, 158, 0.45)';
+    });
+
+    btn.addEventListener('click', async () => {
+      btn.style.opacity = '0.7';
+      btn.style.pointerEvents = 'none';
+      btn.innerHTML = `<span style="font-size: 16px;">⏳</span><span>Đang cào sản phẩm...</span>`;
+
+      try {
+        await startScrapeProcess();
+      } finally {
+        setTimeout(() => {
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = 'auto';
+          btn.innerHTML = `<span style="font-size: 16px;">⚡</span><span>Cào Vào TAVY (1-Click)</span>`;
+        }, 3000);
+      }
+    });
+
+    document.body.appendChild(btn);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectFloatingScrapeButton);
+  } else {
+    injectFloatingScrapeButton();
+  }
+  setInterval(injectFloatingScrapeButton, 2000);
 }

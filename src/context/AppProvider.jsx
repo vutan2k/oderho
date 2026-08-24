@@ -48,12 +48,21 @@ const isFakeProduct = (p) => {
 };
 
 const SALE_PRICES_MAP = {
-  'A000000255682': 27900, // Medicube Zero Pore Pad 1+1
-  'A000000253122': 27800, // Fwee All Day Cover Black Cushion
-  'A000000250199': 23100, // Celimax Vita A Retinal Shot Booster
-  'A000000240462': 16900, // Celimax Tranexamic Mask 5s
-  'A000000204975': 22900, // OBGE Natural Cover Lotion 50g
-  'A000000223414': 20000  // Mediheal Sheet Mask
+  'A000000117541': { salePrice: 23700, originalPrice: 29700 }, // ULOS All in one 200ml
+  'A000000171427': { salePrice: 28500, originalPrice: 39900 }, // Mediheal Derma Pad 200s
+  'A000000204975': { salePrice: 27900, originalPrice: 29800 }, // OBGE Natural Cover Lotion 50g
+  'A000000219553': { salePrice: 17900, originalPrice: 22000 }, // Goodal Sun Cream 1+1
+  'A000000223414': { salePrice: 10000, originalPrice: 20000 }, // Mediheal Essential Sheet Mask 10+1
+  'A000000238816': { salePrice: 18900, originalPrice: 25000 }, // Obge Sun Stick 18g
+  'A000000240462': { salePrice: 23400, originalPrice: 26800 }, // Celimax Tranexamic Mask 5+1
+  'A000000246985': { salePrice: 27500, originalPrice: 34000 }, // Orara Hair Treatment 150ml
+  'A000000248829': { salePrice: 13900, originalPrice: 21000 }, // Eom Trouble Patch Mask 3s
+  'A000000250199': { salePrice: 20900, originalPrice: 30000 }, // Celimax Vita A Retinal Shot Booster
+  'A000000253122': { salePrice: 29000, originalPrice: 38000 }, // Fwee All Day Cover Black Cushion
+  'A000000255585': { salePrice: 26200, originalPrice: 42000 }, // Skinfood Carrot Pad 1+1
+  'A000000255682': { salePrice: 28900, originalPrice: 33000 }, // Medicube Zero Pore Pad 1+1
+  'A000000259222': { salePrice: 16200, originalPrice: 19000 }, // Biodance Serum Mist 50ml
+  'A000000260530': { salePrice: 7100, originalPrice: 15000 }   // Beplain Mung Bean Mask 5s
 };
 
 const sanitizeProducts = (arr) => {
@@ -62,15 +71,24 @@ const sanitizeProducts = (arr) => {
     .filter(p => !isFakeProduct(p))
     .map(p => {
       const gNo = p.goodsNo || p.id;
+      const isCosmeticCat = !p.category || p.category === 'cosmetics' || p.category === 'skincare' || p.category === 'makeup' || p.category === 'haircare' || p.category === 'bodycare';
+      const cleanCat = isCosmeticCat ? 'cosmetics' : p.category;
+
       if (gNo && SALE_PRICES_MAP[gNo]) {
-        const salePrc = SALE_PRICES_MAP[gNo];
+        const info = SALE_PRICES_MAP[gNo];
         return {
           ...p,
-          foreignPrice: salePrc,
-          price: salePrc
+          category: cleanCat,
+          foreignPrice: info.salePrice,
+          originalPrice: info.originalPrice,
+          price: info.salePrice,
+          priceSyncStatus: 'synced_oliveyoung'
         };
       }
-      return p;
+      return {
+        ...p,
+        category: cleanCat
+      };
     });
 };
 

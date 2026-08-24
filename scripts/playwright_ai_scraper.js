@@ -5,6 +5,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import {
+  cleanHighResImageUrl,
+  isOliveYoungJunkImage,
+  cleanKoreanTitle,
+  extractBrandFromTitleOrDom,
+  parseOliveYoungPrices,
+  classifyCosmeticsCategory
+} from '../src/services/oliveYoungScraperCore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,9 +31,11 @@ let lastAiCallTimestamp = 0;
 
 /** Direct OpenAI / Gemini AI Vision & Translator với Rate Limiter & Automatic Retry (Tránh lỗi 429 Rate Limit) */
 async function translateProductWithAI(rawTitle, brandKr) {
-  if (!rawTitle) return { name: 'Sản Phẩm Hàn Quốc Hàng Đầu', category: 'skincare', brand: 'Olive Young' };
+  if (!rawTitle) return { name: 'Sản Phẩm Hàn Quốc Hàng Đầu', category: 'cosmetics', brand: 'Olive Young' };
   
-  const cleanTitle = rawTitle.replace(/\[[^\]]*\]/g, '').trim();
+  const cleanTitle = cleanKoreanTitle(rawTitle);
+  const brandInfo = extractBrandFromTitleOrDom(rawTitle, brandKr);
+  const categoryInfo = classifyCosmeticsCategory(rawTitle);
   
   // 🛡️ BẮT BỘC: Giới hạn tần suất gọi API (tối thiểu 3.5 giây giữa các lần gọi để không vượt quá Quota/Rate Limit)
   const now = Date.now();

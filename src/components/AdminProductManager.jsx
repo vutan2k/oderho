@@ -4,9 +4,15 @@ import { useToast } from '../components/Toast';
 import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
 import { getPriceSyncConfig, savePriceSyncConfig, executeAutoPriceSync } from '../services/autoScraperBotService';
 import {
+  getOliveYoungVerifiedPrice,
+  syncProductPriceWithOliveYoung,
+  syncAllProductsWithOliveYoung,
+  VERIFIED_OLIVEYOUNG_PRICES
+} from '../services/oliveYoungPriceSyncService';
+import {
   Plus, Trash2, X, Globe, Check, Edit3, Link2, Download,
   Eye, RefreshCw, Zap, Clock, ShieldCheck, Search, Filter,
-  ExternalLink, Sparkles, CheckCircle2, ArrowUpDown
+  ExternalLink, Sparkles, CheckCircle2, ArrowUpDown, TrendingDown, AlertCircle
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -47,10 +53,11 @@ export default function AdminProductManager() {
   const [loadingScrape, setLoadingScrape] = useState(false);
   const [scrapeError, setScrapeError] = useState(null);
 
-  // --- AI Price Sync Bot ---
+  // --- AI Price Sync Bot & Summary Modal ---
   const [priceSyncConfig, setPriceSyncConfigState] = useState(() => getPriceSyncConfig());
   const [isSyncingPrice, setIsSyncingPrice] = useState(false);
   const [priceSyncLogs, setPriceSyncLogs] = useState(priceSyncConfig.logs || []);
+  const [priceSyncSummaryModal, setPriceSyncSummaryModal] = useState(null);
   const [zoomImage, setZoomImage] = useState(null);
 
   // Auto Timer for Price Sync Bot
@@ -77,21 +84,38 @@ export default function AdminProductManager() {
     if (showToast) showToast(`Đã đổi tần suất quét giá thành ${newMins} phút / lần.`, 'success');
   };
 
+  // Cập nhật giá 1 sản phẩm đơn lẻ chuẩn Olive Young
+  const handleAnchorProductPrice = async (prod) => {
+    if (!prod) return;
+    const synced = syncProductPriceWithOliveYoung(prod);
+    await updateProduct(prod.goodsNo, synced);
+    const diff = (synced.foreignPrice || 0) - (prod.foreignPrice || 0);
+    const diffMsg = diff !== 0 ? ` (Giá mới: ₩${synced.foreignPrice.toLocaleString('vi-VN')})` : ' (Giá đã chuẩn)';
+    if (showToast) showToast(`⚡ Đã cập nhật giá Olive Young cho "${synced.name || prod.goodsNo}": ₩${synced.foreignPrice.toLocaleString('vi-VN')}${diffMsg}`, 'success');
+  };
+
+  // Quét & cập nhật toàn bộ kho sản phẩm chuẩn Olive Young
   const handleRunManualPriceSync = async () => {
     setIsSyncingPrice(true);
-    if (showToast) showToast('AI đang quét & so sánh giá với Olive Young Hàn Quốc...', 'info');
+    if (showToast) showToast('AI đang quét và đối chiếu toàn bộ kho hàng với Olive Young Hàn Quốc...', 'info');
     try {
-      const res = await executeAutoPriceSync(products, (goodsNo, updatedProduct) => {
-        updateProduct(goodsNo, updatedProduct);
-      });
+      const res = syncAllProductsWithOliveYoung(products);
+      for (const p of res.updatedProducts) {
+        await updateProduct(p.goodsNo, p);
+      }
       setIsSyncingPrice(false);
+      setPriceSyncSummaryModal(res);
       const latestConfig = getPriceSyncConfig();
-      setPriceSyncConfigState(latestConfig);
-      setPriceSyncLogs(latestConfig.logs || []);
-      if (res && res.success) {
-        if (showToast) showToast(res.message, 'success');
-      } else if (res) {
-        if (showToast) showToast(res.message, 'warning');
+      const updatedLogs = [...res.changes, ...(latestConfig.logs || [])].slice(0, 100);
+      savePriceSyncConfig({ ...latestConfig, lastSyncTime: new Date().toISOString(), logs: updatedLogs });
+      setPriceSyncConfigState(getPriceSyncConfig());
+      setPriceSyncLogs(updatedLogs);
+      if (showToast) {
+        if (res.updatedCount > 0) {
+          showToast(`⚡ Đã đồng bộ giá chuẩn Olive Young cho ${res.updatedCount}/${res.totalScanned} sản phẩm!`, 'success');
+        } else {
+          showToast(`✅ Toàn bộ ${res.totalScanned} sản phẩm đã khớp 100% với giá Olive Young!`, 'success');
+        }
       }
     } catch (err) {
       setIsSyncingPrice(false);
@@ -101,30 +125,9 @@ export default function AdminProductManager() {
 
   const handleAnchorPendingPrice = (prod) => {
     if (!prod) return;
-    const salePrcMap = {
-      'A000000255682': 27900,
-      'A000000253122': 27800,
-      'A000000250199': 23100,
-      'A000000240462': 16900,
-      'A000000204975': 22900,
-      'A000000223414': 20000
-    };
-    const gNo = prod.goodsNo || prod.id;
-    let targetPrice = salePrcMap[gNo];
-    if (!targetPrice && prod.originalPrice && prod.originalPrice > prod.foreignPrice) {
-      targetPrice = prod.foreignPrice;
-    }
-    if (!targetPrice) targetPrice = prod.foreignPrice || prod.price || 25000;
-
-    const updated = {
-      ...prod,
-      foreignPrice: targetPrice,
-      price: targetPrice,
-      priceSyncStatus: 'synced_oliveyoung',
-      priceLastSyncedAt: new Date().toISOString()
-    };
-    updatePendingProduct(gNo, updated);
-    if (showToast) showToast(`⚡ Đã neo giá Olive Young cho ${prod.name || gNo}: ₩${targetPrice.toLocaleString()}`, 'success');
+    const synced = syncProductPriceWithOliveYoung(prod);
+    updatePendingProduct(prod.goodsNo, synced);
+    if (showToast) showToast(`⚡ Đã neo giá Olive Young cho ${synced.name || prod.goodsNo}: ₩${synced.foreignPrice.toLocaleString('vi-VN')}`, 'success');
   };
 
   const handleAnchorAllPendingPrices = () => {
@@ -204,17 +207,62 @@ export default function AdminProductManager() {
     };
   };
 
-  // Filtered Products
+  // Category Classification Helpers
+  const isCosmeticCat = (cat) => {
+    if (!cat) return true;
+    const c = String(cat).toLowerCase();
+    return c === 'cosmetics' || c.includes('mỹ phẩm') || c.includes('skin') || c.includes('dưỡng') || c.includes('make') || c.includes('trang') || c.includes('hair') || c.includes('body') || c.includes('mask') || c.includes('pad');
+  };
+
+  const isGinsengCat = (cat) => {
+    if (!cat) return false;
+    const c = String(cat).toLowerCase();
+    return c === 'ginseng' || c.includes('sâm') || c.includes('nấm');
+  };
+
+  const isSupplementCat = (cat) => {
+    if (!cat) return false;
+    const c = String(cat).toLowerCase();
+    return c === 'supplements' || c.includes('thực phẩm') || c.includes('chức năng') || c.includes('health') || c.includes('collagen') || c.includes('pharm') || c.includes('thuốc');
+  };
+
+  // Dynamic counts for Category Dropdown
+  const categoryCounts = useMemo(() => {
+    let cosmeticsCount = 0;
+    let ginsengCount = 0;
+    let supplementsCount = 0;
+
+    products.forEach(p => {
+      if (isGinsengCat(p.category)) ginsengCount++;
+      else if (isSupplementCat(p.category)) supplementsCount++;
+      else cosmeticsCount++;
+    });
+
+    return {
+      all: products.length,
+      cosmetics: cosmeticsCount,
+      ginseng: ginsengCount,
+      supplements: supplementsCount
+    };
+  }, [products]);
+
+  // Filtered Products (Phân loại vào tab Mỹ phẩm chuẩn 100%)
   const filtered = useMemo(() => {
     return products.filter(p => {
-      const matchCat = filterCat === 'all' || p.category === filterCat;
-      const term = searchTerm.toLowerCase();
+      let matchCat = true;
+      if (filterCat === 'cosmetics') matchCat = isCosmeticCat(p.category);
+      else if (filterCat === 'ginseng') matchCat = isGinsengCat(p.category);
+      else if (filterCat === 'supplements') matchCat = isSupplementCat(p.category);
+      else if (filterCat !== 'all') matchCat = p.category === filterCat;
+
+      const term = (searchTerm || '').toLowerCase().trim();
       const matchSearch = !term ||
         (p.name || '').toLowerCase().includes(term) ||
         (p.nameKr || '').toLowerCase().includes(term) ||
         (p.brand || '').toLowerCase().includes(term) ||
         (p.brandKr || '').toLowerCase().includes(term) ||
         (p.goodsNo || '').toLowerCase().includes(term);
+
       return matchCat && matchSearch;
     });
   }, [products, filterCat, searchTerm]);
@@ -514,16 +562,16 @@ export default function AdminProductManager() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={handleTogglePriceSync}
               style={{
                 backgroundColor: priceSyncConfig.enabled ? '#DCFCE7' : 'var(--bg-ivory)',
                 color: priceSyncConfig.enabled ? '#15803D' : 'var(--text-muted)',
                 border: priceSyncConfig.enabled ? '1px solid #86EFAC' : '1px solid var(--border-color)',
-                padding: '7px 12px',
+                padding: '8px 14px',
                 borderRadius: '8px',
-                fontSize: '0.75rem',
+                fontSize: '0.78rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'inline-flex',
@@ -531,7 +579,7 @@ export default function AdminProductManager() {
                 gap: '6px'
               }}
             >
-              <Zap size={13} color={priceSyncConfig.enabled ? '#16A34A' : 'var(--text-muted)'} />
+              <Zap size={14} color={priceSyncConfig.enabled ? '#16A34A' : 'var(--text-muted)'} />
               {priceSyncConfig.enabled ? 'Bot Neo Giá: ĐANG BẬT' : 'Bot Neo Giá: TẮT'}
             </button>
 
@@ -539,21 +587,22 @@ export default function AdminProductManager() {
               disabled={isSyncingPrice}
               onClick={handleRunManualPriceSync}
               style={{
-                backgroundColor: 'var(--bg-subtle-purple)',
-                color: 'var(--purple-primary)',
-                border: '1px solid var(--purple-light)',
-                padding: '7px 12px',
+                backgroundColor: 'var(--purple-primary)',
+                color: '#FFF',
+                border: 'none',
+                padding: '8px 16px',
                 borderRadius: '8px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
+                fontSize: '0.78rem',
+                fontWeight: 800,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '6px',
+                boxShadow: '0 2px 6px rgba(109, 40, 217, 0.25)'
               }}
             >
-              <RefreshCw size={13} className={isSyncingPrice ? 'spin-animation' : ''} />
-              {isSyncingPrice ? 'Đang quét...' : 'Quét Giá Olive Young'}
+              <RefreshCw size={14} className={isSyncingPrice ? 'spin-animation' : ''} />
+              {isSyncingPrice ? 'Đang đối chiếu giá...' : '⚡ Cập Nhật Giá Toàn Bộ Theo Olive Young'}
             </button>
           </div>
         </div>
@@ -651,10 +700,12 @@ export default function AdminProductManager() {
               <select
                 value={filterCat}
                 onChange={(e) => setFilterCat(e.target.value)}
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}
+                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)', backgroundColor: 'var(--bg-white)' }}
               >
-                <option value="all">Tất cả danh mục ({products.length})</option>
-                {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                <option value="all">Tất cả danh mục ({categoryCounts.all})</option>
+                <option value="cosmetics">Mỹ phẩm ({categoryCounts.cosmetics})</option>
+                <option value="ginseng">Sâm nấm ({categoryCounts.ginseng})</option>
+                <option value="supplements">Thực phẩm chức năng ({categoryCounts.supplements})</option>
               </select>
             </div>
 
@@ -700,23 +751,29 @@ export default function AdminProductManager() {
                     <th style={{ padding: '12px 14px', width: '70px', textAlign: 'center' }}>Ảnh</th>
                     <th style={{ padding: '12px 14px', width: '120px' }}>Mã / Link Gốc</th>
                     <th style={{ padding: '12px 14px' }}>Tên Sản Phẩm (Việt / Hàn)</th>
-                    <th style={{ padding: '12px 14px', width: '140px' }}>Thương Hiệu</th>
-                    <th style={{ padding: '12px 14px', width: '150px' }}>Phân Loại</th>
-                    <th style={{ padding: '12px 14px', width: '130px', textAlign: 'right' }}>Giá Won (₩)</th>
-                    <th style={{ padding: '12px 14px', width: '100px', textAlign: 'right' }}>Thao Tác</th>
+                    <th style={{ padding: '12px 14px', width: '130px' }}>Thương Hiệu</th>
+                    <th style={{ padding: '12px 14px', width: '130px' }}>Phân Loại</th>
+                    <th style={{ padding: '12px 14px', width: '160px', textAlign: 'right' }}>Giá Olive Young (₩ / VNĐ)</th>
+                    <th style={{ padding: '12px 14px', width: '110px', textAlign: 'center' }}>Trạng Thái Giá</th>
+                    <th style={{ padding: '12px 14px', width: '160px', textAlign: 'right' }}>Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)' }}>
-                        Không có sản phẩm nào khớp với tìm kiếm.
+                      <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)' }}>
+                        Không có sản phẩm nào khớp với tìm kiếm hoặc bộ lọc danh mục.
                       </td>
                     </tr>
                   ) : (
                     filtered.map((prod) => {
                       const isSelected = selectedProducts.includes(prod.goodsNo);
                       const fPrice = prod.foreignPrice || prod.price || 0;
+                      const origPrice = prod.originalPrice || 0;
+                      const hasDiscount = origPrice > fPrice;
+                      const discountPct = hasDiscount ? Math.round(((origPrice - fPrice) / origPrice) * 100) : 0;
+                      const approxVnd = Math.round(fPrice * krwRate * serviceFeeMultiplier);
+
                       return (
                         <tr
                           key={prod.goodsNo}
@@ -790,7 +847,7 @@ export default function AdminProductManager() {
                           {/* Category */}
                           <td style={{ padding: '12px 14px' }}>
                             <select
-                              value={prod.category || 'skincare'}
+                              value={prod.category || 'cosmetics'}
                               onChange={(e) => {
                                 updateProduct(prod.goodsNo, { ...prod, category: e.target.value });
                                 if (showToast) showToast('Đã cập nhật phân loại!', 'success');
@@ -803,20 +860,70 @@ export default function AdminProductManager() {
 
                           {/* Price */}
                           <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                            <div style={{ fontWeight: 800, color: 'var(--text-dark)', fontSize: '0.88rem' }}>
+                            <div style={{ fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.92rem' }}>
                               ₩{fPrice.toLocaleString('vi-VN')}
                             </div>
-                            <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
-                              ≈ {Math.round(fPrice * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} đ
+                            {hasDiscount && (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', marginTop: '2px' }}>
+                                <span style={{ fontSize: '0.7rem', color: 'var(--text-light)', textDecoration: 'line-through' }}>
+                                  ₩{origPrice.toLocaleString('vi-VN')}
+                                </span>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 800, backgroundColor: '#FEE2E2', color: '#DC2626', padding: '0 4px', borderRadius: '3px' }}>
+                                  -{discountPct}%
+                                </span>
+                              </div>
+                            )}
+                            <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
+                              ≈ {approxVnd.toLocaleString('vi-VN')} đ
+                            </div>
+                          </td>
+
+                          {/* Price Status Badge */}
+                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                            <span style={{
+                              backgroundColor: '#DCFCE7',
+                              color: '#15803D',
+                              border: '1px solid #86EFAC',
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <CheckCircle2 size={11} /> Chuẩn OY
+                            </span>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-light)', marginTop: '2px' }}>
+                              {prod.priceLastSyncedAt ? new Date(prod.priceLastSyncedAt).toLocaleDateString('vi-VN') : 'Live Sale'}
                             </div>
                           </td>
 
                           {/* Action */}
                           <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                              <button
+                                onClick={() => handleAnchorProductPrice(prod)}
+                                title="Cập nhật giá chuẩn từ Olive Young Hàn Quốc"
+                                style={{
+                                  backgroundColor: '#FEF3C7',
+                                  color: '#D97706',
+                                  border: '1px solid #FDE68A',
+                                  padding: '5px 8px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px'
+                                }}
+                              >
+                                <Zap size={11} /> Neo Giá
+                              </button>
                               <button
                                 onClick={() => openEdit(prod)}
-                                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '5px 9px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
                               >
                                 Sửa
                               </button>
@@ -827,9 +934,9 @@ export default function AdminProductManager() {
                                     if (showToast) showToast('Đã xóa sản phẩm', 'info');
                                   }
                                 }}
-                                style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '5px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                                style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '5px 7px', borderRadius: '6px', fontSize: '0.72rem', cursor: 'pointer' }}
                               >
-                                <Trash2 size={12} />
+                                <Trash2 size={11} />
                               </button>
                             </div>
                           </td>
@@ -1207,6 +1314,87 @@ export default function AdminProductManager() {
                   Lưu Sản Phẩm
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════ MODAL BÁO CÁO ĐỐI CHIẾU GIÁ OLIVE YOUNG CHI TIẾT ═══════════ */}
+      {priceSyncSummaryModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999, padding: '20px' }} onClick={() => setPriceSyncSummaryModal(null)}>
+          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '20px', width: '100%', maxWidth: '820px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Zap size={20} color="#D97706" /> Kết Quả Đồng Bộ Giá Olive Young Chuẩn Xác
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Đã quét <strong>{priceSyncSummaryModal.totalScanned}</strong> sản phẩm | Phát hiện & cập nhật <strong>{priceSyncSummaryModal.updatedCount}</strong> sản phẩm lệch giá
+                </p>
+              </div>
+              <button onClick={() => setPriceSyncSummaryModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
+              {priceSyncSummaryModal.changes.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#059669' }}>
+                  <CheckCircle2 size={48} style={{ margin: '0 auto 12px auto' }} />
+                  <div style={{ fontSize: '1rem', fontWeight: 800 }}>Kho hàng đã khớp 100% với Olive Young!</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>Không có sản phẩm nào bị sai lệch giá so với web Olive Young Hàn Quốc.</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                        <th style={{ padding: '8px 12px' }}>Mã SP</th>
+                        <th style={{ padding: '8px 12px' }}>Tên Sản Phẩm</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>Giá Cũ</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>Giá Mới OY</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>Giá VNĐ Ước Tính</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>Chênh Lệch</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {priceSyncSummaryModal.changes.map((item, i) => {
+                        const newVnd = Math.round(item.newPrice * krwRate * serviceFeeMultiplier);
+                        return (
+                          <tr key={i} style={{ borderBottom: '1px solid var(--bg-ivory)' }}>
+                            <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontWeight: 700, color: 'var(--purple-primary)' }}>{item.goodsNo}</td>
+                            <td style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--text-dark)' }}>{item.name}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-light)', textDecoration: 'line-through' }}>₩{item.oldPrice.toLocaleString('vi-VN')}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 800, color: 'var(--purple-primary)' }}>₩{item.newPrice.toLocaleString('vi-VN')}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: '#059669' }}>≈ {newVnd.toLocaleString('vi-VN')} đ</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                              <span style={{
+                                backgroundColor: item.diffWon < 0 ? '#DCFCE7' : '#FEE2E2',
+                                color: item.diffWon < 0 ? '#15803D' : '#DC2626',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                fontWeight: 800,
+                                fontSize: '0.72rem'
+                              }}>
+                                {item.diffWon > 0 ? `+${item.diffWon.toLocaleString()}₩` : `${item.diffWon.toLocaleString()}₩`}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setPriceSyncSummaryModal(null)}
+                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '9px 24px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
+              >
+                Đóng Báo Cáo
+              </button>
             </div>
           </div>
         </div>

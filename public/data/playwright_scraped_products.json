@@ -6,10 +6,10 @@
     "nameKr": "[15년 연속 1위] 메디힐 에센셜 마스크팩 10/10+1매 기획 7종 골라담기",
     "brand": "Mediheal",
     "brandKr": "Mediheal",
-    "category": "skincare",
-    "foreignPrice": 20000,
-    "price": 370000,
-    "originalPrice": 444000,
+    "category": "cosmetics",
+    "foreignPrice": 10000,
+    "price": 10000,
+    "originalPrice": 20000,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0022/A000000223414117ko.jpg",
     "images": [
       "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0022/A000000223414117ko.jpg",
@@ -27,7 +27,7 @@
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
     "scrapedAt": "2026-08-18T13:52:58.912Z",
-    "priceLastSyncedAt": "2026-08-19T08:13:19.115Z",
+    "priceLastSyncedAt": "2026-08-24T21:25:56.486Z",
     "priceSyncStatus": "synced_oliveyoung"
   },
   {
@@ -37,9 +37,9 @@
     "nameKr": "[1등/아이돌 모공패드] 메디큐브 제로 모공 패드 1+1 140매 리필 기획 (본품70매+리필 70매)",
     "brand": "Medicube",
     "brandKr": "Medicube",
-    "category": "skincare",
-    "foreignPrice": 27900,
-    "price": 27900,
+    "category": "cosmetics",
+    "foreignPrice": 28900,
+    "price": 28900,
     "originalPrice": 33000,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025568254ko.jpg",
     "images": [
@@ -59,7 +59,7 @@
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
     "scrapedAt": "2026-08-18T13:53:19.546Z",
-    "priceLastSyncedAt": "2026-08-19T08:13:19.116Z",
+    "priceLastSyncedAt": "2026-08-24T21:25:56.487Z",
     "priceSyncStatus": "synced_oliveyoung"
   },
   {
@@ -69,9 +69,9 @@
     "nameKr": "[잡티미백/TXA] 셀리맥스 트라넥삼산 브라이트닝 크림 랩핑 마스크 5매 기획 (+1매)",
     "brand": "Celimax",
     "brandKr": "Celimax",
-    "category": "skincare",
-    "foreignPrice": 16900,
-    "price": 16900,
+    "category": "cosmetics",
+    "foreignPrice": 23400,
+    "price": 23400,
     "originalPrice": 26800,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0024/A00000024046219ko.jpg",
     "images": [
@@ -94,7 +94,7 @@
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
     "scrapedAt": "2026-08-18T13:53:41.444Z",
-    "priceLastSyncedAt": "2026-08-19T08:13:19.116Z",
+    "priceLastSyncedAt": "2026-08-24T21:25:56.487Z",
     "priceSyncStatus": "synced_oliveyoung"
   },
   {
@@ -104,9 +104,9 @@
     "nameKr": "[NEW 보송버전 출시] [덱스PICK] 오브제 내추럴 커버 로션 50g 단품/기획(+미니어처 10ml)",
     "brand": "OBGE",
     "brandKr": "OBGE",
-    "category": "makeup",
-    "foreignPrice": 22900,
-    "price": 22900,
+    "category": "cosmetics",
+    "foreignPrice": 27900,
+    "price": 27900,
     "originalPrice": 29800,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0020/A00000020497522ko.jpg",
     "images": [
@@ -126,7 +126,7 @@
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
     "scrapedAt": "2026-08-18T13:54:04.289Z",
-    "priceLastSyncedAt": "2026-08-19T08:13:19.116Z",
+    "priceLastSyncedAt": "2026-08-24T21:25:56.487Z",
     "priceSyncStatus": "synced_oliveyoung"
   },
   {
@@ -136,10 +136,10 @@
     "nameKr": "[민스코공동개발] 퓌 올데이 커버 블랙 쿠션 리필기획(본품+리필) 5종",
     "brand": "fwee",
     "brandKr": "fwee",
-    "category": "makeup",
-    "foreignPrice": 27800,
-    "price": 514300,
-    "originalPrice": 703000,
+    "category": "cosmetics",
+    "foreignPrice": 29000,
+    "price": 29000,
+    "originalPrice": 38000,
     "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025312239ko.jpg",
     "images": [
       "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0025/A00000025312239ko.jpg",
@@ -157,7 +157,7 @@
     "inStock": true,
     "source": "PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER",
     "scrapedAt": "2026-08-18T13:54:24.523Z",
-    "priceLastSyncedAt": "2026-08-19T08:13:19.116Z",
+    "priceLastSyncedAt": "2026-08-24T21:25:56.487Z",
     "priceSyncStatus": "synced_oliveyoung"
   }
 ]

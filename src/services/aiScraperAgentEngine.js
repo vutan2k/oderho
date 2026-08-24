@@ -6,6 +6,14 @@
  */
 
 import { lookupKnownGoods } from './productScraperService';
+import {
+  cleanHighResImageUrl,
+  isOliveYoungJunkImage,
+  cleanKoreanTitle,
+  extractBrandFromTitleOrDom,
+  parseOliveYoungPrices,
+  classifyCosmeticsCategory
+} from './oliveYoungScraperCore';
 
 /** Lấy OpenAI / Custom AI config từ env hoặc localStorage */
 const getOpenAIConfig = () => {
@@ -382,18 +390,15 @@ export async function runAIScraperAgent(url) {
       };
     }
 
-    const upgradeUrl = (u) => (u || '').replace(/\?RS=\d+x\d+.*$/, '').replace(/\?.*$/, '');
-    const isJunkImg = (u) => /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_/i.test(u);
-
     // Quét bổ sung tất cả ảnh từ markdown nếu AI chưa lấy đủ
     const allMarkdownImgs = Array.from(markdown.matchAll(/https?:\/\/image\.oliveyoung\.co\.kr\/[^\s"')]+\.(?:jpg|jpeg|png|webp)/gi))
-      .map(m => upgradeUrl(m[0]))
-      .filter(u => u && !isJunkImg(u));
+      .map(m => cleanHighResImageUrl(m[0]))
+      .filter(u => u && !isOliveYoungJunkImage(u));
 
     const gdasImgs = allMarkdownImgs.filter(u => u.includes('gdasEditor') || u.includes('review'));
     const prodAlbumImgs = allMarkdownImgs.filter(u => !gdasImgs.includes(u));
 
-    const image = ai.image ? upgradeUrl(ai.image) : (prodAlbumImgs[0] || (extractedGoodsNo ? `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${extractedGoodsNo}01ko.jpg` : ''));
+    const image = ai.image ? cleanHighResImageUrl(ai.image) : (prodAlbumImgs[0] || (extractedGoodsNo ? `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${extractedGoodsNo}01ko.jpg` : ''));
     if (!image) {
       return {
         success: false,
@@ -402,16 +407,20 @@ export async function runAIScraperAgent(url) {
       };
     }
 
-    const finalAlbum = [...new Set([...(ai.images || []).map(upgradeUrl), image, ...prodAlbumImgs])].filter(u => u && !isJunkImg(u) && !u.includes('gdasEditor'));
-    const finalReviews = [...new Set([...(ai.photoReviews || []).map(upgradeUrl), ...gdasImgs])].filter(u => u && !isJunkImg(u) && !finalAlbum.includes(u));
+    const finalAlbum = [...new Set([...(ai.images || []).map(cleanHighResImageUrl), image, ...prodAlbumImgs])].filter(u => u && !isOliveYoungJunkImage(u) && !u.includes('gdasEditor'));
+    const finalReviews = [...new Set([...(ai.photoReviews || []).map(cleanHighResImageUrl), ...gdasImgs])].filter(u => u && !isOliveYoungJunkImage(u) && !finalAlbum.includes(u));
+
+    const brandInfo = extractBrandFromTitleOrDom(ai.nameKr || ai.name, ai.brand);
+    const categoryInfo = classifyCosmeticsCategory(ai.name || ai.nameKr, ai.description);
 
     const product = {
       goodsNo: extractedGoodsNo || `SP-${Date.now()}`,
       name: ai.name || ai.nameKr,
       nameKr: ai.nameKr,
-      brand: ai.brand || 'Olive Young',
-      brandKr: ai.brandKr || ai.brand || '올리브영',
-      category: ai.category || 'skincare',
+      brand: brandInfo.brand || ai.brand || 'Olive Young',
+      brandKr: brandInfo.brandKr || ai.brandKr || '올리브영',
+      category: categoryInfo.category || 'cosmetics',
+      subCategory: categoryInfo.subCategory || 'skincare',
       foreignPrice: Number(ai.price) || 25000,
       productImage: image,
       images: finalAlbum.length > 0 ? finalAlbum.slice(0, 10) : [image],

@@ -2,6 +2,14 @@ import 'dotenv/config';
 import { chromium } from 'playwright';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import {
+  cleanHighResImageUrl,
+  isOliveYoungJunkImage,
+  cleanKoreanTitle,
+  extractBrandFromTitleOrDom,
+  parseOliveYoungPrices,
+  classifyCosmeticsCategory
+} from '../src/services/oliveYoungScraperCore.js';
 
 const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
 const OPENAI_BASE_URL = process.env.VITE_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL || 'http://localhost:20128/v1';
@@ -24,7 +32,7 @@ const db = getFirestore(app);
 const targetUrl = process.env.PRODUCT_URL || process.argv[2] || 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000223414';
 
 async function scrapeSingleProductByUrl(url) {
-  console.log(`🚀 [Playwright Single URL Scraper] Đang mở đường dẫn: ${url}`);
+  console.log(`🚀 [Playwright Single URL Scraper v19.0] Đang mở đường dẫn: ${url}`);
   
   const browser = await chromium.launch({
     headless: true,
@@ -63,23 +71,30 @@ async function scrapeSingleProductByUrl(url) {
     const goodsNo = goodsNoMatch ? goodsNoMatch[1] : `SP_${Date.now()}`;
 
     const detailData = await page.evaluate(() => {
-      const upgradeUrl = (url) => (url || '').replace(/\?RS=\d+x\d+.*$/, '').replace(/\?.*$/, '');
-      const isJunkImg = (src) => /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_/i.test(src);
-      const cleanUrl = (s) => s.startsWith('//') ? 'https:' + s : (s.startsWith('/') ? 'https://www.oliveyoung.co.kr' + s : s);
-
       let nameKr = document.title ? document.title.split('|')[0].trim() : 'Sản phẩm Olive Young';
       let brand = 'Olive Young';
       const brandEl = document.querySelector('#moveBrandShop, .prd_brand, .tx_brand, .brand_name');
       if (brandEl && brandEl.textContent) brand = brandEl.textContent.trim();
 
-      const elementsWithWon = Array.from(document.querySelectorAll('*')).filter(el => el.children.length === 0 && el.textContent.includes('원'));
-      let priceTxt = '25000';
-      for (const el of elementsWithWon) {
-        const match = el.textContent.match(/[\d,]+원/);
-        if (match) { priceTxt = match[0]; break; }
+      // Bóc tách giá chuẩn
+      let priceWon = 25000;
+      let origPriceWon = 25000;
+      const saleEl = document.querySelector('span.price-2 strong, span.tx_cur .tx_num, [class*="GoodsDetailInfo_price__"], .price-2, strong.price');
+      const origEl = document.querySelector('span.price-1 strike, span.tx_org .tx_num, [class*="GoodsDetailInfo_price-before__"]');
+      if (saleEl) {
+        const num = (saleEl.textContent || '').replace(/[^0-9]/g, '');
+        if (num) priceWon = parseInt(num, 10);
+      }
+      if (origEl) {
+        const num = (origEl.textContent || '').replace(/[^0-9]/g, '');
+        if (num) origPriceWon = parseInt(num, 10);
       }
 
       // Quét tất cả thẻ img sạch trên trang
+      const upgradeUrl = (u) => (u || '').replace(/\?RS=\d+x\d+.*$/, '').replace(/\?.*$/, '');
+      const isJunkImg = (src) => /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_/i.test(src);
+      const cleanUrl = (s) => s.startsWith('//') ? 'https:' + s : (s.startsWith('/') ? 'https://www.oliveyoung.co.kr' + s : s);
+
       const allImgs = Array.from(document.querySelectorAll('img'))
         .map(img => cleanUrl(upgradeUrl(img.getAttribute('data-src') || img.src || '')))
         .filter(src => src && src.length > 10 && src.includes('oliveyoung') && !isJunkImg(src));
@@ -95,12 +110,16 @@ async function scrapeSingleProductByUrl(url) {
       return {
         brand,
         nameKr,
-        foreignPrice: parseInt(priceTxt.replace(/[^0-9]/g, '') || '25000', 10),
+        foreignPrice: priceWon,
+        originalPrice: origPriceWon >= priceWon ? origPriceWon : priceWon,
         mainImg: finalMain,
         albumImgs: finalAlbum.slice(0, 10),
         reviewImgs: finalReviews.slice(0, 12)
       };
     });
+
+    const brandInfo = extractBrandFromTitleOrDom(detailData.nameKr, detailData.brand);
+    const categoryInfo = classifyCosmeticsCategory(detailData.nameKr, '');
 
     const calculatedPrice = Math.round(detailData.foreignPrice * KRW_TO_VND);
     const productObj = {
@@ -108,19 +127,23 @@ async function scrapeSingleProductByUrl(url) {
       goodsNo: goodsNo,
       name: detailData.nameKr,
       nameKr: detailData.nameKr,
-      brand: detailData.brand,
-      category: 'skincare',
+      brand: brandInfo.brand || detailData.brand,
+      brandKr: brandInfo.brandKr || detailData.brand,
+      category: categoryInfo.category,
+      subCategory: categoryInfo.subCategory,
       foreignPrice: detailData.foreignPrice,
       price: calculatedPrice,
-      originalPrice: Math.round(calculatedPrice * 1.2),
+      originalPrice: Math.round(detailData.originalPrice * KRW_TO_VND),
       productImage: detailData.mainImg,
       images: detailData.albumImgs,
       photoReviews: detailData.reviewImgs,
-      description: `Sản phẩm nhập khẩu từ Olive Young Korea. Mã SP: ${goodsNo}`,
+      description: `Sản phẩm nhập khẩu chính hãng từ Olive Young Korea. Mã SP: ${goodsNo}`,
       origin: 'Store Olive Young Seoul, Hàn Quốc',
       rating: 4.9,
       reviewsCount: detailData.reviewImgs.length > 0 ? detailData.reviewImgs.length * 20 : 150,
       productUrl: url,
+      inStock: true,
+      source: 'PLAYWRIGHT_SINGLE_URL_SCRAPER',
       scrapedAt: new Date().toISOString()
     };
 

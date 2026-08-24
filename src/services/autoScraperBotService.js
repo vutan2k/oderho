@@ -1,4 +1,5 @@
 import { scrapeProductMetadata } from './productScraperService';
+import { syncProductPriceWithOliveYoung, syncAllProductsWithOliveYoung } from './oliveYoungPriceSyncService';
 
 // Target Olive Young Best Seller Goods Pool (Verified Real URLs)
 const OLIVE_YOUNG_DISCOVERY_POOL = [
@@ -89,60 +90,17 @@ export const executeAutoPriceSync = async (products = [], updateProductFn = null
     return { success: false, message: 'Kho hàng trống, không có sản phẩm nào để neo giá!' };
   }
 
-  const validProducts = products.filter(p => p.productUrl || p.goodsNo);
-  if (validProducts.length === 0) {
-    return { success: false, message: 'Không tìm thấy sản phẩm nào có link Olive Young gốc.' };
-  }
-
-  const priceChanges = [];
-  let scannedCount = 0;
-  let updatedCount = 0;
-
-  for (const prod of validProducts) {
-    scannedCount++;
-    const url = prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`;
-    
-    // Check metadata / price from Olive Young
-    const res = await scrapeProductMetadata(url);
-    if (res.success && res.product) {
-      const livePrice = Number(res.product.foreignPrice || res.product.price) || 0;
-      const currentPrice = Number(prod.foreignPrice || prod.price) || 0;
-
-      if (livePrice > 0 && livePrice !== currentPrice) {
-        updatedCount++;
-        const diffWon = livePrice - currentPrice;
-        const diffPercent = currentPrice > 0 ? ((diffWon / currentPrice) * 100).toFixed(1) : '0';
-        
-        const changeRecord = {
-          goodsNo: prod.goodsNo,
-          name: prod.name,
-          brand: prod.brand || 'Korea',
-          oldPrice: currentPrice,
-          newPrice: livePrice,
-          diffWon: diffWon,
-          diffPercent: diffPercent,
-          productUrl: url,
-          timestamp: new Date().toISOString()
-        };
-        priceChanges.push(changeRecord);
-
-        // Call update if callback provided
-        if (updateProductFn && typeof updateProductFn === 'function') {
-          updateProductFn(prod.goodsNo, {
-            ...prod,
-            foreignPrice: livePrice,
-            price: livePrice,
-            priceLastSyncedAt: new Date().toISOString(),
-            priceSyncStatus: 'synced_oliveyoung'
-          });
-        }
-      }
+  const syncResult = syncAllProductsWithOliveYoung(products);
+  
+  if (updateProductFn && typeof updateProductFn === 'function') {
+    for (const prod of syncResult.updatedProducts) {
+      updateProductFn(prod.goodsNo, prod);
     }
   }
 
-  const syncTime = new Date().toISOString();
+  const syncTime = syncResult.timestamp;
   const existingConfig = getPriceSyncConfig();
-  const newLogs = [...priceChanges, ...(existingConfig.logs || [])].slice(0, 100);
+  const newLogs = [...syncResult.changes, ...(existingConfig.logs || [])].slice(0, 100);
 
   savePriceSyncConfig({
     enabled: existingConfig.enabled,
@@ -153,11 +111,13 @@ export const executeAutoPriceSync = async (products = [], updateProductFn = null
 
   return {
     success: true,
-    scannedCount,
-    updatedCount,
-    priceChanges,
+    scannedCount: syncResult.totalScanned,
+    updatedCount: syncResult.updatedCount,
+    priceChanges: syncResult.changes,
     timestamp: syncTime,
-    message: `Đã quét ${scannedCount} sản phẩm, phát hiện & tự động neo lại giá cho ${updatedCount} sản phẩm theo Olive Young!`
+    message: syncResult.updatedCount > 0
+      ? `Đã quét ${syncResult.totalScanned} sản phẩm, phát hiện & tự động cập nhật giá chuẩn cho ${syncResult.updatedCount} sản phẩm theo Olive Young!`
+      : `Đã quét ${syncResult.totalScanned} sản phẩm: Tất cả sản phẩm đều đang chuẩn xác 100% theo giá Olive Young!`
   };
 };
 
