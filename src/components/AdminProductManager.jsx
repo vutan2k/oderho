@@ -1,18 +1,17 @@
-import React, { useState, useContext, useMemo, useEffect } from 'react';
+import React, { useState, useContext, useMemo, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
-import { getPriceSyncConfig, savePriceSyncConfig, executeAutoPriceSync } from '../services/autoScraperBotService';
+import { getPriceSyncConfig, savePriceSyncConfig } from '../services/autoScraperBotService';
 import {
-  getOliveYoungVerifiedPrice,
   syncProductPriceWithOliveYoung,
   syncAllProductsWithOliveYoung,
   VERIFIED_OLIVEYOUNG_PRICES
 } from '../services/oliveYoungPriceSyncService';
 import {
-  Plus, Trash2, X, Globe, Check, Edit3, Link2, Download,
-  Eye, RefreshCw, Zap, Clock, ShieldCheck, Search, Filter,
-  ExternalLink, Sparkles, CheckCircle2, ArrowUpDown, TrendingDown, AlertCircle
+  Plus, Trash2, X, Globe, Edit3, Download,
+  Eye, RefreshCw, Zap, Clock, Search, ExternalLink,
+  Sparkles, CheckCircle2, AlertCircle, UploadCloud, Image as ImageIcon, Star
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -23,7 +22,7 @@ const CATEGORIES = [
 
 export default function AdminProductManager() {
   const {
-    products, addProduct, updateProduct, deleteProduct, deleteAllProducts,
+    products, addProduct, updateProduct, deleteProduct,
     pendingProducts, addPendingProduct, updatePendingProduct,
     approvePendingProduct, approveSelectedPendingProducts, approveAllPendingProducts, rejectPendingProduct,
     rates
@@ -35,15 +34,18 @@ export default function AdminProductManager() {
 
   const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'pending' | 'price_logs'
 
-  // --- Inventory State ---
+  // --- Search & Filter State ---
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCat, setFilterCat] = useState('all');
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   // --- Edit Modal State ---
   const [editModal, setEditModal] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [zoomImage, setZoomImage] = useState(null);
+  const [urlInputVal, setUrlInputVal] = useState('');
+  const mainImageFileInputRef = useRef(null);
+  const albumFileInputRef = useRef(null);
 
   // --- Pending State ---
   const [selectedPending, setSelectedPending] = useState([]);
@@ -51,14 +53,12 @@ export default function AdminProductManager() {
   // --- Scraper State ---
   const [quickLink, setQuickLink] = useState('');
   const [loadingScrape, setLoadingScrape] = useState(false);
-  const [scrapeError, setScrapeError] = useState(null);
 
-  // --- AI Price Sync Bot & Summary Modal ---
+  // --- Price Sync Bot & Logs ---
   const [priceSyncConfig, setPriceSyncConfigState] = useState(() => getPriceSyncConfig());
   const [isSyncingPrice, setIsSyncingPrice] = useState(false);
   const [priceSyncLogs, setPriceSyncLogs] = useState(priceSyncConfig.logs || []);
   const [priceSyncSummaryModal, setPriceSyncSummaryModal] = useState(null);
-  const [zoomImage, setZoomImage] = useState(null);
 
   // Auto Timer for Price Sync Bot
   useEffect(() => {
@@ -75,65 +75,6 @@ export default function AdminProductManager() {
     savePriceSyncConfig(updated);
     setPriceSyncConfigState(updated);
     if (showToast) showToast(updated.enabled ? 'Đã BẬT AI Bot Neo Giá Tự Động!' : 'Đã TẮT AI Bot Neo Giá Tự Động.', updated.enabled ? 'success' : 'info');
-  };
-
-  const handleChangePriceSyncInterval = (newMins) => {
-    const updated = { ...priceSyncConfig, intervalMins: newMins };
-    savePriceSyncConfig(updated);
-    setPriceSyncConfigState(updated);
-    if (showToast) showToast(`Đã đổi tần suất quét giá thành ${newMins} phút / lần.`, 'success');
-  };
-
-  // Cập nhật giá 1 sản phẩm đơn lẻ chuẩn Olive Young
-  const handleAnchorProductPrice = async (prod) => {
-    if (!prod) return;
-    const synced = syncProductPriceWithOliveYoung(prod);
-    await updateProduct(prod.goodsNo, synced);
-    const diff = (synced.foreignPrice || 0) - (prod.foreignPrice || 0);
-    const diffMsg = diff !== 0 ? ` (Giá mới: ₩${synced.foreignPrice.toLocaleString('vi-VN')})` : ' (Giá đã chuẩn)';
-    if (showToast) showToast(`⚡ Đã cập nhật giá Olive Young cho "${synced.name || prod.goodsNo}": ₩${synced.foreignPrice.toLocaleString('vi-VN')}${diffMsg}`, 'success');
-  };
-
-  // Quét & cập nhật toàn bộ kho sản phẩm chuẩn Olive Young
-  const handleRunManualPriceSync = async () => {
-    setIsSyncingPrice(true);
-    if (showToast) showToast('AI đang quét và đối chiếu toàn bộ kho hàng với Olive Young Hàn Quốc...', 'info');
-    try {
-      const res = syncAllProductsWithOliveYoung(products);
-      for (const p of res.updatedProducts) {
-        await updateProduct(p.goodsNo, p);
-      }
-      setIsSyncingPrice(false);
-      setPriceSyncSummaryModal(res);
-      const latestConfig = getPriceSyncConfig();
-      const updatedLogs = [...res.changes, ...(latestConfig.logs || [])].slice(0, 100);
-      savePriceSyncConfig({ ...latestConfig, lastSyncTime: new Date().toISOString(), logs: updatedLogs });
-      setPriceSyncConfigState(getPriceSyncConfig());
-      setPriceSyncLogs(updatedLogs);
-      if (showToast) {
-        if (res.updatedCount > 0) {
-          showToast(`⚡ Đã đồng bộ giá chuẩn Olive Young cho ${res.updatedCount}/${res.totalScanned} sản phẩm!`, 'success');
-        } else {
-          showToast(`✅ Toàn bộ ${res.totalScanned} sản phẩm đã khớp 100% với giá Olive Young!`, 'success');
-        }
-      }
-    } catch (err) {
-      setIsSyncingPrice(false);
-      if (showToast) showToast(`Lỗi quét giá: ${err.message}`, 'error');
-    }
-  };
-
-  const handleAnchorPendingPrice = (prod) => {
-    if (!prod) return;
-    const synced = syncProductPriceWithOliveYoung(prod);
-    updatePendingProduct(prod.goodsNo, synced);
-    if (showToast) showToast(`⚡ Đã neo giá Olive Young cho ${synced.name || prod.goodsNo}: ₩${synced.foreignPrice.toLocaleString('vi-VN')}`, 'success');
-  };
-
-  const handleAnchorAllPendingPrices = () => {
-    if (!pendingProducts || pendingProducts.length === 0) return;
-    pendingProducts.forEach(prod => handleAnchorPendingPrice(prod));
-    if (showToast) showToast('⚡ Đã neo giá Olive Young thành công cho tất cả sản phẩm chờ duyệt!', 'success');
   };
 
   // Helper Translate Korean Names
@@ -166,41 +107,27 @@ export default function AdminProductManager() {
     return vi || krTitle;
   };
 
-  const sanitizePrice = (rawPrice) => {
-    let val = Number(rawPrice) || 0;
-    if (val > 200000) {
-      const matches = String(rawPrice).match(/([0-9]{4,6})/g);
-      if (matches && matches.length > 0) {
-        const validNums = matches.map(m => parseInt(m, 10)).filter(n => n >= 1000 && n <= 200000);
-        val = validNums.length > 0 ? Math.min(...validNums) : 26800;
-      } else {
-        val = 26800;
-      }
-    }
-    return val > 0 ? val : 25000;
-  };
-
   const sanitizeProductForAdmin = (prod) => {
     if (!prod) return prod;
-    const cleanPrice = sanitizePrice(prod.foreignPrice || prod.price);
     let vietnameseName = prod.name || '';
     if (!vietnameseName || /[가-힣]/.test(vietnameseName)) {
       vietnameseName = translateKoreanToVi(prod.nameKr || prod.name);
     }
 
     const isJunkImg = (u) => /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_/i.test(u);
-    const isRealWorkingUrl = (u) => u && typeof u === 'string' && u.startsWith('http') && !isJunkImg(u);
+    const isRealWorkingUrl = (u) => u && typeof u === 'string' && (u.startsWith('http') || u.startsWith('data:image')) && !isJunkImg(u);
 
     const existingAlbum = (prod.images || (prod.productImage ? [prod.productImage] : [])).filter(isRealWorkingUrl);
     const existingReviews = (prod.photoReviews || []).filter(isRealWorkingUrl);
-
     const mainImg = (prod.productImage && isRealWorkingUrl(prod.productImage)) ? prod.productImage : (existingAlbum[0] || (existingReviews[0] || ''));
+
+    const rawPrice = prod.foreignPrice !== undefined ? prod.foreignPrice : (prod.price !== undefined ? prod.price : '');
 
     return {
       ...prod,
       name: vietnameseName,
-      foreignPrice: cleanPrice,
-      price: cleanPrice,
+      foreignPrice: rawPrice,
+      price: rawPrice,
       productImage: mainImg,
       images: existingAlbum.length > 0 ? existingAlbum : (mainImg ? [mainImg] : []),
       photoReviews: existingReviews
@@ -226,7 +153,7 @@ export default function AdminProductManager() {
     return c === 'supplements' || c.includes('thực phẩm') || c.includes('chức năng') || c.includes('health') || c.includes('collagen') || c.includes('pharm') || c.includes('thuốc');
   };
 
-  // Dynamic counts for Category Dropdown
+  // Category counts
   const categoryCounts = useMemo(() => {
     let cosmeticsCount = 0;
     let ginsengCount = 0;
@@ -246,8 +173,8 @@ export default function AdminProductManager() {
     };
   }, [products]);
 
-  // Filtered Products (Phân loại vào tab Mỹ phẩm chuẩn 100%)
-  const filtered = useMemo(() => {
+  // Filtered Products
+  const filteredProducts = useMemo(() => {
     return products.filter(p => {
       let matchCat = true;
       if (filterCat === 'cosmetics') matchCat = isCosmeticCat(p.category);
@@ -267,28 +194,78 @@ export default function AdminProductManager() {
     });
   }, [products, filterCat, searchTerm]);
 
-  // Inventory Selection
+  // Selection Handlers
   const toggleSelectProduct = (goodsNo) => {
     setSelectedProducts(prev =>
       prev.includes(goodsNo) ? prev.filter(id => id !== goodsNo) : [...prev, goodsNo]
     );
   };
+
   const toggleSelectAll = () => {
-    if (selectedProducts.length === filtered.length && filtered.length > 0) setSelectedProducts([]);
-    else setSelectedProducts(filtered.map(p => p.goodsNo));
+    if (selectedProducts.length === filteredProducts.length && filteredProducts.length > 0) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map(p => p.goodsNo));
+    }
   };
+
   const handleDeleteSelected = () => {
     if (selectedProducts.length === 0) return;
-    if (window.confirm(`Xóa vĩnh viễn ${selectedProducts.length} sản phẩm đã chọn?`)) {
+    if (window.confirm(`Xóa ${selectedProducts.length} sản phẩm đã chọn?`)) {
       selectedProducts.forEach(id => deleteProduct(id));
       setSelectedProducts([]);
       if (showToast) showToast(`Đã xóa ${selectedProducts.length} sản phẩm`, 'success');
     }
   };
-  const handleDelete = (goodsNo) => {
-    deleteProduct(goodsNo);
-    setDeleteConfirm(null);
-    if (showToast) showToast('Đã xoá sản phẩm', 'info');
+
+  // ⚡ Single Product Anchor Price
+  const handleAnchorProductPrice = async (prod) => {
+    if (!prod) return;
+    const synced = syncProductPriceWithOliveYoung(prod);
+    await updateProduct(prod.goodsNo, synced);
+    const diff = (synced.foreignPrice || 0) - (prod.foreignPrice || 0);
+    const diffMsg = diff !== 0 ? ` (Giá mới: ₩${synced.foreignPrice.toLocaleString('vi-VN')})` : ' (Giá đã chuẩn)';
+    if (showToast) showToast(`⚡ Đã cập nhật giá OY cho "${synced.name || prod.goodsNo}": ₩${synced.foreignPrice.toLocaleString('vi-VN')}${diffMsg}`, 'success');
+  };
+
+  // ⚡ Batch Anchor Price
+  const handleBatchAnchorPrice = async () => {
+    if (selectedProducts.length === 0) return;
+    const targetProds = products.filter(p => selectedProducts.includes(p.goodsNo));
+    for (const prod of targetProds) {
+      const synced = syncProductPriceWithOliveYoung(prod);
+      await updateProduct(prod.goodsNo, synced);
+    }
+    if (showToast) showToast(`⚡ Đã neo giá Olive Young cho ${targetProds.length} sản phẩm đã chọn!`, 'success');
+  };
+
+  // Quét & cập nhật toàn bộ kho sản phẩm chuẩn Olive Young
+  const handleRunManualPriceSync = async () => {
+    setIsSyncingPrice(true);
+    if (showToast) showToast('AI đang quét và đối chiếu toàn bộ kho hàng với Olive Young Hàn Quốc...', 'info');
+    try {
+      const res = syncAllProductsWithOliveYoung(products);
+      for (const p of res.updatedProducts) {
+        await updateProduct(p.goodsNo, p);
+      }
+      setIsSyncingPrice(false);
+      setPriceSyncSummaryModal(res);
+      const latestConfig = getPriceSyncConfig();
+      const updatedLogs = [...res.changes, ...(latestConfig.logs || [])].slice(0, 100);
+      savePriceSyncConfig({ ...latestConfig, lastSyncTime: new Date().toISOString(), logs: updatedLogs });
+      setPriceSyncConfigState(getPriceSyncConfig());
+      setPriceSyncLogs(updatedLogs);
+      if (showToast) {
+        if (res.updatedCount > 0) {
+          showToast(`⚡ Đã đồng bộ giá chuẩn Olive Young cho ${res.updatedCount}/${res.totalScanned} sản phẩm!`, 'success');
+        } else {
+          showToast(`✅ Toàn bộ ${res.totalScanned} sản phẩm đã khớp 100% với giá Olive Young!`, 'success');
+        }
+      }
+    } catch (err) {
+      setIsSyncingPrice(false);
+      if (showToast) showToast(`Lỗi quét giá: ${err.message}`, 'error');
+    }
   };
 
   // Export CSV
@@ -297,7 +274,7 @@ export default function AdminProductManager() {
       if (showToast) showToast('Kho hàng hiện đang trống!', 'warning');
       return;
     }
-    const headers = ['Mã SP', 'Tên Tiếng Việt', 'Tên Tiếng Hàn', 'Thương Hiệu', 'Danh Mục', 'Giá Won (₩)', 'Giá Ước Tính VNĐ', 'Nguồn Gốc', 'Link Olive Young'];
+    const headers = ['Mã SP', 'Tên Tiếng Việt', 'Tên Tiếng Hàn', 'Thương Hiệu', 'Danh Mục', 'Giá Won (₩)', 'Giá Ước Tính VNĐ', 'Link Olive Young'];
     const rows = products.map(p => {
       let catLabel = p.category;
       const foundCat = CATEGORIES.find(c => c.value === p.category);
@@ -314,12 +291,11 @@ export default function AdminProductManager() {
         catLabel,
         fPrice,
         approxVnd,
-        p.origin || 'Store Olive Young Seoul, Hàn Quốc',
-        p.productUrl || ''
+        p.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${p.goodsNo}`
       ];
     });
 
-    const csvContent = "﻿" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -336,34 +312,42 @@ export default function AdminProductManager() {
   const handleAddNew = () => {
     const newProd = {
       goodsNo: `SP-${Math.floor(10000 + Math.random() * 90000)}`,
-      name: '', nameKr: '', brand: '', brandKr: '', category: 'skincare', foreignPrice: 25000,
-      productImage: '', description: '', origin: 'Store Olive Young Seoul, Hàn Quốc',
+      name: '', nameKr: '', brand: '', brandKr: '', category: 'cosmetics',
+      foreignPrice: '', originalPrice: '',
+      productImage: '', images: [], photoReviews: [], description: '', origin: 'Store Olive Young Seoul, Hàn Quốc',
       rating: 5.0, reviewsCount: 0, usage: '', productUrl: '',
     };
     setEditForm(newProd);
+    setUrlInputVal('');
     setEditModal({ isNew: true, ...newProd });
   };
 
   const openEdit = (prod) => {
     const cleanProd = sanitizeProductForAdmin(prod);
-    setEditForm({ ...cleanProd });
+    setEditForm({
+      ...cleanProd,
+      foreignPrice: cleanProd.foreignPrice ?? cleanProd.price ?? '',
+      originalPrice: cleanProd.originalPrice ?? ''
+    });
+    setUrlInputVal('');
     setEditModal({ isPending: false, ...cleanProd });
   };
 
   const openEditPending = (prod) => {
     const cleanProd = sanitizeProductForAdmin(prod);
-    setEditForm({ ...cleanProd });
+    setEditForm({
+      ...cleanProd,
+      foreignPrice: cleanProd.foreignPrice ?? cleanProd.price ?? '',
+      originalPrice: cleanProd.originalPrice ?? ''
+    });
+    setUrlInputVal('');
     setEditModal({ isPending: true, ...cleanProd });
   };
 
   const handleEditChange = (field, value) => {
-    let cleanVal = value;
-    if (field === 'foreignPrice') {
-      cleanVal = sanitizePrice(value);
-    }
     setEditForm(prev => ({
       ...prev,
-      [field]: ['rating', 'reviewsCount'].includes(field) ? (parseFloat(value) || 0) : cleanVal
+      [field]: ['rating', 'reviewsCount'].includes(field) ? (parseFloat(value) || 0) : value
     }));
   };
 
@@ -372,7 +356,17 @@ export default function AdminProductManager() {
       if (showToast) showToast('Tên sản phẩm không được để trống!', 'error');
       return;
     }
-    const cleanForm = sanitizeProductForAdmin(editForm);
+
+    const cleanForeignPrice = editForm.foreignPrice !== '' ? Number(editForm.foreignPrice) || 0 : 0;
+    const cleanOriginalPrice = editForm.originalPrice !== '' && editForm.originalPrice !== undefined ? Number(editForm.originalPrice) || 0 : undefined;
+
+    const cleanForm = sanitizeProductForAdmin({
+      ...editForm,
+      foreignPrice: cleanForeignPrice,
+      price: cleanForeignPrice,
+      originalPrice: cleanOriginalPrice
+    });
+
     if (editModal.isPending) {
       updatePendingProduct(editModal.goodsNo, cleanForm);
       if (showToast) showToast('Đã cập nhật thông tin hàng chờ!', 'success');
@@ -386,39 +380,11 @@ export default function AdminProductManager() {
     setEditModal(null);
   };
 
-  // Pending Actions
-  const toggleSelectPending = (goodsNo) => {
-    setSelectedPending(prev =>
-      prev.includes(goodsNo) ? prev.filter(id => id !== goodsNo) : [...prev, goodsNo]
-    );
-  };
-  const toggleSelectAllPending = () => {
-    if (selectedPending.length === pendingProducts.length && pendingProducts.length > 0) setSelectedPending([]);
-    else setSelectedPending(pendingProducts.map(p => p.goodsNo));
-  };
-  const handleApproveSelected = () => {
-    if (selectedPending.length === 0) return;
-    if (window.confirm(`Duyệt ${selectedPending.length} sản phẩm lên Website chính thức?`)) {
-      approveSelectedPendingProducts(selectedPending);
-      setSelectedPending([]);
-      if (showToast) showToast('Đã duyệt sản phẩm thành công!', 'success');
-    }
-  };
-  const handleDeleteSelectedPending = () => {
-    if (selectedPending.length === 0) return;
-    if (window.confirm(`Xóa ${selectedPending.length} sản phẩm chờ duyệt?`)) {
-      selectedPending.forEach(id => rejectPendingProduct(id));
-      setSelectedPending([]);
-      if (showToast) showToast('Đã xóa danh sách chờ!', 'success');
-    }
-  };
-
   // AI Link Scraper
   const handleScrape = async (e) => {
     e.preventDefault();
     if (!quickLink.trim()) return;
     setLoadingScrape(true);
-    setScrapeError(null);
     if (showToast) showToast('AI đang bóc tách dữ liệu từ Olive Young...', 'info');
     const res = await runAIScraperAgent(quickLink.trim());
     setLoadingScrape(false);
@@ -426,15 +392,38 @@ export default function AdminProductManager() {
       addPendingProduct(res.product);
       setQuickLink('');
       setActiveTab('pending');
-      if (showToast) showToast(`Đã bóc tách thành công: "${res.product.name}"! Dữ liệu đã chuyển sang mục Chờ Duyệt.`, 'success');
+      if (showToast) showToast(`Đã bóc tách thành công: "${res.product.name}"!`, 'success');
     } else {
-      setScrapeError({ message: res.error, url: quickLink.trim(), openPage: !!res.openProductPage });
       if (showToast) showToast(`Lỗi bóc tách: ${res.error}`, 'error');
     }
   };
 
-  const handleLocalImageUpload = (e) => {
-    const files = Array.from(e.target.files);
+  // 🖼️ Upload Main Avatar Image from Computer
+  const handleMainAvatarUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result;
+      setEditForm(prev => {
+        const currentImages = prev.images || [];
+        const updatedImages = currentImages.includes(base64) ? currentImages : [base64, ...currentImages];
+        return {
+          ...prev,
+          productImage: base64,
+          images: updatedImages
+        };
+      });
+      if (showToast) showToast('Đã tải và cài đặt ảnh đại diện chính!', 'success');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // 🖼️ Upload Multiple Album Images from Computer
+  const handleAlbumUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     files.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -443,191 +432,203 @@ export default function AdminProductManager() {
           const currentImages = prev.images || [];
           const updatedImages = [...currentImages, base64];
           const mainImg = prev.productImage || base64;
-          return { ...prev, images: updatedImages, productImage: mainImg };
+          return {
+            ...prev,
+            images: updatedImages,
+            productImage: mainImg
+          };
         });
       };
       reader.readAsDataURL(file);
     });
+    if (showToast) showToast(`Đang tải ${files.length} ảnh lên album...`, 'info');
+    e.target.value = '';
   };
 
-  // Chrome Extension Receive Listener
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const autoFill = params.get('autoFill');
-    if (autoFill) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(atob(autoFill)));
-        const urlGoodsNoMatch = (decoded.url || '').match(/goodsNo=([A-Za-z0-9_]+)/i);
-        const goodsNo = urlGoodsNoMatch ? urlGoodsNoMatch[1].toUpperCase() : `SP-${Math.floor(10000 + Math.random() * 90000)}`;
+  // 🖼️ Add Image via Web URL
+  const handleAddImageUrl = (e) => {
+    e.preventDefault();
+    const url = urlInputVal.trim();
+    if (!url) return;
+    setEditForm(prev => {
+      const currentImages = prev.images || [];
+      const updatedImages = [...currentImages, url];
+      const mainImg = prev.productImage || url;
+      return {
+        ...prev,
+        images: updatedImages,
+        productImage: mainImg
+      };
+    });
+    setUrlInputVal('');
+    if (showToast) showToast('Đã thêm ảnh từ link URL!', 'success');
+  };
 
-        const extProduct = {
-          goodsNo: goodsNo,
-          name: decoded.name || decoded.nameKr || 'Sản phẩm Olive Young',
-          nameKr: decoded.nameKr || decoded.name || '',
-          brand: decoded.brand || 'Korea Brand',
-          brandKr: decoded.brandKr || decoded.brand || '올리브영',
-          category: decoded.category || 'skincare',
-          foreignPrice: Number(decoded.foreignPrice || decoded.price) || 25000,
-          productImage: decoded.productImage || decoded.image || (decoded.images && decoded.images[0]) || '',
-          images: decoded.images || [],
-          photoReviews: decoded.photoReviews || [],
-          description: decoded.description || `Sản phẩm chính hãng bóc tách từ Olive Young. Tên gốc: ${decoded.nameKr || decoded.name}`,
-          usage: decoded.usage || 'Xem hướng dẫn sử dụng trên bao bì.',
-          origin: 'Store Olive Young, Hàn Quốc',
-          productUrl: decoded.url || '',
-          rating: decoded.rating || 4.9,
-          reviewsCount: decoded.reviewsCount || (decoded.photoReviews ? decoded.photoReviews.length : 150),
-          scrapedAt: new Date().toISOString(),
-          source: 'chrome-extension'
-        };
+  // Set any album photo as Main Avatar
+  const handleSetMainAvatar = (imgUrl) => {
+    setEditForm(prev => ({
+      ...prev,
+      productImage: imgUrl
+    }));
+    if (showToast) showToast('Đã đặt làm ảnh đại diện chính!', 'success');
+  };
 
-        addPendingProduct(extProduct);
-        setActiveTab('pending');
-        if (showToast) showToast(`🚀 Đã nhận sản phẩm từ Chrome Extension: "${extProduct.name}"! Đã thêm vào Chờ Duyệt.`, 'success');
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (err) {
-        console.error('Lỗi nhận dữ liệu từ Chrome Extension:', err);
-      }
-    }
-  }, [addPendingProduct, showToast]);
+  // Remove photo from album
+  const handleRemovePhoto = (imgUrl) => {
+    setEditForm(prev => {
+      const updated = (prev.images || []).filter(u => u !== imgUrl);
+      const newMain = prev.productImage === imgUrl ? (updated[0] || '') : prev.productImage;
+      return {
+        ...prev,
+        images: updated,
+        productImage: newMain
+      };
+    });
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '1400px', margin: '0 auto' }}>
 
-      {/* 📊 KPI SUMMARY CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-        <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '14px', padding: '16px 18px', border: '1px solid var(--border-color)', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* 📊 SUMMARY KPI CARDS (TRỰC QUAN & GỌN GÀNG) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+        <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '14px 18px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase' }}>
               KHO SẢN PHẨM LIVE
             </span>
-            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--purple-primary)', marginTop: '2px' }}>
+            <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--purple-primary)', marginTop: '2px' }}>
               {products.length} SP
             </div>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--purple-primary)' }}>
-            <Globe size={20} />
+          <div style={{ width: '38px', height: '38px', borderRadius: '8px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--purple-primary)' }}>
+            <Globe size={18} />
           </div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '14px', padding: '16px 18px', border: '1px solid var(--border-color)', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '14px 18px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              HÀNG CHỜ DUYỆT (PENDING)
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase' }}>
+              HÀNG CHỜ DUYỆT
             </span>
-            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: pendingProducts?.length > 0 ? '#D97706' : '#059669', marginTop: '2px' }}>
+            <div style={{ fontSize: '1.35rem', fontWeight: 900, color: pendingProducts?.length > 0 ? '#D97706' : '#059669', marginTop: '2px' }}>
               {pendingProducts?.length || 0} SP
             </div>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: pendingProducts?.length > 0 ? '#FEF3C7' : '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: pendingProducts?.length > 0 ? '#D97706' : '#059669' }}>
-            <Clock size={20} />
+          <div style={{ width: '38px', height: '38px', borderRadius: '8px', backgroundColor: pendingProducts?.length > 0 ? '#FEF3C7' : '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: pendingProducts?.length > 0 ? '#D97706' : '#059669' }}>
+            <Clock size={18} />
           </div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '14px', padding: '16px 18px', border: '1px solid var(--border-color)', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '14px 18px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase' }}>
               BOT NEO GIÁ OLIVE YOUNG
             </span>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: priceSyncConfig.enabled ? '#059669' : 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: priceSyncConfig.enabled ? '#22C55E' : 'var(--text-light)', display: 'inline-block' }}></span>
-              {priceSyncConfig.enabled ? `Bật (${priceSyncConfig.intervalMins || 60}p/lần)` : 'Đang Tắt'}
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: priceSyncConfig.enabled ? '#059669' : 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: priceSyncConfig.enabled ? '#22C55E' : '#94A3B8' }} />
+              {priceSyncConfig.enabled ? `Đang Bật (${priceSyncConfig.intervalMins || 60}p)` : 'Đang Tắt'}
             </div>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: priceSyncConfig.enabled ? '#DCFCE7' : 'var(--bg-ivory)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: priceSyncConfig.enabled ? '#059669' : 'var(--text-muted)' }}>
-            <Zap size={20} />
-          </div>
+          <button
+            onClick={handleTogglePriceSync}
+            style={{
+              backgroundColor: priceSyncConfig.enabled ? '#DCFCE7' : 'var(--bg-ivory)',
+              color: priceSyncConfig.enabled ? '#15803D' : '#64748B',
+              border: '1px solid var(--border-color)',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            {priceSyncConfig.enabled ? 'Tắt Bot' : 'Bật Bot'}
+          </button>
         </div>
       </div>
 
-      {/* 🚀 QUICK SCRAPER & EXTENSION PRO TOOLBAR */}
-      <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', padding: '20px', border: '1px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'var(--bg-subtle-purple)', color: 'var(--purple-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={20} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-dark)' }}>
-                  Tiện Ích Cào Sản Phẩm Chrome Extension Pro v18.0
-                </h3>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, backgroundColor: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: '12px' }}>
-                  Khuyên dùng
-                </span>
-              </div>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Mở Olive Young trên Chrome ➔ Bấm icon <strong>TAVY AI Scraper</strong> để tự động bóc 30+ ảnh GDAS, 3 ảnh HD và dịch AI mượt mà về Admin
-              </p>
-            </div>
-          </div>
+      {/* 🚀 QUICK SCRAPER BAR (CÀO LINK GỌN GÀNG) */}
+      <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '14px 18px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <form onSubmit={handleScrape} style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '280px' }}>
+          <input
+            type="text"
+            placeholder="Dán link sản phẩm Olive Young Hàn Quốc cần cào..."
+            value={quickLink}
+            onChange={(e) => setQuickLink(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)',
+              fontSize: '0.82rem',
+              outline: 'none'
+            }}
+          />
+          <button
+            type="submit"
+            disabled={loadingScrape || !quickLink.trim()}
+            style={{
+              backgroundColor: 'var(--purple-primary)',
+              color: '#FFF',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <Sparkles size={14} />
+            {loadingScrape ? 'Đang bóc tách...' : 'Cào Dữ Liệu'}
+          </button>
+        </form>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              onClick={handleTogglePriceSync}
-              style={{
-                backgroundColor: priceSyncConfig.enabled ? '#DCFCE7' : 'var(--bg-ivory)',
-                color: priceSyncConfig.enabled ? '#15803D' : 'var(--text-muted)',
-                border: priceSyncConfig.enabled ? '1px solid #86EFAC' : '1px solid var(--border-color)',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <Zap size={14} color={priceSyncConfig.enabled ? '#16A34A' : 'var(--text-muted)'} />
-              {priceSyncConfig.enabled ? 'Bot Neo Giá: ĐANG BẬT' : 'Bot Neo Giá: TẮT'}
-            </button>
-
-            <button
-              disabled={isSyncingPrice}
-              onClick={handleRunManualPriceSync}
-              style={{
-                backgroundColor: 'var(--purple-primary)',
-                color: '#FFF',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 6px rgba(109, 40, 217, 0.25)'
-              }}
-            >
-              <RefreshCw size={14} className={isSyncingPrice ? 'spin-animation' : ''} />
-              {isSyncingPrice ? 'Đang đối chiếu giá...' : '⚡ Cập Nhật Giá Toàn Bộ Theo Olive Young'}
-            </button>
-          </div>
-        </div>
+        <button
+          disabled={isSyncingPrice}
+          onClick={handleRunManualPriceSync}
+          style={{
+            backgroundColor: '#059669',
+            color: '#FFF',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <RefreshCw size={14} className={isSyncingPrice ? 'spin-animation' : ''} />
+          {isSyncingPrice ? 'Đang quét giá...' : '⚡ Quét Giá Toàn Bộ Theo Olive Young'}
+        </button>
       </div>
 
-      {/* 🧭 TABS NAVIGATION */}
-      <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid var(--border-color)', paddingBottom: '2px' }}>
+      {/* 🧭 NAVIGATION TABS */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border-color)', paddingBottom: '2px' }}>
         <button
           onClick={() => setActiveTab('inventory')}
           style={{
-            padding: '10px 18px',
+            padding: '8px 16px',
             border: 'none',
             background: 'none',
             cursor: 'pointer',
-            fontSize: '0.9rem',
+            fontSize: '0.88rem',
             fontWeight: activeTab === 'inventory' ? 800 : 600,
             color: activeTab === 'inventory' ? 'var(--purple-primary)' : 'var(--text-muted)',
             borderBottom: activeTab === 'inventory' ? '3px solid var(--purple-primary)' : '3px solid transparent',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '6px'
           }}
         >
           <span>Kho Sản Phẩm Live</span>
-          <span style={{ backgroundColor: activeTab === 'inventory' ? 'var(--purple-primary)' : 'var(--bg-ivory)', color: activeTab === 'inventory' ? 'var(--bg-white)' : 'var(--text-muted)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+          <span style={{ backgroundColor: activeTab === 'inventory' ? 'var(--purple-primary)' : '#E2E8F0', color: activeTab === 'inventory' ? '#FFF' : '#475569', padding: '1px 6px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800 }}>
             {products.length}
           </span>
         </button>
@@ -635,22 +636,22 @@ export default function AdminProductManager() {
         <button
           onClick={() => setActiveTab('pending')}
           style={{
-            padding: '10px 18px',
+            padding: '8px 16px',
             border: 'none',
             background: 'none',
             cursor: 'pointer',
-            fontSize: '0.9rem',
+            fontSize: '0.88rem',
             fontWeight: activeTab === 'pending' ? 800 : 600,
             color: activeTab === 'pending' ? 'var(--purple-primary)' : 'var(--text-muted)',
             borderBottom: activeTab === 'pending' ? '3px solid var(--purple-primary)' : '3px solid transparent',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '6px'
           }}
         >
           <span>Chờ Duyệt (Pending)</span>
           {pendingProducts?.length > 0 && (
-            <span style={{ backgroundColor: '#D97706', color: 'var(--bg-white)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+            <span style={{ backgroundColor: '#D97706', color: '#FFF', padding: '1px 6px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800 }}>
               {pendingProducts.length}
             </span>
           )}
@@ -659,48 +660,48 @@ export default function AdminProductManager() {
         <button
           onClick={() => setActiveTab('price_logs')}
           style={{
-            padding: '10px 18px',
+            padding: '8px 16px',
             border: 'none',
             background: 'none',
             cursor: 'pointer',
-            fontSize: '0.9rem',
+            fontSize: '0.88rem',
             fontWeight: activeTab === 'price_logs' ? 800 : 600,
             color: activeTab === 'price_logs' ? 'var(--purple-primary)' : 'var(--text-muted)',
             borderBottom: activeTab === 'price_logs' ? '3px solid var(--purple-primary)' : '3px solid transparent',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '6px'
           }}
         >
-          <span>Nhật Ký Biến Động Giá Olive Young</span>
-          <span style={{ backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+          <span>Nhật Ký Biến Động Giá</span>
+          <span style={{ backgroundColor: '#E2E8F0', color: '#475569', padding: '1px 6px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800 }}>
             {priceSyncLogs?.length || 0}
           </span>
         </button>
       </div>
 
-      {/* ═══════════ TAB 1: KHO SẢN PHẨM (INVENTORY) ═══════════ */}
+      {/* ═══════════ TAB 1: KHO SẢN PHẨM LIVE (TRỰC QUAN & ĐƠN GIẢN) ═══════════ */}
       {activeTab === 'inventory' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-          {/* Search & Bulk Control Bar */}
-          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', padding: '16px 20px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '280px', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
-                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+          {/* Search & Action Bar */}
+          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '12px 16px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '280px', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+                <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
                 <input
                   type="text"
-                  placeholder="Tìm theo Tên SP, Mã hàng, Thương hiệu..."
+                  placeholder="Tìm theo tên sản phẩm, mã hàng, thương hiệu..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '7px 10px 7px 32px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', outline: 'none' }}
                 />
               </div>
 
               <select
                 value={filterCat}
                 onChange={(e) => setFilterCat(e.target.value)}
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)', backgroundColor: 'var(--bg-white)' }}
+                style={{ padding: '7px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)', backgroundColor: '#FFF' }}
               >
                 <option value="all">Tất cả danh mục ({categoryCounts.all})</option>
                 <option value="cosmetics">Mỹ phẩm ({categoryCounts.cosmetics})</option>
@@ -711,66 +712,74 @@ export default function AdminProductManager() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {selectedProducts.length > 0 && (
-                <button
-                  onClick={handleDeleteSelected}
-                  style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Trash2 size={14} /> Xóa {selectedProducts.length} mục đã chọn
-                </button>
+                <>
+                  <button
+                    onClick={handleBatchAnchorPrice}
+                    style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A', padding: '7px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <Zap size={13} /> Neo Giá ({selectedProducts.length})
+                  </button>
+                  <button
+                    onClick={handleDeleteSelected}
+                    style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '7px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <Trash2 size={13} /> Xóa ({selectedProducts.length})
+                  </button>
+                </>
               )}
 
               <button
                 onClick={handleExportProductCSV}
-                style={{ backgroundColor: 'var(--bg-white)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ backgroundColor: '#FFF', color: '#475569', border: '1px solid var(--border-color)', padding: '7px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
               >
-                <Download size={14} /> Xuất CSV
+                <Download size={13} /> Xuất CSV
               </button>
 
               <button
                 onClick={handleAddNew}
-                style={{ backgroundColor: 'var(--purple-primary)', color: 'var(--bg-white)', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '7px 14px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
               >
-                <Plus size={15} /> Thêm Sản Phẩm Mới
+                <Plus size={14} /> Thêm Sản Phẩm Mới
               </button>
             </div>
           </div>
 
-          {/* Product Table */}
-          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+          {/* BẢNG SẢN PHẨM TRỰC QUAN */}
+          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    <th style={{ padding: '12px 14px', width: '36px', textAlign: 'center' }}>
+                  <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <th style={{ padding: '10px 12px', width: '36px', textAlign: 'center' }}>
                       <input
                         type="checkbox"
-                        checked={filtered.length > 0 && selectedProducts.length === filtered.length}
+                        checked={filteredProducts.length > 0 && selectedProducts.length === filteredProducts.length}
                         onChange={toggleSelectAll}
                       />
                     </th>
-                    <th style={{ padding: '12px 14px', width: '70px', textAlign: 'center' }}>Ảnh</th>
-                    <th style={{ padding: '12px 14px', width: '120px' }}>Mã / Link Gốc</th>
-                    <th style={{ padding: '12px 14px' }}>Tên Sản Phẩm (Việt / Hàn)</th>
-                    <th style={{ padding: '12px 14px', width: '130px' }}>Thương Hiệu</th>
-                    <th style={{ padding: '12px 14px', width: '130px' }}>Phân Loại</th>
-                    <th style={{ padding: '12px 14px', width: '160px', textAlign: 'right' }}>Giá Olive Young (₩ / VNĐ)</th>
-                    <th style={{ padding: '12px 14px', width: '110px', textAlign: 'center' }}>Trạng Thái Giá</th>
-                    <th style={{ padding: '12px 14px', width: '160px', textAlign: 'right' }}>Thao Tác</th>
+                    <th style={{ padding: '10px 12px', width: '64px', textAlign: 'center' }}>Ảnh</th>
+                    <th style={{ padding: '10px 12px', width: '125px' }}>Mã / Link Gốc</th>
+                    <th style={{ padding: '10px 12px' }}>Tên Sản Phẩm (Việt / Hàn)</th>
+                    <th style={{ padding: '10px 12px', width: '120px' }}>Thương Hiệu</th>
+                    <th style={{ padding: '10px 12px', width: '120px' }}>Phân Loại</th>
+                    <th style={{ padding: '10px 12px', width: '160px', textAlign: 'right' }}>Giá Olive Young</th>
+                    <th style={{ padding: '10px 12px', width: '110px', textAlign: 'center' }}>Trạng Thái</th>
+                    <th style={{ padding: '10px 12px', width: '150px', textAlign: 'right' }}>Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.length === 0 ? (
+                  {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)' }}>
-                        Không có sản phẩm nào khớp với tìm kiếm hoặc bộ lọc danh mục.
+                      <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                        Không tìm thấy sản phẩm nào phù hợp.
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((prod) => {
+                    filteredProducts.map((prod) => {
                       const isSelected = selectedProducts.includes(prod.goodsNo);
-                      const fPrice = prod.foreignPrice || prod.price || 0;
-                      const origPrice = prod.originalPrice || 0;
-                      const hasDiscount = origPrice > fPrice;
+                      const fPrice = Number(prod.foreignPrice || prod.price) || 0;
+                      const origPrice = Number(prod.originalPrice) || 0;
+                      const hasDiscount = origPrice > fPrice && fPrice > 0;
                       const discountPct = hasDiscount ? Math.round(((origPrice - fPrice) / origPrice) * 100) : 0;
                       const approxVnd = Math.round(fPrice * krwRate * serviceFeeMultiplier);
 
@@ -778,12 +787,13 @@ export default function AdminProductManager() {
                         <tr
                           key={prod.goodsNo}
                           style={{
-                            borderBottom: '1px solid var(--bg-ivory)',
-                            backgroundColor: isSelected ? 'var(--bg-subtle-purple)' : 'var(--bg-white)',
+                            borderBottom: '1px solid #F1F5F9',
+                            backgroundColor: isSelected ? '#F5F3FF' : '#FFF',
                             transition: 'background-color 0.15s ease'
                           }}
                         >
-                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          {/* Checkbox */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                             <input
                               type="checkbox"
                               checked={isSelected}
@@ -791,45 +801,45 @@ export default function AdminProductManager() {
                             />
                           </td>
 
-                          {/* Image */}
-                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          {/* Thumbnail */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                             <img
-                              src={prod.productImage || (prod.images && prod.images[0])}
+                              src={prod.productImage || (prod.images && prod.images[0]) || ''}
                               alt=""
                               onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}
-                              style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
                             />
                           </td>
 
-                          {/* Code & Olive Young Link */}
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--purple-primary)', fontSize: '0.8rem' }}>
+                          {/* Mã SP & Link Olive Young */}
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.78rem' }}>
                               {prod.goodsNo}
                             </div>
                             <a
                               href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`}
                               target="_blank"
                               rel="noreferrer"
-                              style={{ fontSize: '0.72rem', color: '#0284C7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '3px', fontWeight: 600 }}
+                              style={{ fontSize: '0.7rem', color: '#0284C7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '2px', fontWeight: 600 }}
                             >
                               <span>Olive Young</span> <ExternalLink size={10} />
                             </a>
                           </td>
 
-                          {/* Name */}
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.84rem' }}>
+                          {/* Tên Sản Phẩm (VI / KR) */}
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.84rem', lineHeight: '1.3' }}>
                               {prod.name}
                             </div>
                             {prod.nameKr && (
-                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                                 🇰🇷 {prod.nameKr}
                               </div>
                             )}
                           </td>
 
-                          {/* Brand */}
-                          <td style={{ padding: '12px 14px' }}>
+                          {/* Thương Hiệu (Brand) */}
+                          <td style={{ padding: '10px 12px' }}>
                             <input
                               type="text"
                               defaultValue={prod.brand || ''}
@@ -840,32 +850,32 @@ export default function AdminProductManager() {
                                   if (showToast) showToast(`Đã đổi hãng: ${val}`, 'success');
                                 }
                               }}
-                              style={{ width: '100%', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem', fontWeight: 600 }}
+                              style={{ width: '100%', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.78rem', fontWeight: 600 }}
                             />
                           </td>
 
-                          {/* Category */}
-                          <td style={{ padding: '12px 14px' }}>
+                          {/* Danh Mục (Category) */}
+                          <td style={{ padding: '10px 12px' }}>
                             <select
                               value={prod.category || 'cosmetics'}
                               onChange={(e) => {
                                 updateProduct(prod.goodsNo, { ...prod, category: e.target.value });
                                 if (showToast) showToast('Đã cập nhật phân loại!', 'success');
                               }}
-                              style={{ width: '100%', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.78rem', fontWeight: 600 }}
+                              style={{ width: '100%', padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.76rem', fontWeight: 600 }}
                             >
                               {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                             </select>
                           </td>
 
-                          {/* Price */}
-                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                            <div style={{ fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.92rem' }}>
+                          {/* Giá Won & VNĐ */}
+                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                            <div style={{ fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.9rem' }}>
                               ₩{fPrice.toLocaleString('vi-VN')}
                             </div>
                             {hasDiscount && (
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', marginTop: '2px' }}>
-                                <span style={{ fontSize: '0.7rem', color: 'var(--text-light)', textDecoration: 'line-through' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', marginTop: '1px' }}>
+                                <span style={{ fontSize: '0.68rem', color: 'var(--text-light)', textDecoration: 'line-through' }}>
                                   ₩{origPrice.toLocaleString('vi-VN')}
                                 </span>
                                 <span style={{ fontSize: '0.65rem', fontWeight: 800, backgroundColor: '#FEE2E2', color: '#DC2626', padding: '0 4px', borderRadius: '3px' }}>
@@ -873,34 +883,31 @@ export default function AdminProductManager() {
                                 </span>
                               </div>
                             )}
-                            <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
+                            <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
                               ≈ {approxVnd.toLocaleString('vi-VN')} đ
                             </div>
                           </td>
 
-                          {/* Price Status Badge */}
-                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          {/* Trạng Thái Giá */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                             <span style={{
                               backgroundColor: '#DCFCE7',
                               color: '#15803D',
                               border: '1px solid #86EFAC',
-                              padding: '3px 8px',
+                              padding: '2px 8px',
                               borderRadius: '12px',
-                              fontSize: '0.7rem',
+                              fontSize: '0.68rem',
                               fontWeight: 700,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '4px'
+                              gap: '3px'
                             }}>
                               <CheckCircle2 size={11} /> Chuẩn OY
                             </span>
-                            <div style={{ fontSize: '0.65rem', color: 'var(--text-light)', marginTop: '2px' }}>
-                              {prod.priceLastSyncedAt ? new Date(prod.priceLastSyncedAt).toLocaleDateString('vi-VN') : 'Live Sale'}
-                            </div>
                           </td>
 
-                          {/* Action */}
-                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                          {/* 3 Nút Thao Tác Trực Quan */}
+                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
                             <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
                               <button
                                 onClick={() => handleAnchorProductPrice(prod)}
@@ -909,32 +916,34 @@ export default function AdminProductManager() {
                                   backgroundColor: '#FEF3C7',
                                   color: '#D97706',
                                   border: '1px solid #FDE68A',
-                                  padding: '5px 8px',
+                                  padding: '4px 8px',
                                   borderRadius: '6px',
                                   fontSize: '0.72rem',
                                   fontWeight: 700,
                                   cursor: 'pointer',
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '3px'
+                                  gap: '2px'
                                 }}
                               >
                                 <Zap size={11} /> Neo Giá
                               </button>
+
                               <button
                                 onClick={() => openEdit(prod)}
-                                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '5px 9px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '4px 9px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
                               >
                                 Sửa
                               </button>
+
                               <button
                                 onClick={() => {
-                                  if (window.confirm(`Xóa sản phẩm ${prod.goodsNo}?`)) {
+                                  if (window.confirm(`Xóa vĩnh viễn sản phẩm ${prod.goodsNo} (${prod.name})?`)) {
                                     deleteProduct(prod.goodsNo);
                                     if (showToast) showToast('Đã xóa sản phẩm', 'info');
                                   }
                                 }}
-                                style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '5px 7px', borderRadius: '6px', fontSize: '0.72rem', cursor: 'pointer' }}
+                                style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '4px 7px', borderRadius: '6px', fontSize: '0.72rem', cursor: 'pointer' }}
                               >
                                 <Trash2 size={11} />
                               </button>
@@ -954,153 +963,141 @@ export default function AdminProductManager() {
 
       {/* ═══════════ TAB 2: HÀNG CHỜ DUYỆT (PENDING) ═══════════ */}
       {activeTab === 'pending' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', padding: '16px 20px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '12px 16px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
               Danh sách <strong>{pendingProducts?.length || 0}</strong> sản phẩm bóc tách từ Olive Young chờ kiểm duyệt.
             </div>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {selectedPending.length > 0 && (
                 <>
-                  <button onClick={handleDeleteSelectedPending} style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={handleDeleteSelectedPending} style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '6px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}>
                     Từ chối ({selectedPending.length})
                   </button>
-                  <button onClick={handleApproveSelected} style={{ backgroundColor: '#059669', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}>
+                  <button onClick={handleApproveSelected} style={{ backgroundColor: '#059669', color: '#FFF', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}>
                     Duyệt {selectedPending.length} SP Lên Web
                   </button>
                 </>
               )}
               {pendingProducts?.length > 0 && (
-                <>
-                  <button onClick={handleAnchorAllPendingPrices} style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A', padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <Zap size={14} /> Neo Giá Olive Young Tất Cả
-                  </button>
-                  <button onClick={approveAllPendingProducts} style={{ backgroundColor: 'var(--purple-primary)', color: 'var(--bg-white)', border: 'none', padding: '8px 18px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}>
-                    Duyệt Tất Cả ({pendingProducts.length})
-                  </button>
-                </>
+                <button onClick={approveAllPendingProducts} style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '6px 16px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}>
+                  Duyệt Tất Cả ({pendingProducts.length})
+                </button>
               )}
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    <th style={{ padding: '12px 14px', width: '36px', textAlign: 'center' }}>
+                  <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.74rem', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '10px 12px', width: '36px', textAlign: 'center' }}>
                       <input
                         type="checkbox"
                         checked={pendingProducts?.length > 0 && selectedPending.length === pendingProducts.length}
-                        onChange={toggleSelectAllPending}
+                        onChange={() => {
+                          if (selectedPending.length === pendingProducts.length && pendingProducts.length > 0) setSelectedPending([]);
+                          else setSelectedPending(pendingProducts.map(p => p.goodsNo));
+                        }}
                       />
                     </th>
-                    <th style={{ padding: '12px 14px', width: '70px', textAlign: 'center' }}>Ảnh</th>
-                    <th style={{ padding: '12px 14px', width: '120px' }}>Mã SP</th>
-                    <th style={{ padding: '12px 14px' }}>Tên Sản Phẩm</th>
-                    <th style={{ padding: '12px 14px', width: '130px' }}>Thương Hiệu</th>
-                    <th style={{ padding: '12px 14px', width: '120px', textAlign: 'right' }}>Giá Won (₩)</th>
-                    <th style={{ padding: '12px 14px', width: '220px', textAlign: 'right' }}>Hành Động 1-Click</th>
+                    <th style={{ padding: '10px 12px', width: '64px', textAlign: 'center' }}>Ảnh</th>
+                    <th style={{ padding: '10px 12px', width: '120px' }}>Mã SP</th>
+                    <th style={{ padding: '10px 12px' }}>Tên Sản Phẩm</th>
+                    <th style={{ padding: '10px 12px', width: '120px' }}>Hãng</th>
+                    <th style={{ padding: '10px 12px', width: '110px', textAlign: 'right' }}>Giá Won (₩)</th>
+                    <th style={{ padding: '10px 12px', width: '180px', textAlign: 'right' }}>Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {!pendingProducts || pendingProducts.length === 0 ? (
                     <tr>
                       <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)' }}>
-                        Hàng chờ hiện đang trống. Hãy dán URL Olive Young ở ô phía trên để bóc tách!
+                        Hàng chờ hiện đang trống. Hãy dán link Olive Young ở ô phía trên để bóc tách!
                       </td>
                     </tr>
                   ) : (
                     pendingProducts.map((prod) => {
                       const isSelected = selectedPending.includes(prod.goodsNo);
-                      const fPrice = prod.foreignPrice || prod.price || 0;
+                      const fPrice = Number(prod.foreignPrice || prod.price) || 0;
                       return (
                         <tr
                           key={prod.goodsNo}
                           style={{
-                            borderBottom: '1px solid var(--bg-ivory)',
-                            backgroundColor: isSelected ? 'var(--bg-subtle-purple)' : 'var(--bg-white)'
+                            borderBottom: '1px solid #F1F5F9',
+                            backgroundColor: isSelected ? '#F5F3FF' : '#FFF'
                           }}
                         >
-                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => toggleSelectPending(prod.goodsNo)}
+                              onChange={() => {
+                                setSelectedPending(prev =>
+                                  prev.includes(prod.goodsNo) ? prev.filter(id => id !== prod.goodsNo) : [...prev, prod.goodsNo]
+                                );
+                              }}
                             />
                           </td>
 
-                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                             <img
-                              src={prod.productImage || (prod.images && prod.images[0])}
+                              src={prod.productImage || (prod.images && prod.images[0]) || ''}
                               alt=""
                               onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}
-                              style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
                             />
                           </td>
 
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--purple-primary)', fontSize: '0.8rem' }}>
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.78rem' }}>
                               {prod.goodsNo}
                             </div>
                             <a
                               href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`}
                               target="_blank"
                               rel="noreferrer"
-                              style={{ fontSize: '0.72rem', color: '#0284C7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}
+                              style={{ fontSize: '0.7rem', color: '#0284C7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px', marginTop: '2px' }}
                             >
-                              <span>Olive Young</span> <ExternalLink size={10} />
+                              <span>Olive Young</span> <ExternalLink size={9} />
                             </a>
                           </td>
 
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.84rem' }}>
-                              {prod.name}
-                            </div>
-                            {prod.nameKr && (
-                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                🇰🇷 {prod.nameKr}
-                              </div>
-                            )}
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.84rem' }}>{prod.name}</div>
+                            {prod.nameKr && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>🇰🇷 {prod.nameKr}</div>}
                           </td>
 
-                          <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--text-muted)' }}>
+                          <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-muted)' }}>
                             {prod.brand || 'Korea Brand'}
                           </td>
 
-                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                            <div style={{ fontWeight: 800, color: 'var(--text-dark)', fontSize: '0.88rem' }}>
-                              ₩{fPrice.toLocaleString('vi-VN')}
-                            </div>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, color: 'var(--purple-primary)' }}>
+                            ₩{fPrice.toLocaleString('vi-VN')}
                           </td>
 
-                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
                               <button
                                 onClick={() => openEditPending(prod)}
-                                style={{ backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                                style={{ backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer' }}
                               >
                                 Sửa
                               </button>
                               <button
-                                onClick={() => handleAnchorPendingPrice(prod)}
-                                style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A', padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                              >
-                                <Zap size={11} /> Neo Giá
-                              </button>
-                              <button
                                 onClick={() => approvePendingProduct(prod.goodsNo)}
-                                style={{ backgroundColor: '#059669', color: '#FFF', border: 'none', padding: '5px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+                                style={{ backgroundColor: '#059669', color: '#FFF', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer' }}
                               >
                                 Duyệt
                               </button>
                               <button
                                 onClick={() => rejectPendingProduct(prod.goodsNo)}
-                                style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '5px 8px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                                style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '4px 6px', borderRadius: '6px', fontSize: '0.74rem', cursor: 'pointer' }}
                               >
-                                <X size={12} />
+                                <X size={11} />
                               </button>
                             </div>
                           </td>
@@ -1118,35 +1115,35 @@ export default function AdminProductManager() {
 
       {/* ═══════════ TAB 3: NHẬT KÝ BIẾN ĐỘNG GIÁ ═══════════ */}
       {activeTab === 'price_logs' && (
-        <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ backgroundColor: '#FFF', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', padding: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-dark)' }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-dark)' }}>
                 Lịch Sử Quét & Tự Động Neo Giá Theo Olive Young
               </h3>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                AI tự động phát hiện khi Olive Young có đợt Flash Sale hoặc tăng giá
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                AI tự động ghi nhận khi giá trên web Olive Young Hàn Quốc có đợt Flash Sale hoặc tăng giá
               </p>
             </div>
             <button
               disabled={isSyncingPrice}
               onClick={handleRunManualPriceSync}
-              style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             >
-              <RefreshCw size={13} className={isSyncingPrice ? 'spin-animation' : ''} />
+              <RefreshCw size={12} className={isSyncingPrice ? 'spin-animation' : ''} />
               Quét Giá Ngay
             </button>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
               <thead>
-                <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                  <th style={{ padding: '10px 14px' }}>Thời Gian</th>
-                  <th style={{ padding: '10px 14px' }}>Tên Sản Phẩm</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'right' }}>Giá Cũ</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'right' }}>Giá Mới Olive Young</th>
-                  <th style={{ padding: '10px 14px', textAlign: 'center' }}>Biến Động</th>
+                <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '8px 12px' }}>Thời Gian</th>
+                  <th style={{ padding: '8px 12px' }}>Tên Sản Phẩm</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Giá Cũ</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Giá Mới OY</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>Biến Động</th>
                 </tr>
               </thead>
               <tbody>
@@ -1158,17 +1155,17 @@ export default function AdminProductManager() {
                   </tr>
                 ) : (
                   priceSyncLogs.map((log, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid var(--bg-ivory)' }}>
-                      <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>{new Date(log.timestamp).toLocaleString('vi-VN')}</td>
-                      <td style={{ padding: '10px 14px', fontWeight: 600 }}>{log.name}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'right', textDecoration: 'line-through', color: 'var(--text-light)' }}>₩{Number(log.oldPrice).toLocaleString()}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 800, color: '#059669' }}>₩{Number(log.newPrice).toLocaleString()}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                    <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                      <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{new Date(log.timestamp).toLocaleString('vi-VN')}</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{log.name}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', textDecoration: 'line-through', color: 'var(--text-light)' }}>₩{Number(log.oldPrice).toLocaleString()}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 800, color: '#059669' }}>₩{Number(log.newPrice).toLocaleString()}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                         <span style={{
-                          padding: '2px 8px',
-                          borderRadius: '10px',
+                          padding: '2px 6px',
+                          borderRadius: '8px',
                           fontWeight: 800,
-                          fontSize: '0.72rem',
+                          fontSize: '0.7rem',
                           backgroundColor: Number(log.diffWon) < 0 ? '#DCFCE7' : '#FEE2E2',
                           color: Number(log.diffWon) < 0 ? '#15803D' : '#DC2626'
                         }}>
@@ -1184,215 +1181,396 @@ export default function AdminProductManager() {
         </div>
       )}
 
-      {/* ═══════════ MODAL SỬA SẢN PHẨM CHI TIẾT ═══════════ */}
+      {/* ═══════════ MODAL SỬA & THÊM SẢN PHẨM TRỰC QUAN (VỚI Ô ẢNH ĐẠI DIỆN CỠ LỚN) ═══════════ */}
       {editModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '40px', paddingBottom: '40px', zIndex: 99999, overflowY: 'auto' }} onClick={() => setEditModal(null)}>
-          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '20px', width: '100%', maxWidth: '720px', padding: '24px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-dark)' }}>
-                {editModal.isPending ? `Sửa hàng chờ: ${editModal.goodsNo}` : (editModal.isNew ? 'Thêm Sản Phẩm Mới' : `Sửa SP: ${editModal.goodsNo}`)}
-              </h3>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '30px', paddingBottom: '30px', zIndex: 99999, overflowY: 'auto' }} onClick={() => setEditModal(null)}>
+          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '18px', width: '100%', maxWidth: '880px', padding: '24px', boxShadow: '0 25px 50px rgba(0,0,0,0.3)', margin: 'auto' }} onClick={(e) => e.stopPropagation()}>
+
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-dark)' }}>
+                  {editModal.isPending ? `Sửa Hàng Chờ: ${editModal.goodsNo}` : (editModal.isNew ? 'Thêm Sản Phẩm Mới Vào Kho' : `Chỉnh Sửa Sản Phẩm: ${editModal.goodsNo}`)}
+                </h3>
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                  Tải ảnh từ máy tính, thiết lập ảnh đại diện chính và chỉnh sửa giá tiền chi tiết
+                </p>
+              </div>
               <button onClick={() => setEditModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                <X size={20} />
+                <X size={22} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* 2-Column Main Form Body */}
+            <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '20px' }}>
+
+              {/* 📸 CỘT TRÁI: Ô ẢNH ĐẠI DIỆN CỠ LỚN & ALBUM PHỤ */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                {/* 1. Ô LỚN ẢNH ĐẠI DIỆN CHÍNH (FEATURED AVATAR BOX) */}
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Mã sản phẩm</label>
-                  <input
-                    value={editForm.goodsNo || ''}
-                    onChange={(e) => handleEditChange('goodsNo', e.target.value)}
-                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Thương hiệu (Brand)</label>
-                  <input
-                    value={editForm.brand || ''}
-                    onChange={(e) => handleEditChange('brand', e.target.value)}
-                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Tên sản phẩm (Tiếng Việt) *</label>
-                <input
-                  value={editForm.name || ''}
-                  onChange={(e) => handleEditChange('name', e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Tên tiếng Hàn gốc (Olive Young)</label>
-                <input
-                  value={editForm.nameKr || ''}
-                  onChange={(e) => handleEditChange('nameKr', e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Danh mục</label>
-                  <select
-                    value={editForm.category || 'skincare'}
-                    onChange={(e) => handleEditChange('category', e.target.value)}
-                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
-                  >
-                    {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Won (₩)</label>
-                  <input
-                    type="number"
-                    value={editForm.foreignPrice || 0}
-                    onChange={(e) => handleEditChange('foreignPrice', e.target.value)}
-                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px', fontWeight: 700 }}
-                  />
-                  <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
-                    ≈ {Math.round((editForm.foreignPrice || 0) * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} VNĐ
-                  </div>
-                </div>
-              </div>
-
-              {/* Album ảnh & Tải từ máy */}
-              <div style={{ backgroundColor: 'var(--bg-ivory)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-                    📸 Album Ảnh Sản Phẩm ({((editForm.images || []).length)} ảnh)
-                  </span>
-                  <label style={{ backgroundColor: 'var(--bg-white)', border: '1px solid var(--border-color)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Plus size={12} /> Tải ảnh từ máy tính
-                    <input type="file" accept="image/*" multiple onChange={handleLocalImageUpload} style={{ display: 'none' }} />
-                  </label>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                  {(editForm.images || []).map((imgUrl, i) => (
-                    <div key={i} style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '6px', overflow: 'hidden', border: editForm.productImage === imgUrl ? '2px solid var(--purple-primary)' : '1px solid var(--border-color)', flexShrink: 0 }}>
-                      <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--purple-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Star size={13} fill="var(--purple-primary)" /> ẢNH ĐẠI DIỆN CHÍNH *
+                    </label>
+                    {editForm.productImage && (
                       <button
                         type="button"
-                        onClick={() => {
-                          const updated = (editForm.images || []).filter((_, idx) => idx !== i);
-                          setEditForm(prev => ({ ...prev, images: updated, productImage: updated[0] || '' }));
-                        }}
-                        style={{ position: 'absolute', top: '2px', right: '2px', backgroundColor: 'rgba(220,38,38,0.9)', color: '#FFF', border: 'none', borderRadius: '4px', width: '16px', height: '16px', fontSize: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => mainImageFileInputRef.current?.click()}
+                        style={{ fontSize: '0.7rem', color: '#0284C7', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
                       >
-                        ✕
+                        Đổi ảnh khác
                       </button>
-                    </div>
-                  ))}
+                    )}
+                  </div>
+
+                  {/* Big Image Box */}
+                  <div
+                    onClick={() => {
+                      if (!editForm.productImage) mainImageFileInputRef.current?.click();
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '240px',
+                      borderRadius: '12px',
+                      border: editForm.productImage ? '2px solid var(--purple-primary)' : '2px dashed #CBD5E1',
+                      backgroundColor: editForm.productImage ? '#000' : 'var(--bg-ivory)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      transition: 'border-color 0.2s ease'
+                    }}
+                  >
+                    {editForm.productImage ? (
+                      <>
+                        <img
+                          src={editForm.productImage}
+                          alt="Ảnh đại diện"
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                        <div style={{ position: 'absolute', bottom: '8px', left: '8px', right: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'none' }}>
+                          <span style={{ backgroundColor: 'rgba(0,0,0,0.75)', color: '#FFF', padding: '3px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700 }}>
+                            ⭐ Ảnh Đại Diện
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              mainImageFileInputRef.current?.click();
+                            }}
+                            style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '3px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', pointerEvents: 'auto' }}
+                          >
+                            Thay ảnh
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '16px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#EDE9FE', color: 'var(--purple-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px auto' }}>
+                          <UploadCloud size={24} />
+                        </div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-dark)' }}>
+                          Bấm để tải ảnh đại diện
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                          Hỗ trợ ảnh từ máy tính (PNG, JPG, WebP)
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Hidden Main Image File Input */}
+                  <input
+                    ref={mainImageFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleMainAvatarUpload}
+                    style={{ display: 'none' }}
+                  />
                 </div>
+
+                {/* 2. ALBUM ẢNH PHỤ & NÚT TẢI NHIỀU ẢNH */}
+                <div style={{ backgroundColor: 'var(--bg-ivory)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-dark)' }}>
+                      📸 Album Ảnh ({((editForm.images || []).length)} ảnh)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => albumFileInputRef.current?.click()}
+                      style={{ backgroundColor: '#FFF', border: '1px solid var(--border-color)', padding: '3px 8px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                    >
+                      <Plus size={11} /> Thêm ảnh từ máy
+                    </button>
+                  </div>
+
+                  {/* Hidden Album File Input */}
+                  <input
+                    ref={albumFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleAlbumUpload}
+                    style={{ display: 'none' }}
+                  />
+
+                  {/* Sub-Images List */}
+                  {(!editForm.images || editForm.images.length === 0) ? (
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', textAlign: 'center', padding: '10px' }}>
+                      Chưa có ảnh nào trong album.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                      {editForm.images.map((imgUrl, i) => {
+                        const isMain = editForm.productImage === imgUrl;
+                        return (
+                          <div
+                            key={i}
+                            style={{
+                              position: 'relative',
+                              width: '100%',
+                              paddingTop: '100%',
+                              borderRadius: '6px',
+                              overflow: 'hidden',
+                              border: isMain ? '2px solid var(--purple-primary)' : '1px solid var(--border-color)',
+                              cursor: 'pointer',
+                              backgroundColor: '#FFF'
+                            }}
+                            onClick={() => handleSetMainAvatar(imgUrl)}
+                            title="Bấm để chọn ảnh này làm Ảnh Đại Diện"
+                          >
+                            <img
+                              src={imgUrl}
+                              alt=""
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            {isMain && (
+                              <div style={{ position: 'absolute', bottom: '1px', left: '1px', right: '1px', backgroundColor: 'var(--purple-primary)', color: '#FFF', fontSize: '0.52rem', fontWeight: 800, textAlign: 'center', borderRadius: '2px' }}>
+                                CHÍNH
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemovePhoto(imgUrl);
+                              }}
+                              style={{ position: 'absolute', top: '1px', right: '1px', backgroundColor: 'rgba(220,38,38,0.9)', color: '#FFF', border: 'none', borderRadius: '3px', width: '14px', height: '14px', fontSize: '0.55rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Form Chèn Link URL Trực Tiếp */}
+                  <form onSubmit={handleAddImageUrl} style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Hoặc dán link ảnh Web URL..."
+                      value={urlInputVal}
+                      onChange={(e) => setUrlInputVal(e.target.value)}
+                      style={{ flex: 1, padding: '4px 6px', borderRadius: '4px', border: '1px solid var(--border-color)', fontSize: '0.72rem', outline: 'none' }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!urlInputVal.trim()}
+                      style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '4px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Thêm Link
+                    </button>
+                  </form>
+                </div>
+
               </div>
 
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Mô tả sản phẩm</label>
-                <textarea
-                  value={editForm.description || ''}
-                  onChange={(e) => handleEditChange('description', e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px', height: '60px', resize: 'vertical' }}
-                />
+              {/* 📝 CỘT PHẢI: THÔNG TIN SẢN PHẨM & GIÁ BÁN */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Mã sản phẩm</label>
+                    <input
+                      value={editForm.goodsNo || ''}
+                      onChange={(e) => handleEditChange('goodsNo', e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px', fontWeight: 800, fontFamily: 'monospace', color: 'var(--purple-primary)' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Thương hiệu (Brand)</label>
+                    <input
+                      placeholder="Nhập tên thương hiệu (vd: Torriden, Anua, Sâm Cheong Kwan Jang...)"
+                      value={editForm.brand || ''}
+                      onChange={(e) => handleEditChange('brand', e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '3px' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Tên sản phẩm (Tiếng Việt) *</label>
+                  <input
+                    placeholder="Nhập tên sản phẩm tiếng Việt..."
+                    value={editForm.name || ''}
+                    onChange={(e) => handleEditChange('name', e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.85rem', marginTop: '3px', fontWeight: 700 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Tên tiếng Hàn gốc (nếu có)</label>
+                  <input
+                    placeholder="Tên tiếng Hàn (Olive Young)..."
+                    value={editForm.nameKr || ''}
+                    onChange={(e) => handleEditChange('nameKr', e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem', marginTop: '3px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Danh mục *</label>
+                    <select
+                      value={editForm.category || 'cosmetics'}
+                      onChange={(e) => handleEditChange('category', e.target.value)}
+                      style={{ width: '100%', padding: '7px 8px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem', marginTop: '3px', fontWeight: 700 }}
+                    >
+                      {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Bán Won (₩) *</label>
+                    <input
+                      type="number"
+                      placeholder="Nhập giá Won..."
+                      value={editForm.foreignPrice ?? ''}
+                      onChange={(e) => handleEditChange('foreignPrice', e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.85rem', marginTop: '3px', fontWeight: 800, color: 'var(--purple-primary)' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Gốc Niêm Yết (₩)</label>
+                    <input
+                      type="number"
+                      placeholder="Giá gốc trước sale..."
+                      value={editForm.originalPrice ?? ''}
+                      onChange={(e) => handleEditChange('originalPrice', e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.85rem', marginTop: '3px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Quy đổi VNĐ trực tiếp */}
+                {editForm.foreignPrice ? (
+                  <div style={{ backgroundColor: '#F0FDF4', padding: '8px 12px', borderRadius: '6px', border: '1px solid #BBF7D0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.74rem', color: '#166534', fontWeight: 600 }}>
+                      Giá bán ước tính sang VNĐ (Tỷ giá ₩: {krwRate}đ):
+                    </span>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#15803D' }}>
+                      ≈ {Math.round(Number(editForm.foreignPrice) * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} VNĐ
+                    </span>
+                  </div>
+                ) : null}
+
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Mô tả chi tiết / Thành phần / Công dụng</label>
+                  <textarea
+                    placeholder="Nhập mô tả sản phẩm, cách sử dụng hoặc quy cách đóng gói..."
+                    value={editForm.description || ''}
+                    onChange={(e) => handleEditChange('description', e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem', marginTop: '3px', height: '65px', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditModal(null)}
+                    style={{ padding: '7px 16px', borderRadius: '6px', backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Hủy Bỏ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveEdit}
+                    style={{ padding: '7px 22px', borderRadius: '6px', backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    Lưu Sản Phẩm
+                  </button>
+                </div>
+
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
-                <button
-                  onClick={() => setEditModal(null)}
-                  style={{ padding: '8px 14px', borderRadius: '8px', backgroundColor: 'var(--bg-ivory)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  style={{ padding: '8px 20px', borderRadius: '8px', backgroundColor: 'var(--purple-primary)', color: 'var(--bg-white)', border: 'none', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}
-                >
-                  Lưu Sản Phẩm
-                </button>
-              </div>
             </div>
+
           </div>
         </div>
       )}
 
-      {/* ═══════════ MODAL BÁO CÁO ĐỐI CHIẾU GIÁ OLIVE YOUNG CHI TIẾT ═══════════ */}
+      {/* ═══════════ MODAL BÁO CÁO ĐỐI CHIẾU GIÁ OLIVE YOUNG ═══════════ */}
       {priceSyncSummaryModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999, padding: '20px' }} onClick={() => setPriceSyncSummaryModal(null)}>
-          <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '20px', width: '100%', maxWidth: '820px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ backgroundColor: '#FFF', borderRadius: '16px', width: '100%', maxWidth: '800px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Zap size={20} color="#D97706" /> Kết Quả Đồng Bộ Giá Olive Young Chuẩn Xác
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Zap size={18} color="#D97706" /> Báo Cáo Đối Chiếu Giá Olive Young
                 </h3>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  Đã quét <strong>{priceSyncSummaryModal.totalScanned}</strong> sản phẩm | Phát hiện & cập nhật <strong>{priceSyncSummaryModal.updatedCount}</strong> sản phẩm lệch giá
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                  Đã quét <strong>{priceSyncSummaryModal.totalScanned}</strong> sản phẩm | Cập nhật <strong>{priceSyncSummaryModal.updatedCount}</strong> sản phẩm có biến động giá
                 </p>
               </div>
               <button onClick={() => setPriceSyncSummaryModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
+            <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
               {priceSyncSummaryModal.changes.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#059669' }}>
-                  <CheckCircle2 size={48} style={{ margin: '0 auto 12px auto' }} />
-                  <div style={{ fontSize: '1rem', fontWeight: 800 }}>Kho hàng đã khớp 100% với Olive Young!</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>Không có sản phẩm nào bị sai lệch giá so với web Olive Young Hàn Quốc.</div>
+                <div style={{ textAlign: 'center', padding: '30px 20px', color: '#059669' }}>
+                  <CheckCircle2 size={40} style={{ margin: '0 auto 8px auto' }} />
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800 }}>Kho hàng đã khớp 100% với Olive Young Korea!</div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase' }}>
-                        <th style={{ padding: '8px 12px' }}>Mã SP</th>
-                        <th style={{ padding: '8px 12px' }}>Tên Sản Phẩm</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>Giá Cũ</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>Giá Mới OY</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>Giá VNĐ Ước Tính</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>Chênh Lệch</th>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.78rem' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: 'var(--bg-ivory)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '6px 10px' }}>Mã SP</th>
+                      <th style={{ padding: '6px 10px' }}>Tên Sản Phẩm</th>
+                      <th style={{ padding: '6px 10px', textAlign: 'right' }}>Giá Cũ</th>
+                      <th style={{ padding: '6px 10px', textAlign: 'right' }}>Giá Mới OY</th>
+                      <th style={{ padding: '6px 10px', textAlign: 'center' }}>Chênh Lệch</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priceSyncSummaryModal.changes.map((item, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontWeight: 800, color: 'var(--purple-primary)' }}>{item.goodsNo}</td>
+                        <td style={{ padding: '6px 10px', fontWeight: 600 }}>{item.name}</td>
+                        <td style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--text-light)', textDecoration: 'line-through' }}>₩{item.oldPrice.toLocaleString()}</td>
+                        <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 800, color: 'var(--purple-primary)' }}>₩{item.newPrice.toLocaleString()}</td>
+                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>
+                          <span style={{ backgroundColor: item.diffWon < 0 ? '#DCFCE7' : '#FEE2E2', color: item.diffWon < 0 ? '#15803D' : '#DC2626', padding: '2px 6px', borderRadius: '8px', fontWeight: 800, fontSize: '0.68rem' }}>
+                            {item.diffWon > 0 ? `+${item.diffWon.toLocaleString()}₩` : `${item.diffWon.toLocaleString()}₩`}
+                          </span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {priceSyncSummaryModal.changes.map((item, i) => {
-                        const newVnd = Math.round(item.newPrice * krwRate * serviceFeeMultiplier);
-                        return (
-                          <tr key={i} style={{ borderBottom: '1px solid var(--bg-ivory)' }}>
-                            <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontWeight: 700, color: 'var(--purple-primary)' }}>{item.goodsNo}</td>
-                            <td style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--text-dark)' }}>{item.name}</td>
-                            <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-light)', textDecoration: 'line-through' }}>₩{item.oldPrice.toLocaleString('vi-VN')}</td>
-                            <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 800, color: 'var(--purple-primary)' }}>₩{item.newPrice.toLocaleString('vi-VN')}</td>
-                            <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: '#059669' }}>≈ {newVnd.toLocaleString('vi-VN')} đ</td>
-                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                              <span style={{
-                                backgroundColor: item.diffWon < 0 ? '#DCFCE7' : '#FEE2E2',
-                                color: item.diffWon < 0 ? '#15803D' : '#DC2626',
-                                padding: '2px 8px',
-                                borderRadius: '10px',
-                                fontWeight: 800,
-                                fontSize: '0.72rem'
-                              }}>
-                                {item.diffWon > 0 ? `+${item.diffWon.toLocaleString()}₩` : `${item.diffWon.toLocaleString()}₩`}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
 
-            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setPriceSyncSummaryModal(null)}
-                style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '9px 24px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer' }}
-              >
+            <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setPriceSyncSummaryModal(null)} style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '6px 18px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer' }}>
                 Đóng Báo Cáo
               </button>
             </div>
@@ -1410,7 +1588,7 @@ export default function AdminProductManager() {
             <img src={zoomImage} alt="Zoom" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }} />
             <button
               onClick={() => setZoomImage(null)}
-              style={{ position: 'absolute', top: '-36px', right: '0px', background: 'none', border: 'none', color: '#FFF', fontSize: '1rem', cursor: 'pointer', fontWeight: 700 }}
+              style={{ position: 'absolute', top: '-32px', right: 0, background: 'none', border: 'none', color: '#FFF', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 700 }}
             >
               ✕ Đóng
             </button>

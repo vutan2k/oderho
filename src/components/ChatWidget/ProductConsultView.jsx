@@ -11,7 +11,7 @@ export default function ProductConsultView({ onBack, isMobile }) {
   const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
 
   const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
-    if (product.isPublished === false || product.status === 'pending') return false;
+    if (product.isPublished === false || product.status === 'pending' || product.isHidden === true) return false;
     if (!searchTerm.trim()) return true;
     const query = searchTerm.trim().toLowerCase();
     const matchName = (product.name || '').toLowerCase().includes(query);

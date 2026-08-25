@@ -28,7 +28,7 @@ export default function KROrderHomePage() {
   ];
 
   const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
-    if (product.isPublished === false || product.status === 'pending') return false;
+    if (product.isPublished === false || product.status === 'pending' || product.isHidden === true) return false;
 
     if (searchQuery.trim()) {
       const query = searchQuery.trim().toLowerCase();
