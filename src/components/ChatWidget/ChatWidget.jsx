@@ -113,7 +113,6 @@ export default function ChatWidget() {
               transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease',
               touchAction: 'manipulation',
               textDecoration: 'none',
-              position: 'relative',
               overflow: 'hidden'
             }}
             onMouseEnter={(e) => {
@@ -129,7 +128,7 @@ export default function ChatWidget() {
               }
             }}
           >
-            {/* Hình đại diện Zalo chính hãng bo tròn */}
+            {/* Hình đại diện Zalo chính hãng nguyên bản của người dùng */}
             <img
               src="/images/zalo-avatar.jpg"
               alt="Zalo Tư Vấn"
@@ -141,26 +140,6 @@ export default function ChatWidget() {
                 display: 'block'
               }}
             />
-            {/* Badge chữ Zalo nổi bật */}
-            <span
-              style={{
-                position: 'absolute',
-                top: '2px',
-                right: '2px',
-                backgroundColor: '#EF4444',
-                color: '#FFFFFF',
-                fontSize: '9px',
-                fontWeight: 800,
-                padding: '2px 5px',
-                borderRadius: '8px',
-                border: '1.5px solid #FFFFFF',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
-                lineHeight: 1,
-                zIndex: 2
-              }}
-            >
-              Zalo
-            </span>
           </a>
 
           {/* B. NÚT MESSENGER NẰM PHÍA DƯỚI */}
