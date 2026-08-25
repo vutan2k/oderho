@@ -477,43 +477,76 @@ export default function AdminDashboardPage() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }} className="admin-main-wrapper">
 
         {/* TOPBAR */}
-        <header style={{ height: '64px', backgroundColor: 'var(--bg-white)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', position: 'sticky', top: 0, zIndex: 99 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <header
+          style={{
+            minHeight: '56px',
+            backgroundColor: 'var(--bg-white)',
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 16px',
+            position: 'sticky',
+            top: 0,
+            zIndex: 99,
+            gap: '8px'
+          }}
+          className="admin-topbar-responsive"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
             <button
               onClick={() => setSidebarOpen(true)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center', flexShrink: 0 }}
               className="admin-hamburger-btn"
+              aria-label="Menu"
             >
               <Menu size={22} />
             </button>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-dark)', margin: 0 }}>
-              {activeTab === 'overview' && 'Bàn Làm Việc & Báo Cáo'}
-              {activeTab === 'orders' && 'Quản Lý Quy Trình 8 Bước'}
-              {activeTab === 'products' && 'Kho Sản Phẩm & Cào Link Olive Young'}
-              {activeTab === 'payments' && 'Xác Nhận Thanh Toán VietQR'}
-              {activeTab === 'settings' && 'Cấu Hình Tỷ Giá & Đồng Bộ'}
+            <h1
+              style={{
+                fontSize: '1.05rem',
+                fontWeight: 800,
+                color: 'var(--text-dark)',
+                margin: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+              title={
+                activeTab === 'overview' ? 'Bàn Làm Việc & Báo Cáo' :
+                activeTab === 'orders' ? 'Quản Lý Đơn Hàng (8 Bước)' :
+                activeTab === 'products' ? 'Kho Hàng & Cào Olive Young' :
+                activeTab === 'payments' ? 'Xác Nhận VietQR' : 'Cấu Hình Hệ Thống'
+              }
+            >
+              {activeTab === 'overview' && 'Bàn Làm Việc'}
+              {activeTab === 'orders' && 'Quản Lý Đơn Hàng'}
+              {activeTab === 'products' && 'Kho Hàng Olive Young'}
+              {activeTab === 'payments' && 'Xác Nhận VietQR'}
+              {activeTab === 'settings' && 'Cấu Hình Hệ Thống'}
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button
               onClick={() => window.open('/', '_blank')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '7px 14px',
+                gap: '5px',
+                padding: '6px 10px',
                 borderRadius: '8px',
                 backgroundColor: 'var(--bg-ivory)',
                 color: 'var(--text-muted)',
                 border: '1px solid var(--border-color)',
-                fontSize: '0.78rem',
+                fontSize: '0.74rem',
                 fontWeight: 700,
                 cursor: 'pointer'
               }}
+              title="Xem trang web khách hàng"
             >
-              <ExternalLink size={14} />
-              <span>Xem Web Khách</span>
+              <ExternalLink size={13} />
+              <span className="admin-btn-label">Web Khách</span>
             </button>
 
             <button
@@ -532,26 +565,27 @@ export default function AdminDashboardPage() {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '7px 16px',
+                gap: '5px',
+                padding: '6px 12px',
                 borderRadius: '8px',
                 backgroundColor: '#10B981',
                 color: 'var(--bg-white)',
                 border: 'none',
-                fontSize: '0.78rem',
+                fontSize: '0.74rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
               }}
+              title="Đồng bộ sản phẩm lên web khách"
             >
-              {isPublishing ? <RefreshCw size={14} className="spin" /> : <RefreshCw size={14} />}
-              <span>{isPublishing ? 'Đang lên web...' : 'Lên Web Ngay'}</span>
+              {isPublishing ? <RefreshCw size={13} className="spin" /> : <RefreshCw size={13} />}
+              <span>{isPublishing ? 'Đang lên...' : 'Lên Web'}</span>
             </button>
           </div>
         </header>
 
         {/* TAB CONTENTS */}
-        <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+        <div style={{ padding: '14px 12px', flex: 1, overflowY: 'auto' }} className="admin-content-padding">
 
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (

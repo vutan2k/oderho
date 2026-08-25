@@ -998,11 +998,28 @@ textarea.input {
   .product-card-price-box {
     padding: 6px 10px !important;
   }
-  .product-modal-grid {
-    grid-template-columns: 1fr !important;
-    gap: 16px !important;
-    padding: 18px !important;
+}
+
+/* Mobile Responsiveness for Admin Dashboard & Product Manager */
+@media (max-width: 640px) {
+  .admin-content-padding {
+    padding: 10px 8px !important;
+  }
+  .admin-topbar-responsive {
+    padding: 8px 12px !important;
+    min-height: 52px !important;
+  }
+  .admin-topbar-responsive h1 {
+    font-size: 0.95rem !important;
   }
 }
 
-/* Mobile Responsiveness for 2 Products Per Row & Product Detail Modal */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-animation {
+  animation: spin 1s linear infinite;
+}
+
