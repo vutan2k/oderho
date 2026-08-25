@@ -402,9 +402,14 @@ export default function ChatWidget() {
             </div>
 
             {/* Hotline & Zalo */}
-            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #E5E7EB', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.78rem', color: '#6B7280' }}>
-              <Phone size={13} />
-              <span>Hotline & Zalo: <strong>{displayZaloPhone}</strong></span>
+            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #E5E7EB', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', fontSize: '0.78rem', color: '#6B7280' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Phone size={13} />
+                <span>Hotline VN / Zalo: <strong>{displayZaloPhone}</strong></span>
+              </div>
+              <div style={{ fontSize: '0.73rem', color: '#4B5563' }}>
+                Hotline Korea: <strong>010 6671 3978</strong> (+82 10-6671-3978)
+              </div>
             </div>
           </div>
         </div>

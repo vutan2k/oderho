@@ -43,10 +43,19 @@ export default function CartPage() {
 
   const subTotalKrw = cart.reduce((sum, item) => sum + (item.foreignPrice * item.qty), 0);
   const subTotalVnd = subTotalKrw * krwRate * serviceFeeMultiplier;
+  const MIN_ORDER_AMOUNT_VND = 1000000; // Đơn hàng tối thiểu 1.000.000 VNĐ
+  const isMinOrderMet = subTotalVnd >= MIN_ORDER_AMOUNT_VND;
+  const shortfallVnd = Math.max(0, MIN_ORDER_AMOUNT_VND - subTotalVnd);
+  const progressPercent = Math.min(100, Math.max(0, Math.round((subTotalVnd / MIN_ORDER_AMOUNT_VND) * 100)));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (cart.length === 0 || isSubmitting) return;
+
+    if (!isMinOrderMet) {
+      setErrorMsg(`Đơn hàng hiện tại là ${formatVnd(subTotalVnd)}, chưa đạt mức tối thiểu 1.000.000 VNĐ. Vui lòng chọn thêm ${formatVnd(shortfallVnd)} để tiến hành thanh toán.`);
+      return;
+    }
 
     if (!name.trim() || !phone.trim() || !address.trim()) {
       setErrorMsg('Vui lòng điền đầy đủ Họ Tên, Số điện thoại và Địa chỉ giao hàng.');
@@ -91,20 +100,7 @@ export default function CartPage() {
       setIsSubmitting(false);
     }
   };
-  const handleCheckout = async () => {
-    if (cart.length === 0) return;
-    try {
-      const session = await paymentService.createCheckoutSession(cart);
-      // Navigate to the checkout URL returned by the service
-      if (session && session.url) {
-        navigate(session.url);
-      } else {
-        console.error('Invalid checkout session:', session);
-      }
-    } catch (error) {
-      console.error('Checkout failed:', error);
-    }
-  };
+
   if (success) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F9F6FA' }}>
@@ -132,7 +128,6 @@ export default function CartPage() {
         <title>Giỏ Hàng - TAVY Korea</title>
         <meta name="description" content="Xem và quản lý giỏ hàng của bạn trên TAVY Korea. Thanh toán nhanh chóng và an toàn." />
       </Helmet>
-      {/* Navbar chung sẽ được hiển thị từ App.jsx nên không cần header đơn giản riêng ở đây */}
 
       <main className="container" style={{ flex: 1, padding: '40px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
@@ -182,51 +177,115 @@ export default function CartPage() {
                         <Trash2 size={18} />
                       </button>
                     </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
-                          <button type="button" onClick={() => updateCartQty(item.goodsNo, item.qty - 1)} style={{ padding: '6px 10px', background: '#f9f9f9', border: 'none', cursor: 'pointer' }}><Minus size={14}/></button>
-                          <span style={{ padding: '6px 16px', fontSize: '0.9rem', fontWeight: 600, minWidth: '40px', textAlign: 'center' }}>{item.qty}</span>
-                          <button type="button" onClick={() => updateCartQty(item.goodsNo, item.qty + 1)} style={{ padding: '6px 10px', background: '#f9f9f9', border: 'none', cursor: 'pointer' }}><Plus size={14}/></button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
+                        <button type="button" onClick={() => updateCartQty(item.goodsNo, item.qty - 1)} style={{ padding: '6px 10px', background: '#f9f9f9', border: 'none', cursor: 'pointer' }}><Minus size={14}/></button>
+                        <span style={{ padding: '6px 16px', fontSize: '0.9rem', fontWeight: 600, minWidth: '40px', textAlign: 'center' }}>{item.qty}</span>
+                        <button type="button" onClick={() => updateCartQty(item.goodsNo, item.qty + 1)} style={{ padding: '6px 10px', background: '#f9f9f9', border: 'none', cursor: 'pointer' }}><Plus size={14}/></button>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--purple-primary)', fontSize: '1.05rem' }}>
+                          {formatKrw(item.foreignPrice * item.qty)}
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 800, color: 'var(--purple-primary)', fontSize: '1.05rem' }}>
-                            {formatKrw(item.foreignPrice * item.qty)}
-                          </div>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2563EB', marginTop: '2px' }}>
-                            ~ {formatVnd(Math.round(item.foreignPrice * item.qty * krwRate * serviceFeeMultiplier))}
-                          </div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2563EB', marginTop: '2px' }}>
+                          ~ {formatVnd(Math.round(item.foreignPrice * item.qty * krwRate * serviceFeeMultiplier))}
                         </div>
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
 
-                {/* Banner Thông Báo Giải Thích Giá Nằm Dưới Danh Sách Sản Phẩm */}
-                <div style={{
-                  marginTop: '20px',
-                  backgroundColor: '#FAF5FF',
-                  border: '1px solid #E9D5FF',
-                  borderRadius: '14px',
-                  padding: '16px 20px',
-                  fontSize: '0.88rem',
-                  color: '#581C87',
-                  lineHeight: '1.55',
-                  boxShadow: '0 2px 8px rgba(122, 75, 158, 0.05)'
-                }}>
-                  <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '0.92rem' }}>
-                    Thông tin thanh toán & Giá về tay:
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <div>• <strong>Giá tại Hàn (Won ₩):</strong> Giá gốc niêm yết tại Store Olive Young / Hàn Quốc.</div>
-                    <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá và phí dịch vụ trọn gói (toàn bộ tiền vận chuyển 2 đầu đã nằm tất cả trong phí dịch vụ, quý khách chỉ thanh toán 1 lần duy nhất).</div>
-                  </div>
+              {/* Banner Thông Báo Giải Thích Giá Nằm Dưới Danh Sách Sản Phẩm */}
+              <div style={{
+                marginTop: '20px',
+                backgroundColor: '#FAF5FF',
+                border: '1px solid #E9D5FF',
+                borderRadius: '14px',
+                padding: '16px 20px',
+                fontSize: '0.88rem',
+                color: '#581C87',
+                lineHeight: '1.55',
+                boxShadow: '0 2px 8px rgba(122, 75, 158, 0.05)'
+              }}>
+                <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '0.92rem' }}>
+                  Thông tin thanh toán & Giá về tay:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div>• <strong>Giá tại Hàn (Won ₩):</strong> Giá gốc niêm yết tại Store Olive Young / Hàn Quốc.</div>
+                  <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá và phí dịch vụ trọn gói (toàn bộ tiền vận chuyển 2 đầu đã nằm tất cả trong phí dịch vụ, quý khách chỉ thanh toán 1 lần duy nhất).</div>
                 </div>
               </div>
+            </div>
 
             {/* Cột phải: Form Đặt Hàng */}
             <div style={{ backgroundColor: '#FFF', padding: '30px 24px', borderRadius: '16px', boxShadow: 'var(--shadow-md)', position: 'sticky', top: '24px' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '20px', borderBottom: '2px solid #f0f0f0', paddingBottom: '12px' }}>Thông tin người nhận</h3>
               
+              {/* Card Thông Báo Đơn Tối Thiểu 1.000.000 VNĐ */}
+              {!isMinOrderMet ? (
+                <div style={{
+                  backgroundColor: '#FFFBEB',
+                  border: '1.5px solid #FCD34D',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  marginBottom: '20px',
+                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.08)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#B45309', fontWeight: 800, fontSize: '0.9rem' }}>
+                      <span>⚠️ Đơn hàng tối thiểu: <strong>1.000.000 VNĐ</strong></span>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#D97706' }}>{progressPercent}%</span>
+                  </div>
+                  {/* Thanh tiến trình */}
+                  <div style={{ width: '100%', height: '7px', backgroundColor: '#FDE68A', borderRadius: '4px', overflow: 'hidden', marginBottom: '10px' }}>
+                    <div style={{ width: `${progressPercent}%`, height: '100%', backgroundColor: '#F59E0B', transition: 'width 0.3s ease' }} />
+                  </div>
+                  <p style={{ fontSize: '0.84rem', color: '#92400E', margin: '0 0 6px 0', lineHeight: 1.45 }}>
+                    Bạn cần chọn thêm <strong>{formatVnd(shortfallVnd)}</strong> để đạt mức tối thiểu 1.000.000đ.
+                  </p>
+                  <p style={{ fontSize: '0.76rem', color: '#B45309', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+                    💡 <em>Ghi chú: TAVY Korea áp dụng đơn tối thiểu 1.000.000đ để tối ưu chi phí mua hộ từ Hàn Quốc và bảo đảm quy chuẩn đóng gói đường bay an toàn.</em>
+                  </p>
+                  <Link
+                    to="/#products"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: '#FEF3C7',
+                      color: '#B45309',
+                      border: '1px solid #FCD34D',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    + Chọn thêm sản phẩm
+                  </Link>
+                </div>
+              ) : (
+                <div style={{
+                  backgroundColor: '#F0FDF4',
+                  border: '1.5px solid #86EFAC',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: '#166534',
+                  fontSize: '0.84rem',
+                  fontWeight: 600
+                }}>
+                  <CheckCircle size={16} color="#22C55E" style={{ flexShrink: 0 }} />
+                  <span>Đã đạt điều kiện đơn hàng tối thiểu (trên 1.000.000 VNĐ)!</span>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label className="form-label">Họ và tên</label>
@@ -270,7 +329,7 @@ export default function CartPage() {
                 </div>
 
                 {errorMsg && (
-                  <div style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '12px', textAlign: 'center' }}>
+                  <div style={{ color: '#EF4444', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '10px', padding: '10px 14px', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center', lineHeight: 1.4 }}>
                     {errorMsg}
                   </div>
                 )}
@@ -282,10 +341,11 @@ export default function CartPage() {
                   style={{
                     width: '100%',
                     padding: '16px',
-                    fontSize: '1.1rem',
+                    fontSize: '1.05rem',
                     fontWeight: 700,
                     borderRadius: '14px',
-                    boxShadow: '0 4px 16px rgba(124, 58, 237, 0.25)',
+                    boxShadow: isMinOrderMet ? '0 4px 16px rgba(124, 58, 237, 0.25)' : '0 4px 12px rgba(217, 119, 6, 0.2)',
+                    background: isMinOrderMet ? undefined : 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
                     opacity: isSubmitting ? 0.6 : 1,
                     cursor: isSubmitting ? 'not-allowed' : 'pointer',
                     display: 'flex',
@@ -299,6 +359,8 @@ export default function CartPage() {
                       <Loader2 className="lucide-spin" size={20} />
                       Đang xử lý...
                     </>
+                  ) : !isMinOrderMet ? (
+                    `Cần thêm ${formatVnd(shortfallVnd)} để Đặt Hàng`
                   ) : (
                     'Xác Nhận Đặt Hàng & Thanh Toán'
                   )}
