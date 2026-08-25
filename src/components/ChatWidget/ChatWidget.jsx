@@ -11,7 +11,7 @@ export default function ChatWidget() {
   const rawZaloPhone = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ZALO_PHONE) || '0935861690';
   const cleanZaloPhone = rawZaloPhone.replace(/[^0-9]/g, '');
   const zaloChatUrl = `https://zalo.me/${cleanZaloPhone}`;
-  const displayZaloPhone = '(+84) 935 861 690';
+  const displayZaloPhone = '0935 861 690';
 
   // Link Facebook Messenger & Profile của TAVY Korea
   const facebookPageId = '100062954372060';
@@ -408,7 +408,7 @@ export default function ChatWidget() {
                 <span>Hotline VN / Zalo: <strong>{displayZaloPhone}</strong></span>
               </div>
               <div style={{ fontSize: '0.73rem', color: '#4B5563' }}>
-                Hotline Korea: <strong>010 6671 3978</strong> (+82 10-6671-3978)
+                Hotline Korea: <strong>010 6671 3978</strong>
               </div>
             </div>
           </div>
