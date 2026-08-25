@@ -44,7 +44,7 @@ export default function Footer() {
             <h5>LIÊN HỆ TAVY</h5>
             <ul className="footer-links" style={{ gap: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               <li>
-                <strong style={{ color: 'var(--text-dark)', fontWeight: 600 }}>Hotline VN:</strong> 0988 888 888
+                <strong style={{ color: 'var(--text-dark)', fontWeight: 600 }}>Hotline / Zalo:</strong> (+84) 935 861 690
               </li>
               <li>
                 <strong style={{ color: 'var(--text-dark)', fontWeight: 600 }}>Hotline Korea:</strong> +82 10-1234-5678

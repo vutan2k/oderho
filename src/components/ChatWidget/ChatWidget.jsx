@@ -2,35 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send, ShieldCheck, Clock, ExternalLink, Phone } from 'lucide-react';
 
-// Biểu tượng Zalo chính hãng
-const ZaloIcon = ({ size = 26, className = '' }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 48 48"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
-  >
-    <rect width="48" height="48" rx="24" fill="#0068FF" />
-    <path
-      d="M13.5 20.6H17.8L13 27.4H19.2V29.4H11.2V27.4L16 20.6H11.2V18.6H19.2V20.6H13.5ZM24.4 29.4C22.6 29.4 21.2 28.6 20.4 27.2L22 25.8C22.6 26.8 23.4 27.4 24.4 27.4C25.6 27.4 26.4 26.6 26.4 25.4C26.4 24.2 25.6 23.4 24.2 23.4H23V21.4H24C25.2 21.4 25.8 20.8 25.8 19.8C25.8 18.8 25.2 18.2 24.2 18.2C23.2 18.2 22.4 18.8 22 19.6L20.4 18.2C21.2 17 22.6 16.2 24.2 16.2C26.4 16.2 28 17.6 28 19.6C28 20.8 27.4 21.8 26.4 22.2C27.6 22.6 28.6 23.8 28.6 25.4C28.6 27.8 26.8 29.4 24.4 29.4ZM32 29.4C30.8 29.4 30 28.6 30 27.4V14.6H32.2V27.2C32.2 27.4 32.4 27.6 32.6 27.6C32.8 27.6 33 27.4 33 27.2V14.6H35.2V27.4C35.2 28.6 34.4 29.4 33.2 29.4H32ZM40 29.4C37.4 29.4 35.4 27.4 35.4 24C35.4 20.6 37.4 18.6 40 18.6C42.6 18.6 44.6 20.6 44.6 24C44.6 27.4 42.6 29.4 40 29.4ZM40 27.4C41.4 27.4 42.4 26 42.4 24C42.4 22 41.4 20.6 40 20.6C38.6 20.6 37.6 22 37.6 24C37.6 26 38.6 27.4 40 27.4Z"
-      fill="#FFFFFF"
-    />
-  </svg>
-);
-
 export default function ChatWidget() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Cấu hình Zalo & Facebook Messenger của TAVY Korea
-  const rawZaloPhone = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ZALO_PHONE) || '0988888888';
+  // Cấu hình Zalo & Hotline chính thức của TAVY Korea
+  const rawZaloPhone = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ZALO_PHONE) || '0935861690';
   const cleanZaloPhone = rawZaloPhone.replace(/[^0-9]/g, '');
   const zaloChatUrl = `https://zalo.me/${cleanZaloPhone}`;
-  const displayZaloPhone = '0988 888 888';
+  const displayZaloPhone = '(+84) 935 861 690';
 
   // Link Facebook Messenger & Profile của TAVY Korea
   const facebookPageId = '100062954372060';
@@ -123,8 +104,8 @@ export default function ChatWidget() {
               borderRadius: '50%',
               backgroundColor: '#0068FF',
               color: '#FFFFFF',
-              border: '2px solid #FFFFFF',
-              boxShadow: '0 6px 20px rgba(0, 104, 255, 0.45)',
+              border: '2.5px solid #FFFFFF',
+              boxShadow: '0 8px 24px rgba(0, 104, 255, 0.45)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -132,37 +113,50 @@ export default function ChatWidget() {
               transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease',
               touchAction: 'manipulation',
               textDecoration: 'none',
-              position: 'relative'
+              position: 'relative',
+              overflow: 'hidden'
             }}
             onMouseEnter={(e) => {
               if (!isMobile) {
                 e.currentTarget.style.transform = 'translateY(-3px) scale(1.08)';
-                e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 104, 255, 0.6)';
+                e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 104, 255, 0.6)';
               }
             }}
             onMouseLeave={(e) => {
               if (!isMobile) {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 104, 255, 0.45)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 104, 255, 0.45)';
               }
             }}
           >
-            {/* Hiệu ứng badge chữ Zalo nổi bật */}
-            <ZaloIcon size={isMobile ? 32 : 36} />
+            {/* Hình đại diện Zalo chính hãng bo tròn */}
+            <img
+              src="/images/zalo-avatar.jpg"
+              alt="Zalo Tư Vấn"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '50%',
+                display: 'block'
+              }}
+            />
+            {/* Badge chữ Zalo nổi bật */}
             <span
               style={{
                 position: 'absolute',
-                top: '-4px',
-                right: '-4px',
+                top: '2px',
+                right: '2px',
                 backgroundColor: '#EF4444',
                 color: '#FFFFFF',
-                fontSize: '10px',
+                fontSize: '9px',
                 fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '10px',
+                padding: '2px 5px',
+                borderRadius: '8px',
                 border: '1.5px solid #FFFFFF',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                lineHeight: 1
+                boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+                lineHeight: 1,
+                zIndex: 2
               }}
             >
               Zalo
@@ -180,8 +174,8 @@ export default function ChatWidget() {
               borderRadius: '50%',
               backgroundColor: '#0084FF',
               color: '#FFFFFF',
-              border: '2px solid #FFFFFF',
-              boxShadow: '0 6px 20px rgba(0, 132, 255, 0.4)',
+              border: '2.5px solid #FFFFFF',
+              boxShadow: '0 8px 24px rgba(0, 132, 255, 0.4)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -192,13 +186,13 @@ export default function ChatWidget() {
             onMouseEnter={(e) => {
               if (!isMobile) {
                 e.currentTarget.style.transform = 'translateY(-3px) scale(1.08)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 132, 255, 0.5)';
+                e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 132, 255, 0.55)';
               }
             }}
             onMouseLeave={(e) => {
               if (!isMobile) {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 132, 255, 0.4)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 132, 255, 0.4)';
               }
             }}
           >
@@ -224,7 +218,7 @@ export default function ChatWidget() {
                   width: '360px',
                   maxWidth: 'calc(100vw - 32px)',
                   backgroundColor: '#FAF8F5',
-                  borderRadius: '18px',
+                  borderRadius: '20px',
                   boxShadow: '0 20px 50px rgba(0,0,0,0.18)',
                   border: '1px solid #E5E7EB',
                   overflow: 'hidden',
@@ -235,7 +229,7 @@ export default function ChatWidget() {
                 }
           }
         >
-          {/* Header */}
+          {/* Header với viền bo tròn thẩm mỹ */}
           <div
             style={{
               padding: '16px 18px',
@@ -244,28 +238,34 @@ export default function ChatWidget() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 2px 8px rgba(0, 104, 255, 0.25)'
+              boxShadow: '0 2px 10px rgba(0, 104, 255, 0.25)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {/* Hình đại diện khung chat bo tròn */}
               <div
                 style={{
-                  width: '38px',
-                  height: '38px',
+                  width: '42px',
+                  height: '42px',
                   borderRadius: '50%',
                   backgroundColor: '#FFFFFF',
-                  color: '#0068FF',
+                  border: '2px solid rgba(255,255,255,0.85)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '0.95rem'
+                  overflow: 'hidden',
+                  flexShrink: 0
                 }}
               >
-                <MessageCircle size={22} />
+                <img
+                  src="/images/zalo-avatar.jpg"
+                  alt="Zalo Avatar"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
               </div>
               <div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 800, letterSpacing: '0.3px' }}>
+                <div style={{ fontSize: '0.94rem', fontWeight: 800, letterSpacing: '0.3px' }}>
                   TƯ VẤN VIÊN TAVY
                 </div>
                 <div style={{ fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.95 }}>
@@ -349,7 +349,7 @@ export default function ChatWidget() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
+                  gap: '10px',
                   padding: '13px 20px',
                   borderRadius: '30px',
                   backgroundColor: '#0068FF',
@@ -362,8 +362,12 @@ export default function ChatWidget() {
                   touchAction: 'manipulation'
                 }}
               >
-                <ZaloIcon size={20} />
-                <span>Nhắn tin tư vấn qua Zalo</span>
+                <img
+                  src="/images/zalo-avatar.jpg"
+                  alt="Zalo"
+                  style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+                <span>Nhắn tin Zalo: {displayZaloPhone}</span>
                 <ExternalLink size={14} style={{ opacity: 0.8 }} />
               </a>
 
