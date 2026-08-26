@@ -423,6 +423,21 @@ export default function AdminProductManager() {
     }
   };
 
+  // ⚡ Đồng bộ tức thời ảnh lên Database (Firestore / Context) khi Admin thêm/đổi ảnh
+  const syncImageChangesToDb = (updatedImages, mainImg) => {
+    if (editModal && editModal.goodsNo) {
+      const payload = {
+        productImage: mainImg,
+        images: updatedImages
+      };
+      if (editModal.isPending) {
+        updatePendingProduct(editModal.goodsNo, { ...editForm, ...payload });
+      } else if (!editModal.isNew) {
+        updateProduct(editModal.goodsNo, { ...editForm, ...payload });
+      }
+    }
+  };
+
   // 🖼️ Upload Main Avatar Image from Computer
   const handleMainAvatarUpload = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -433,13 +448,14 @@ export default function AdminProductManager() {
       setEditForm(prev => {
         const currentImages = prev.images || [];
         const updatedImages = currentImages.includes(base64) ? currentImages : [base64, ...currentImages];
+        syncImageChangesToDb(updatedImages, base64);
         return {
           ...prev,
           productImage: base64,
           images: updatedImages
         };
       });
-      if (showToast) showToast('Đã tải và cài đặt ảnh đại diện chính!', 'success');
+      if (showToast) showToast('Đã tải và đồng bộ ảnh đại diện chính lên Database!', 'success');
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -457,6 +473,7 @@ export default function AdminProductManager() {
           const currentImages = prev.images || [];
           const updatedImages = [...currentImages, base64];
           const mainImg = prev.productImage || base64;
+          syncImageChangesToDb(updatedImages, mainImg);
           return {
             ...prev,
             images: updatedImages,
@@ -466,7 +483,7 @@ export default function AdminProductManager() {
       };
       reader.readAsDataURL(file);
     });
-    if (showToast) showToast(`Đang tải ${files.length} ảnh lên album...`, 'info');
+    if (showToast) showToast(`Đã đồng bộ ${files.length} ảnh lên album Database!`, 'success');
     e.target.value = '';
   };
 
@@ -479,6 +496,7 @@ export default function AdminProductManager() {
       const currentImages = prev.images || [];
       const updatedImages = [...currentImages, url];
       const mainImg = prev.productImage || url;
+      syncImageChangesToDb(updatedImages, mainImg);
       return {
         ...prev,
         images: updatedImages,
@@ -486,16 +504,20 @@ export default function AdminProductManager() {
       };
     });
     setUrlInputVal('');
-    if (showToast) showToast('Đã thêm ảnh từ link URL!', 'success');
+    if (showToast) showToast('Đã thêm ảnh và đồng bộ lên Database!', 'success');
   };
 
   // Set any album photo as Main Avatar
   const handleSetMainAvatar = (imgUrl) => {
-    setEditForm(prev => ({
-      ...prev,
-      productImage: imgUrl
-    }));
-    if (showToast) showToast('Đã đặt làm ảnh đại diện chính!', 'success');
+    setEditForm(prev => {
+      const imgs = prev.images || [];
+      syncImageChangesToDb(imgs, imgUrl);
+      return {
+        ...prev,
+        productImage: imgUrl
+      };
+    });
+    if (showToast) showToast('Đã đặt làm ảnh đại diện chính & đồng bộ Database!', 'success');
   };
 
   // Remove photo from album
@@ -503,6 +525,7 @@ export default function AdminProductManager() {
     setEditForm(prev => {
       const updated = (prev.images || []).filter(u => u !== imgUrl);
       const newMain = prev.productImage === imgUrl ? (updated[0] || '') : prev.productImage;
+      syncImageChangesToDb(updated, newMain);
       return {
         ...prev,
         images: updated,
@@ -1001,13 +1024,13 @@ export default function AdminProductManager() {
 
                       {/* Row 2: Image (Left) + Product Info & Price (Right) */}
                       <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                        {/* Thumbnail */}
+                        {/* Thumbnail - Phóng to ảnh đại diện & bấm vào nhảy vào sửa */}
                         <div
-                          onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}
+                          onClick={() => openEdit(prod)}
                           style={{
-                            width: '74px',
-                            height: '74px',
-                            borderRadius: '8px',
+                            width: '84px',
+                            height: '84px',
+                            borderRadius: '10px',
                             overflow: 'hidden',
                             border: '1px solid var(--border-color)',
                             flexShrink: 0,
@@ -1015,6 +1038,7 @@ export default function AdminProductManager() {
                             backgroundColor: '#F8FAFC',
                             position: 'relative'
                           }}
+                          title="Bấm để sửa sản phẩm"
                         >
                           <img
                             src={prod.productImage || (prod.images && prod.images[0]) || ''}
@@ -1025,11 +1049,19 @@ export default function AdminProductManager() {
 
                         {/* Title, Brand, Category, Price */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.84rem', lineHeight: '1.35', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          <div
+                            onClick={() => openEdit(prod)}
+                            style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.86rem', lineHeight: '1.35', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', cursor: 'pointer' }}
+                            title="Bấm để sửa sản phẩm"
+                          >
                             {prod.name}
                           </div>
                           {prod.nameKr && (
-                            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div
+                              onClick={() => openEdit(prod)}
+                              style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
+                              title="Bấm để sửa sản phẩm"
+                            >
                               🇰🇷 {prod.nameKr}
                             </div>
                           )}
@@ -1170,7 +1202,7 @@ export default function AdminProductManager() {
                           onChange={toggleSelectAll}
                         />
                       </th>
-                      <th style={{ padding: '10px 12px', width: '64px', textAlign: 'center' }}>Ảnh</th>
+                      <th style={{ padding: '10px 12px', width: '76px', textAlign: 'center' }}>Ảnh</th>
                       <th style={{ padding: '10px 12px', width: '135px' }}>Mã / Link Gốc</th>
                       <th style={{ padding: '10px 12px' }}>Tên Sản Phẩm (Việt / Hàn)</th>
                       <th style={{ padding: '10px 12px', width: '140px' }}>Phân Loại</th>
@@ -1223,12 +1255,24 @@ export default function AdminProductManager() {
                               />
                             </td>
 
-                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            {/* Cột Ảnh phóng to & click mở sửa trực tiếp */}
+                            <td style={{ padding: '8px 10px', textAlign: 'center' }}>
                               <img
                                 src={prod.productImage || (prod.images && prod.images[0]) || ''}
                                 alt=""
-                                onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}
-                                style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                                onClick={() => openEdit(prod)}
+                                style={{
+                                  width: '60px',
+                                  height: '60px',
+                                  objectFit: 'cover',
+                                  borderRadius: '8px',
+                                  border: '1px solid var(--border-color)',
+                                  cursor: 'pointer',
+                                  display: 'block',
+                                  margin: '0 auto',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                                }}
+                                title="Bấm vào ảnh để sửa sản phẩm"
                               />
                             </td>
 
@@ -1246,12 +1290,21 @@ export default function AdminProductManager() {
                               </a>
                             </td>
 
+                            {/* Tên sản phẩm click mở sửa trực tiếp */}
                             <td style={{ padding: '10px 12px' }}>
-                              <div style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.84rem', lineHeight: '1.3' }}>
+                              <div
+                                onClick={() => openEdit(prod)}
+                                style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '0.86rem', lineHeight: '1.35', cursor: 'pointer' }}
+                                title="Bấm vào tên để sửa sản phẩm"
+                              >
                                 {prod.name}
                               </div>
                               {prod.nameKr && (
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                <div
+                                  onClick={() => openEdit(prod)}
+                                  style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px', cursor: 'pointer' }}
+                                  title="Bấm vào tên để sửa sản phẩm"
+                                >
                                   🇰🇷 {prod.nameKr}
                                 </div>
                               )}
@@ -1734,12 +1787,9 @@ export default function AdminProductManager() {
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', position: 'sticky', top: 0, backgroundColor: 'var(--bg-white)', zIndex: 10 }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: isMobile ? '1.0rem' : '1.1rem', fontWeight: 800, color: 'var(--text-dark)' }}>
+                <h3 style={{ margin: 0, fontSize: isMobile ? '1.05rem' : '1.15rem', fontWeight: 800, color: 'var(--text-dark)' }}>
                   {editModal.isPending ? `Sửa: ${editModal.goodsNo}` : (editModal.isNew ? 'Thêm Sản Phẩm Mới' : `Sửa SP: ${editModal.goodsNo}`)}
                 </h3>
-                <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  {isMobile ? 'Tải ảnh & chỉnh sửa thông tin sản phẩm' : 'Tải ảnh từ máy tính, thiết lập ảnh đại diện chính và chỉnh sửa giá tiền'}
-                </p>
               </div>
               <button onClick={() => setEditModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}>
                 <X size={22} />
@@ -1950,9 +2000,9 @@ export default function AdminProductManager() {
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Thương hiệu (Brand)</label>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Thương hiệu</label>
                     <input
-                      placeholder="vd: Torriden, Anua..."
+                      placeholder="vd: Torriden, Anua, Korea Brand..."
                       value={editForm.brand || ''}
                       onChange={(e) => handleEditChange('brand', e.target.value)}
                       style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.85rem', marginTop: '2px' }}
@@ -1971,7 +2021,7 @@ export default function AdminProductManager() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Tên tiếng Hàn (Olive Young)</label>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Tên tiếng Hàn</label>
                   <input
                     placeholder="Tên tiếng Hàn gốc..."
                     value={editForm.nameKr || ''}
@@ -1980,50 +2030,38 @@ export default function AdminProductManager() {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '8px' }}>
+                {/* Danh mục & Giá Bán Won (Loại bỏ cột Giá Gốc theo yêu cầu) */}
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px' }}>
                   <div>
                     <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Danh mục *</label>
                     <select
                       value={editForm.category || 'cosmetics'}
                       onChange={(e) => handleEditChange('category', e.target.value)}
-                      style={{ width: '100%', padding: '7px 8px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.82rem', marginTop: '2px', fontWeight: 700 }}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.85rem', marginTop: '2px', fontWeight: 700 }}
                     >
                       {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', gridColumn: isMobile ? 'span 1' : 'span 2' }}>
-                    <div>
-                      <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Bán Won (₩) *</label>
-                      <input
-                        type="number"
-                        placeholder="Giá Won bán..."
-                        value={editForm.foreignPrice ?? ''}
-                        onChange={(e) => handleEditChange('foreignPrice', e.target.value)}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.9rem', marginTop: '2px', fontWeight: 800, color: 'var(--purple-primary)' }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Gốc Won (₩)</label>
-                      <input
-                        type="number"
-                        placeholder="Giá gốc niêm yết..."
-                        value={editForm.originalPrice ?? ''}
-                        onChange={(e) => handleEditChange('originalPrice', e.target.value)}
-                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.85rem', marginTop: '2px' }}
-                      />
-                    </div>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Bán Won (₩) *</label>
+                    <input
+                      type="number"
+                      placeholder="Nhập giá bán Won (VD: 103500)..."
+                      value={editForm.foreignPrice ?? ''}
+                      onChange={(e) => handleEditChange('foreignPrice', e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.92rem', marginTop: '2px', fontWeight: 800, color: 'var(--purple-primary)' }}
+                    />
                   </div>
                 </div>
 
-                {/* Quy đổi VNĐ trực tiếp */}
+                {/* Giá VNĐ về tay = Tỷ giá + Phí dịch vụ (Tự động thay đổi theo) */}
                 {editForm.foreignPrice ? (
-                  <div style={{ backgroundColor: '#F0FDF4', padding: '8px 12px', borderRadius: '6px', border: '1px solid #BBF7D0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 600 }}>
-                      Ước tính VNĐ (₩: {krwRate}đ):
+                  <div style={{ backgroundColor: '#F0FDF4', padding: '10px 14px', borderRadius: '8px', border: '1px solid #BBF7D0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#166534', fontWeight: 700 }}>
+                      giá vnd về tay:
                     </span>
-                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#15803D' }}>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#15803D' }}>
                       ≈ {Math.round(Number(editForm.foreignPrice) * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} VNĐ
                     </span>
                   </div>
