@@ -78,9 +78,17 @@ export default function AdminProductManager() {
     if (isMobile) return;
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     const rect = e.currentTarget.getBoundingClientRect();
-    const popoverWidth = 320;
-    const left = Math.min(Math.max(10, rect.left), window.innerWidth - popoverWidth - 20);
-    const top = rect.bottom + 6;
+    const popoverWidth = 680;
+    const popoverHeight = 530;
+    let left = rect.left;
+    if (left + popoverWidth > window.innerWidth - 20) {
+      left = window.innerWidth - popoverWidth - 20;
+    }
+    if (left < 20) left = 20;
+    let top = rect.bottom + 8;
+    if (top + popoverHeight > window.innerHeight - 10) {
+      top = Math.max(10, rect.top - popoverHeight - 8);
+    }
     setHoverPopoverPos({ top, left });
     setHoveredPreviewProduct(prod);
   };
@@ -2204,132 +2212,182 @@ export default function AdminProductManager() {
         </div>
       )}
 
-      {/* ═══════════ POPUP DI CHUỘT CHECK GIÁ NHANH (QUICK PRICE HOVER CARD) ═══════════ */}
+      {/* ═══════════ CỬA SỔ POPUP NHÚNG TRANG WEB THẬT (LIVE WEB BROWSER POPUP) ═══════════ */}
       {hoveredPreviewProduct && !isMobile && (
         <div
           onMouseEnter={handlePopoverMouseEnter}
           onMouseLeave={handlePopoverMouseLeave}
           style={{
             position: 'fixed',
-            top: `${hoverPopoverPos.top}px`,
-            left: `${hoverPopoverPos.left}px`,
-            width: '330px',
+            top: `${Math.min(hoverPopoverPos.top, window.innerHeight - 560)}px`,
+            left: `${Math.min(hoverPopoverPos.left, window.innerWidth - 700)}px`,
+            width: '680px',
+            height: '530px',
             backgroundColor: '#FFFFFF',
-            borderRadius: '12px',
-            boxShadow: '0 12px 30px rgba(0,0,0,0.18), 0 4px 10px rgba(0,0,0,0.08)',
-            border: '1px solid #E2E8F0',
-            padding: '12px',
+            borderRadius: '14px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.28), 0 6px 16px rgba(0,0,0,0.12)',
+            border: '1px solid #CBD5E1',
             zIndex: 999999,
             pointerEvents: 'auto',
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px'
+            overflow: 'hidden',
+            animation: 'fadeIn 0.15s ease-out'
           }}
         >
-          {/* Header: Thumbnail + Mã SP + Thương Hiệu */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <img
-              src={hoveredPreviewProduct.productImage || (hoveredPreviewProduct.images && hoveredPreviewProduct.images[0]) || ''}
-              alt=""
-              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E2E8F0', flexShrink: 0 }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.78rem' }}>
-                  {hoveredPreviewProduct.goodsNo}
-                </span>
-                <span style={{ fontSize: '0.65rem', backgroundColor: '#F1F5F9', color: '#475569', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                  {hoveredPreviewProduct.brand || 'Korea Brand'}
-                </span>
-              </div>
-              <div style={{ fontWeight: 700, fontSize: '0.80rem', color: 'var(--text-dark)', lineHeight: '1.25', marginTop: '2px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {hoveredPreviewProduct.name}
-              </div>
+          {/* 🖥️ Browser Window Header Bar (Thanh Tiêu Đề & Địa Chỉ Web Thật) */}
+          <div style={{
+            backgroundColor: '#F1F5F9',
+            borderBottom: '1px solid #CBD5E1',
+            padding: '8px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            userSelect: 'none'
+          }}>
+            {/* macOS Window Controls */}
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span
+                onClick={() => setHoveredPreviewProduct(null)}
+                style={{ width: '11px', height: '11px', borderRadius: '50%', backgroundColor: '#EF4444', display: 'inline-block', cursor: 'pointer' }}
+                title="Đóng xem trước"
+              />
+              <span style={{ width: '11px', height: '11px', borderRadius: '50%', backgroundColor: '#F59E0B', display: 'inline-block' }} />
+              <span
+                onClick={() => window.open(hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`, '_blank')}
+                style={{ width: '11px', height: '11px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block', cursor: 'pointer' }}
+                title="Mở toàn màn hình tab mới"
+              />
+            </div>
+
+            {/* Address Bar */}
+            <div style={{
+              flex: 1,
+              backgroundColor: '#FFFFFF',
+              borderRadius: '6px',
+              border: '1px solid #CBD5E1',
+              padding: '4px 10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.72rem',
+              color: '#334155',
+              overflow: 'hidden'
+            }}>
+              <span style={{ color: '#16A34A', fontSize: '0.70rem', fontWeight: 800 }}>🔒</span>
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'monospace', fontWeight: 600 }}>
+                {hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
+              </span>
+            </div>
+
+            {/* Window Action Buttons */}
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+              <button
+                onClick={() => {
+                  const url = hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`;
+                  window.open(url, 'OliveYoungLivePopup', 'width=1120,height=850,menubar=no,toolbar=no,location=yes,status=no,scrollbars=yes,resizable=yes');
+                }}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  color: '#0284C7',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '5px',
+                  padding: '3px 8px',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px'
+                }}
+                title="Mở cửa sổ popup trình duyệt riêng biệt"
+              >
+                <span>Cửa Sổ Riêng</span> 🗗
+              </button>
+
+              <button
+                onClick={() => window.open(hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`, '_blank')}
+                style={{
+                  backgroundColor: 'var(--purple-primary)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '4px 9px',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px'
+                }}
+                title="Mở trang web trong tab mới"
+              >
+                <span>Tab Mới</span> <ExternalLink size={10} />
+              </button>
             </div>
           </div>
 
-          {hoveredPreviewProduct.nameKr && (
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', borderBottom: '1px dashed #F1F5F9', paddingBottom: '6px' }}>
-              🇰🇷 {hoveredPreviewProduct.nameKr}
-            </div>
-          )}
+          {/* 🌐 Live Web View Area (Iframe + Live Fallback Inspector) */}
+          <div style={{ flex: 1, position: 'relative', backgroundColor: '#F8FAFC', overflow: 'hidden' }}>
+            <iframe
+              src={hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
+              title="Olive Young Live Preview"
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            />
 
-          {/* Bảng Chi Tiết Giá Won & Giá VNĐ Về Tay */}
-          {(() => {
-            const fPrice = Number(hoveredPreviewProduct.foreignPrice || hoveredPreviewProduct.price) || 0;
-            const origPrice = Number(hoveredPreviewProduct.originalPrice) || 0;
-            const hasDiscount = origPrice > fPrice && fPrice > 0;
-            const discountPct = hasDiscount ? Math.round(((origPrice - fPrice) / origPrice) * 100) : 0;
-            const approxVnd = Math.round(fPrice * krwRate * serviceFeeMultiplier);
-            const verified = VERIFIED_OLIVEYOUNG_PRICES[hoveredPreviewProduct.goodsNo];
-            let isPriceMatch = true;
-            let oyStandardPrice = fPrice;
-            if (verified && verified.foreignPrice) {
-              oyStandardPrice = verified.foreignPrice;
-              isPriceMatch = (fPrice === verified.foreignPrice);
-            } else if (hoveredPreviewProduct.expectedPrice && hoveredPreviewProduct.expectedPrice !== fPrice) {
-              oyStandardPrice = hoveredPreviewProduct.expectedPrice;
-              isPriceMatch = false;
-            }
-
-            return (
-              <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', padding: '8px 10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>Giá Bán Won (₩):</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontWeight: 900, color: 'var(--purple-primary)', fontSize: '0.90rem' }}>
-                      ₩{fPrice.toLocaleString('vi-VN')}
-                    </span>
-                    {isPriceMatch ? (
-                      <span title="Giá chuẩn 100% Olive Young Korea" style={{ color: '#16A34A', fontWeight: 900, fontSize: '0.75rem', backgroundColor: '#DCFCE7', padding: '0 4px', borderRadius: '4px' }}>✓ Chuẩn OY</span>
-                    ) : (
-                      <span title={`Lệch giá (Chuẩn OY: ₩${oyStandardPrice.toLocaleString('vi-VN')})`} style={{ color: '#DC2626', fontWeight: 900, fontSize: '0.75rem', backgroundColor: '#FEE2E2', padding: '0 4px', borderRadius: '4px' }}>✕ Lệch OY</span>
-                    )}
+            {/* Quick Live Price Bar Overlay at Bottom */}
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: 'rgba(255, 255, 255, 0.96)',
+              backdropFilter: 'blur(8px)',
+              borderTop: '1px solid #E2E8F0',
+              padding: '8px 14px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img
+                  src={hoveredPreviewProduct.productImage || (hoveredPreviewProduct.images && hoveredPreviewProduct.images[0]) || ''}
+                  alt=""
+                  style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #E2E8F0' }}
+                />
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--text-dark)' }}>
+                    {hoveredPreviewProduct.name}
                   </div>
-                </div>
-
-                {hasDiscount && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.70rem', color: '#94A3B8' }}>Giá gốc niêm yết:</span>
-                    <span style={{ fontSize: '0.72rem', color: '#94A3B8', textDecoration: 'line-through' }}>
-                      ₩{origPrice.toLocaleString('vi-VN')} (-{discountPct}%)
-                    </span>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                    Mã: <strong>{hoveredPreviewProduct.goodsNo}</strong> {hoveredPreviewProduct.brand ? `• ${hoveredPreviewProduct.brand}` : ''}
                   </div>
-                )}
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '5px', marginTop: '2px' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 700 }}>giá vnd về tay:</span>
-                  <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#15803D' }}>
-                    ≈ {approxVnd.toLocaleString('vi-VN')} đ
-                  </span>
-                </div>
-
-                <div style={{ fontSize: '0.65rem', color: '#94A3B8', textAlign: 'right' }}>
-                  (Tỷ giá KRW: {krwRate}đ + Phí DV: {rates?.serviceFeePercent ?? 5}%)
                 </div>
               </div>
-            );
-          })()}
 
-          {/* Quick Footer Links */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px' }}>
-            <a
-              href={hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{ fontSize: '0.72rem', color: '#0284C7', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-            >
-              <span>Mở web Olive Young</span> <ExternalLink size={11} />
-            </a>
-            <button
-              onClick={() => {
-                setHoveredPreviewProduct(null);
-                openEdit(hoveredPreviewProduct);
-              }}
-              style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '3px 8px', borderRadius: '5px', fontSize: '0.70rem', fontWeight: 700, cursor: 'pointer' }}
-            >
-              Sửa SP
-            </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 900, color: 'var(--purple-primary)', fontSize: '0.92rem' }}>
+                    ₩{Number(hoveredPreviewProduct.foreignPrice || hoveredPreviewProduct.price || 0).toLocaleString('vi-VN')}
+                  </div>
+                  <div style={{ fontSize: '0.70rem', color: '#15803D', fontWeight: 700 }}>
+                    ≈ {Math.round(Number(hoveredPreviewProduct.foreignPrice || hoveredPreviewProduct.price || 0) * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} VNĐ
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setHoveredPreviewProduct(null);
+                    openEdit(hoveredPreviewProduct);
+                  }}
+                  style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Sửa SP
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
