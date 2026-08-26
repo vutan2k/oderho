@@ -69,22 +69,23 @@ export default function AdminProductManager() {
   const [priceSyncLogs, setPriceSyncLogs] = useState(priceSyncConfig.logs || []);
   const [priceSyncSummaryModal, setPriceSyncSummaryModal] = useState(null);
 
-  // --- Quick Price Preview Popover (Hover Card) ---
+  // --- Quick Price Preview Popover (Hover Card & Mini Browser) ---
   const [hoveredPreviewProduct, setHoveredPreviewProduct] = useState(null);
   const [hoverPopoverPos, setHoverPopoverPos] = useState({ top: 0, left: 0 });
+  const [previewZoomScale, setPreviewZoomScale] = useState(0.55); // Tỉ lệ thu nhỏ 55% nhìn trọn trang web
   const hoverTimeoutRef = useRef(null);
 
   const handleLinkMouseEnter = (prod, e) => {
     if (isMobile) return;
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     const rect = e.currentTarget.getBoundingClientRect();
-    const popoverWidth = 680;
-    const popoverHeight = 530;
-    let left = rect.left;
+    const popoverWidth = 740;
+    const popoverHeight = 560;
+    let left = rect.left - 40;
     if (left + popoverWidth > window.innerWidth - 20) {
       left = window.innerWidth - popoverWidth - 20;
     }
-    if (left < 20) left = 20;
+    if (left < 10) left = 10;
     let top = rect.bottom + 8;
     if (top + popoverHeight > window.innerHeight - 10) {
       top = Math.max(10, rect.top - popoverHeight - 8);
@@ -2219,13 +2220,13 @@ export default function AdminProductManager() {
           onMouseLeave={handlePopoverMouseLeave}
           style={{
             position: 'fixed',
-            top: `${Math.min(hoverPopoverPos.top, window.innerHeight - 560)}px`,
-            left: `${Math.min(hoverPopoverPos.left, window.innerWidth - 700)}px`,
-            width: '680px',
-            height: '530px',
+            top: `${Math.min(hoverPopoverPos.top, window.innerHeight - 590)}px`,
+            left: `${Math.min(hoverPopoverPos.left, window.innerWidth - 760)}px`,
+            width: '740px',
+            height: '560px',
             backgroundColor: '#FFFFFF',
             borderRadius: '14px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.28), 0 6px 16px rgba(0,0,0,0.12)',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.30), 0 8px 20px rgba(0,0,0,0.15)',
             border: '1px solid #CBD5E1',
             zIndex: 999999,
             pointerEvents: 'auto',
@@ -2235,18 +2236,18 @@ export default function AdminProductManager() {
             animation: 'fadeIn 0.15s ease-out'
           }}
         >
-          {/* 🖥️ Browser Window Header Bar (Thanh Tiêu Đề & Địa Chỉ Web Thật) */}
+          {/* 🖥️ Browser Window Header Bar (Thanh Tiêu Đề & Địa Chỉ Web Thật + Nút Thu Nhỏ Tỉ Lệ) */}
           <div style={{
             backgroundColor: '#F1F5F9',
             borderBottom: '1px solid #CBD5E1',
-            padding: '8px 12px',
+            padding: '7px 10px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: '8px',
             userSelect: 'none'
           }}>
             {/* macOS Window Controls */}
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
               <span
                 onClick={() => setHoveredPreviewProduct(null)}
                 style={{ width: '11px', height: '11px', borderRadius: '50%', backgroundColor: '#EF4444', display: 'inline-block', cursor: 'pointer' }}
@@ -2266,22 +2267,50 @@ export default function AdminProductManager() {
               backgroundColor: '#FFFFFF',
               borderRadius: '6px',
               border: '1px solid #CBD5E1',
-              padding: '4px 10px',
+              padding: '3px 8px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.72rem',
+              gap: '5px',
+              fontSize: '0.70rem',
               color: '#334155',
               overflow: 'hidden'
             }}>
-              <span style={{ color: '#16A34A', fontSize: '0.70rem', fontWeight: 800 }}>🔒</span>
+              <span style={{ color: '#16A34A', fontSize: '0.68rem', fontWeight: 800 }}>🔒</span>
               <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'monospace', fontWeight: 600 }}>
                 {hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
               </span>
             </div>
 
+            {/* 🔍 Zoom Scale Controls (Chỉnh Tỉ Lệ Nhỏ Để Thấy Trọn Giá) */}
+            <div style={{ display: 'flex', gap: '3px', alignItems: 'center', backgroundColor: '#E2E8F0', padding: '2px 4px', borderRadius: '6px' }}>
+              <span style={{ fontSize: '0.64rem', fontWeight: 700, color: '#475569', paddingRight: '2px' }}>Tỉ lệ:</span>
+              {[
+                { label: '45%', scale: 0.45 },
+                { label: '55%', scale: 0.55 },
+                { label: '70%', scale: 0.70 },
+                { label: '100%', scale: 1.0 }
+              ].map(item => (
+                <button
+                  key={item.label}
+                  onClick={() => setPreviewZoomScale(item.scale)}
+                  style={{
+                    border: 'none',
+                    backgroundColor: previewZoomScale === item.scale ? 'var(--purple-primary)' : 'transparent',
+                    color: previewZoomScale === item.scale ? '#FFF' : '#334155',
+                    fontSize: '0.64rem',
+                    fontWeight: previewZoomScale === item.scale ? 800 : 600,
+                    padding: '2px 5px',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
             {/* Window Action Buttons */}
-            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
               <button
                 onClick={() => {
                   const url = hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`;
@@ -2292,13 +2321,13 @@ export default function AdminProductManager() {
                   color: '#0284C7',
                   border: '1px solid #CBD5E1',
                   borderRadius: '5px',
-                  padding: '3px 8px',
-                  fontSize: '0.68rem',
+                  padding: '3px 7px',
+                  fontSize: '0.66rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px'
+                  gap: '2px'
                 }}
                 title="Mở cửa sổ popup trình duyệt riêng biệt"
               >
@@ -2312,8 +2341,8 @@ export default function AdminProductManager() {
                   color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '5px',
-                  padding: '4px 9px',
-                  fontSize: '0.68rem',
+                  padding: '3px 8px',
+                  fontSize: '0.66rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
@@ -2327,14 +2356,22 @@ export default function AdminProductManager() {
             </div>
           </div>
 
-          {/* 🌐 Live Web View Area (Iframe + Live Fallback Inspector) */}
+          {/* 🌐 Live Web View Area (Iframe Scaled with CSS Zoom) */}
           <div style={{ flex: 1, position: 'relative', backgroundColor: '#F8FAFC', overflow: 'hidden' }}>
-            <iframe
-              src={hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
-              title="Olive Young Live Preview"
-              style={{ width: '100%', height: '100%', border: 'none' }}
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-            />
+            <div style={{
+              width: `${100 / previewZoomScale}%`,
+              height: `${100 / previewZoomScale}%`,
+              transform: `scale(${previewZoomScale})`,
+              transformOrigin: 'top left',
+              backgroundColor: '#FFF'
+            }}>
+              <iframe
+                src={hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
+                title="Olive Young Live Preview"
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              />
+            </div>
 
             {/* Quick Live Price Bar Overlay at Bottom */}
             <div style={{
@@ -2345,34 +2382,34 @@ export default function AdminProductManager() {
               backgroundColor: 'rgba(255, 255, 255, 0.96)',
               backdropFilter: 'blur(8px)',
               borderTop: '1px solid #E2E8F0',
-              padding: '8px 14px',
+              padding: '6px 12px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
+              boxShadow: '0 -2px 8px rgba(0,0,0,0.06)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <img
                   src={hoveredPreviewProduct.productImage || (hoveredPreviewProduct.images && hoveredPreviewProduct.images[0]) || ''}
                   alt=""
-                  style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #E2E8F0' }}
+                  style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '5px', border: '1px solid #E2E8F0' }}
                 />
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--text-dark)' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.76rem', color: 'var(--text-dark)', maxWidth: '340px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {hoveredPreviewProduct.name}
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>
                     Mã: <strong>{hoveredPreviewProduct.goodsNo}</strong> {hoveredPreviewProduct.brand ? `• ${hoveredPreviewProduct.brand}` : ''}
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 900, color: 'var(--purple-primary)', fontSize: '0.92rem' }}>
+                  <div style={{ fontWeight: 900, color: 'var(--purple-primary)', fontSize: '0.90rem' }}>
                     ₩{Number(hoveredPreviewProduct.foreignPrice || hoveredPreviewProduct.price || 0).toLocaleString('vi-VN')}
                   </div>
-                  <div style={{ fontSize: '0.70rem', color: '#15803D', fontWeight: 700 }}>
+                  <div style={{ fontSize: '0.68rem', color: '#15803D', fontWeight: 700 }}>
                     ≈ {Math.round(Number(hoveredPreviewProduct.foreignPrice || hoveredPreviewProduct.price || 0) * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} VNĐ
                   </div>
                 </div>
@@ -2382,7 +2419,7 @@ export default function AdminProductManager() {
                     setHoveredPreviewProduct(null);
                     openEdit(hoveredPreviewProduct);
                   }}
-                  style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer' }}
+                  style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '4px 9px', borderRadius: '5px', fontSize: '0.70rem', fontWeight: 800, cursor: 'pointer' }}
                 >
                   Sửa SP
                 </button>
