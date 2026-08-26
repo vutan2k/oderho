@@ -158,11 +158,13 @@ export default function KROrderHomePage() {
               </ul>
             </nav>
 
-            <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
-              <a href="#order-tracker" className="icon-btn" aria-label="Tra cứu đơn hàng" title="Tra cứu tiến độ đơn hàng" style={{ color: 'var(--text-dark)' }}>
+            <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+              {/* Tra cứu đơn hàng (Desktop only) */}
+              <a href="#order-tracker" className="icon-btn desktop-only-icon" aria-label="Tra cứu đơn hàng" title="Tra cứu tiến độ đơn hàng" style={{ color: 'var(--text-dark)' }}>
                 <Search size={26} />
               </a>
 
+              {/* Giỏ hàng (Hiển thị trên cả Desktop & Mobile) */}
               <Link id="cart-icon-header" to="/cart" className="icon-btn" style={{ position: 'relative', transition: 'transform 0.2s ease', color: 'var(--text-dark)' }} aria-label="Giỏ hàng" title="Giỏ hàng">
                 <ShoppingCart size={26} />
                 {cart && cart.length > 0 && (
@@ -180,23 +182,26 @@ export default function KROrderHomePage() {
                 )}
               </Link>
 
+              {/* Đơn của tôi & Tài khoản & Đăng nhập/Đăng xuất (Desktop only - Trên Mobile được gom gọn vào Menu 3 gạch) */}
               {currentUser ? (
                 <>
-                  <Link to="/orders" className="icon-btn" aria-label="Đơn của tôi" title="Đơn của tôi" style={{ color: 'var(--text-dark)' }}>
+                  <Link to="/orders" className="icon-btn desktop-only-icon" aria-label="Đơn của tôi" title="Đơn của tôi" style={{ color: 'var(--text-dark)' }}>
                     <Package size={26} />
                   </Link>
-                  <Link to="/profile" className="icon-btn" aria-label="Tài khoản" title="Tài khoản" style={{ color: 'var(--text-dark)' }}>
+                  <Link to="/profile" className="icon-btn desktop-only-icon" aria-label="Tài khoản" title="Tài khoản" style={{ color: 'var(--text-dark)' }}>
                     <User size={26} />
                   </Link>
-                  <button onClick={() => logoutUser()} className="icon-btn" aria-label="Đăng xuất" title="Đăng xuất" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dark)', padding: 0 }}>
+                  <button onClick={() => logoutUser()} className="icon-btn desktop-only-icon" aria-label="Đăng xuất" title="Đăng xuất" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dark)', padding: 0 }}>
                     <LogOut size={26} />
                   </button>
                 </>
               ) : (
-                <Link to="/login" className="icon-btn" aria-label="Đăng nhập" title="Đăng nhập" style={{ color: 'var(--text-dark)' }}>
+                <Link to="/login" className="icon-btn desktop-only-icon" aria-label="Đăng nhập" title="Đăng nhập" style={{ color: 'var(--text-dark)' }}>
                   <User size={26} />
                 </Link>
               )}
+
+              {/* Nút 3 gạch Menu trên Mobile */}
               <button
                 className="icon-btn mobile-menu-toggle"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -209,27 +214,78 @@ export default function KROrderHomePage() {
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Mobile Navigation Drawer (Gom gọn toàn bộ chức năng tài khoản, tra cứu & danh mục) */}
         {mobileMenuOpen && (
           <div className="mobile-nav-drawer" style={{
             position: 'absolute', top: '80px', left: 0, width: '100%',
             backgroundColor: '#FFFFFF', borderBottom: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-md)', padding: '20px 24px', zIndex: 99
+            boxShadow: '0 10px 30px rgba(0,0,0,0.1)', padding: '20px 24px', zIndex: 99
           }}>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <li><a href="#" onClick={(e) => handleNavCategoryClick(e, 'all')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>TRANG CHỦ</a></li>
-              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'cosmetics')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>MỸ PHẨM</a></li>
-              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'ginseng')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>SÂM NẤM</a></li>
-              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'supplements')} style={{ color: 'var(--text-dark)', fontWeight: 600 }}>THỰC PHẨM CHỨC NĂNG</a></li>
-              <li><Link to="/policy" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>QUY ĐỊNH & CHÍNH SÁCH</Link></li>
+            {/* 1. Nhóm Tra cứu, Đơn hàng & Tài khoản */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '18px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+              <a
+                href="#order-tracker"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  const elem = document.getElementById('order-tracker');
+                  if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{ color: 'var(--purple-primary)', fontWeight: 700, fontSize: '0.94rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}
+              >
+                <Search size={18} />
+                <span>Tra cứu tiến độ đơn hàng</span>
+              </a>
+
               {currentUser ? (
                 <>
-                  <li><Link to="/orders" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>ĐƠN CỦA TÔI</Link></li>
-                  <li><button onClick={() => { logoutUser(); setMobileMenuOpen(false); }} style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>ĐĂNG XUẤT</button></li>
+                  <Link
+                    to="/orders"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ color: 'var(--text-dark)', fontWeight: 600, fontSize: '0.92rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <Package size={18} />
+                    <span>Đơn hàng của tôi</span>
+                  </Link>
+
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ color: 'var(--text-dark)', fontWeight: 600, fontSize: '0.92rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <User size={18} />
+                    <span>Tài khoản ({currentUser.name || 'Cá nhân'})</span>
+                  </Link>
+
+                  <button
+                    onClick={() => { logoutUser(); setMobileMenuOpen(false); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '0.92rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '10px', padding: 0, textAlign: 'left' }}
+                  >
+                    <LogOut size={18} />
+                    <span>Đăng xuất</span>
+                  </button>
                 </>
               ) : (
-                <li><Link to="/login" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>ĐĂNG NHẬP</Link></li>
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{ color: 'var(--purple-primary)', fontWeight: 700, fontSize: '0.92rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}
+                >
+                  <User size={18} />
+                  <span>Đăng nhập / Đăng ký</span>
+                </Link>
               )}
+            </div>
+
+            {/* 2. Nhóm Danh mục sản phẩm */}
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
+              Danh mục mua sắm
+            </div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px', margin: 0, padding: 0 }}>
+              <li><a href="#" onClick={(e) => handleNavCategoryClick(e, 'all')} style={{ color: activeCategory === 'all' ? 'var(--purple-primary)' : 'var(--text-dark)', fontWeight: activeCategory === 'all' ? 700 : 600, textDecoration: 'none', fontSize: '0.9rem' }}>Trang chủ</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'cosmetics')} style={{ color: activeCategory === 'cosmetics' ? 'var(--purple-primary)' : 'var(--text-dark)', fontWeight: activeCategory === 'cosmetics' ? 700 : 600, textDecoration: 'none', fontSize: '0.9rem' }}>Mỹ phẩm</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'ginseng')} style={{ color: activeCategory === 'ginseng' ? 'var(--purple-primary)' : 'var(--text-dark)', fontWeight: activeCategory === 'ginseng' ? 700 : 600, textDecoration: 'none', fontSize: '0.9rem' }}>Sâm nấm</a></li>
+              <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'supplements')} style={{ color: activeCategory === 'supplements' ? 'var(--purple-primary)' : 'var(--text-dark)', fontWeight: activeCategory === 'supplements' ? 700 : 600, textDecoration: 'none', fontSize: '0.9rem' }}>Thực phẩm chức năng</a></li>
+              <li><Link to="/policy" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--purple-primary)', fontWeight: 600, textDecoration: 'none', fontSize: '0.88rem' }}>Quy định & Chính sách</Link></li>
             </ul>
           </div>
         )}

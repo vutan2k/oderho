@@ -560,6 +560,9 @@ h1, h2, h3, h4, .font-serif {
   .nav-links {
     display: none;
   }
+  .desktop-only-icon {
+    display: none !important;
+  }
   .mobile-menu-toggle {
     display: flex;
   }
