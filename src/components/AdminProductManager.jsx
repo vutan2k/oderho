@@ -109,6 +109,22 @@ export default function AdminProductManager() {
     setHoveredPreviewProduct(null);
   };
 
+  // Helper mở trực tiếp Cửa Sổ Live Web Olive Young thật (Pop-up Window)
+  const openLiveOliveYoungPopup = (prod, e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!prod) return;
+    const targetUrl = prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`;
+    const width = 1080;
+    const height = 860;
+    const left = Math.max(40, window.screen.width - width - 40);
+    const top = 60;
+    window.open(
+      targetUrl,
+      'OliveYoungLiveWindow',
+      `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=yes,status=no,scrollbars=yes,resizable=yes`
+    );
+  };
+
   // Auto Timer for Price Sync Bot
   useEffect(() => {
     if (!priceSyncConfig.enabled) return;
@@ -1324,14 +1340,26 @@ export default function AdminProductManager() {
                               <div style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.78rem' }}>
                                 {prod.goodsNo}
                               </div>
-                              <a
-                                href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{ fontSize: '0.7rem', color: '#0284C7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '2px', fontWeight: 600 }}
+                              <button
+                                onClick={(e) => openLiveOliveYoungPopup(prod, e)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  fontSize: '0.7rem',
+                                  color: '#0284C7',
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                  marginTop: '2px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                                title="Bấm để mở cửa sổ live web Olive Young"
                               >
                                 <span>Olive Young</span> <ExternalLink size={10} />
-                              </a>
+                              </button>
                             </td>
 
                             {/* Tên sản phẩm click mở sửa trực tiếp */}
@@ -1672,14 +1700,26 @@ export default function AdminProductManager() {
                               <div style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.78rem' }}>
                                 {prod.goodsNo}
                               </div>
-                              <a
-                                href={prod.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${prod.goodsNo}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{ fontSize: '0.7rem', color: '#0284C7', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px', marginTop: '2px' }}
+                              <button
+                                onClick={(e) => openLiveOliveYoungPopup(prod, e)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  fontSize: '0.7rem',
+                                  color: '#0284C7',
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                  marginTop: '2px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                                title="Bấm để mở cửa sổ live web Olive Young"
                               >
                                 <span>Olive Young</span> <ExternalLink size={9} />
-                              </a>
+                              </button>
                             </td>
 
                             <td style={{ padding: '10px 12px' }}>
@@ -2282,28 +2322,26 @@ export default function AdminProductManager() {
             </div>
 
             {/* Window Action Buttons */}
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
               <button
-                onClick={() => {
-                  const url = hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`;
-                  window.open(url, 'OliveYoungLivePopup', 'width=1120,height=850,menubar=no,toolbar=no,location=yes,status=no,scrollbars=yes,resizable=yes');
-                }}
+                onClick={(e) => openLiveOliveYoungPopup(hoveredPreviewProduct, e)}
                 style={{
-                  backgroundColor: '#FFFFFF',
-                  color: '#0284C7',
-                  border: '1px solid #CBD5E1',
-                  borderRadius: '5px',
-                  padding: '3px 7px',
-                  fontSize: '0.66rem',
-                  fontWeight: 700,
+                  backgroundColor: '#0284C7',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '2px'
+                  gap: '4px',
+                  boxShadow: '0 1px 3px rgba(2,132,199,0.3)'
                 }}
-                title="Mở cửa sổ popup trình duyệt riêng biệt"
+                title="Mở trực tiếp cửa sổ trình duyệt Live Web Olive Young thật"
               >
-                <span>Cửa Sổ Riêng</span> 🗗
+                <span>🌐 Mở Cửa Sổ Live Web Thật</span> 🗗
               </button>
 
               <button
@@ -2312,9 +2350,9 @@ export default function AdminProductManager() {
                   backgroundColor: 'var(--purple-primary)',
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '5px',
-                  padding: '3px 8px',
-                  fontSize: '0.66rem',
+                  borderRadius: '6px',
+                  padding: '4px 9px',
+                  fontSize: '0.68rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'inline-flex',
@@ -2461,14 +2499,24 @@ export default function AdminProductManager() {
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <a
-                    href={hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ fontSize: '0.74rem', color: '#0284C7', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  <button
+                    onClick={(e) => openLiveOliveYoungPopup(hoveredPreviewProduct, e)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '0.74rem',
+                      color: '#0284C7',
+                      textDecoration: 'none',
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'pointer'
+                    }}
                   >
-                    <span>Mở trang web gốc Olive Young</span> <ExternalLink size={12} />
-                  </a>
+                    <span>🌐 Mở Trang Web Live Olive Young Thật</span> <ExternalLink size={12} />
+                  </button>
 
                   <button
                     onClick={() => {
