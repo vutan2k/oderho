@@ -978,28 +978,71 @@ textarea.input {
   }
 }
 
+/* Mobile 3-Column Grid & Compact Typography */
 @media (max-width: 640px) {
+  .container {
+    padding: 0 10px !important;
+  }
   .product-grid-container {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
   }
   .product-card {
-    border-radius: 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #F1F5F9 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
   }
-  .product-card > div:nth-child(2) {
-    padding: 12px !important;
+  .product-card-brand-badge {
+    top: 4px !important;
+    left: 4px !important;
+    font-size: 0.52rem !important;
+    padding: 1px 5px !important;
+    border-radius: 8px !important;
+    line-height: 1.1 !important;
   }
-  .product-card h3 {
-    font-size: 0.85rem !important;
-    height: 38px !important;
-    margin-bottom: 4px !important;
+  .product-card-body {
+    padding: 6px !important;
   }
-  .product-card p {
+  .product-card-title {
     font-size: 0.72rem !important;
-    margin-bottom: 8px !important;
+    height: 28px !important;
+    line-height: 1.22 !important;
+    margin-bottom: 2px !important;
+  }
+  .product-card-subtitle {
+    display: none !important;
   }
   .product-card-price-box {
-    padding: 6px 10px !important;
+    padding: 4px 5px !important;
+    border-radius: 6px !important;
+    margin-bottom: 6px !important;
+  }
+  .product-card-price-krw-row {
+    font-size: 0.58rem !important;
+    margin-bottom: 1px !important;
+  }
+  .product-card-price-krw-row strong {
+    font-size: 0.64rem !important;
+  }
+  .product-card-price-vnd-row span {
+    font-size: 0.60rem !important;
+  }
+  .product-card-price-vnd-row strong {
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+  }
+  .product-card-actions {
+    gap: 4px !important;
+  }
+  .product-card-btn-detail,
+  .product-card-btn-cart {
+    padding: 5px 0 !important;
+    border-radius: 16px !important;
+  }
+  .product-card-btn-detail svg,
+  .product-card-btn-cart svg {
+    width: 13px !important;
+    height: 13px !important;
   }
 }
 

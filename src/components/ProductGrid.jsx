@@ -3,7 +3,7 @@ import { ShoppingBag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 40;
+  const itemsPerPage = 48;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -27,145 +27,171 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-          gap: '24px'
+          gap: '20px'
         }}
       >
         {currentProducts.map((product, pIdx) => {
           const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
           const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80';
 
-        return (
-          <div
-            key={product.goodsNo || `grid-prod-${pIdx}`}
-            className="product-card"
-            style={{
-              borderRadius: '16px',
-              overflow: 'hidden',
-              border: '1px solid rgba(0,0,0,0.08)',
-              backgroundColor: '#FFF',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: 'var(--shadow-sm)',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {/* Product Image */}
+          return (
             <div
-              style={{ position: 'relative', width: '100%', paddingTop: '90%', overflow: 'hidden', cursor: 'pointer' }}
-              onClick={() => onViewDetail && onViewDetail(product)}
+              key={product.goodsNo || `grid-prod-${pIdx}`}
+              className="product-card"
+              style={{
+                borderRadius: '14px',
+                overflow: 'hidden',
+                border: '1px solid rgba(0,0,0,0.08)',
+                backgroundColor: '#FFF',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'all 0.2s ease'
+              }}
             >
-              <img
-                src={product.productImage || defaultImg}
-                alt={product.name || 'Sản phẩm Hàn Quốc'}
-                loading="lazy"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = defaultImg;
-                }}
-                style={{
-                  position: 'absolute',
-                  top: 0, left: 0,
-                  width: '100%', height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-              <span style={{
-                position: 'absolute',
-                top: '12px',
-                left: '12px',
-                backgroundColor: 'var(--purple-primary)',
-                color: '#FFF',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                padding: '4px 10px',
-                borderRadius: '20px',
-                textTransform: 'uppercase'
-              }}>
-                {product.brand || 'Olive Young'}
-              </span>
-            </div>
-
-            {/* Product Info */}
-            <div style={{ padding: '20px', display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <h3
-                  onClick={() => onViewDetail && onViewDetail(product)}
-                  style={{
-                    fontSize: '0.95rem',
-                    fontWeight: 700,
-                    color: 'var(--text-dark)',
-                    marginBottom: '8px',
-                    lineHeight: '1.4',
-                    height: '42px',
-                    overflow: 'hidden',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    cursor: 'pointer'
+              {/* Product Image */}
+              <div
+                className="product-card-image-wrap"
+                style={{ position: 'relative', width: '100%', paddingTop: '100%', overflow: 'hidden', cursor: 'pointer' }}
+                onClick={() => onViewDetail && onViewDetail(product)}
+              >
+                <img
+                  src={product.productImage || defaultImg}
+                  alt={product.name || 'Sản phẩm Hàn Quốc'}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = defaultImg;
                   }}
-                  title={product.name}
+                  style={{
+                    position: 'absolute',
+                    top: 0, left: 0,
+                    width: '100%', height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+                <span
+                  className="product-card-brand-badge"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    left: '8px',
+                    backgroundColor: 'var(--purple-primary)',
+                    color: '#FFF',
+                    fontSize: '0.66rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '20px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.3px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                  }}
                 >
-                  {product.name}
-                </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px', minHeight: '1.2em' }}>
-                  {product.options ? `Quy cách: ${product.options}` : 'Hàng chính hãng nội địa Hàn'}
-                </p>
+                  {product.brand || 'Olive Young'}
+                </span>
               </div>
 
-              <div>
-                {/* 2 Dòng Giá Rõ Ràng: Giá tại Hàn & Giá về tay */}
-                <div style={{ marginBottom: '14px', background: '#F8F6FA', padding: '10px 14px', borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: '#6B7280', marginBottom: '4px' }}>
-                    <span>Giá tại Hàn:</span>
-                    <strong style={{ color: '#374151', fontWeight: 700 }}>{formatKrw(product.foreignPrice)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)' }}>Giá về tay:</span>
-                    <strong style={{ fontSize: '1.08rem', color: 'var(--purple-primary)', fontWeight: 800 }}>{formatVnd(calculatedVnd)}</strong>
-                  </div>
-                </div>
-
-                {/* Buttons Action: Xem Chi Tiết & Đặt Mua Ngay */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <button
+              {/* Product Info */}
+              <div
+                className="product-card-body"
+                style={{ padding: '12px', display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'space-between' }}
+              >
+                <div>
+                  <h3
+                    className="product-card-title"
                     onClick={() => onViewDetail && onViewDetail(product)}
                     style={{
-                      padding: '12px 0',
-                      borderRadius: '30px',
-                      border: '1px solid var(--purple-primary)',
-                      backgroundColor: '#FFF',
-                      color: 'var(--purple-primary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      color: 'var(--text-dark)',
+                      marginBottom: '4px',
+                      lineHeight: '1.3',
+                      height: '36px',
+                      overflow: 'hidden',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      cursor: 'pointer'
                     }}
-                    title="Xem chi tiết"
+                    title={product.name}
                   >
-                    <Eye size={22} />
-                  </button>
+                    {product.name}
+                  </h3>
+                  <p
+                    className="product-card-subtitle"
+                    style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '8px', minHeight: '1.2em' }}
+                  >
+                    {product.options ? `Quy cách: ${product.options}` : 'Hàng chính hãng nội địa Hàn'}
+                  </p>
+                </div>
 
-                  <button
-                    onClick={(e) => onSelectProduct(product, e)}
-                    className="btn-gold"
-                    style={{ 
-                      width: '100%', 
-                      justifyContent: 'center', 
-                      padding: '12px 0',
-                      borderRadius: '30px',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                    title="Thêm vào giỏ hàng"
+                <div>
+                  {/* 2 Dòng Giá Rõ Ràng: Giá tại Hàn & Giá về tay */}
+                  <div
+                    className="product-card-price-box"
+                    style={{ marginBottom: '10px', background: '#F8F6FA', padding: '8px 10px', borderRadius: '10px' }}
                   >
-                    <ShoppingBag size={22} />
-                  </button>
+                    <div
+                      className="product-card-price-krw-row"
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#6B7280', marginBottom: '2px' }}
+                    >
+                      <span>Giá Hàn:</span>
+                      <strong style={{ color: '#374151', fontWeight: 700 }}>{formatKrw(product.foreignPrice)}</strong>
+                    </div>
+                    <div
+                      className="product-card-price-vnd-row"
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+                    >
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-dark)' }}>Về tay:</span>
+                      <strong style={{ fontSize: '0.98rem', color: 'var(--purple-primary)', fontWeight: 800 }}>{formatVnd(calculatedVnd)}</strong>
+                    </div>
+                  </div>
+
+                  {/* Buttons Action: Xem Chi Tiết & Đặt Mua Ngay */}
+                  <div
+                    className="product-card-actions"
+                    style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}
+                  >
+                    <button
+                      className="product-card-btn-detail"
+                      onClick={() => onViewDetail && onViewDetail(product)}
+                      style={{
+                        padding: '8px 0',
+                        borderRadius: '24px',
+                        border: '1px solid var(--purple-primary)',
+                        backgroundColor: '#FFF',
+                        color: 'var(--purple-primary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Xem chi tiết"
+                    >
+                      <Eye size={18} />
+                    </button>
+
+                    <button
+                      className="btn-gold product-card-btn-cart"
+                      onClick={(e) => onSelectProduct(product, e)}
+                      style={{ 
+                        width: '100%', 
+                        justifyContent: 'center', 
+                        padding: '8px 0',
+                        borderRadius: '24px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      title="Thêm vào giỏ hàng"
+                    >
+                      <ShoppingBag size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
       </div>
 
       {/* Pagination Controls */}
@@ -174,51 +200,53 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          marginTop: '40px',
-          gap: '12px'
+          marginTop: '32px',
+          gap: '8px'
         }}>
           <button
-            disabled={currentPage === 1}
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
             style={{
-              padding: '8px 16px',
+              padding: '6px 12px',
               borderRadius: '8px',
-              border: '1px solid #E5E7EB',
-              backgroundColor: currentPage === 1 ? '#F3F4F6' : '#FFF',
+              border: '1px solid var(--border-color)',
+              backgroundColor: currentPage === 1 ? '#F3F4F6' : '#FFFFFF',
               color: currentPage === 1 ? '#9CA3AF' : 'var(--text-dark)',
               cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600,
-              transition: 'all 0.2s'
+              gap: '4px',
+              fontSize: '0.82rem',
+              fontWeight: 600
             }}
           >
-            <ChevronLeft size={18} /> Trước
+            <ChevronLeft size={16} />
+            <span>Trước</span>
           </button>
 
-          <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-dark)' }}>
+          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)', padding: '0 8px' }}>
             Trang {currentPage} / {totalPages}
           </span>
 
           <button
-            disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
             style={{
-              padding: '8px 16px',
+              padding: '6px 12px',
               borderRadius: '8px',
-              border: '1px solid #E5E7EB',
-              backgroundColor: currentPage === totalPages ? '#F3F4F6' : '#FFF',
+              border: '1px solid var(--border-color)',
+              backgroundColor: currentPage === totalPages ? '#F3F4F6' : '#FFFFFF',
               color: currentPage === totalPages ? '#9CA3AF' : 'var(--text-dark)',
               cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600,
-              transition: 'all 0.2s'
+              gap: '4px',
+              fontSize: '0.82rem',
+              fontWeight: 600
             }}
           >
-            Sau <ChevronRight size={18} />
+            <span>Sau</span>
+            <ChevronRight size={16} />
           </button>
         </div>
       )}
