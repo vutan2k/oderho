@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
-import { Search, X, Loader2, Sparkles, ShieldCheck } from 'lucide-react';
+import { Search, X, Loader2 } from 'lucide-react';
 
 /**
  * GuestOrderTrackingBar
- * Prominent order status tracking input bar for guest users on the Home Page.
- * Supports Phone Number or Order ID lookup with quick suggestion chips.
+ * Clean & minimal order status tracking input bar for guest users on the Home Page.
+ * Supports Phone Number or Order ID lookup.
  */
 export default function GuestOrderTrackingBar({
   onSearch,
   onClear,
   initialValue = '',
   isLoading = false,
-  placeholder = 'Nhập Số điện thoại hoặc Mã đơn (VD: 0912345678, ORD-827192)...',
-  sampleSuggestions = [
-    { label: 'Thử mã: ORD-100001', value: 'ORD-100001' },
-    { label: 'Thử SĐT: 0912345678', value: '0912345678' }
-  ]
+  placeholder = 'Nhập Số điện thoại hoặc Mã đơn (VD: 0912345678, ORD-827192)...'
 }) {
   const [query, setQuery] = useState(initialValue || '');
   const [prevInitial, setPrevInitial] = useState(initialValue);
@@ -41,19 +37,12 @@ export default function GuestOrderTrackingBar({
     }
   };
 
-  const handleSuggestionClick = (value) => {
-    setQuery(value);
-    if (onSearch) {
-      onSearch(value);
-    }
-  };
-
   return (
     <div
       className="guest-order-tracking-bar-container"
       style={{
         maxWidth: '720px',
-        margin: '0 auto 28px auto',
+        margin: '0 auto 24px auto',
         width: '100%'
       }}
     >
@@ -165,68 +154,6 @@ export default function GuestOrderTrackingBar({
           </button>
         </div>
       </form>
-
-      {/* Quick Suggestion Chips & Value Props */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          flexWrap: 'wrap',
-          marginTop: '12px'
-        }}
-      >
-        <span style={{ fontSize: '0.78rem', color: '#6B7280', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          <Sparkles size={13} style={{ color: 'var(--gold-primary, #C5A059)' }} /> Gợi ý tra cứu:
-        </span>
-
-        {sampleSuggestions.map((sug, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => handleSuggestionClick(sug.value)}
-            style={{
-              background: '#FFFFFF',
-              border: '1px solid #D1D5DB',
-              borderRadius: '16px',
-              padding: '4px 10px',
-              fontSize: '0.76rem',
-              color: '#374151',
-              cursor: 'pointer',
-              fontWeight: 500,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--purple-primary, #7A4B9E)';
-              e.currentTarget.style.color = 'var(--purple-primary, #7A4B9E)';
-              e.currentTarget.style.backgroundColor = 'var(--purple-light, #F0E8F5)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#D1D5DB';
-              e.currentTarget.style.color = '#374151';
-              e.currentTarget.style.backgroundColor = '#FFFFFF';
-            }}
-          >
-            {sug.label}
-          </button>
-        ))}
-
-        <span
-          style={{
-            fontSize: '0.75rem',
-            color: 'var(--purple-primary, #7A4B9E)',
-            fontWeight: 600,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            marginLeft: '4px'
-          }}
-        >
-          <ShieldCheck size={14} /> Minh bạch 100% Bill & Video POV
-        </span>
-      </div>
     </div>
   );
 }
