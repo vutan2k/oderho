@@ -996,7 +996,7 @@ export default function AdminProductManager() {
 
                   // Kiểm tra so khớp giá Olive Young
                   const verified = VERIFIED_OLIVEYOUNG_PRICES[prod.goodsNo];
-                  let isPriceMatch = true;
+                  let isPriceMatch = null;
                   let oyStandardPrice = fPrice;
                   if (verified && verified.foreignPrice) {
                     oyStandardPrice = verified.foreignPrice;
@@ -1105,8 +1105,8 @@ export default function AdminProductManager() {
                               ₩{fPrice.toLocaleString('vi-VN')}
                             </span>
 
-                            {/* Tích xanh ✓ nếu chuẩn OY, Dấu ✕ nếu khác web OY */}
-                            {isPriceMatch ? (
+                            {/* Tích xanh ✓ nếu chuẩn OY, Dấu ✕ nếu khác web OY, ẩn nếu chưa xác minh */}
+                            {isPriceMatch === true ? (
                               <span
                                 title="Giá chuẩn 100% Olive Young Korea"
                                 style={{
@@ -1125,7 +1125,7 @@ export default function AdminProductManager() {
                               >
                                 ✓
                               </span>
-                            ) : (
+                            ) : isPriceMatch === false ? (
                               <span
                                 onClick={() => handleAnchorProductPrice(prod)}
                                 title={`Giá hiện tại khác web Olive Young (Chuẩn OY: ₩${oyStandardPrice.toLocaleString('vi-VN')}). Nhấp để đồng bộ!`}
@@ -1145,7 +1145,7 @@ export default function AdminProductManager() {
                               >
                                 ✕ ₩{oyStandardPrice.toLocaleString('vi-VN')}
                               </span>
-                            )}
+                            ) : null}
 
                             {hasDiscount && (
                               <span style={{ fontSize: '0.68rem', color: 'var(--text-light)', textDecoration: 'line-through' }}>
@@ -1249,7 +1249,7 @@ export default function AdminProductManager() {
 
                         // Kiểm tra so khớp giá Olive Young
                         const verified = VERIFIED_OLIVEYOUNG_PRICES[prod.goodsNo];
-                        let isPriceMatch = true;
+                        let isPriceMatch = null;
                         let oyStandardPrice = fPrice;
                         if (verified && verified.foreignPrice) {
                           oyStandardPrice = verified.foreignPrice;
@@ -1368,8 +1368,8 @@ export default function AdminProductManager() {
                                   ₩{fPrice.toLocaleString('vi-VN')}
                                 </span>
 
-                                {/* Dấu tích xanh ✓ nếu giá chuẩn Olive Young, Dấu ✕ đỏ nếu khác web */}
-                                {isPriceMatch ? (
+                                {/* Dấu tích xanh ✓ nếu giá chuẩn Olive Young, Dấu ✕ đỏ nếu khác web, ẩn nếu chưa xác minh */}
+                                {isPriceMatch === true ? (
                                   <span
                                     title="Giá chuẩn 100% Olive Young Korea"
                                     style={{
@@ -1389,7 +1389,7 @@ export default function AdminProductManager() {
                                   >
                                     ✓
                                   </span>
-                                ) : (
+                                ) : isPriceMatch === false ? (
                                   <span
                                     onClick={() => handleAnchorProductPrice(prod)}
                                     title={`Giá hiện tại khác web Olive Young (Chuẩn OY: ₩${oyStandardPrice.toLocaleString('vi-VN')}). Nhấp để đồng bộ ngay!`}
@@ -1409,7 +1409,7 @@ export default function AdminProductManager() {
                                   >
                                     ✕ ₩{oyStandardPrice.toLocaleString('vi-VN')}
                                   </span>
-                                )}
+                                ) : null}
                               </div>
 
                               {hasDiscount && (
@@ -2105,16 +2105,27 @@ export default function AdminProductManager() {
                       <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Bán Won (₩) *</label>
                       <button
                         type="button"
-                        onClick={() => {
-                          const synced = syncProductPriceWithOliveYoung(editForm);
-                          if (synced && synced.foreignPrice !== editForm.foreignPrice) {
-                            handleEditChange('foreignPrice', synced.foreignPrice);
-                            if (synced.originalPrice) {
-                              handleEditChange('originalPrice', synced.originalPrice);
+                        onClick={async () => {
+                          const url = editForm.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${editForm.goodsNo}`;
+                          if (showToast) showToast('Đang kết nối Olive Young để lấy giá thực tế...', 'info');
+                          try {
+                            const res = await runAIScraperAgent(url);
+                            if (res && res.success && res.product) {
+                              const newPrice = res.product.foreignPrice || res.product.price;
+                              if (newPrice && newPrice !== editForm.foreignPrice) {
+                                handleEditChange('foreignPrice', newPrice);
+                                if (res.product.originalPrice) {
+                                  handleEditChange('originalPrice', res.product.originalPrice);
+                                }
+                                if (showToast) showToast(`Đã cập nhật giá mới: ₩${newPrice.toLocaleString('vi-VN')}`, 'success');
+                              } else {
+                                if (showToast) showToast('Giá hiện tại đã là mới nhất so với Olive Young!', 'info');
+                              }
+                            } else {
+                              if (showToast) showToast('Không tìm thấy thông tin giá trên Olive Young.', 'error');
                             }
-                            if (showToast) showToast(`Đã lấy giá mới: ₩${synced.foreignPrice.toLocaleString('vi-VN')}`, 'success');
-                          } else {
-                            if (showToast) showToast('Giá hiện tại đã là mới nhất hoặc không tìm thấy mã SP này trên Olive Young.', 'info');
+                          } catch (error) {
+                            if (showToast) showToast('Lỗi mạng khi kết nối Olive Young.', 'error');
                           }
                         }}
                         style={{
