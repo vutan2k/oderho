@@ -2,6 +2,7 @@ import React, { useState, useContext, useMemo, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
+import { compressImage } from '../utils/imageCompressor';
 import { getPriceSyncConfig, savePriceSyncConfig } from '../services/autoScraperBotService';
 import {
   syncProductPriceWithOliveYoung,
@@ -457,12 +458,12 @@ export default function AdminProductManager() {
   };
 
   // 🖼️ Upload Main Avatar Image from Computer
-  const handleMainAvatarUpload = (e) => {
+  const handleMainAvatarUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result;
+    if (showToast) showToast('Đang nén và tải ảnh lên...', 'info');
+    try {
+      const base64 = await compressImage(file, 800, 0.7);
       setEditForm(prev => {
         const currentImages = prev.images || [];
         const updatedImages = currentImages.includes(base64) ? currentImages : [base64, ...currentImages];
@@ -473,35 +474,37 @@ export default function AdminProductManager() {
           images: updatedImages
         };
       });
-      if (showToast) showToast('Đã tải và đồng bộ ảnh đại diện chính lên Database!', 'success');
-    };
-    reader.readAsDataURL(file);
+      if (showToast) showToast('Đã nén và đồng bộ ảnh đại diện chính lên Database!', 'success');
+    } catch (error) {
+      if (showToast) showToast('Lỗi khi xử lý ảnh!', 'error');
+    }
     e.target.value = '';
   };
 
   // 🖼️ Upload Multiple Album Images from Computer
-  const handleAlbumUpload = (e) => {
+  const handleAlbumUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result;
-        setEditForm(prev => {
-          const currentImages = prev.images || [];
-          const updatedImages = [...currentImages, base64];
-          const mainImg = prev.productImage || base64;
-          syncImageChangesToDb(updatedImages, mainImg);
-          return {
-            ...prev,
-            images: updatedImages,
-            productImage: mainImg
-          };
-        });
-      };
-      reader.readAsDataURL(file);
-    });
-    if (showToast) showToast(`Đã đồng bộ ${files.length} ảnh lên album Database!`, 'success');
+    if (showToast) showToast(`Đang xử lý ${files.length} ảnh...`, 'info');
+    try {
+      const base64Promises = files.map(file => compressImage(file, 800, 0.7));
+      const base64Images = await Promise.all(base64Promises);
+      
+      setEditForm(prev => {
+        const currentImages = prev.images || [];
+        const updatedImages = [...currentImages, ...base64Images];
+        const mainImg = prev.productImage || base64Images[0];
+        syncImageChangesToDb(updatedImages, mainImg);
+        return {
+          ...prev,
+          images: updatedImages,
+          productImage: mainImg
+        };
+      });
+      if (showToast) showToast(`Đã đồng bộ ${files.length} ảnh lên album Database!`, 'success');
+    } catch (error) {
+      if (showToast) showToast('Lỗi khi nén ảnh!', 'error');
+    }
     e.target.value = '';
   };
 
@@ -2098,13 +2101,47 @@ export default function AdminProductManager() {
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Bán Won (₩) *</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2px' }}>
+                      <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)' }}>Giá Bán Won (₩) *</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const synced = syncProductPriceWithOliveYoung(editForm);
+                          if (synced && synced.foreignPrice !== editForm.foreignPrice) {
+                            handleEditChange('foreignPrice', synced.foreignPrice);
+                            if (synced.originalPrice) {
+                              handleEditChange('originalPrice', synced.originalPrice);
+                            }
+                            if (showToast) showToast(`Đã lấy giá mới: ₩${synced.foreignPrice.toLocaleString('vi-VN')}`, 'success');
+                          } else {
+                            if (showToast) showToast('Giá hiện tại đã là mới nhất hoặc không tìm thấy mã SP này trên Olive Young.', 'info');
+                          }
+                        }}
+                        style={{
+                          backgroundColor: '#DCFCE7',
+                          color: '#16A34A',
+                          border: '1px solid #86EFAC',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        title="Tự động cào giá Won mới nhất từ Olive Young"
+                      >
+                        <RefreshCw size={10} />
+                        Lấy giá OY
+                      </button>
+                    </div>
                     <input
                       type="number"
                       placeholder="Nhập giá bán Won (VD: 103500)..."
                       value={editForm.foreignPrice ?? ''}
                       onChange={(e) => handleEditChange('foreignPrice', e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.92rem', marginTop: '2px', fontWeight: 800, color: 'var(--purple-primary)' }}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.92rem', fontWeight: 800, color: 'var(--purple-primary)' }}
                     />
                   </div>
                 </div>
