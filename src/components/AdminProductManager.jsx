@@ -807,27 +807,53 @@ export default function AdminProductManager() {
               />
             </div>
 
-            {/* Bottom row of Filter: Category Dropdown + Action Buttons */}
+            {/* 3 Tab Phân Loại Sản Phẩm Riêng Biệt + Tab Tất Cả */}
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-              <select
-                value={filterCat}
-                onChange={(e) => setFilterCat(e.target.value)}
-                style={{
-                  flex: isMobile ? '1 1 140px' : '0 1 200px',
-                  padding: '7px 8px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  fontSize: isMobile ? '0.76rem' : '0.82rem',
-                  fontWeight: 700,
-                  color: 'var(--text-dark)',
-                  backgroundColor: '#FFF'
-                }}
-              >
-                <option value="all">Tất cả ({categoryCounts.all})</option>
-                <option value="cosmetics">Mỹ phẩm ({categoryCounts.cosmetics})</option>
-                <option value="ginseng">Sâm nấm ({categoryCounts.ginseng})</option>
-                <option value="supplements">TP Chức Năng ({categoryCounts.supplements})</option>
-              </select>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', overflowX: 'auto', paddingBottom: '2px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', flex: '1 1 auto' }}>
+                {[
+                  { id: 'all', label: 'Tất cả', count: categoryCounts.all },
+                  { id: 'cosmetics', label: 'Mỹ phẩm', count: categoryCounts.cosmetics },
+                  { id: 'ginseng', label: 'Sâm nấm', count: categoryCounts.ginseng },
+                  { id: 'supplements', label: 'Thực phẩm chức năng', count: categoryCounts.supplements }
+                ].map((tab) => {
+                  const isActive = filterCat === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setFilterCat(tab.id)}
+                      style={{
+                        padding: isMobile ? '5px 10px' : '6px 14px',
+                        borderRadius: '20px',
+                        border: isActive ? '1.5px solid var(--purple-primary)' : '1px solid var(--border-color)',
+                        backgroundColor: isActive ? 'var(--purple-primary)' : '#FFF',
+                        color: isActive ? '#FFF' : 'var(--text-dark)',
+                        fontSize: isMobile ? '0.74rem' : '0.80rem',
+                        fontWeight: isActive ? 800 : 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isActive ? '0 2px 6px rgba(122, 75, 158, 0.2)' : 'none',
+                        flexShrink: 0
+                      }}
+                    >
+                      <span>{tab.label}</span>
+                      <span style={{
+                        backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : '#F1F5F9',
+                        color: isActive ? '#FFF' : '#64748B',
+                        padding: '1px 6px',
+                        borderRadius: '10px',
+                        fontSize: '0.68rem',
+                        fontWeight: 800
+                      }}>
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 <button
@@ -924,6 +950,18 @@ export default function AdminProductManager() {
                   const discountPct = hasDiscount ? Math.round(((origPrice - fPrice) / origPrice) * 100) : 0;
                   const approxVnd = Math.round(fPrice * krwRate * serviceFeeMultiplier);
 
+                  // Kiểm tra so khớp giá Olive Young
+                  const verified = VERIFIED_OLIVEYOUNG_PRICES[prod.goodsNo];
+                  let isPriceMatch = true;
+                  let oyStandardPrice = fPrice;
+                  if (verified && verified.foreignPrice) {
+                    oyStandardPrice = verified.foreignPrice;
+                    isPriceMatch = (fPrice === verified.foreignPrice);
+                  } else if (prod.expectedPrice && prod.expectedPrice !== fPrice) {
+                    oyStandardPrice = prod.expectedPrice;
+                    isPriceMatch = false;
+                  }
+
                   return (
                     <div
                       key={prod.goodsNo}
@@ -938,7 +976,7 @@ export default function AdminProductManager() {
                         gap: '10px'
                       }}
                     >
-                      {/* Row 1: Checkbox + GoodsNo + Olive Young Link + Status Badge */}
+                      {/* Row 1: Checkbox + GoodsNo + Olive Young Link */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px dashed #F1F5F9', paddingBottom: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                           <input
@@ -959,22 +997,6 @@ export default function AdminProductManager() {
                             <span>Olive Young</span> <ExternalLink size={10} />
                           </a>
                         </div>
-
-                        <span style={{
-                          backgroundColor: '#DCFCE7',
-                          color: '#15803D',
-                          border: '1px solid #86EFAC',
-                          padding: '2px 7px',
-                          borderRadius: '12px',
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '3px',
-                          flexShrink: 0
-                        }}>
-                          <CheckCircle2 size={10} /> Chuẩn OY
-                        </span>
                       </div>
 
                       {/* Row 2: Image (Left) + Product Info & Price (Right) */}
@@ -1024,11 +1046,54 @@ export default function AdminProductManager() {
                             </span>
                           </div>
 
-                          {/* Price Row */}
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '5px', flexWrap: 'wrap' }}>
+                          {/* Price Row with Olive Young Match/Mismatch Indicator */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '5px', flexWrap: 'wrap' }}>
                             <span style={{ fontWeight: 900, color: 'var(--purple-primary)', fontSize: '0.94rem' }}>
                               ₩{fPrice.toLocaleString('vi-VN')}
                             </span>
+
+                            {/* Tích xanh ✓ nếu chuẩn OY, Dấu ✕ nếu khác web OY */}
+                            {isPriceMatch ? (
+                              <span
+                                title="Giá chuẩn 100% Olive Young Korea"
+                                style={{
+                                  backgroundColor: '#DCFCE7',
+                                  color: '#16A34A',
+                                  border: '1px solid #86EFAC',
+                                  borderRadius: '50%',
+                                  width: '18px',
+                                  height: '18px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.70rem',
+                                  fontWeight: 900
+                                }}
+                              >
+                                ✓
+                              </span>
+                            ) : (
+                              <span
+                                onClick={() => handleAnchorProductPrice(prod)}
+                                title={`Giá hiện tại khác web Olive Young (Chuẩn OY: ₩${oyStandardPrice.toLocaleString('vi-VN')}). Nhấp để đồng bộ!`}
+                                style={{
+                                  backgroundColor: '#FEE2E2',
+                                  color: '#DC2626',
+                                  border: '1px solid #FCA5A5',
+                                  borderRadius: '10px',
+                                  padding: '1px 5px',
+                                  fontSize: '0.66rem',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '2px'
+                                }}
+                              >
+                                ✕ ₩{oyStandardPrice.toLocaleString('vi-VN')}
+                              </span>
+                            )}
+
                             {hasDiscount && (
                               <span style={{ fontSize: '0.68rem', color: 'var(--text-light)', textDecoration: 'line-through' }}>
                                 ₩{origPrice.toLocaleString('vi-VN')} (-{discountPct}%)
@@ -1041,28 +1106,8 @@ export default function AdminProductManager() {
                         </div>
                       </div>
 
-                      {/* Row 3: 3 Thumb-Friendly Action Buttons */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 42px', gap: '6px', borderTop: '1px solid #F1F5F9', paddingTop: '8px' }}>
-                        <button
-                          onClick={() => handleAnchorProductPrice(prod)}
-                          style={{
-                            backgroundColor: '#FEF3C7',
-                            color: '#D97706',
-                            border: '1px solid #FDE68A',
-                            padding: '7px 8px',
-                            borderRadius: '6px',
-                            fontSize: '0.74rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '3px'
-                          }}
-                        >
-                          <Zap size={12} /> Neo Giá OY
-                        </button>
-
+                      {/* Row 3: 2 Thumb-Friendly Action Buttons (Sửa & Xóa) */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 42px', gap: '6px', borderTop: '1px solid #F1F5F9', paddingTop: '8px' }}>
                         <button
                           onClick={() => openEdit(prod)}
                           style={{
@@ -1071,16 +1116,16 @@ export default function AdminProductManager() {
                             border: 'none',
                             padding: '7px 8px',
                             borderRadius: '6px',
-                            fontSize: '0.74rem',
+                            fontSize: '0.76rem',
                             fontWeight: 800,
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '3px'
+                            gap: '4px'
                           }}
                         >
-                          <Edit3 size={12} /> Sửa Chi Tiết
+                          <Edit3 size={13} /> Sửa Chi Tiết
                         </button>
 
                         <button
@@ -1126,19 +1171,17 @@ export default function AdminProductManager() {
                         />
                       </th>
                       <th style={{ padding: '10px 12px', width: '64px', textAlign: 'center' }}>Ảnh</th>
-                      <th style={{ padding: '10px 12px', width: '125px' }}>Mã / Link Gốc</th>
+                      <th style={{ padding: '10px 12px', width: '135px' }}>Mã / Link Gốc</th>
                       <th style={{ padding: '10px 12px' }}>Tên Sản Phẩm (Việt / Hàn)</th>
-                      <th style={{ padding: '10px 12px', width: '120px' }}>Thương Hiệu</th>
-                      <th style={{ padding: '10px 12px', width: '120px' }}>Phân Loại</th>
-                      <th style={{ padding: '10px 12px', width: '160px', textAlign: 'right' }}>Giá Olive Young</th>
-                      <th style={{ padding: '10px 12px', width: '110px', textAlign: 'center' }}>Trạng Thái</th>
-                      <th style={{ padding: '10px 12px', width: '150px', textAlign: 'right' }}>Thao Tác</th>
+                      <th style={{ padding: '10px 12px', width: '140px' }}>Phân Loại</th>
+                      <th style={{ padding: '10px 12px', width: '190px', textAlign: 'right' }}>Giá Olive Young</th>
+                      <th style={{ padding: '10px 12px', width: '110px', textAlign: 'right' }}>Thao Tác</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredProducts.length === 0 ? (
                       <tr>
-                        <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
                           Không tìm thấy sản phẩm nào phù hợp.
                         </td>
                       </tr>
@@ -1150,6 +1193,18 @@ export default function AdminProductManager() {
                         const hasDiscount = origPrice > fPrice && fPrice > 0;
                         const discountPct = hasDiscount ? Math.round(((origPrice - fPrice) / origPrice) * 100) : 0;
                         const approxVnd = Math.round(fPrice * krwRate * serviceFeeMultiplier);
+
+                        // Kiểm tra so khớp giá Olive Young
+                        const verified = VERIFIED_OLIVEYOUNG_PRICES[prod.goodsNo];
+                        let isPriceMatch = true;
+                        let oyStandardPrice = fPrice;
+                        if (verified && verified.foreignPrice) {
+                          oyStandardPrice = verified.foreignPrice;
+                          isPriceMatch = (fPrice === verified.foreignPrice);
+                        } else if (prod.expectedPrice && prod.expectedPrice !== fPrice) {
+                          oyStandardPrice = prod.expectedPrice;
+                          isPriceMatch = false;
+                        }
 
                         return (
                           <tr
@@ -1200,21 +1255,11 @@ export default function AdminProductManager() {
                                   🇰🇷 {prod.nameKr}
                                 </div>
                               )}
-                            </td>
-
-                            <td style={{ padding: '10px 12px' }}>
-                              <input
-                                type="text"
-                                defaultValue={prod.brand || ''}
-                                onBlur={(e) => {
-                                  const val = e.target.value.trim();
-                                  if (val !== prod.brand) {
-                                    updateProduct(prod.goodsNo, { ...prod, brand: val, brandKr: val });
-                                    if (showToast) showToast(`Đã đổi hãng: ${val}`, 'success');
-                                  }
-                                }}
-                                style={{ width: '100%', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.78rem', fontWeight: 600 }}
-                              />
+                              {prod.brand && (
+                                <span style={{ backgroundColor: '#F1F5F9', color: '#475569', fontSize: '0.66rem', fontWeight: 700, padding: '1px 5px', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>
+                                  🏷️ {prod.brand}
+                                </span>
+                              )}
                             </td>
 
                             <td style={{ padding: '10px 12px' }}>
@@ -1230,10 +1275,57 @@ export default function AdminProductManager() {
                               </select>
                             </td>
 
+                            {/* Cột GIÁ OLIVE YOUNG kèm Dấu tích xanh ✓ hoặc Dấu ✕ đỏ */}
                             <td style={{ padding: '10px 12px', textAlign: 'right' }}>
-                              <div style={{ fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.9rem' }}>
-                                ₩{fPrice.toLocaleString('vi-VN')}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                                <span style={{ fontWeight: 800, color: 'var(--purple-primary)', fontSize: '0.90rem' }}>
+                                  ₩{fPrice.toLocaleString('vi-VN')}
+                                </span>
+
+                                {/* Dấu tích xanh ✓ nếu giá chuẩn Olive Young, Dấu ✕ đỏ nếu khác web */}
+                                {isPriceMatch ? (
+                                  <span
+                                    title="Giá chuẩn 100% Olive Young Korea"
+                                    style={{
+                                      backgroundColor: '#DCFCE7',
+                                      color: '#16A34A',
+                                      border: '1px solid #86EFAC',
+                                      borderRadius: '50%',
+                                      width: '18px',
+                                      height: '18px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '0.70rem',
+                                      fontWeight: 900,
+                                      cursor: 'help'
+                                    }}
+                                  >
+                                    ✓
+                                  </span>
+                                ) : (
+                                  <span
+                                    onClick={() => handleAnchorProductPrice(prod)}
+                                    title={`Giá hiện tại khác web Olive Young (Chuẩn OY: ₩${oyStandardPrice.toLocaleString('vi-VN')}). Nhấp để đồng bộ ngay!`}
+                                    style={{
+                                      backgroundColor: '#FEE2E2',
+                                      color: '#DC2626',
+                                      border: '1px solid #FCA5A5',
+                                      borderRadius: '12px',
+                                      padding: '1px 5px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '2px',
+                                      fontSize: '0.68rem',
+                                      fontWeight: 800,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    ✕ ₩{oyStandardPrice.toLocaleString('vi-VN')}
+                                  </span>
+                                )}
                               </div>
+
                               {hasDiscount && (
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', marginTop: '1px' }}>
                                   <span style={{ fontSize: '0.68rem', color: 'var(--text-light)', textDecoration: 'line-through' }}>
@@ -1244,50 +1336,15 @@ export default function AdminProductManager() {
                                   </span>
                                 </div>
                               )}
-                              <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
+
+                              <div style={{ fontSize: '0.70rem', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
                                 ≈ {approxVnd.toLocaleString('vi-VN')} đ
                               </div>
                             </td>
 
-                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                              <span style={{
-                                backgroundColor: '#DCFCE7',
-                                color: '#15803D',
-                                border: '1px solid #86EFAC',
-                                padding: '2px 8px',
-                                borderRadius: '12px',
-                                fontSize: '0.68rem',
-                                fontWeight: 700,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '3px'
-                              }}>
-                                <CheckCircle2 size={11} /> Chuẩn OY
-                              </span>
-                            </td>
-
+                            {/* Cột THAO TÁC: Chỉ giữ nút Sửa và nút Xóa */}
                             <td style={{ padding: '10px 12px', textAlign: 'right' }}>
                               <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                <button
-                                  onClick={() => handleAnchorProductPrice(prod)}
-                                  title="Cập nhật giá chuẩn từ Olive Young Hàn Quốc"
-                                  style={{
-                                    backgroundColor: '#FEF3C7',
-                                    color: '#D97706',
-                                    border: '1px solid #FDE68A',
-                                    padding: '4px 8px',
-                                    borderRadius: '6px',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '2px'
-                                  }}
-                                >
-                                  <Zap size={11} /> Neo Giá
-                                </button>
-
                                 <button
                                   onClick={() => openEdit(prod)}
                                   style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '4px 9px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
@@ -1303,6 +1360,7 @@ export default function AdminProductManager() {
                                     }
                                   }}
                                   style={{ backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', padding: '4px 7px', borderRadius: '6px', fontSize: '0.72rem', cursor: 'pointer' }}
+                                  title="Xóa sản phẩm"
                                 >
                                   <Trash2 size={11} />
                                 </button>
