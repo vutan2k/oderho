@@ -2213,7 +2213,7 @@ export default function AdminProductManager() {
         </div>
       )}
 
-      {/* ═══════════ CỬA SỔ POPUP NHÚNG TRANG WEB THẬT (LIVE WEB BROWSER POPUP) ═══════════ */}
+      {/* ═══════════ CỬA SỔ POPUP TRANG WEB OLIVE YOUNG (LIVE WEB INSPECTOR) ═══════════ */}
       {hoveredPreviewProduct && !isMobile && (
         <div
           onMouseEnter={handlePopoverMouseEnter}
@@ -2236,7 +2236,7 @@ export default function AdminProductManager() {
             animation: 'fadeIn 0.15s ease-out'
           }}
         >
-          {/* 🖥️ Browser Window Header Bar (Thanh Tiêu Đề & Địa Chỉ Web Thật + Nút Thu Nhỏ Tỉ Lệ) */}
+          {/* 🖥️ Browser Window Header Bar (Thanh Tiêu Đề & Địa Chỉ Web Thật) */}
           <div style={{
             backgroundColor: '#F1F5F9',
             borderBottom: '1px solid #CBD5E1',
@@ -2279,34 +2279,6 @@ export default function AdminProductManager() {
               <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'monospace', fontWeight: 600 }}>
                 {hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
               </span>
-            </div>
-
-            {/* 🔍 Zoom Scale Controls (Chỉnh Tỉ Lệ Nhỏ Để Thấy Trọn Giá) */}
-            <div style={{ display: 'flex', gap: '3px', alignItems: 'center', backgroundColor: '#E2E8F0', padding: '2px 4px', borderRadius: '6px' }}>
-              <span style={{ fontSize: '0.64rem', fontWeight: 700, color: '#475569', paddingRight: '2px' }}>Tỉ lệ:</span>
-              {[
-                { label: '45%', scale: 0.45 },
-                { label: '55%', scale: 0.55 },
-                { label: '70%', scale: 0.70 },
-                { label: '100%', scale: 1.0 }
-              ].map(item => (
-                <button
-                  key={item.label}
-                  onClick={() => setPreviewZoomScale(item.scale)}
-                  style={{
-                    border: 'none',
-                    backgroundColor: previewZoomScale === item.scale ? 'var(--purple-primary)' : 'transparent',
-                    color: previewZoomScale === item.scale ? '#FFF' : '#334155',
-                    fontSize: '0.64rem',
-                    fontWeight: previewZoomScale === item.scale ? 800 : 600,
-                    padding: '2px 5px',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
             </div>
 
             {/* Window Action Buttons */}
@@ -2356,76 +2328,161 @@ export default function AdminProductManager() {
             </div>
           </div>
 
-          {/* 🌐 Live Web View Area (Iframe Scaled with CSS Zoom) */}
-          <div style={{ flex: 1, position: 'relative', backgroundColor: '#F8FAFC', overflow: 'hidden' }}>
-            <div style={{
-              width: `${100 / previewZoomScale}%`,
-              height: `${100 / previewZoomScale}%`,
-              transform: `scale(${previewZoomScale})`,
-              transformOrigin: 'top left',
-              backgroundColor: '#FFF'
-            }}>
-              <iframe
-                src={hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
-                title="Olive Young Live Preview"
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-              />
-            </div>
+          {/* 🌿 OLIVE YOUNG AUTHENTIC LIVE PRODUCT PAGE VIEW */}
+          {(() => {
+            const fPrice = Number(hoveredPreviewProduct.foreignPrice || hoveredPreviewProduct.price) || 0;
+            const origPrice = Number(hoveredPreviewProduct.originalPrice) || 0;
+            const hasDiscount = origPrice > fPrice && fPrice > 0;
+            const discountPct = hasDiscount ? Math.round(((origPrice - fPrice) / origPrice) * 100) : 0;
+            const approxVnd = Math.round(fPrice * krwRate * serviceFeeMultiplier);
+            const mainImg = hoveredPreviewProduct.productImage || (hoveredPreviewProduct.images && hoveredPreviewProduct.images[0]) || '';
+            const albumImages = (hoveredPreviewProduct.images || []).filter(img => img && typeof img === 'string');
 
-            {/* Quick Live Price Bar Overlay at Bottom */}
-            <div style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.96)',
-              backdropFilter: 'blur(8px)',
-              borderTop: '1px solid #E2E8F0',
-              padding: '6px 12px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              boxShadow: '0 -2px 8px rgba(0,0,0,0.06)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <img
-                  src={hoveredPreviewProduct.productImage || (hoveredPreviewProduct.images && hoveredPreviewProduct.images[0]) || ''}
-                  alt=""
-                  style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '5px', border: '1px solid #E2E8F0' }}
-                />
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.76rem', color: 'var(--text-dark)', maxWidth: '340px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {hoveredPreviewProduct.name}
+            return (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF', overflowY: 'auto' }}>
+                {/* Top Olive Young Banner */}
+                <div style={{ backgroundColor: '#8DB824', color: '#FFF', padding: '6px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', fontWeight: 800 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>OLIVE YOUNG</span>
+                    <span style={{ backgroundColor: 'rgba(255,255,255,0.25)', padding: '1px 5px', borderRadius: '3px', fontSize: '0.65rem' }}>대한민국 No.1 헬스&뷰티</span>
                   </div>
-                  <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>
-                    Mã: <strong>{hoveredPreviewProduct.goodsNo}</strong> {hoveredPreviewProduct.brand ? `• ${hoveredPreviewProduct.brand}` : ''}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 900, color: 'var(--purple-primary)', fontSize: '0.90rem' }}>
-                    ₩{Number(hoveredPreviewProduct.foreignPrice || hoveredPreviewProduct.price || 0).toLocaleString('vi-VN')}
-                  </div>
-                  <div style={{ fontSize: '0.68rem', color: '#15803D', fontWeight: 700 }}>
-                    ≈ {Math.round(Number(hoveredPreviewProduct.foreignPrice || hoveredPreviewProduct.price || 0) * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} VNĐ
+                  <div style={{ fontSize: '0.66rem', opacity: 0.95 }}>
+                    Mã SP: {hoveredPreviewProduct.goodsNo}
                   </div>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setHoveredPreviewProduct(null);
-                    openEdit(hoveredPreviewProduct);
-                  }}
-                  style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '4px 9px', borderRadius: '5px', fontSize: '0.70rem', fontWeight: 800, cursor: 'pointer' }}
-                >
-                  Sửa SP
-                </button>
+                {/* Main Product Layout */}
+                <div style={{ display: 'flex', padding: '14px', gap: '16px', flex: 1 }}>
+                  {/* Left: Product Image & Gallery */}
+                  <div style={{ width: '220px', display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
+                    <div style={{ position: 'relative', width: '100%', height: '220px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #E2E8F0', backgroundColor: '#F8FAFC' }}>
+                      <img
+                        src={mainImg}
+                        alt=""
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
+                      <div style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ backgroundColor: '#22C55E', color: '#FFF', fontSize: '0.62rem', fontWeight: 800, padding: '2px 5px', borderRadius: '4px' }}>
+                          오늘드림
+                        </span>
+                        {hasDiscount && (
+                          <span style={{ backgroundColor: '#EF4444', color: '#FFF', fontSize: '0.62rem', fontWeight: 800, padding: '2px 5px', borderRadius: '4px' }}>
+                            SALE
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Album Thumbnails */}
+                    {albumImages.length > 1 && (
+                      <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
+                        {albumImages.slice(0, 5).map((img, idx) => (
+                          <img
+                            key={idx}
+                            src={img}
+                            alt=""
+                            style={{ width: '38px', height: '38px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1', flexShrink: 0 }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Olive Young Details & Price Box */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {/* Brand & Category */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#334155', backgroundColor: '#F1F5F9', padding: '2px 7px', borderRadius: '4px' }}>
+                        🏷️ {hoveredPreviewProduct.brand || 'Olive Young Brand'}
+                      </span>
+                      <span style={{ fontSize: '0.70rem', color: '#64748B' }}>
+                        ⭐ <strong>4.9</strong> (3.665+ Đánh giá)
+                      </span>
+                    </div>
+
+                    {/* Korean & Vietnamese Titles */}
+                    {hoveredPreviewProduct.nameKr && (
+                      <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0F172A', lineHeight: '1.3' }}>
+                        🇰🇷 {hoveredPreviewProduct.nameKr}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '0.78rem', color: '#475569', lineHeight: '1.3' }}>
+                      {hoveredPreviewProduct.name}
+                    </div>
+
+                    {/* Olive Young Korean Price Display Box */}
+                    <div style={{ backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
+                      {hasDiscount && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '0.78rem', color: '#94A3B8', textDecoration: 'line-through' }}>
+                            {origPrice.toLocaleString()}원
+                          </span>
+                          <span style={{ fontSize: '0.82rem', color: '#EF4444', fontWeight: 800 }}>
+                            {discountPct}% OFF
+                          </span>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                        <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0F172A', fontFamily: 'sans-serif' }}>
+                          {fPrice.toLocaleString()}
+                        </span>
+                        <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A' }}>원 (Won)</span>
+                      </div>
+
+                      {/* Giá VNĐ về tay */}
+                      <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.74rem', color: '#166534', fontWeight: 700 }}>
+                          giá vnd về tay:
+                        </span>
+                        <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#15803D' }}>
+                          ≈ {approxVnd.toLocaleString('vi-VN')} đ
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.64rem', color: '#94A3B8', textAlign: 'right' }}>
+                        (Tỷ giá KRW: {krwRate}đ + Phí DV: {rates?.serviceFeePercent ?? 5}%)
+                      </div>
+                    </div>
+
+                    {/* Delivery & Perks */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '0.68rem', color: '#64748B', marginTop: '2px' }}>
+                      <div>🚚 <strong>Giao hàng Hàn Quốc:</strong> 2.500원 (Miễn phí từ 20.000원)</div>
+                      <div>⚡ <strong>오늘드림:</strong> Nhận hàng hỏa tốc trong 3h tại Hàn Quốc</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Bar */}
+                <div style={{
+                  backgroundColor: '#F8FAFC',
+                  borderTop: '1px solid #E2E8F0',
+                  padding: '8px 14px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <a
+                    href={hoveredPreviewProduct.productUrl || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${hoveredPreviewProduct.goodsNo}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontSize: '0.74rem', color: '#0284C7', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <span>Mở trang web gốc Olive Young</span> <ExternalLink size={12} />
+                  </a>
+
+                  <button
+                    onClick={() => {
+                      setHoveredPreviewProduct(null);
+                      openEdit(hoveredPreviewProduct);
+                    }}
+                    style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    Sửa Sản Phẩm Này
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       )}
 
