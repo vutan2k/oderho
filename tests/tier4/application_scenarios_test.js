@@ -18,6 +18,12 @@ import { ORDER_STATUSES, getStatusConfig } from '../../src/data/orderStatuses.js
 import { fetchVietnamProvinces, fetchVietnamSubDivisions } from '../../src/services/vietnamAddressService.js';
 import { scrapeProductMetadata } from '../../src/services/productScraperService.js';
 import { runAIScraperAgent } from '../../src/services/aiScraperAgentEngine.js';
+import {
+  findGuestOrders,
+  calculateStepProgress,
+  getProofBadges,
+  normalizePhone
+} from '../../src/services/guestTrackingService.js';
 
 setTier('Tier 4: Real-World Scenarios');
 
@@ -455,3 +461,170 @@ test('[SCENARIO-8] Complete E2E System Build & Self-Check Automated Verification
   assert(systemCheckResults.ratesValid, 'Exchange rates check passed');
   assert(systemCheckResults.scraperValid, 'Scraper candidate discovery check passed');
 });
+
+// 9. Scenario 9: Real-World Guest Multi-Order Journey & 8-Step Transparent Fulfillment Experience (R1, R2, R3)
+test('[SCENARIO-9] Real-World Guest Multi-Order Journey & 8-Step Transparent Fulfillment Experience (R1, R2, R3)', async () => {
+  const mockStorage = createMockLocalStorage();
+  globalThis.localStorage = mockStorage;
+
+  // Step 1: Customer has placed 3 separate orders on different dates
+  const ordersDatabase = [
+    {
+      id: 'ORD-2026-0801',
+      customerName: 'Trần Thị Mai',
+      customerPhone: '0912 345 678',
+      status: 'completed',
+      createdAt: '2026-08-01T10:00:00Z',
+      povVideoUrl: 'https://cdn.tavy.vn/videos/pov_mai_01.mp4',
+      receiptImageUrl: 'https://cdn.tavy.vn/bills/bill_mai_01.jpg',
+      packingVideoUrl: 'https://cdn.tavy.vn/videos/pack_mai_01.mp4',
+      packageWeightKg: 1.45,
+      flightCode: 'VN415 - ICN/HAN',
+      trackingCode: 'AWB-VN415-8821',
+      domesticCarrier: 'ViettelPost',
+      domesticTrackingCode: 'VT992819283VN',
+      totalVnd: 1450000,
+      paymentStatus: 'paid'
+    },
+    {
+      id: 'ORD-2026-0815',
+      customerName: 'Trần Thị Mai',
+      customerPhone: '+84912345678',
+      status: 'in_transit_air',
+      createdAt: '2026-08-15T14:30:00Z',
+      packageWeightKg: 0.95,
+      flightCode: 'VN415 - ICN/SGN',
+      trackingCode: 'AWB-VN415-9942',
+      totalVnd: 890000,
+      paymentStatus: 'paid'
+    },
+    {
+      id: 'ORD-2026-0826',
+      customerName: 'Trần Thị Mai',
+      customerPhone: '0912345678',
+      status: 'pending',
+      createdAt: '2026-08-26T08:00:00Z',
+      totalVnd: 650000,
+      paymentStatus: 'pending'
+    }
+  ];
+
+  mockStorage.setItem('beauty_orders', JSON.stringify(ordersDatabase));
+
+  // Step 2: Guest user navigates to Home Page and enters phone with "+84" and spaces
+  const rawInput = '+84 912 345 678';
+  const normalizedPhone = normalizePhone(rawInput);
+  assertEquals(normalizedPhone, '0912345678', 'Phone correctly normalized to standard 10-digit format');
+
+  // Step 3: Execute search
+  const retrievedOrders = JSON.parse(mockStorage.getItem('beauty_orders'));
+  const searchResults = findGuestOrders(rawInput, retrievedOrders);
+
+  // Assert multi-order results & sorting (newest Aug 26 first, then Aug 15, then Aug 1)
+  assertEquals(searchResults.length, 3, 'Must return all 3 orders matching phone');
+  assertEquals(searchResults[0].id, 'ORD-2026-0826', 'Index 0 is latest pending order');
+  assertEquals(searchResults[1].id, 'ORD-2026-0815', 'Index 1 is middle in-transit order');
+  assertEquals(searchResults[2].id, 'ORD-2026-0801', 'Index 2 is oldest completed order');
+
+  // Step 4: Inspect Order 0 (Pending Unpaid Order)
+  const activeOrder0 = searchResults[0];
+  const progress0 = calculateStepProgress(activeOrder0);
+  assertEquals(progress0.stepIndex, 0, 'Pending order stepIndex is 0 (Step 1)');
+  assertEquals(progress0.stepNumber, 1);
+  assertEquals(progress0.progressPercent, '12.5%');
+  assertEquals(activeOrder0.totalVnd, 650000);
+
+  // Unpaid Payment CTA check
+  const isUnpaid0 = activeOrder0.status === 'pending' || activeOrder0.paymentStatus === 'pending';
+  assertEquals(isUnpaid0, true, 'Payment CTA must be active for pending order');
+
+  // Step 5: Switch Tab to Order 2 (Completed Order with full proof hub)
+  const activeOrder2 = searchResults[2];
+  const progress2 = calculateStepProgress(activeOrder2);
+  assertEquals(progress2.stepIndex, 7, 'Completed order stepIndex is 7 (Step 8)');
+  assertEquals(progress2.progressPercent, '100%');
+  assertEquals(progress2.isCompleted, true);
+
+  // Transparent Proof Hub verification for Order 2
+  const proofBadges2 = getProofBadges(activeOrder2);
+  assertEquals(proofBadges2.hasProof, true);
+  assertEquals(proofBadges2.povVideoUrl, 'https://cdn.tavy.vn/videos/pov_mai_01.mp4');
+  assertEquals(proofBadges2.receiptImageUrl, 'https://cdn.tavy.vn/bills/bill_mai_01.jpg');
+  assertEquals(proofBadges2.packingVideoUrl, 'https://cdn.tavy.vn/videos/pack_mai_01.mp4');
+  assertEquals(proofBadges2.packageWeightKg, 1.45);
+  assertEquals(proofBadges2.flightCode, 'VN415 - ICN/HAN');
+  assertEquals(proofBadges2.domesticTrackingCode, 'VT992819283VN');
+  assertEquals(proofBadges2.domesticCarrier, 'ViettelPost');
+
+  // Simulate copying domestic tracking code
+  const clipboardPayload = proofBadges2.domesticTrackingCode;
+  assertEquals(clipboardPayload, 'VT992819283VN', 'Domestic tracking code copied correctly');
+
+  // Step 6: Simulate Guest Customer paying deposit for Order 0
+  activeOrder0.status = 'deposit_paid';
+  activeOrder0.paymentStatus = 'paid';
+  activeOrder0.paidAmountVnd = 650000;
+
+  const progress0AfterPayment = calculateStepProgress(activeOrder0);
+  assertEquals(progress0AfterPayment.stepIndex, 1, 'Progression moves to Step 2 (deposit_paid)');
+  assertEquals(progress0AfterPayment.progressPercent, '25%');
+  assertEquals(progress0AfterPayment.statusConfig.shortLabel, 'Đã cọc 100%');
+
+  // Step 7: Dismiss / Close tracking card
+  let hasSearched = true;
+  const handleClose = () => { hasSearched = false; };
+  handleClose();
+  assertEquals(hasSearched, false, 'Tracking card closed cleanly, returning focus to product catalog');
+});
+
+// 10. Scenario 10: Case-Insensitive Order ID Lookup & Media Lightbox Verification (R1, R2)
+test('[SCENARIO-10] Case-Insensitive Order ID Lookup & Media Lightbox Verification (R1, R2)', () => {
+  const orders = [
+    {
+      id: 'ORD-882194',
+      customerName: 'Vũ Đức Thịnh',
+      customerPhone: '0988112233',
+      status: 'purchased',
+      createdAt: '2026-08-25T15:00:00Z',
+      povVideoUrl: 'https://cdn.tavy.vn/videos/pov_oliveyoung_882194.mp4',
+      receiptImageUrl: 'https://cdn.tavy.vn/bills/bill_oliveyoung_882194.jpg',
+      items: [
+        { productId: 'P-TORRIDEN', name: 'Torriden Dive-In Serum 50ml', brand: 'Torriden', price: 420000, qty: 2 }
+      ],
+      totalVnd: 840000
+    }
+  ];
+
+  // 1. Guest types lowercase without prefix: "882194"
+  const foundByNumber = findGuestOrders('882194', orders);
+  assertEquals(foundByNumber.length, 1);
+  assertEquals(foundByNumber[0].id, 'ORD-882194');
+
+  // 2. Guest types "ord-882194"
+  const foundByPrefix = findGuestOrders('ord-882194', orders);
+  assertEquals(foundByPrefix.length, 1);
+  assertEquals(foundByPrefix[0].id, 'ORD-882194');
+
+  const targetOrder = foundByPrefix[0];
+  const stepInfo = calculateStepProgress(targetOrder);
+  assertEquals(stepInfo.stepIndex, 3, 'Purchased status is Step 4 (stepIndex 3)');
+  assertEquals(stepInfo.progressPercent, '50%');
+
+  // 3. User opens Proof Media Modal for POV Video
+  const proof = getProofBadges(targetOrder);
+  let activeModal = {
+    type: 'video',
+    badgeType: 'pov_video',
+    url: proof.povVideoUrl,
+    title: `Video POV Mua Hàng Tại Store — Đơn #${targetOrder.id}`
+  };
+
+  assertEquals(activeModal.type, 'video');
+  assertEquals(activeModal.url, 'https://cdn.tavy.vn/videos/pov_oliveyoung_882194.mp4');
+  assertContains(activeModal.title, 'ORD-882194');
+
+  // 4. Modal closes
+  activeModal = null;
+  assertEquals(activeModal, null, 'Lightbox modal dismissed');
+});
+

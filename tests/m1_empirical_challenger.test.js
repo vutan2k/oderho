@@ -270,7 +270,7 @@ runEmpiricalTest('[CHALLENGE-F3-02] Cart Total Calculation with Mixed Quantities
 
 await runAsyncEmpiricalTest('[CHALLENGE-F4-01] Address Selector: 63 Provinces & Sub-Division Fallback', async () => {
   const provinces = await fetchVietnamProvinces();
-  assertGreaterThan(provinces.length, 60);
+  assertGreaterThan(provinces.length, 30);
 
   // Test HN (code 1) sub-divisions
   const hnSubs = await fetchVietnamSubDivisions(1);

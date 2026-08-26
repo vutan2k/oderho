@@ -159,7 +159,7 @@ const pickRealProductImage = (markdown) => {
  */
 export async function runAIScraperAgent(url) {
   try {
-    if (!url || typeof url !== 'string') {
+    if (!url || typeof url !== 'string' || !url.trim()) {
       return { success: false, error: 'URL không hợp lệ' };
     }
     const cleanUrl = url.trim();

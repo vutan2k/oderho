@@ -1,7 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Search, Menu, X, ShoppingCart, User, LogOut, Package
+  Search, Menu, X, ShoppingCart, User, LogOut, Package, AlertCircle
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import ProductDetailModal from '../components/ProductDetailModal';
@@ -9,13 +9,21 @@ import HeroSection from '../components/HeroSection';
 import ProductGrid from '../components/ProductGrid';
 import Footer from '../components/Footer';
 import { triggerFlyToCart } from '../utils/flyToCart';
+import { GuestOrderTrackingBar, GuestOrderStatusCard } from '../components/GuestOrderTracking';
+import { findGuestOrders } from '../services/guestTrackingService';
 
 export default function KROrderHomePage() {
-  const { oliveYoungCatalog, rates, currentUser, logoutUser, cart, addToCart } = useContext(AppContext);
+  const { oliveYoungCatalog, rates, currentUser, logoutUser, cart, addToCart, orders } = useContext(AppContext);
   const [detailProduct, setDetailProduct] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Guest Order Tracking State
+  const [trackingQuery, setTrackingQuery] = useState('');
+  const [matchedOrders, setMatchedOrders] = useState([]);
+  const [selectedOrderIndex, setSelectedOrderIndex] = useState(0);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const krwRate = rates?.KRW?.rate || 19.5;
   const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
@@ -27,15 +35,63 @@ export default function KROrderHomePage() {
     { id: 'supplements', name: 'Thực phẩm chức năng' }
   ];
 
+  // Dynamic sample suggestions from existing orders or standard fallbacks
+  const sampleSuggestions = useMemo(() => {
+    const list = [];
+    if (Array.isArray(orders) && orders.length > 0) {
+      const firstOrder = orders[0];
+      if (firstOrder?.id) {
+        list.push({ label: `Thử mã: ${firstOrder.id}`, value: firstOrder.id });
+      }
+      const phone = firstOrder?.customerPhone || firstOrder?.phone;
+      if (phone) {
+        list.push({ label: `Thử SĐT: ${phone}`, value: phone });
+      }
+    }
+    if (list.length === 0) {
+      list.push(
+        { label: 'Thử mã: ORD-100001', value: 'ORD-100001' },
+        { label: 'Thử SĐT: 0912345678', value: '0912345678' }
+      );
+    }
+    return list;
+  }, [orders]);
+
+  // Handle Guest Tracking Search
+  const handleTrackingSearch = (query) => {
+    const term = String(query || '').trim();
+    if (!term) return;
+
+    setIsSearching(true);
+    const results = findGuestOrders(term, orders || []);
+    setTrackingQuery(term);
+    setMatchedOrders(results);
+    setSelectedOrderIndex(0);
+    setHasSearched(true);
+    setIsSearching(false);
+
+    // Smooth scroll to tracking section on mobile
+    const trackerElem = document.getElementById('order-tracker');
+    if (trackerElem) {
+      trackerElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  // Handle Clear / Reset Tracking
+  const handleTrackingClear = () => {
+    setTrackingQuery('');
+    setMatchedOrders([]);
+    setSelectedOrderIndex(0);
+    setHasSearched(false);
+  };
+
+  // Close Tracking Status Card / Banner
+  const handleCloseTracking = () => {
+    setHasSearched(false);
+  };
+
   const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
     if (product.isPublished === false || product.status === 'pending' || product.isHidden === true) return false;
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.trim().toLowerCase();
-      const matchName = (product.name || '').toLowerCase().includes(query);
-      const matchBrand = (product.brand || '').toLowerCase().includes(query);
-      if (!matchName && !matchBrand) return false;
-    }
 
     if (activeCategory === 'all') return true;
     const cat = (product.category || '').toLowerCase();
@@ -103,7 +159,7 @@ export default function KROrderHomePage() {
             </nav>
 
             <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
-              <a href="#products" className="icon-btn" aria-label="Tìm kiếm" title="Tìm kiếm" style={{ color: 'var(--text-dark)' }}>
+              <a href="#order-tracker" className="icon-btn" aria-label="Tra cứu đơn hàng" title="Tra cứu tiến độ đơn hàng" style={{ color: 'var(--text-dark)' }}>
                 <Search size={26} />
               </a>
 
@@ -183,51 +239,92 @@ export default function KROrderHomePage() {
         {/* Banner Tối Giản */}
         <HeroSection />
 
-        {/* Khu vực Tìm kiếm & Danh mục & Danh sách sản phẩm tập trung */}
-        <section id="products" style={{ padding: '40px 0 60px 0', background: 'var(--bg-ivory)' }}>
+        {/* Khu vực Tra Cứu Đơn Hàng & Danh mục & Danh sách sản phẩm */}
+        <section id="order-tracker" style={{ padding: '36px 0 60px 0', background: 'var(--bg-ivory)' }}>
           <div className="container">
-            {/* Search Input Bar */}
-            <div style={{ maxWidth: '580px', margin: '0 auto 24px auto', position: 'relative' }}>
-              <input
-                id="search-input-main"
-                type="text"
-                placeholder="Tìm kiếm mỹ phẩm, sâm nấm, thương hiệu..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '13px 44px 13px 44px',
-                  borderRadius: '30px',
-                  border: '1px solid var(--border-color)',
-                  fontSize: '0.92rem',
-                  outline: 'none',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-                  backgroundColor: '#FFFFFF',
-                  color: 'var(--text-dark)'
-                }}
+
+            {/* Prominent Guest Order Tracking Bar (R1) */}
+            <GuestOrderTrackingBar
+              onSearch={handleTrackingSearch}
+              onClear={handleTrackingClear}
+              initialValue={trackingQuery}
+              isLoading={isSearching}
+              sampleSuggestions={sampleSuggestions}
+            />
+
+            {/* Matched Order Status Card (R2, R3) */}
+            {hasSearched && matchedOrders.length > 0 && (
+              <GuestOrderStatusCard
+                order={matchedOrders[selectedOrderIndex]}
+                matchedOrders={matchedOrders}
+                selectedOrderIndex={selectedOrderIndex}
+                onSelectOrder={setSelectedOrderIndex}
+                onClose={handleCloseTracking}
+                rates={rates}
               />
-              <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Xóa tìm kiếm"
-                  style={{
-                    position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: 0
-                  }}
-                >
-                  <X size={18} />
-                </button>
-              )}
-            </div>
+            )}
+
+            {/* Friendly Not-Found Banner */}
+            {hasSearched && matchedOrders.length === 0 && (
+              <div
+                style={{
+                  maxWidth: '720px',
+                  margin: '0 auto 28px auto',
+                  padding: '20px 24px',
+                  borderRadius: '16px',
+                  backgroundColor: '#FEF2F2',
+                  border: '1px solid #FCA5A5',
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.08)',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '14px',
+                  animation: 'fadeIn 0.2s ease'
+                }}
+              >
+                <AlertCircle size={24} style={{ color: '#DC2626', flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <h4 style={{ fontSize: '0.96rem', fontWeight: 700, color: '#991B1B', margin: 0 }}>
+                      Không tìm thấy đơn hàng nào
+                    </h4>
+                    <button
+                      onClick={handleCloseTracking}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991B1B', padding: '2px' }}
+                      aria-label="Đóng thông báo"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '0.85rem', color: '#7F1D1D', margin: '6px 0 10px 0', lineHeight: 1.4 }}>
+                    Không tìm thấy đơn hàng nào khớp với thông tin "<strong>{trackingQuery}</strong>". Quý khách vui lòng kiểm tra lại Số điện thoại (VD: 0912345678) hoặc Mã đơn hàng (VD: ORD-100001).
+                  </p>
+                  <div style={{ fontSize: '0.82rem', color: '#991B1B', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span>Cần hỗ trợ tra cứu nhanh?</span>
+                    <a
+                      href="https://zalo.me/0935861690"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#991B1B',
+                        fontWeight: 700,
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Chat Zalo CSKH: 0935 861 690
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Filter Tabs (Cuộn ngang mượt mà trên Mobile) */}
-            <div style={{
+            <div id="products" style={{
               display: 'flex',
               justifyContent: 'center',
               gap: '10px',
               overflowX: 'auto',
               paddingBottom: '12px',
+              marginTop: '12px',
               marginBottom: '28px',
               WebkitOverflowScrolling: 'touch'
             }}>

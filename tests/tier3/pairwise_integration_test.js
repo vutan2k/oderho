@@ -18,6 +18,7 @@ import { ORDER_STATUSES, getStatusConfig } from '../../src/data/orderStatuses.js
 import { ALL_63_VIETNAM_PROVINCES, fetchVietnamProvinces, fetchVietnamSubDivisions } from '../../src/services/vietnamAddressService.js';
 import { scrapeProductMetadata } from '../../src/services/productScraperService.js';
 import { runAIScraperAgent } from '../../src/services/aiScraperAgentEngine.js';
+import { findGuestOrders } from '../../src/services/guestTrackingService.js';
 
 setTier('Tier 3: Pairwise Integration');
 
@@ -483,3 +484,129 @@ test('[T15-PAIR-15] F1+F10: Catalog search -> Scraper catalog update integration
   const found = searchResults.find(p => p.goodsNo === newScrapedProduct.goodsNo || p.brand === 'Layerlab');
   assert(found !== undefined, 'Scraped Layerlab product must exist in search results');
 });
+
+// 16. F1+F6: Guest Tracking Bar search on Home Page ↔ Product Catalog display and Category Tabs
+test('[T16-PAIR-16] F1+F6: Guest Tracking Bar search on Home Page ↔ Product Catalog display & Category Tabs', () => {
+  const mockOrders = [
+    { id: 'ORD-HOME-01', customerPhone: '0912345678', status: 'purchased', createdAt: '2026-08-25T10:00:00Z' }
+  ];
+
+  // 1. Initial home page state: catalog filtered by category 'cosmetics'
+  let activeCategory = 'cosmetics';
+  const filterCatalog = (cat) => OLIVE_YOUNG_CATALOG.filter((p) => {
+    if (p.isPublished === false) return false;
+    if (cat === 'all') return true;
+    const pCat = (p.category || '').toLowerCase();
+    if (pCat === cat) return true;
+    if (cat === 'cosmetics') return pCat.includes('mỹ phẩm') || pCat.includes('skin') || pCat.includes('dưỡng') || pCat.includes('make') || pCat.includes('trang');
+    return false;
+  });
+
+  const initialCosmetics = filterCatalog(activeCategory);
+  assertGreaterThan(initialCosmetics.length, 0, 'Should have cosmetics products');
+
+  // 2. User searches for order via GuestOrderTrackingBar
+  const query = '0912 345 678';
+  const matchedOrders = findGuestOrders(query, mockOrders);
+  assertEquals(matchedOrders.length, 1, 'Search finds 1 order');
+  assertEquals(matchedOrders[0].id, 'ORD-HOME-01');
+
+  // 3. User switches category to 'all' while order card is displayed
+  activeCategory = 'all';
+  const allProducts = filterCatalog(activeCategory);
+  assertGreaterThan(allProducts.length, initialCosmetics.length, 'All products count must exceed cosmetics category alone');
+
+  // 4. Order tracking state remains intact during catalog interaction
+  assertEquals(matchedOrders[0].status, 'purchased', 'Tracking state remains unchanged across category switching');
+});
+
+// 17. F6+F3: Unpaid Order Status Card Payment CTA ↔ Payment Navigation Route binding
+test('[T17-PAIR-17] F6+F3: Unpaid Order Status Card Payment CTA ↔ Payment Navigation Route binding', () => {
+  const order = {
+    id: 'ORD-PAY-8819',
+    customerName: 'Trịnh Quốc Bảo',
+    status: 'pending',
+    paymentStatus: 'pending',
+    totalVnd: 620000
+  };
+
+  // Status card CTA evaluation logic
+  const isUnpaid = (
+    order.status === 'pending' ||
+    order.paymentStatus === 'pending' ||
+    !order.paymentStatus ||
+    order.paymentStatus === 'unpaid'
+  );
+  assertEquals(isUnpaid, true, 'Pending order must evaluate to unpaid');
+
+  const paymentRoute = `/payment/${order.id}`;
+  assertEquals(paymentRoute, '/payment/ORD-PAY-8819', 'Payment navigation route must match target order ID');
+
+  // Simulate payment completion
+  order.status = 'deposit_paid';
+  order.paymentStatus = 'paid';
+
+  const isUnpaidAfter = (
+    order.status === 'pending' ||
+    order.paymentStatus === 'pending' ||
+    !order.paymentStatus ||
+    order.paymentStatus === 'unpaid'
+  );
+  assertEquals(isUnpaidAfter, false, 'Paid order must not show payment CTA');
+});
+
+// 18. F6+F5: Guest Order Phone Lookup ↔ AppContext Authenticated User Profile & Orders Integration
+test('[T18-PAIR-18] F6+F5: Guest Order Phone Lookup ↔ Authenticated User Profile & Orders Integration', () => {
+  const mockStorage = createMockLocalStorage();
+  globalThis.localStorage = mockStorage;
+
+  const authenticatedUser = {
+    email: 'lan@gmail.com',
+    phone: '0912345678',
+    name: 'Nguyễn Thị Lan'
+  };
+  mockStorage.setItem('beauty_current_user', JSON.stringify(authenticatedUser));
+
+  const userOrders = [
+    { id: 'ORD-USER-01', userEmail: 'lan@gmail.com', customerPhone: '0912345678', status: 'completed', createdAt: '2026-08-20T00:00:00Z' },
+    { id: 'ORD-USER-02', userEmail: 'lan@gmail.com', customerPhone: '0912345678', status: 'deposit_paid', createdAt: '2026-08-26T00:00:00Z' }
+  ];
+  mockStorage.setItem('beauty_orders', JSON.stringify(userOrders));
+
+  // Guest lookup with different phone formatting (+84 912-345-678)
+  const storedOrders = JSON.parse(mockStorage.getItem('beauty_orders'));
+  const guestFound = findGuestOrders('+84 912-345-678', storedOrders);
+
+  assertEquals(guestFound.length, 2, 'Guest phone lookup finds all orders belonging to user');
+  assertEquals(guestFound[0].id, 'ORD-USER-02', 'Latest order first');
+  assertEquals(guestFound[0].userEmail, authenticatedUser.email, 'Order userEmail matches authenticated profile');
+});
+
+// 19. F6+F7: Guest Order Item Summary ↔ Dynamic Exchange Rate & Service Fee Recalculation
+test('[T19-PAIR-19] F6+F7: Guest Order Item Summary ↔ Dynamic Exchange Rate & Service Fee Recalculation', () => {
+  const order = {
+    id: 'ORD-RATE-TEST',
+    status: 'pending',
+    items: [
+      { productId: 'P-KOR-01', name: 'Serum Torriden', foreignPrice: 20000, qty: 2 }
+    ]
+  };
+
+  const calculateTotal = (ord, krwRate, serviceFeePercent) => {
+    const serviceFeeMultiplier = 1 + serviceFeePercent / 100;
+    return ord.items.reduce((sum, item) => {
+      const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate * serviceFeeMultiplier);
+      return sum + itemPrice * (item.qty || 1);
+    }, 0);
+  };
+
+  // Initial rates: KRW 19.5, service fee 5% -> 20000 * 19.5 * 1.05 = 409,500 * 2 = 819,000
+  const total1 = calculateTotal(order, 19.5, 5);
+  assertEquals(total1, 819000, 'Total with 19.5 KRW rate and 5% service fee');
+
+  // Admin updates rates: KRW 20.0, service fee 8% -> 20000 * 20.0 * 1.08 = 432,000 * 2 = 864,000
+  const total2 = calculateTotal(order, 20.0, 8);
+  assertEquals(total2, 864000, 'Total with 20.0 KRW rate and 8% service fee');
+  assertGreaterThan(total2, total1, 'Recalculated total increases with higher rate and fee');
+});
+
