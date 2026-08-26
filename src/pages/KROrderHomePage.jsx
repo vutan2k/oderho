@@ -374,33 +374,12 @@ export default function KROrderHomePage() {
             )}
 
             {/* Filter Tabs (Cuộn ngang mượt mà trên Mobile) */}
-            <div id="products" style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '10px',
-              overflowX: 'auto',
-              paddingBottom: '12px',
-              marginTop: '12px',
-              marginBottom: '28px',
-              WebkitOverflowScrolling: 'touch'
-            }}>
+            <div id="products" className="category-filter-ribbon">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
-                  style={{
-                    padding: '8px 20px',
-                    borderRadius: '30px',
-                    border: activeCategory === cat.id ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
-                    backgroundColor: activeCategory === cat.id ? 'var(--purple-primary)' : '#FFF',
-                    color: activeCategory === cat.id ? '#FFF' : 'var(--text-dark)',
-                    fontWeight: activeCategory === cat.id ? 700 : 500,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0
-                  }}
+                  className={`category-filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
                 >
                   {cat.name}
                 </button>
@@ -416,20 +395,8 @@ export default function KROrderHomePage() {
             />
 
             {/* Banner Tối Giản Mua Hộ Ngoài Web */}
-            <div style={{
-              marginTop: '36px',
-              padding: '14px 22px',
-              borderRadius: '14px',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid var(--border-color)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-            }}>
-              <div style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-dark)' }}>
+            <div className="consult-banner-wrap">
+              <div className="consult-banner-text">
                 Cần tìm mua sản phẩm khác từ Hàn Quốc?
               </div>
 
@@ -437,21 +404,7 @@ export default function KROrderHomePage() {
                 href="https://m.me/100062954372060"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'var(--purple-primary)',
-                  color: '#FFFFFF',
-                  padding: '8px 20px',
-                  borderRadius: '24px',
-                  fontWeight: 700,
-                  fontSize: '0.84rem',
-                  textDecoration: 'none',
-                  boxShadow: '0 2px 6px rgba(122, 75, 158, 0.25)',
-                  transition: 'all 0.2s ease',
-                  flexShrink: 0
-                }}
+                className="consult-banner-btn"
               >
                 Nhận tư vấn
               </a>

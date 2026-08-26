@@ -56,94 +56,43 @@ export default function HeroSection() {
   };
 
   return (
-    <section style={{
-      background: 'linear-gradient(135deg, #FAF8F5 0%, #F3EFF6 100%)',
-      padding: '48px 0 36px 0',
-      borderBottom: '1px solid var(--border-color)',
-      position: 'relative'
-    }}>
+    <section className="hero-banner-section">
       <div className="container">
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '24px'
-        }}>
+        <div className="hero-banner-wrap">
           {/* Headline & CTA */}
-          <div style={{ flex: '1 1 440px', minWidth: '280px' }}>
-            <span style={{
-              fontSize: '0.78rem',
-              fontWeight: 800,
-              letterSpacing: '2px',
-              color: 'var(--purple-primary)',
-              textTransform: 'uppercase',
-              display: 'block',
-              marginBottom: '10px'
-            }}>
+          <div className="hero-banner-content">
+            <span className="hero-banner-tag">
               MUA HÀNG HÀN QUỐC TRỰC TIẾP TỪ STORE
             </span>
 
-            <h1 style={{
-              fontSize: '2.4rem',
-              lineHeight: '1.25',
-              fontWeight: 700,
-              color: 'var(--text-dark)',
-              marginBottom: '12px',
-              fontFamily: 'var(--font-serif)'
-            }}>
+            <h1 className="hero-banner-title">
               Mỹ Phẩm & Sâm Nấm <br />
               <span className="font-serif-italic" style={{ color: 'var(--purple-primary)', fontWeight: 600 }}>Nội Địa Hàn Chính Hãng</span>
             </h1>
 
-            <p style={{
-              fontSize: '0.92rem',
-              color: 'var(--text-muted)',
-              maxWidth: '520px',
-              marginBottom: '20px',
-              lineHeight: '1.6'
-            }}>
+            <p className="hero-banner-desc">
               Phân phối và mua hộ trực tiếp từ Olive Young, hiệu thuốc và các cửa hàng uy tín tại Seoul. Giao tận tay tại Việt Nam.
             </p>
 
             <a
               href="#products"
-              className="btn-gold"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '11px 22px',
-                borderRadius: '30px',
-                textDecoration: 'none',
-                fontSize: '0.88rem',
-                fontWeight: 700
-              }}
+              className="btn-gold hero-banner-btn"
             >
               <span>Xem tất cả sản phẩm</span>
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
             </a>
           </div>
 
-          {/* Interactive Visual Banner Slider (Mở rộng thêm 20%) */}
+          {/* Interactive Visual Banner Slider */}
           <div 
-            style={{ flex: '1 1 420px', maxWidth: '530px', minWidth: '280px', position: 'relative' }}
+            className="hero-banner-slider-col"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
             <div 
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
-              style={{
-                width: '100%',
-                height: '315px',
-                borderRadius: '22px',
-                overflow: 'hidden',
-                position: 'relative',
-                boxShadow: '0 12px 36px rgba(122, 75, 158, 0.16)',
-                border: '4px solid #FFFFFF',
-                backgroundColor: '#F3F4F6'
-              }}
+              className="hero-slider-wrap"
             >
               {BANNER_IMAGES.map((img, idx) => (
                 <div
@@ -169,13 +118,13 @@ export default function HeroSection() {
               {/* Dãy chấm nhỏ hiển thị tổng số ảnh & ảnh đang chọn */}
               <div style={{
                 position: 'absolute',
-                bottom: '14px',
+                bottom: '10px',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '5px 12px',
+                gap: '5px',
+                padding: '4px 10px',
                 borderRadius: '20px',
                 backgroundColor: 'rgba(0, 0, 0, 0.38)',
                 backdropFilter: 'blur(4px)',
@@ -187,9 +136,9 @@ export default function HeroSection() {
                     onClick={() => setCurrentIndex(idx)}
                     aria-label={`Chuyển đến ảnh ${idx + 1}`}
                     style={{
-                      width: idx === currentIndex ? '20px' : '6px',
-                      height: '6px',
-                      borderRadius: '4px',
+                      width: idx === currentIndex ? '16px' : '5px',
+                      height: '5px',
+                      borderRadius: '3px',
                       backgroundColor: idx === currentIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
                       border: 'none',
                       padding: 0,
@@ -206,4 +155,3 @@ export default function HeroSection() {
     </section>
   );
 }
-
