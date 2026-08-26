@@ -1549,8 +1549,9 @@ export default function AdminProductManager() {
                         <img
                           src={prod.productImage || (prod.images && prod.images[0]) || ''}
                           alt=""
-                          onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}
-                          style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)', flexShrink: 0 }}
+                          onClick={() => openEditPending(prod)}
+                          style={{ width: '84px', height: '84px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)', flexShrink: 0, cursor: 'pointer' }}
+                          title="Bấm để sửa sản phẩm"
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 700, fontSize: '0.84rem', lineHeight: '1.3' }}>{prod.name}</div>
@@ -1645,8 +1646,19 @@ export default function AdminProductManager() {
                               <img
                                 src={prod.productImage || (prod.images && prod.images[0]) || ''}
                                 alt=""
-                                onClick={() => setZoomImage(prod.productImage || (prod.images && prod.images[0]))}
-                                style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                                onClick={() => openEditPending(prod)}
+                                style={{
+                                  width: '60px',
+                                  height: '60px',
+                                  objectFit: 'cover',
+                                  borderRadius: '8px',
+                                  border: '1px solid var(--border-color)',
+                                  cursor: 'pointer',
+                                  display: 'block',
+                                  margin: '0 auto',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                                }}
+                                title="Bấm vào ảnh để sửa sản phẩm"
                               />
                             </td>
 

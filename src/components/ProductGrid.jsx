@@ -22,14 +22,7 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
 
   return (
     <div>
-      <div 
-        className="product-grid-container"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-          gap: '20px'
-        }}
-      >
+      <div className="product-grid-container">
         {currentProducts.map((product, pIdx) => {
           const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
           const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80';
