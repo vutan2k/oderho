@@ -9,8 +9,9 @@ import LoadingSpinner from './components/LoadingSpinner';
 import Navbar from './components/Navbar';
 import ChatWidget from './components/ChatWidget/ChatWidget';
 
+import KROrderHomePage from './pages/KROrderHomePage';
+
 // Lazy load pages for code-splitting
-const KROrderHomePage = lazy(() => import('./pages/KROrderHomePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));

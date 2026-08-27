@@ -35,9 +35,29 @@ export default class ErrorBoundary extends React.Component {
             }}>
               Đã xảy ra lỗi
             </h1>
-            <p style={{ color: '#666', fontSize: '1rem', marginBottom: '24px', lineHeight: '1.6' }}>
-              Trang web gặp sự cố không mong muốn. Vui lòng thử tải lại trang.
+            <p style={{ color: '#666', fontSize: '1rem', marginBottom: '16px', lineHeight: '1.6' }}>
+              Trang web gặp sự cố không mong muốn. Vui lòng thử tải lại trang hoặc làm mới dữ liệu.
             </p>
+
+            {this.state.error && (
+              <div style={{
+                margin: '0 auto 24px auto',
+                padding: '12px 16px',
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FCA5A5',
+                borderRadius: '8px',
+                textAlign: 'left',
+                fontSize: '0.78rem',
+                color: '#B91C1C',
+                fontFamily: 'monospace',
+                maxHeight: '120px',
+                overflowY: 'auto',
+                wordBreak: 'break-word'
+              }}>
+                <strong>Chi tiết lỗi:</strong> {this.state.error.message || String(this.state.error)}
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => window.location.reload()}
@@ -58,10 +78,8 @@ export default class ErrorBoundary extends React.Component {
               <button
                 onClick={() => {
                   try {
-                    localStorage.removeItem('tavy_custom_products');
-                    localStorage.removeItem('tavy_published_products');
-                    localStorage.removeItem('tavy_pending_products');
-                    localStorage.removeItem('beauty_orders');
+                    localStorage.clear();
+                    sessionStorage.clear();
                   } catch {}
                   window.location.href = '/';
                 }}
