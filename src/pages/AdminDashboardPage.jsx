@@ -4,6 +4,7 @@ import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import AdminProductManager from '../components/AdminProductManager';
 import AdminOrderManager from '../components/AdminOrderManager';
+import AdminAiCopilotWidget from '../components/AdminAiCopilotWidget';
 import { APP_VERSION } from '../data/appVersion';
 import { getOrderTotalVnd } from '../utils/priceCalculator';
 import {
@@ -1084,6 +1085,9 @@ export default function AdminDashboardPage() {
           }
         }
       `}</style>
+
+      {/* 🤖 Embedded AI Admin Copilot Assistant */}
+      <AdminAiCopilotWidget />
 
     </div>
   );
