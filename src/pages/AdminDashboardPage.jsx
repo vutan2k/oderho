@@ -2,14 +2,16 @@ import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
-import AdminProductManager from '../components/AdminProductManager';
+import AdminProductCatalog from '../components/AdminProductCatalog';
+import AdminProductSourcing from '../components/AdminProductSourcing';
 import AdminOrderManager from '../components/AdminOrderManager';
-import AdminAiCopilotWidget from '../components/AdminAiCopilotWidget';
 import { APP_VERSION } from '../data/appVersion';
 import { getOrderTotalVnd } from '../utils/priceCalculator';
 import {
   BarChart3,
   ShoppingBag,
+  Zap,
+  Layers,
   LogOut,
   RefreshCw,
   TrendingUp,
@@ -19,10 +21,10 @@ import {
   Menu,
   X,
   Clock,
-  Sparkles,
   Sliders,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Inbox
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -32,7 +34,8 @@ export default function AdminDashboardPage() {
     orders,
     rates,
     updateRates,
-    products
+    products,
+    pendingProducts
   } = useContext(AppContext);
   const navigate = useNavigate();
   const showToast = useToast();
@@ -210,10 +213,17 @@ export default function AdminDashboardPage() {
             },
             {
               id: 'products',
-              label: 'Sản Phẩm & Nạp Hàng',
+              label: 'Kho Sản Phẩm',
               icon: ShoppingBag,
               badge: `${products.length}`,
               badgeColor: '#10B981'
+            },
+            {
+              id: 'sourcing',
+              label: 'Kho Nạp Hàng',
+              icon: Zap,
+              badge: pendingProducts?.length > 0 ? `${pendingProducts.length} chờ duyệt` : null,
+              badgeColor: '#F59E0B'
             },
             {
               id: 'settings',
@@ -409,6 +419,31 @@ export default function AdminDashboardPage() {
                   Sâm Nấm, Mỹ phẩm, TPCN
                 </div>
               </div>
+
+              {/* Card 5: Hàng Chờ Duyệt */}
+              <div
+                onClick={() => setActiveTab('sourcing')}
+                style={{
+                  backgroundColor: '#FFF',
+                  borderRadius: '12px',
+                  padding: '18px',
+                  border: (pendingProducts?.length || 0) > 0 ? '2px solid #F59E0B' : '1px solid #E2E8F0',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#D97706', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>HÀNG CHỜ DUYỆT</span>
+                  <Zap size={16} color="#D97706" />
+                </div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#D97706', marginTop: '6px' }}>
+                  {pendingProducts?.length || 0} Sản Phẩm
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                  <span>Bấm để duyệt lên web</span>
+                  <ChevronRight size={12} />
+                </div>
+              </div>
             </div>
 
             {/* Bảng Danh Sách Việc Cần Làm Hôm Nay (Urgent Action Queue) */}
@@ -560,19 +595,28 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ════════════════════════════════════════════════════════════════ */}
-        {/* TAB 3: SẢN PHẨM & NẠP HÀNG (PRODUCTS & SOURCING)                */}
+        {/* TAB 3: KHO SẢN PHẨM ĐANG BÁN (LIVE PRODUCT CATALOG)             */}
         {/* ════════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <AdminProductCatalog />
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* TAB 4: KHO NẠP HÀNG & HÀNG CHỜ DUYỆT (SOURCING & PENDING)       */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'sourcing' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <h1 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0 }}>
-                🏷️ Quản Lý Kho Hàng & Trung Tâm Nạp Hàng Hàn Quốc
+                📥 Kho Nạp Hàng & Kiểm Duyệt Sản Phẩm Mới
               </h1>
               <p style={{ margin: '4px 0 0 0', color: '#64748B', fontSize: '0.85rem' }}>
-                Quản lý kho hàng đang bán và cào sản phẩm tự động từ Naver Brand Store, KGC, Nonghyup, Olive Young.
+                Tiếp nhận sản phẩm cào từ Naver, KGC, Nonghyup, Olive Young & Extension. Kiểm duyệt chất lượng và giá trước khi xuất bản lên website.
               </p>
             </div>
-            <AdminProductManager />
+            <AdminProductSourcing />
           </div>
         )}
 
@@ -648,9 +692,6 @@ export default function AdminDashboardPage() {
             </form>
           </div>
         )}
-
-        {/* 🤖 Embedded AI Admin Copilot Assistant */}
-        <AdminAiCopilotWidget />
       </main>
 
       <style>{`
