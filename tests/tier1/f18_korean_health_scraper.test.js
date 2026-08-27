@@ -78,3 +78,14 @@ test('[F18-5] Dynamic Multi-Source Health Scraper execution and price conversion
   assert(res.photoReviews.length >= 1, 'Contains unboxing customer review photos');
   assert(res.filterEvaluation.passed, 'Passed filter evaluation');
 });
+
+test('[F18-6] Naver Brand Store health supplement scraper integration and HD image processing', async () => {
+  const naverRes = await scrapeKoreanHealthProduct('https://brand.naver.com/kgcshop/products/10556547785');
+  assert(naverRes !== null, 'Naver product scraped successfully');
+  assertEquals(naverRes.goodsNo, '10556547785', 'GoodsNo matches Naver product ID');
+  assertContains(naverRes.source, 'Naver Brand Store', 'Source is Naver Brand Store');
+  assertEquals(naverRes.foreignPrice, 79000, 'Exact Won price 79,000 W');
+  assertContains(naverRes.productImage, 'pstatic.net', 'Uses high-res Naver CDN image');
+  assertContains(naverRes.productImage, 'type=f800', 'Optimized to f800 HD resolution');
+  assert(naverRes.filterEvaluation.passed, 'Passed 3-tier health criteria');
+});

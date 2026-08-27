@@ -43,7 +43,8 @@ async function main() {
   const targetUrl = getArgVal('url');
   const targetBrand = getArgVal('brand');
   const targetCat = getArgVal('category');
-  const isAll = hasFlag('all') || (!targetUrl && !targetBrand && !targetCat);
+  const targetSource = getArgVal('source');
+  const isAll = hasFlag('all') || (!targetUrl && !targetBrand && !targetCat && !targetSource);
 
   let results = [];
 
@@ -53,6 +54,11 @@ async function main() {
     results.push(item);
   } else {
     let sourcePool = [...VERIFIED_KOREAN_HEALTH_CATALOG];
+
+    if (targetSource) {
+      sourcePool = sourcePool.filter(p => p.source.toLowerCase().includes(targetSource.toLowerCase()) || (p.originalUrl && p.originalUrl.includes(targetSource.toLowerCase())));
+      console.log(`📌 Lọc theo Nguồn Nền Tảng: "${targetSource}" (Tìm thấy ${sourcePool.length} sản phẩm)`);
+    }
 
     if (targetBrand) {
       sourcePool = sourcePool.filter(p => p.brand.toLowerCase().includes(targetBrand.toLowerCase()));

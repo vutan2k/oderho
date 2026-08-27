@@ -529,6 +529,8 @@ function AdminProductManager() {
       pool = pool.filter(p => p.category === 'supplements');
     } else if (type === 'kgc') {
       pool = pool.filter(p => p.brand.includes('KGC') || p.brand.includes('CheongKwanJang'));
+    } else if (type === 'naver') {
+      pool = pool.filter(p => p.source.includes('Naver') || (p.originalUrl && p.originalUrl.includes('naver.com')));
     }
 
     let count = 0;
@@ -1965,6 +1967,24 @@ function AdminProductManager() {
 
             {/* Quick Batch Actions */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              <button
+                onClick={() => handleBatchImportHealth('naver')}
+                style={{
+                  backgroundColor: '#03C75A',
+                  color: '#FFF',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <span>🟢</span> Naver Brand Store
+              </button>
               <button
                 onClick={() => handleBatchImportHealth('kgc')}
                 style={{

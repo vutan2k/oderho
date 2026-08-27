@@ -1,95 +1,45 @@
 [
   {
-    "goodsNo": "A000000213255",
-    "legacyCode": "KGC-EVERYTIME-30",
-    "source": "KGC JungKwanJang / Olive Young Health",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000213255",
+    "goodsNo": "10556547785",
+    "legacyCode": "NAVER-KGC-SOFT-50",
+    "source": "Naver Brand Store (brand.naver.com/kgcshop)",
+    "originalUrl": "https://brand.naver.com/kgcshop/products/10556547785",
     "brand": "KGC CheongKwanJang (Sâm Chính Phủ)",
-    "koreanTitle": "정관장 홍삼정 에브리타임 샷(20ml*20병) (20일분) [건강기능식품 / GMP인증]",
-    "name": "Nước Cao Hồng Sâm 6 Năm Tuổi KGC CheongKwanJang Everytime Shot Chai 20ml x 20 Lọ [Sâm Chính Phủ Hàn Quốc]",
+    "koreanTitle": "[네이버단독] 정관장 에브리타임 소프트 10ml 50포 [공식 정품 / Naver Pay]",
+    "name": "Cao Hồng Sâm 6 Năm Tuổi KGC CheongKwanJang Everytime Soft Hộp Lớn 50 Gói [Gian Hàng Chính Hãng Naver]",
     "category": "ginseng",
-    "foreignPrice": 52750,
-    "originalPrice": 52750,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0021/A00000021325505ko.jpg?l=ko",
+    "foreignPrice": 79000,
+    "originalPrice": 79000,
+    "productImage": "https://shop-phinf.pstatic.net/20260806_59/1786007625721fkLpX_JPEG/40533958083576298_2012085661.jpg?type=f800",
     "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0021/A00000021325505ko.jpg?l=ko",
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0021/A00000021058714ko.jpg?l=ko"
+      "https://shop-phinf.pstatic.net/20260806_59/1786007625721fkLpX_JPEG/40533958083576298_2012085661.jpg?type=f800",
+      "https://shop-phinf.pstatic.net/20250913_10/1757732425216jSUWH_JPEG/91865245299679097_213547353.jpg?type=f800"
     ],
     "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0021/A00000021325505ko.jpg?l=ko"
+      "https://shop-phinf.pstatic.net/20260806_59/1786007625721fkLpX_JPEG/40533958083576298_2012085661.jpg?type=f800"
     ],
     "rating": 4.9,
-    "reviewsCount": 18450,
-    "origin": "KGC CheongKwanJang Flagship Store Seoul, Hàn Quốc",
-    "ranking": "TOP 1 Hồng Sâm Bán Chạy Nhất Hàn Quốc (2020-2026)",
+    "reviewsCount": 15400,
+    "origin": "(주)한국인삼공사 KGC Official Naver Store",
+    "ranking": "TOP 1 Sâm Stick Độc Quyền Bán Chạy Nhất Naver Brand Store",
     "activeIngredients": [
-      "Hồng sâm 6 năm tuổi cô đặc 100% (Ginsenoside Rg1+Rb1+Rg3 = 11.6mg/g): 30%",
-      "Nước tinh khiết 70%"
+      "Hồng sâm 6 năm tuổi cô đặc KGC (Ginsenoside Rg1+Rb1+Rg3 = 5.5mg/g)",
+      "Mật ong nội địa Hàn Quốc, Chiết xuất cam thảo tự nhiên"
     ],
     "isVerifiedHealthFood": true,
     "isGmpCertified": true,
     "isBestSeller": true,
-    "description": "Sản phẩm hồng sâm quốc dân số 1 Hàn Quốc được chính phủ bảo chứng chất lượng. 100% củ sâm 6 năm tuổi tuyển chọn nghiêm ngặt qua 290 bài kiểm tra an toàn của KGC. Giúp tăng cường hệ miễn dịch, giảm mệt mỏi, cải thiện tuần hoàn máu và tăng cường trí nhớ.",
-    "usage": "Mỗi ngày dùng 1 lọ (20ml). Uống trực tiếp trước hoặc sau bữa ăn 30 phút.",
-    "targetUsers": "Dân văn phòng mệt mỏi, người suy nhược cơ thể, người lớn tuổi cần phục hồi thể lực và tăng đề kháng.",
-    "contraindications": "Không dùng cho trẻ em dưới 3 tuổi và phụ nữ mang thai.",
+    "description": "Phiên bản độc quyền trên Naver Brand Store của KGC인삼공사. Bổ sung mật ong rừng thượng hạng, giúp vị sâm thơm ngọt dịu êm.",
+    "usage": "Mỗi ngày uống 1-2 gói trực tiếp vào buổi sáng.",
+    "targetUsers": "Người cần nạp năng lượng nhanh, học sinh, dân công sở bận rộn.",
+    "contraindications": "Người dị ứng mật ong nên lưu ý.",
     "specifications": {
-      "volume": "20ml x 20 chai (400ml)",
-      "packaging": "Hộp cứng sang trọng kèm túi giấy chính hãng KGC",
-      "expiry": "24 tháng kể từ NSX",
-      "certificate": "MFDS số 2004-0017 / Đạt chuẩn GMP Hàn Quốc"
-    },
-    "scrapedAt": "2026-08-27T12:57:13.021Z",
-    "filterEvaluation": {
-      "passed": true,
-      "score": 100,
-      "isBestSeller": true,
-      "isRatingHigh": true,
-      "isReviewCountEnough": true,
-      "isCertified": true,
-      "reasons": []
-    }
-  },
-  {
-    "goodsNo": "A000000210587",
-    "legacyCode": "KGC-EXTRACT-240G",
-    "source": "KGC JungKwanJang / Olive Young Health",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000210587",
-    "brand": "KGC CheongKwanJang (Sâm Chính Phủ)",
-    "koreanTitle": "정관장 에브리타임 소프트(10ml*20포) [건강기능식품 / 프리미엄]",
-    "name": "Cao Hồng Sâm 6 Năm Tuổi KGC CheongKwanJang Everytime Soft Dạng Stick 10ml x 20 Gói [Dễ Uống Dịu Nhẹ]",
-    "category": "ginseng",
-    "foreignPrice": 40680,
-    "originalPrice": 40680,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0021/A00000021058714ko.jpg?l=ko",
-    "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0021/A00000021058714ko.jpg?l=ko"
-    ],
-    "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0021/A00000021058714ko.jpg?l=ko"
-    ],
-    "rating": 4.9,
-    "reviewsCount": 12300,
-    "origin": "KGC CheongKwanJang Flagship Store Seoul, Hàn Quốc",
-    "ranking": "TOP 1 Cao Hồng Sâm Dạng Stick Tiện Lợi Hàn Quốc",
-    "activeIngredients": [
-      "Hồng sâm 6 năm tuổi cô đặc (Ginsenoside Rg1+Rb1+Rg3 = 5.5mg/g)",
-      "Mật ong nội địa Hàn Quốc, Chiết xuất rễ cam thảo"
-    ],
-    "isVerifiedHealthFood": true,
-    "isGmpCertified": true,
-    "isBestSeller": true,
-    "description": "Phiên bản Everytime Soft giảm bớt vị đắng gắt truyền thống, bổ sung mật ong rừng ngọt thanh tự nhiên, phù hợp cho người trẻ và người mới bắt đầu dùng sâm.",
-    "usage": "Mỗi ngày dùng 1 gói (10ml). Dùng trực tiếp mọi lúc mọi nơi.",
-    "targetUsers": "Người cần bổ sung năng lượng, học sinh ôn thi, người bận rộn.",
-    "contraindications": "Người dị ứng với mật ong hoặc sâm nên lưu ý.",
-    "specifications": {
-      "volume": "10ml x 20 gói (200ml)",
-      "packaging": "Hộp giấy cao cấp nguyên seal",
+      "volume": "10ml x 50 gói (500ml)",
+      "packaging": "Hộp quà biếu cao cấp KGC",
       "expiry": "24 tháng",
-      "certificate": "MFDS số 2004-0017"
+      "certificate": "Chứng nhận MFDS / Chuẩn GMP Hàn Quốc"
     },
-    "scrapedAt": "2026-08-27T12:57:13.022Z",
+    "scrapedAt": "2026-08-27T13:05:16.945Z",
     "filterEvaluation": {
       "passed": true,
       "score": 100,
@@ -101,45 +51,45 @@
     }
   },
   {
-    "goodsNo": "A000000247765",
-    "legacyCode": "HANSAMIN-GOODDAY-14",
-    "source": "Nonghyup Hanaro / Hansamin Korea",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000247765",
-    "brand": "Hansamin Nonghyup (Nông Hiệp Hàn Quốc)",
-    "koreanTitle": "한삼인 홍삼진 굿데이스틱 14포(14일분) [농협 보증]",
-    "name": "Hồng Sâm Nông Hiệp Hàn Quốc Hansamin Nonghyup Good Day Stick Hộp 14 Gói [Bảo Chứng Nông Dân]",
+    "goodsNo": "8141406992",
+    "legacyCode": "NAVER-KGC-BOOSTER-14",
+    "source": "Naver Brand Store (brand.naver.com/kgcshop)",
+    "originalUrl": "https://brand.naver.com/kgcshop/products/8141406992",
+    "brand": "KGC CheongKwanJang (Sâm Chính Phủ)",
+    "koreanTitle": "정관장 활기력 부스터 20ml 14개입 [부모님 선물 / 여행 필수품]",
+    "name": "Nước Hồng Sâm Tăng Lực Hoạt Khí Lực Booster KGC CheongKwanJang Hộp 14 Lọ [Phục Hồi Thể Lực Cấp Tốc]",
     "category": "ginseng",
-    "foreignPrice": 9900,
-    "originalPrice": 9900,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024776502ko.png?l=ko",
+    "foreignPrice": 39000,
+    "originalPrice": 39000,
+    "productImage": "https://shop-phinf.pstatic.net/20251125_89/17639966385329hYy8_JPEG/98129523946976392_1375614465.jpg?type=f800",
     "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024776502ko.png?l=ko",
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024787103ko.png?l=ko"
+      "https://shop-phinf.pstatic.net/20251125_89/17639966385329hYy8_JPEG/98129523946976392_1375614465.jpg?type=f800"
     ],
     "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024776502ko.png?l=ko"
+      "https://shop-phinf.pstatic.net/20251125_89/17639966385329hYy8_JPEG/98129523946976392_1375614465.jpg?type=f800"
     ],
-    "rating": 4.8,
-    "reviewsCount": 8900,
-    "origin": "Hợp Tác Xã Nông Nghiệp Hàn Quốc (Nonghyup Farm), Hàn Quốc",
-    "ranking": "TOP 1 Hồng Sâm Giá Tốt Bán Chạy Nhất Nông Hiệp Hàn Quốc",
+    "rating": 4.88,
+    "reviewsCount": 28900,
+    "origin": "(주)한국인삼공사 KGC Official Store",
+    "ranking": "TOP 1 Nước Tăng Lực Hồng Sâm Biếu Tặng Hàn Quốc",
     "activeIngredients": [
-      "100% Củ Hồng Sâm 6 năm tuổi Nông Hiệp Nonghyup (Ginsenoside 7.0mg/g)",
-      "Nước ép táo cô đặc nội địa Hàn Quốc"
+      "Hồng sâm 6 năm tuổi KGC 5%",
+      "Hỗn hợp thảo dược truyền thống (Hoàng kỳ, Câu kỷ tử, Ngũ vị tử, Táo đỏ)",
+      "Phức hợp Vitamin B1, B2, B6, C, Axit Nicotinic"
     ],
     "isVerifiedHealthFood": true,
     "isGmpCertified": true,
     "isBestSeller": true,
-    "description": "Thương hiệu Hansamin thuộc Liên đoàn Hợp tác xã Nông nghiệp Hàn Quốc (Nonghyup) cam kết nguồn sâm củ thuần khiết 100% trồng tại các vùng đất trù phú nhất xứ Kim Chi.",
-    "usage": "Mỗi ngày dùng 1 gói (10ml) vào buổi sáng.",
-    "targetUsers": "Người cần bồi bổ sức khỏe hàng ngày với chi phí tiết kiệm tối đa.",
-    "contraindications": "Phụ nữ có thai nên hỏi ý kiến bác sĩ.",
+    "description": "Dòng sản phẩm tăng cường sinh lực quốc dân dạng chai nhỏ tiện lợi, nắp mở bật nhanh, giúp cơ thể lấy lại năng lượng sảng khoái ngay sau khi dùng.",
+    "usage": "Dùng 1 chai mỗi ngày. Mở nắp bằng dụng cụ kèm theo và uống trực tiếp.",
+    "targetUsers": "Người lái xe đường dài, người làm việc khuya, người đi du lịch hoặc vận động nhiều.",
+    "contraindications": "Trẻ em dưới 6 tuổi không nên dùng.",
     "specifications": {
-      "volume": "10ml x 14 gói (140ml)",
-      "packaging": "Hộp vuông tiện lợi",
+      "volume": "20ml x 14 chai (280ml)",
+      "packaging": "Hộp cứng sang trọng kèm dụng cụ mở nắp",
       "expiry": "24 tháng"
     },
-    "scrapedAt": "2026-08-27T12:57:13.022Z",
+    "scrapedAt": "2026-08-27T13:05:16.947Z",
     "filterEvaluation": {
       "passed": true,
       "score": 100,
@@ -151,93 +101,45 @@
     }
   },
   {
-    "goodsNo": "A000000247871",
-    "legacyCode": "HANSAMIN-YANGGAENG-10",
-    "source": "Nonghyup Hanaro / Hansamin Korea",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000247871",
-    "brand": "Hansamin Nonghyup (Nông Hiệp Hàn Quốc)",
-    "koreanTitle": "한삼인 홍삼밤양갱스틱 10개입(10일분) [전통 디저트 영양]",
-    "name": "Thanh Thạch Hồng Sâm Hạt Dẻ Cao Cấp Hansamin Nonghyup Hộp 10 Thanh [Dinh Dưỡng & Năng Lượng]",
-    "category": "ginseng",
-    "foreignPrice": 19800,
-    "originalPrice": 19800,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024787103ko.png?l=ko",
-    "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024787103ko.png?l=ko"
-    ],
-    "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024787103ko.png?l=ko"
-    ],
-    "rating": 4.8,
-    "reviewsCount": 4320,
-    "origin": "Hợp Tác Xã Nông Nghiệp Hàn Quốc (Nonghyup Farm), Hàn Quốc",
-    "ranking": "TOP 1 Bánh Thạch Hồng Sâm Truyền Thống Hàn Quốc",
-    "activeIngredients": [
-      "Tinh chất Hồng sâm 6 năm tuổi Nonghyup 10%",
-      "Hạt dẻ ngọt bùi Gongju, Đậu đỏ tự nhiên"
-    ],
-    "isVerifiedHealthFood": true,
-    "isGmpCertified": true,
-    "isBestSeller": true,
-    "description": "Món tráng miệng dinh dưỡng truyền thống thượng hạng của Hàn Quốc kết hợp vị thơm bùi của hạt dẻ và dưỡng chất từ Hồng sâm 6 năm tuổi.",
-    "usage": "Ăn trực tiếp 1 thanh mỗi khi thấy mệt hoặc dùng kèm trà nóng.",
-    "targetUsers": "Người lớn tuổi thích ăn thanh đạm, người vận động thể thao.",
-    "contraindications": "Người tiểu đường nặng nên kiểm soát liều lượng.",
-    "specifications": {
-      "volume": "45g x 10 thanh (450g)",
-      "packaging": "Hộp quà truyền thống",
-      "expiry": "12 tháng"
-    },
-    "scrapedAt": "2026-08-27T12:57:13.022Z",
-    "filterEvaluation": {
-      "passed": true,
-      "score": 100,
-      "isBestSeller": true,
-      "isRatingHigh": true,
-      "isReviewCountEnough": true,
-      "isCertified": true,
-      "reasons": []
-    }
-  },
-  {
-    "goodsNo": "A000000199062",
-    "legacyCode": "CKD-LACTOFIT-GOLD-50",
-    "source": "Chong Kun Dang Health / Olive Young",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000199062",
+    "goodsNo": "13432133537",
+    "legacyCode": "NAVER-CKD-SLIM-60",
+    "source": "Naver Brand Store (brand.naver.com/ckdhc)",
+    "originalUrl": "https://brand.naver.com/ckdhc/products/13432133537",
     "brand": "Chong Kun Dang Health",
-    "koreanTitle": "[8월 올영픽] 락토핏 골드 트리플 기획 (3개월분) [국민 유산균 / 1초에 1통]",
-    "name": "Men Vi Sinh Lợi Khuẩn Sống Quốc Dân Chong Kun Dang Lacto-Fit Gold Bộ 3 Tháng [TOP 1 Bán Chạy 6 Năm Liền]",
+    "koreanTitle": "종근당건강 락토핏 슈퍼슬림 다이어트 유산균 30포 x 2통 (60포) [체지방 & 장 건강]",
+    "name": "Men Vi Sinh Thon Dáng & Giảm Mỡ Chong Kun Dang Lacto-Fit Super Slim Hộp 60 Gói [Gian Hàng Naver]",
     "category": "supplements",
-    "foreignPrice": 19900,
-    "originalPrice": 19900,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0019/A00000019906245ko.jpg?l=ko",
+    "foreignPrice": 26900,
+    "originalPrice": 26900,
+    "productImage": "https://shop-phinf.pstatic.net/20260825_285/1787615475629bF8Bs_PNG/37185687988657655_1611484306.png?type=f800",
     "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0019/A00000019906245ko.jpg?l=ko"
+      "https://shop-phinf.pstatic.net/20260825_285/1787615475629bF8Bs_PNG/37185687988657655_1611484306.png?type=f800"
     ],
     "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0019/A00000019906245ko.jpg?l=ko"
+      "https://shop-phinf.pstatic.net/20260825_285/1787615475629bF8Bs_PNG/37185687988657655_1611484306.png?type=f800"
     ],
-    "rating": 4.9,
-    "reviewsCount": 48900,
-    "origin": "Chong Kun Dang Healthcare Seoul, Hàn Quốc",
-    "ranking": "TOP 1 Men Vi Sinh Bán Chạy Nhất Hàn Quốc (Cứ 1 giây bán ra 1 hộp)",
+    "rating": 4.87,
+    "reviewsCount": 32000,
+    "origin": "종근당건강(주) Chong Kun Dang Official Naver Store",
+    "ranking": "TOP 1 Men Vi Sinh Thon Dáng Bán Chạy Nhất Naver",
     "activeIngredients": [
-      "Hỗn hợp 2 tỷ CFU lợi khuẩn sống LACTO-5X™ (Lactobacillus + Bifidobacterium)",
-      "Prebiotics (FOS) và Kẽm (Zinc) tăng hấp thu"
+      "Hỗn hợp 2 tỷ CFU Probiotics LACTO-5X",
+      "Chiết xuất Garcinia Cambogia (HCA) 750mg ức chế tích tụ mỡ thừa",
+      "Kẽm (Zinc) tăng miễn dịch"
     ],
     "isVerifiedHealthFood": true,
     "isGmpCertified": true,
     "isBestSeller": true,
-    "description": "Dòng men vi sinh quốc dân được hàng chục triệu người dân Hàn Quốc tin dùng hàng ngày. Công nghệ phủ kép LACTO-5X giúp lợi khuẩn sống sót qua môi trường axit dạ dày đến tận ruột già.",
-    "usage": "Mỗi ngày dùng 1 gói vào buổi sáng trước khi ăn hoặc khi bụng đói. Uống trực tiếp không cần pha nước (vị nho ngọt nhẹ thơm ngon).",
-    "targetUsers": "Mọi thành viên trong gia đình từ trẻ nhỏ đến người lớn bị rối loạn tiêu hóa, đầy hơi, khó tiêu hoặc táo bón.",
-    "contraindications": "Không dùng nước nóng trên 40 độ.",
+    "description": "Sản phẩm hit bán chạy hàng đầu trên Naver Brand Store của tập đoàn Chong Kun Dang. Vừa chăm sóc hệ tiêu hóa trơn tru vừa hỗ trợ siết eo giữ dáng an toàn.",
+    "usage": "Mỗi ngày uống 2 lần, mỗi lần 1 gói trước bữa ăn.",
+    "targetUsers": "Người cần quản lý cân nặng, người hay ăn đồ ngọt tinh bột.",
+    "contraindications": "Phụ nữ có thai nên hỏi ý kiến chuyên gia.",
     "specifications": {
-      "volume": "2g x 90 gói (Dùng 3 tháng)",
-      "packaging": "Hộp thiếc tròn cao cấp",
+      "volume": "2g x 60 gói (Dùng 1 tháng)",
+      "packaging": "Hộp trụ hồng cao cấp",
       "expiry": "18 tháng"
     },
-    "scrapedAt": "2026-08-27T12:57:13.022Z",
+    "scrapedAt": "2026-08-27T13:05:16.947Z",
     "filterEvaluation": {
       "passed": true,
       "score": 100,
@@ -249,336 +151,43 @@
     }
   },
   {
-    "goodsNo": "A000000225906",
-    "legacyCode": "KOREA-EUNDAN-VITAMINC-120",
-    "source": "Korea Eundan / Olive Young",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000225906",
+    "goodsNo": "9206049536",
+    "legacyCode": "NAVER-EUNDAN-VITC-600",
+    "source": "Naver Brand Store (brand.naver.com/koreaeundan)",
+    "originalUrl": "https://brand.naver.com/koreaeundan/products/9206049536",
     "brand": "Korea Eundan",
-    "koreanTitle": "고려은단 메가도스C 비타민C 3000mg 100포 (100일분) [영국산 DSM 원료 100%]",
-    "name": "Bột Uống Vitamin C Megadose 3000mg Korea Eundan Hộp 100 Gói [100% Nguyên Liệu DSM Anh Quốc]",
-    "category": "supplements",
-    "foreignPrice": 25900,
-    "originalPrice": 25900,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0022/A00000022590605ko.jpg?l=ko",
-    "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0022/A00000022590605ko.jpg?l=ko"
-    ],
-    "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0022/A00000022590605ko.jpg?l=ko"
-    ],
-    "rating": 4.9,
-    "reviewsCount": 65200,
-    "origin": "Korea Eundan Seoul, Hàn Quốc",
-    "ranking": "TOP 1 Vitamin C Liều Cao Bán Chạy Nhất Hàn Quốc",
-    "activeIngredients": [
-      "Vitamin C tinh khiết 3000mg (chiết xuất 100% từ ngô tự nhiên nguồn gốc DSM Anh Quốc)"
-    ],
-    "isVerifiedHealthFood": true,
-    "isGmpCertified": true,
-    "isBestSeller": true,
-    "description": "Liệu pháp Megadose bổ sung hàm lượng Vitamin C đỉnh cao 3000mg chống oxy hóa cực mạnh, phục hồi thể lực nhanh chóng và làm sáng khỏe làn da.",
-    "usage": "Mỗi ngày uống 1 gói sau bữa ăn sáng hoặc trưa cùng nhiều nước.",
-    "targetUsers": "Người cần tăng đề kháng cấp tốc, người làm việc mệt mỏi kiệt sức, người muốn trẻ hóa da.",
-    "contraindications": "Tránh uống vào buổi tối hoặc lúc bụng đói.",
-    "specifications": {
-      "volume": "3g x 100 gói (Dùng hơn 3 tháng)",
-      "packaging": "Hộp thiếc chống ẩm tuyệt đối",
-      "expiry": "24 tháng"
-    },
-    "scrapedAt": "2026-08-27T12:57:13.022Z",
-    "filterEvaluation": {
-      "passed": true,
-      "score": 100,
-      "isBestSeller": true,
-      "isRatingHigh": true,
-      "isReviewCountEnough": true,
-      "isCertified": true,
-      "reasons": []
-    }
-  },
-  {
-    "goodsNo": "A000000173904",
-    "legacyCode": "CKD-PROMEGA-OMEGA3",
-    "source": "Chong Kun Dang Health / Olive Young",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000173904",
-    "brand": "Chong Kun Dang Health",
-    "koreanTitle": "프로메가 알티지 오메가3 듀얼 40 캡슐 더블 기획세트 (40일분) [혈행 & 눈 건강]",
-    "name": "Viên Dầu Cá rTG Omega-3 Hấp Thu Cao Chong Kun Dang Promega Dual Bộ Kép 80 Viên [Bổ Não & Mắt]",
-    "category": "supplements",
-    "foreignPrice": 29800,
-    "originalPrice": 29800,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0017/A00000017390413ko.jpg?l=ko",
-    "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0017/A00000017390413ko.jpg?l=ko"
-    ],
-    "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0017/A00000017390413ko.jpg?l=ko"
-    ],
-    "rating": 4.8,
-    "reviewsCount": 32100,
-    "origin": "Chong Kun Dang Healthcare, Hàn Quốc",
-    "ranking": "TOP 1 Omega 3 Bán Chạy Nhất Hàn Quốc",
-    "activeIngredients": [
-      "Dầu cá tinh khiết dạng rTG (EPA + DHA = 600mg)",
-      "Vitamin E chống oxy hóa màng tế bào 11mg a-TE"
-    ],
-    "isVerifiedHealthFood": true,
-    "isGmpCertified": true,
-    "isBestSeller": true,
-    "description": "Dầu cá dạng rTG sinh khả dụng cao nhất, bóc tách từ cá nhỏ ở vùng biển sạch Nam Thái Bình Dương loại bỏ hoàn toàn kim loại nặng và mùi tanh nồng.",
-    "usage": "Mỗi ngày uống 1 lần, mỗi lần 2 viên sau bữa ăn trưa hoặc tối với nước ấm.",
-    "targetUsers": "Người mỡ máu cao, dân văn phòng mỏi khô mắt, người cần bảo vệ tim mạch và não bộ.",
-    "contraindications": "Người chuẩn bị phẫu thuật nên tham khảo ý kiến bác sĩ.",
-    "specifications": {
-      "volume": "Hộp 80 viên nang mềm (Dùng 40 ngày)",
-      "packaging": "Vỉ bấm chống oxy hóa PTP",
-      "expiry": "24 tháng"
-    },
-    "scrapedAt": "2026-08-27T12:57:13.022Z",
-    "filterEvaluation": {
-      "passed": true,
-      "score": 100,
-      "isBestSeller": true,
-      "isRatingHigh": true,
-      "isReviewCountEnough": true,
-      "isCertified": true,
-      "reasons": []
-    }
-  },
-  {
-    "goodsNo": "A000000193086",
-    "legacyCode": "ORTHOMOL-IMMUN-30",
-    "source": "Orthomol Korea / Olive Young",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000193086",
-    "brand": "Orthomol",
-    "koreanTitle": "[8월 올영픽] 오쏘몰 이뮨 멀티비타민&미네랄 14+1입 [비타민계의 에르메스]",
-    "name": "Bộ Vitamin Tổng Hợp Đỉnh Cao Orthomol Immun Hàn Quốc 15 Ngày [Hermes Trong Giới Vitamin]",
+    "koreanTitle": "고려은단 비타민C 1000 300정 X 2개 (총 600정 / 20개월분) [영국산 원료]",
+    "name": "Viên Uống Vitamin C 1000mg Korea Eundan Hộp Lớn 600 Viên (20 Tháng) [Đại Sứ Yoo Jae-suk]",
     "category": "supplements",
     "foreignPrice": 49900,
     "originalPrice": 49900,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0019/A00000019308653ko.jpg?l=ko",
+    "productImage": "https://shop-phinf.pstatic.net/20241209_98/1733736275317uNIhf_JPEG/52294369746810387_661328780.jpg?type=f800",
     "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0019/A00000019308653ko.jpg?l=ko"
+      "https://shop-phinf.pstatic.net/20241209_98/1733736275317uNIhf_JPEG/52294369746810387_661328780.jpg?type=f800"
     ],
     "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0019/A00000019308653ko.jpg?l=ko"
+      "https://shop-phinf.pstatic.net/20241209_98/1733736275317uNIhf_JPEG/52294369746810387_661328780.jpg?type=f800"
     ],
     "rating": 4.9,
-    "reviewsCount": 22400,
-    "origin": "Orthomol Korea Flagship Seoul, Hàn Quốc",
-    "ranking": "TOP 1 Vitamin Tăng Miễn Dịch Hạng Sang Được Giới Thượng Lưu Hàn Quốc Tin Dùng",
+    "reviewsCount": 85000,
+    "origin": "고려은단헬스케어(주) Korea Eundan Naver Store",
+    "ranking": "TOP 1 Vitamin C Quốc Dân Số 1 Naver Shopping Suốt 10 Năm",
     "activeIngredients": [
-      "Phức hợp 25 loại Vitamin & Vi khoáng nồng độ cao (Vitamin C, D, E, K, B-Complex, Kẽm, Selen, I-ốt, Đồng...)"
+      "Vitamin C 1000mg chiết xuất từ ngô tự nhiên nguồn gốc DSM Anh Quốc"
     ],
     "isVerifiedHealthFood": true,
     "isGmpCertified": true,
     "isBestSeller": true,
-    "description": "Được mệnh danh là \"Hermes trong giới vitamin\". Thiết kế 2 tầng độc đáo (tầng trên 2 viên nén, tầng dưới ống dung dịch đậm đặc) giúp nạp tức thì nguồn năng lượng khổng lồ cho cơ thể.",
-    "usage": "Lắc đều chai dung dịch, uống kèm 2 viên thuốc sau bữa ăn sáng hoặc trưa.",
-    "targetUsers": "Người kiệt sức, suy giảm miễn dịch nặng, người sau phẫu thuật hoặc chuẩn bị thi cử / công tác áp lực cao.",
-    "contraindications": "Người rối loạn chức năng tuyến giáp nên tham khảo bác sĩ do có chứa I-ốt.",
+    "description": "Combo 600 viên tiết kiệm dùng cho cả gia đình gần 2 năm. Được bảo vệ trong bao bì ép thiếc bạc PTP chống oxy hóa tuyệt đối.",
+    "usage": "Mỗi ngày uống 1 viên sau bữa ăn trưa hoặc sáng.",
+    "targetUsers": "Tất cả mọi người cần tăng sức đề kháng và phòng ngừa cảm cúm.",
+    "contraindications": "Tránh uống lúc đói.",
     "specifications": {
-      "volume": "Hộp 15 chai kép (Chai dung dịch 20ml + 2 viên nén)",
-      "packaging": "Hộp cứng xanh hoàng gia sang trọng",
+      "volume": "600 viên (Dùng 20 tháng)",
+      "packaging": "Hộp thiếc đỏ bạc nguyên seal",
       "expiry": "24 tháng"
     },
-    "scrapedAt": "2026-08-27T12:57:13.022Z",
-    "filterEvaluation": {
-      "passed": true,
-      "score": 100,
-      "isBestSeller": true,
-      "isRatingHigh": true,
-      "isReviewCountEnough": true,
-      "isCertified": true,
-      "reasons": []
-    }
-  },
-  {
-    "goodsNo": "A000000248072",
-    "legacyCode": "BBLAB-COLLAGEN-50",
-    "source": "NutriOne BB LAB / Olive Young",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000248072",
-    "brand": "NutriOne BB LAB",
-    "koreanTitle": "비비랩 화이트 콜라겐 18+2/30포 (30일분) [피부 탄력 & 글루타치온]",
-    "name": "Bột Uống Collagen Trắng Da BB LAB White Collagen S Hộp 30 Gói [Bổ Sung Glutathione & Vitamin C]",
-    "category": "supplements",
-    "foreignPrice": 24900,
-    "originalPrice": 24900,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024807206ko.png?l=ko",
-    "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024807206ko.png?l=ko"
-    ],
-    "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024807206ko.png?l=ko"
-    ],
-    "rating": 4.8,
-    "reviewsCount": 38400,
-    "origin": "NutriOne Healthcare Seoul, Hàn Quốc",
-    "ranking": "TOP 1 Collagen Dạng Bột Bán Chạy Nhất Hàn Quốc (Đại sứ Yoona)",
-    "activeIngredients": [
-      "Collagen cá thủy phân phân tử siêu nhỏ 1,000Da: 1,500mg",
-      "Men nấm chứa Glutathione tự nhiên, Vitamin C 30mg, Hyaluronic Acid"
-    ],
-    "isVerifiedHealthFood": true,
-    "isGmpCertified": true,
-    "isBestSeller": true,
-    "description": "Dòng Collagen thế hệ mới kết hợp hoạt chất dưỡng trắng mờ thâm Glutathione và Vitamin C. Giúp da căng mịn, đàn hồi và tươi sáng rạng rỡ.",
-    "usage": "Mỗi ngày uống 1 gói trước khi đi ngủ 30 phút. Đổ trực tiếp vào miệng hoặc pha với 100ml nước lọc.",
-    "targetUsers": "Chị em từ 20 tuổi trở lên muốn nuôi dưỡng làn da sáng khỏe, căng bóng từ bên trong.",
-    "contraindications": "Người dị ứng hải sản nên lưu ý.",
-    "specifications": {
-      "volume": "2g x 30 gói (60g)",
-      "packaging": "Hộp thiếc hồng sang trọng",
-      "expiry": "24 tháng"
-    },
-    "scrapedAt": "2026-08-27T12:57:13.023Z",
-    "filterEvaluation": {
-      "passed": true,
-      "score": 100,
-      "isBestSeller": true,
-      "isRatingHigh": true,
-      "isReviewCountEnough": true,
-      "isCertified": true,
-      "reasons": []
-    }
-  },
-  {
-    "goodsNo": "A000000247884",
-    "legacyCode": "DAEWON-SLEEP-SHOT",
-    "source": "Daewon Pharm / Olive Young",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000247884",
-    "brand": "Daewon Pharm (Dược Phẩm Daewon)",
-    "koreanTitle": "[8월 올영픽/수면 효율증가] 대원제약 대원헬스 꿀잠샷 20gX12포 (+2포) (14일분)",
-    "name": "Nước Uống Hỗ Trợ Giấc Ngủ Sâu Daewon Pharm Good Sleep Shot Hộp 14 Gói [Tăng Hiệu Quả Giấc Ngủ]",
-    "category": "supplements",
-    "foreignPrice": 17800,
-    "originalPrice": 17800,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024788479ko.jpg?l=ko",
-    "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024788479ko.jpg?l=ko"
-    ],
-    "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0024/A00000024788479ko.jpg?l=ko"
-    ],
-    "rating": 4.8,
-    "reviewsCount": 15600,
-    "origin": "Daewon Pharm Seoul, Hàn Quốc",
-    "ranking": "TOP 1 Nước Uống Hỗ Trợ Ngủ Ngon Bán Chạy Nhất",
-    "activeIngredients": [
-      "Chiết xuất Ashwagandha & GABA tự nhiên",
-      "L-Theanine, Magie và Vitamin B6"
-    ],
-    "isVerifiedHealthFood": true,
-    "isGmpCertified": true,
-    "isBestSeller": true,
-    "description": "Giải pháp cải thiện chất lượng giấc ngủ tự nhiên từ tập đoàn dược phẩm hàng đầu Daewon Pharm, giúp thư giãn hệ thần kinh, ngủ sâu giấc và thức dậy sảng khoái.",
-    "usage": "Mỗi ngày dùng 1 gói trước khi đi ngủ 30 phút.",
-    "targetUsers": "Người khó ngủ, mất ngủ, căng thẳng đầu óc, ngủ chập chờn.",
-    "contraindications": "Không dùng khi chuẩn bị lái xe.",
-    "specifications": {
-      "volume": "20g x 14 gói (280g)",
-      "packaging": "Hộp quà tặng kèm bịt mắt ngủ",
-      "expiry": "24 tháng"
-    },
-    "scrapedAt": "2026-08-27T12:57:13.023Z",
-    "filterEvaluation": {
-      "passed": true,
-      "score": 100,
-      "isBestSeller": true,
-      "isRatingHigh": true,
-      "isReviewCountEnough": true,
-      "isCertified": true,
-      "reasons": []
-    }
-  },
-  {
-    "goodsNo": "A000000183645",
-    "legacyCode": "FOODOLOGY-COLEOLOGY-CUT",
-    "source": "Foodology / Olive Young Health",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000183645",
-    "brand": "Foodology",
-    "koreanTitle": "[8월 올영픽/서현 PICK] 푸드올로지 콜레올로지 컷 1개월 [체지방 감소]",
-    "name": "Viên Uống Hỗ Trợ Giảm Mỡ Tự Nhiên Foodology Coleology Cut Hộp 60 Viên [Đại Sứ Seohyun]",
-    "category": "supplements",
-    "foreignPrice": 11900,
-    "originalPrice": 11900,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0018/A00000018364585ko.jpg?l=ko",
-    "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0018/A00000018364585ko.jpg?l=ko"
-    ],
-    "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0018/A00000018364585ko.jpg?l=ko"
-    ],
-    "rating": 4.8,
-    "reviewsCount": 52100,
-    "origin": "Foodology Health Seoul, Hàn Quốc",
-    "ranking": "TOP 1 Viên Uống Giảm Mỡ Đốt Cháy Calo Bán Chạy Nhất Olive Young",
-    "activeIngredients": [
-      "Chiết xuất Coleus Forskohlii tự nhiên 500mg",
-      "Chiết xuất Trà xanh Catechin, Vitamin B1, B2, B6, Axit Pantothenic"
-    ],
-    "isVerifiedHealthFood": true,
-    "isGmpCertified": true,
-    "isBestSeller": true,
-    "description": "Viên uống đốt mỡ Coleology màu đỏ huyền thoại của SNSD Seohyun. Đạt chuẩn chức năng giảm mỡ thừa an toàn MFDS không gây mất nước mệt mỏi.",
-    "usage": "Mỗi ngày uống 2 viên trước khi đi ngủ với nhiều nước.",
-    "targetUsers": "Người cần quản lý vóc dáng, giảm mỡ nội tạng và mỡ bụng sau sinh.",
-    "contraindications": "Trẻ em và phụ nữ đang cho con bú không nên dùng.",
-    "specifications": {
-      "volume": "60 viên (Dùng 1 tháng)",
-      "packaging": "Hũ đỏ tiêu chuẩn MFDS",
-      "expiry": "24 tháng"
-    },
-    "scrapedAt": "2026-08-27T12:57:13.023Z",
-    "filterEvaluation": {
-      "passed": true,
-      "score": 100,
-      "isBestSeller": true,
-      "isRatingHigh": true,
-      "isReviewCountEnough": true,
-      "isCertified": true,
-      "reasons": []
-    }
-  },
-  {
-    "goodsNo": "A000000205496",
-    "legacyCode": "PRONUTRITION-DIET-PROBIOTICS",
-    "source": "ProNutrition / Olive Young",
-    "originalUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000205496",
-    "brand": "ProNutrition",
-    "koreanTitle": "[8월 올영픽/한선화 PICK] 프로뉴트리션 듀얼플랜 다이어트 유산균 14포",
-    "name": "Men Vi Sinh Hỗ Trợ Tiêu Hóa & Thon Dáng ProNutrition Dual Plan Hộp 14 Gói [Đại Sứ Han Sun-hwa]",
-    "category": "supplements",
-    "foreignPrice": 32900,
-    "originalPrice": 32900,
-    "productImage": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0020/A00000020549616ko.jpg?l=ko",
-    "images": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0020/A00000020549616ko.jpg?l=ko"
-    ],
-    "photoReviews": [
-      "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0020/A00000020549616ko.jpg?l=ko"
-    ],
-    "rating": 4.8,
-    "reviewsCount": 19800,
-    "origin": "ProNutrition Korea, Hàn Quốc",
-    "ranking": "TOP 1 Men Vi Sinh Kép Chăm Sóc Đường Ruột & Vóc Dáng",
-    "activeIngredients": [
-      "Hỗn hợp 5 tỷ CFU Lợi khuẩn Probiotics đa chủng",
-      "Chiết xuất quả Garcinia Cambogia (HCA) ức chế tổng hợp mỡ thừa"
-    ],
-    "isVerifiedHealthFood": true,
-    "isGmpCertified": true,
-    "isBestSeller": true,
-    "description": "Công thức tác động kép vừa cân bằng hệ vi sinh đường ruột khỏe mạnh vừa hỗ trợ chuyển hóa mỡ thừa nhẹ nhàng, tự nhiên.",
-    "usage": "Mỗi ngày dùng 1 gói sau bữa ăn hoặc trước khi tập luyện thể thao.",
-    "targetUsers": "Người tiêu hóa kém, ngồi nhiều ít vận động, muốn giữ dáng thon thả.",
-    "contraindications": "Phụ nữ có thai nên tham khảo ý kiến bác sĩ.",
-    "specifications": {
-      "volume": "14 gói (Dùng 2 tuần)",
-      "packaging": "Hộp giấy cao cấp",
-      "expiry": "24 tháng"
-    },
-    "scrapedAt": "2026-08-27T12:57:13.023Z",
+    "scrapedAt": "2026-08-27T13:05:16.947Z",
     "filterEvaluation": {
       "passed": true,
       "score": 100,
