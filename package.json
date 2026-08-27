@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@mendable/firecrawl-js": "^4.32.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "canvas-confetti": "^1.9.4",
     "dotenv": "^17.4.2",
     "firebase": "^12.17.1",

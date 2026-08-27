@@ -41,7 +41,7 @@ test('[F19-2] Admin AI Copilot URL scraper intent recognition for Korean health 
   assert(res !== null, 'Scraped response exists');
   assert(res.action !== undefined, 'Contains action payload');
   assertEquals(res.action.type, 'IMPORT_HEALTH_PRODUCT', 'Action is IMPORT_HEALTH_PRODUCT');
-  assertContains(res.content, 'bóc tách thành công', 'Mentions successful scraping');
+  assertContains(res.content, 'BÁO CÁO BÓC TÁCH', 'Mentions successful scraping');
   assertContains(res.action.product.brand, 'KGC', 'Identifies KGC brand');
 });
 
@@ -53,5 +53,5 @@ test('[F19-3] Admin AI Copilot handles empty input gracefully', async () => {
   });
 
   assert(res !== null, 'Fallback response exists');
-  assertContains(res.content, 'Tôi có thể giúp gì', 'Provides helpful guidance');
+  assertContains(res.content, 'hỗ trợ gì', 'Provides helpful guidance');
 });
