@@ -292,7 +292,7 @@ export default function AdminProductModal({
                   onChange={(e) => handleChange('isOutOfStock', e.target.checked)}
                   style={{ width: '16px', height: '16px', accentColor: '#DC2626' }}
                 />
-                <span>{formData.isOutOfStock ? '🔴 Đang tạm hết hàng (Out of Stock)' : '🟢 Còn hàng trong kho'}</span>
+                <span>{formData.isOutOfStock ? 'Đang tạm hết hàng (Out of Stock)' : 'Còn hàng trong kho'}</span>
               </label>
 
               {!isPending && (
@@ -303,7 +303,7 @@ export default function AdminProductModal({
                     onChange={(e) => handleChange('isHidden', e.target.checked)}
                     style={{ width: '16px', height: '16px', accentColor: '#2563EB' }}
                   />
-                  <span>{formData.isHidden ? '👁️ Tạm ẩn khỏi Website' : '🌐 Đang hiển thị trên Website'}</span>
+                  <span>{formData.isHidden ? 'Tạm ẩn khỏi Website' : 'Đang hiển thị trên Website'}</span>
                 </label>
               )}
             </div>
@@ -445,11 +445,11 @@ export default function AdminProductModal({
                       backgroundColor: '#FFF'
                     }}
                   >
-                    <option value="ginseng">🌿 Sâm Nấm Hàn Quốc</option>
-                    <option value="supplements">💊 Thực Phẩm Chức Năng</option>
-                    <option value="cosmetics">✨ Mỹ Phẩm Nội Địa Hàn</option>
-                    <option value="skincare">💆 Chăm Sóc Da & Body</option>
-                    <option value="other">📦 Khác</option>
+                    <option value="ginseng">Sâm Nấm Hàn Quốc</option>
+                    <option value="supplements">Thực Phẩm Chức Năng</option>
+                    <option value="cosmetics">Mỹ Phẩm Nội Địa Hàn</option>
+                    <option value="skincare">Chăm Sóc Da & Body</option>
+                    <option value="other">Khác</option>
                   </select>
                 </div>
 
@@ -477,7 +477,7 @@ export default function AdminProductModal({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                    Đánh Giá Sao (⭐)
+                    Đánh Giá Sao
                   </label>
                   <input
                     type="number"

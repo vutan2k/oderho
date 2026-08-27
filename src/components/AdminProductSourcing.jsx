@@ -10,7 +10,8 @@ import { scrapeProductMetadata } from '../services/productScraperService';
 import {
   Zap, Search, Plus, Trash2, Edit3, Check,
   CheckCircle2, AlertCircle, RefreshCw, Layers,
-  ExternalLink, ArrowRight, X, Sparkles, Box, CheckCheck
+  ExternalLink, ArrowRight, X, Sparkles, Box, CheckCheck,
+  Table, LayoutGrid, Download, Copy, ChevronDown, ChevronUp, ShoppingBag
 } from 'lucide-react';
 
 export default function AdminProductSourcing() {
@@ -29,6 +30,17 @@ export default function AdminProductSourcing() {
 
   const [activeSubTab, setActiveSubTab] = useState('pending'); // 'pending' | 'scraper'
 
+  // View state: 'table' (Excel Spreadsheet) | 'grid' (Cards)
+  const [viewMode, setViewMode] = useState('table');
+
+  // Filters & Search
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Sorting
+  const [sortField, setSortField] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
+
   // Sourcing input state
   const [sourcingInput, setSourcingInput] = useState('');
   const [isScraping, setIsScraping] = useState(false);
@@ -44,8 +56,52 @@ export default function AdminProductSourcing() {
   const krwRate = rates?.KRW?.rate || 19.5;
   const serviceFee = rates?.serviceFeePercent || 5;
 
+  // Lọc và sắp xếp hàng chờ duyệt
+  const filteredPending = useMemo(() => {
+    let result = (pendingProducts || []).filter(p => {
+      const matchCat = selectedCategory === 'all' || p.category === selectedCategory;
+      const matchSearch = !searchTerm.trim() ||
+        (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p.goodsNo && p.goodsNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p.nameKr && p.nameKr.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      return matchCat && matchSearch;
+    });
+
+    result.sort((a, b) => {
+      let valA = a[sortField];
+      let valB = b[sortField];
+
+      if (sortField === 'foreignPrice' || sortField === 'price') {
+        valA = a.foreignPrice || a.price || 0;
+        valB = b.foreignPrice || b.price || 0;
+      } else if (typeof valA === 'string') {
+        return sortOrder === 'asc'
+          ? String(valA).localeCompare(String(valB))
+          : String(valB).localeCompare(String(valA));
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [pendingProducts, selectedCategory, searchTerm, sortField, sortOrder]);
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
   // Toggle select item
-  const handleToggleSelect = (goodsNo) => {
+  const handleToggleSelect = (e, goodsNo) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     setSelectedIds(prev =>
       prev.includes(goodsNo) ? prev.filter(id => id !== goodsNo) : [...prev, goodsNo]
     );
@@ -53,15 +109,16 @@ export default function AdminProductSourcing() {
 
   // Select all / Deselect all
   const handleToggleSelectAll = () => {
-    if (selectedIds.length === pendingProducts.length) {
+    if (selectedIds.length === filteredPending.length && filteredPending.length > 0) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(pendingProducts.map(p => p.goodsNo));
+      setSelectedIds(filteredPending.map(p => p.goodsNo));
     }
   };
 
   // Duyệt 1 sản phẩm 1-click
-  const handleApproveSingle = (prod) => {
+  const handleApproveSingle = (e, prod) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     approvePendingProduct(prod.goodsNo);
     if (showToast) showToast(`Đã duyệt và xuất bản "${prod.name}" lên website!`, 'success');
   };
@@ -87,7 +144,19 @@ export default function AdminProductSourcing() {
   // Từ chối / Xoá 1 sản phẩm chờ duyệt
   const handleRejectSingle = (goodsNo) => {
     rejectPendingProduct(goodsNo);
+    setIsModalOpen(false);
+    setSelectedIds(prev => prev.filter(id => id !== goodsNo));
     if (showToast) showToast('Đã xoá sản phẩm khỏi Hàng Chờ Duyệt!', 'info');
+  };
+
+  // Xoá hàng loạt
+  const handleBatchReject = () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Bạn có chắc chắn muốn xoá ${selectedIds.length} sản phẩm đã chọn khỏi Hàng Chờ Duyệt?`)) {
+      selectedIds.forEach(id => rejectPendingProduct(id));
+      setSelectedIds([]);
+      if (showToast) showToast(`Đã xoá ${selectedIds.length} sản phẩm khỏi Hàng Chờ Duyệt!`, 'info');
+    }
   };
 
   // Mở modal sửa trước khi duyệt
@@ -113,6 +182,58 @@ export default function AdminProductSourcing() {
     addProduct(cleanProduct);
     rejectPendingProduct(goodsNo);
     if (showToast) showToast(`Đã duyệt và xuất bản "${cleanProduct.name}" lên website!`, 'success');
+  };
+
+  // Sao chép mã SKU
+  const handleCopySku = (e, sku) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    navigator.clipboard.writeText(sku);
+    if (showToast) showToast(`Đã sao chép mã SKU: ${sku}`, 'success');
+  };
+
+  // Category label helper
+  const getCategoryLabel = (cat) => {
+    switch (cat) {
+      case 'ginseng': return 'Sâm Nấm';
+      case 'supplements': return 'TPCN';
+      case 'cosmetics': return 'Mỹ Phẩm';
+      case 'skincare': return 'Da & Body';
+      default: return 'Khác';
+    }
+  };
+
+  // Xuất file CSV
+  const handleExportCSV = () => {
+    if (filteredPending.length === 0) {
+      alert('Không có dữ liệu sản phẩm để xuất!');
+      return;
+    }
+
+    const headers = ['Mã SKU', 'Tên Sản Phẩm', 'Tên Tiếng Hàn', 'Thương Hiệu', 'Ngành Hàng', 'Giá Won (KRW)', 'Giá VNĐ'];
+    const rows = filteredPending.map(p => {
+      const won = p.foreignPrice || p.price || 0;
+      const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
+      return [
+        `"${p.goodsNo || ''}"`,
+        `"${(p.name || '').replace(/"/g, '""')}"`,
+        `"${(p.nameKr || '').replace(/"/g, '""')}"`,
+        `"${p.brand || ''}"`,
+        `"${getCategoryLabel(p.category)}"`,
+        won,
+        vnd
+      ];
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Tavy_Hang_Cho_Duyet_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    if (showToast) showToast('Đã xuất file Excel / CSV thành công!', 'success');
   };
 
   // Xử lý cào sản phẩm từ URL
@@ -172,7 +293,7 @@ export default function AdminProductSourcing() {
     if (showToast) showToast(`Đã lưu "${prod.name}" vào Hàng Chờ Duyệt!`, 'success');
     setScrapedPreview(null);
     setSourcingInput('');
-    setActiveSubTab('pending'); // Chuyển sang hàng chờ duyệt để kiểm tra
+    setActiveSubTab('pending');
   };
 
   // Duyệt & Đăng ngay (1-click bypass)
@@ -331,28 +452,6 @@ export default function AdminProductSourcing() {
               <CheckCheck size={16} />
               <span>Duyệt Tất Cả ({pendingProducts.length}) Lên Web</span>
             </button>
-
-            {selectedIds.length > 0 && (
-              <button
-                onClick={handleApproveSelected}
-                style={{
-                  backgroundColor: '#2563EB',
-                  color: '#FFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 14px',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <Check size={15} />
-                <span>Duyệt {selectedIds.length} Mục Đã Chọn</span>
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -362,165 +461,644 @@ export default function AdminProductSourcing() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {activeSubTab === 'pending' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Header Note */}
+          {/* Top Banner & Control */}
           <div style={{
-            backgroundColor: '#FFFBEB',
-            border: '1px solid #FDE68A',
-            borderRadius: '12px',
-            padding: '14px 18px',
+            backgroundColor: '#FFF',
+            borderRadius: '16px',
+            padding: '18px 24px',
+            border: '1px solid #E2E8F0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '10px'
+            gap: '16px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <AlertCircle size={20} color="#D97706" />
-              <div>
-                <strong style={{ fontSize: '0.88rem', color: '#92400E' }}>
-                  Hàng chờ duyệt trước khi xuất bản lên website
-                </strong>
-                <div style={{ fontSize: '0.78rem', color: '#B45309', marginTop: '2px' }}>
-                  Các sản phẩm trong danh sách này <strong>chưa hiển thị</strong> cho khách hàng. Hãy kiểm tra giá, ảnh và bấm Duyệt để đưa lên web bán hàng.
-                </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: '#0F172A' }}>
+                  Kho Hàng Chờ Duyệt ({pendingProducts.length})
+                </h2>
+                <span style={{
+                  backgroundColor: '#FEF3C7',
+                  color: '#D97706',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #FDE68A'
+                }}>
+                  CHƯA HIỂN THỊ TRÊN WEB
+                </span>
               </div>
+              <p style={{ margin: '4px 0 0 0', color: '#64748B', fontSize: '0.82rem' }}>
+                Bảng danh sách chuẩn Excel: Nhấp vào dòng để <strong>Chỉnh Sửa Nhanh</strong> thông tin và giá trước khi bấm <strong>Duyệt</strong> đưa lên website.
+              </p>
             </div>
 
-            {pendingProducts.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              {/* View Switcher: Table vs Grid */}
+              <div style={{
+                display: 'flex',
+                backgroundColor: '#F1F5F9',
+                padding: '3px',
+                borderRadius: '8px',
+                border: '1px solid #CBD5E1'
+              }}>
+                <button
+                  onClick={() => setViewMode('table')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: viewMode === 'table' ? '#FFF' : 'transparent',
+                    color: viewMode === 'table' ? '#0F172A' : '#64748B',
+                    fontWeight: viewMode === 'table' ? 800 : 600,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    boxShadow: viewMode === 'table' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none'
+                  }}
+                >
+                  <Table size={14} />
+                  <span>Bảng Excel</span>
+                </button>
+
+                <button
+                  onClick={() => setViewMode('grid')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: viewMode === 'grid' ? '#FFF' : 'transparent',
+                    color: viewMode === 'grid' ? '#0F172A' : '#64748B',
+                    fontWeight: viewMode === 'grid' ? 800 : 600,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    boxShadow: viewMode === 'grid' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none'
+                  }}
+                >
+                  <LayoutGrid size={14} />
+                  <span>Lưới Thẻ</span>
+                </button>
+              </div>
+
+              {/* Export CSV Button */}
               <button
-                onClick={handleToggleSelectAll}
+                onClick={handleExportCSV}
                 style={{
-                  backgroundColor: '#FFF',
+                  backgroundColor: '#F8FAFC',
+                  color: '#0F172A',
                   border: '1px solid #CBD5E1',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  fontSize: '0.78rem',
+                  borderRadius: '8px',
+                  padding: '8px 14px',
+                  fontSize: '0.8rem',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  color: '#334155'
-                }}
-              >
-                {selectedIds.length === pendingProducts.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
-              </button>
-            )}
-          </div>
-
-          {/* Pending List Grid */}
-          {pendingProducts.length === 0 ? (
-            <div style={{
-              padding: '60px 20px',
-              textAlign: 'center',
-              backgroundColor: '#FFF',
-              borderRadius: '16px',
-              border: '1px dashed #CBD5E1',
-              color: '#94A3B8'
-            }}>
-              <Box size={44} style={{ margin: '0 auto 12px auto', opacity: 0.4 }} />
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#475569' }}>
-                Hiện không có sản phẩm nào đang chờ duyệt
-              </div>
-              <div style={{ fontSize: '0.82rem', marginTop: '6px', color: '#64748B' }}>
-                Bấm sang tab <strong>"Cào & Nạp Dữ Liệu Hàn Quốc"</strong> bên trên để cào link sản phẩm mới!
-              </div>
-              <button
-                onClick={() => setActiveSubTab('scraper')}
-                style={{
-                  marginTop: '16px',
-                  backgroundColor: '#10B981',
-                  color: '#FFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 18px',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
                   gap: '6px'
                 }}
               >
+                <Download size={14} color="#059669" />
+                <span>Xuất Excel/CSV</span>
+              </button>
+
+              {/* Go to Scraper tab */}
+              <button
+                onClick={() => setActiveSubTab('scraper')}
+                style={{
+                  backgroundColor: '#10B981',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                }}
+              >
                 <Zap size={15} />
-                <span>Mở Trung Tâm Cào Hàng Ngay</span>
+                <span>Cào Link Mới</span>
               </button>
             </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '16px'
-            }}>
-              {pendingProducts.map(prod => {
-                const won = prod.foreignPrice || prod.price || 0;
-                const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
-                const isSelected = selectedIds.includes(prod.goodsNo);
+          </div>
 
-                return (
-                  <div
-                    key={prod.goodsNo}
-                    style={{
-                      backgroundColor: '#FFF',
-                      borderRadius: '14px',
-                      border: isSelected ? '2px solid #2563EB' : '1px solid #E2E8F0',
-                      padding: '14px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                      transition: 'all 0.15s ease',
-                      position: 'relative'
-                    }}
-                  >
-                    {/* Header bar of Card: Checkbox + Brand */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, color: '#334155' }}>
+          {/* Filter & Search Bar */}
+          <div style={{
+            backgroundColor: '#FFF',
+            borderRadius: '12px',
+            padding: '12px 18px',
+            border: '1px solid #E2E8F0',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px'
+          }}>
+            {/* Search */}
+            <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: '380px' }}>
+              <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                type="text"
+                placeholder="Tìm theo tên sản phẩm, mã SKU, thương hiệu..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 36px',
+                  borderRadius: '8px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '0.82rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            {/* Categories */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {[
+                { id: 'all', label: 'Tất Cả' },
+                { id: 'ginseng', label: 'Sâm Nấm' },
+                { id: 'supplements', label: 'TPCN' },
+                { id: 'cosmetics', label: 'Mỹ Phẩm' }
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: selectedCategory === cat.id ? '1px solid #2563EB' : '1px solid #E2E8F0',
+                    backgroundColor: selectedCategory === cat.id ? '#EFF6FF' : '#FFF',
+                    color: selectedCategory === cat.id ? '#1D4ED8' : '#475569',
+                    fontWeight: selectedCategory === cat.id ? 700 : 500,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Floating / Inline Batch Actions Bar (when rows are selected) */}
+          {selectedIds.length > 0 && (
+            <div style={{
+              backgroundColor: '#0F172A',
+              color: '#FFF',
+              borderRadius: '12px',
+              padding: '12px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ backgroundColor: '#2563EB', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 900 }}>
+                  {selectedIds.length} ĐÃ CHỌN
+                </span>
+                <span style={{ fontSize: '0.82rem', color: '#CBD5E1' }}>
+                  Thao tác hàng loạt trên các sản phẩm đã chọn:
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleApproveSelected}
+                  style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <Check size={14} />
+                  <span>Duyệt {selectedIds.length} Sản Phẩm Lên Web</span>
+                </button>
+
+                <button
+                  onClick={handleBatchReject}
+                  style={{ backgroundColor: '#DC2626', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Xoá
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════ */}
+          {/* EXCEL SPREADSHEET TABLE VIEW (MẶC ĐỊNH)                        */}
+          {/* ════════════════════════════════════════════════════════════ */}
+          {viewMode === 'table' && (
+            <div style={{
+              backgroundColor: '#FFF',
+              borderRadius: '14px',
+              border: '1px solid #CBD5E1',
+              overflow: 'hidden',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+            }}>
+              <div style={{ overflowX: 'auto', maxHeight: '72vh' }}>
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '0.82rem',
+                  textAlign: 'left'
+                }}>
+                  {/* Excel Table Header */}
+                  <thead style={{
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: '#F1F5F9',
+                    borderBottom: '2px solid #CBD5E1',
+                    zIndex: 10
+                  }}>
+                    <tr style={{ color: '#334155', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                      {/* Select All Checkbox */}
+                      <th style={{ width: '40px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
                         <input
                           type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSelect(prod.goodsNo)}
-                          style={{ width: '16px', height: '16px', accentColor: '#2563EB' }}
+                          checked={selectedIds.length === filteredPending.length && filteredPending.length > 0}
+                          onChange={handleToggleSelectAll}
+                          style={{ width: '15px', height: '15px', accentColor: '#2563EB', cursor: 'pointer' }}
                         />
-                        <span>Mã: {prod.goodsNo}</span>
-                      </label>
+                      </th>
+                      <th style={{ width: '45px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>#</th>
+                      <th style={{ width: '60px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>Ảnh</th>
 
-                      <span style={{
-                        backgroundColor: '#FEF3C7',
-                        color: '#D97706',
-                        fontSize: '0.68rem',
-                        fontWeight: 800,
-                        padding: '2px 8px',
-                        borderRadius: '4px'
-                      }}>
-                        CHỜ DUYỆT
-                      </span>
-                    </div>
+                      <th
+                        onClick={() => handleSort('goodsNo')}
+                        style={{ width: '130px', padding: '10px 12px', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>Mã SKU</span>
+                          {sortField === 'goodsNo' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                        </div>
+                      </th>
 
-                    {/* Image & Title */}
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <th
+                        onClick={() => handleSort('name')}
+                        style={{ minWidth: '260px', padding: '10px 12px', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>Tên Sản Phẩm (Việt / Hàn)</span>
+                          {sortField === 'name' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                        </div>
+                      </th>
+
+                      <th style={{ width: '120px', padding: '10px 12px', borderRight: '1px solid #E2E8F0' }}>Thương Hiệu</th>
+                      <th style={{ width: '110px', padding: '10px 12px', borderRight: '1px solid #E2E8F0' }}>Ngành Hàng</th>
+
+                      <th
+                        onClick={() => handleSort('foreignPrice')}
+                        style={{ width: '130px', padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                          <span>Giá Bán</span>
+                          {sortField === 'foreignPrice' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                        </div>
+                      </th>
+
+                      <th style={{ width: '140px', padding: '10px 12px', textAlign: 'center' }}>Thao Tác</th>
+                    </tr>
+                  </thead>
+
+                  {/* Excel Table Body */}
+                  <tbody>
+                    {filteredPending.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                          <ShoppingBag size={36} style={{ margin: '0 auto 8px auto', opacity: 0.4 }} />
+                          <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#475569' }}>Không tìm thấy sản phẩm nào trong Hàng Chờ Duyệt</div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredPending.map((prod, idx) => {
+                        const won = prod.foreignPrice || prod.price || 0;
+                        const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
+                        const isSelected = selectedIds.includes(prod.goodsNo);
+
+                        return (
+                          <tr
+                            key={prod.goodsNo || prod.id}
+                            onClick={() => handleOpenEdit(prod)}
+                            style={{
+                              backgroundColor: isSelected ? '#EFF6FF' : (idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF'),
+                              borderBottom: '1px solid #E2E8F0',
+                              cursor: 'pointer',
+                              transition: 'background 0.1s'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) e.currentTarget.style.backgroundColor = idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF';
+                            }}
+                          >
+                            {/* Checkbox */}
+                            <td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => handleToggleSelect(e, prod.goodsNo)}
+                                style={{ width: '15px', height: '15px', accentColor: '#2563EB', cursor: 'pointer' }}
+                              />
+                            </td>
+
+                            {/* STT */}
+                            <td style={{ padding: '8px', textAlign: 'center', color: '#94A3B8', fontWeight: 600, borderRight: '1px solid #E2E8F0' }}>
+                              {idx + 1}
+                            </td>
+
+                            {/* Thumbnail Image */}
+                            <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
+                              <div style={{
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '6px',
+                                backgroundColor: '#FFF',
+                                border: '1px solid #E2E8F0',
+                                overflow: 'hidden',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <img
+                                  src={prod.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'}
+                                  alt=""
+                                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                  onError={(e) => {
+                                    e.target.src = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80';
+                                  }}
+                                />
+                              </div>
+                            </td>
+
+                            {/* SKU */}
+                            <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#334155', fontSize: '0.78rem' }}>
+                                  {prod.goodsNo}
+                                </span>
+                                <button
+                                  title="Sao chép mã SKU"
+                                  onClick={(e) => handleCopySku(e, prod.goodsNo)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#94A3B8' }}
+                                >
+                                  <Copy size={12} />
+                                </button>
+                              </div>
+                            </td>
+
+                            {/* Product Title */}
+                            <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                              <div style={{ fontWeight: 700, color: '#0F172A', lineHeight: 1.35 }}>
+                                {prod.name}
+                              </div>
+                              {prod.nameKr && (
+                                <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '2px' }}>
+                                  {prod.nameKr}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Brand */}
+                            <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0', color: '#475569', fontWeight: 600 }}>
+                              <span style={{
+                                backgroundColor: '#F1F5F9',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                color: '#334155'
+                              }}>
+                                {prod.brand || 'Korea'}
+                              </span>
+                            </td>
+
+                            {/* Category */}
+                            <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                              <span style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                color: prod.category === 'ginseng' ? '#047857' : (prod.category === 'supplements' ? '#B45309' : '#1D4ED8'),
+                                backgroundColor: prod.category === 'ginseng' ? '#ECFDF5' : (prod.category === 'supplements' ? '#FFFBEB' : '#EFF6FF'),
+                                padding: '2px 8px',
+                                borderRadius: '4px'
+                              }}>
+                                {getCategoryLabel(prod.category)}
+                              </span>
+                            </td>
+
+                            {/* Merged Price (VNĐ & Won) */}
+                            <td style={{ padding: '8px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0' }}>
+                              <div style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '0.88rem' }}>
+                                {vnd.toLocaleString('vi-VN')} đ
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: '#64748B', fontFamily: 'monospace', marginTop: '2px' }}>
+                                {won.toLocaleString('vi-VN')} ₩
+                              </div>
+                            </td>
+
+                            {/* Action Buttons */}
+                            <td style={{ padding: '6px 8px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                <button
+                                  title="Duyệt xuất bản lên website"
+                                  onClick={(e) => handleApproveSingle(e, prod)}
+                                  style={{
+                                    backgroundColor: '#10B981',
+                                    color: '#FFF',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '4px 8px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}
+                                >
+                                  <Check size={12} />
+                                  <span>Duyệt</span>
+                                </button>
+
+                                <button
+                                  title="Chỉnh sửa trước khi duyệt"
+                                  onClick={() => handleOpenEdit(prod)}
+                                  style={{
+                                    backgroundColor: '#2563EB',
+                                    color: '#FFF',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '4px 8px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}
+                                >
+                                  <Edit3 size={11} />
+                                  <span>Sửa</span>
+                                </button>
+
+                                <button
+                                  title="Xoá khỏi Hàng Chờ Duyệt"
+                                  onClick={() => handleRejectSingle(prod.goodsNo || prod.id)}
+                                  style={{
+                                    backgroundColor: '#FEE2E2',
+                                    color: '#DC2626',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '4px 6px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Table Footer Summary */}
+              <div style={{
+                padding: '10px 18px',
+                backgroundColor: '#F8FAFC',
+                borderTop: '1px solid #CBD5E1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '0.78rem',
+                color: '#64748B',
+                fontWeight: 600
+              }}>
+                <div>
+                  Hiển thị <strong>{filteredPending.length}</strong> / <strong>{pendingProducts.length}</strong> sản phẩm chờ duyệt
+                </div>
+                <div>
+                  Tỷ giá quy đổi: <strong>1 KRW = {krwRate} VNĐ</strong> (Phí {serviceFee}%)
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════ */}
+          {/* GRID VIEW (KHI CHỌN XEM DẠNG THẺ)                              */}
+          {/* ════════════════════════════════════════════════════════════ */}
+          {viewMode === 'grid' && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '16px'
+            }}>
+              {filteredPending.length === 0 ? (
+                <div style={{
+                  gridColumn: '1 / -1',
+                  padding: '50px 20px',
+                  textAlign: 'center',
+                  backgroundColor: '#FFF',
+                  borderRadius: '16px',
+                  border: '1px dashed #CBD5E1',
+                  color: '#94A3B8'
+                }}>
+                  <ShoppingBag size={40} style={{ margin: '0 auto 12px auto', opacity: 0.4 }} />
+                  <div style={{ fontWeight: 800, fontSize: '1rem', color: '#475569' }}>
+                    Không tìm thấy sản phẩm nào phù hợp
+                  </div>
+                </div>
+              ) : (
+                filteredPending.map(prod => {
+                  const won = prod.foreignPrice || prod.price || 0;
+                  const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
+                  const isSelected = selectedIds.includes(prod.goodsNo);
+
+                  return (
+                    <div
+                      key={prod.goodsNo || prod.id}
+                      onClick={() => handleOpenEdit(prod)}
+                      style={{
+                        backgroundColor: '#FFF',
+                        borderRadius: '14px',
+                        border: isSelected ? '2px solid #2563EB' : '1px solid #E2E8F0',
+                        padding: '14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        position: 'relative'
+                      }}
+                    >
                       <div style={{
-                        width: '90px',
-                        height: '90px',
-                        borderRadius: '8px',
-                        backgroundColor: '#F8FAFC',
-                        border: '1px solid #E2E8F0',
+                        position: 'relative',
+                        width: '100%',
+                        height: '190px',
+                        borderRadius: '10px',
                         overflow: 'hidden',
-                        flexShrink: 0
+                        backgroundColor: '#F8FAFC',
+                        border: '1px solid #F1F5F9'
                       }}>
                         <img
                           src={prod.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'}
                           alt={prod.name}
                           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                          onError={(e) => {
+                            e.target.src = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80';
+                          }}
                         />
+
+                        <span style={{
+                          position: 'absolute',
+                          top: '8px',
+                          left: '8px',
+                          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                          color: '#FFF',
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          padding: '2px 8px',
+                          borderRadius: '4px'
+                        }}>
+                          {prod.brand || 'Hàn Quốc'}
+                        </span>
+
+                        <span style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          backgroundColor: '#FEF3C7',
+                          color: '#D97706',
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '4px'
+                        }}>
+                          CHỜ DUYỆT
+                        </span>
                       </div>
 
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700 }}>
-                          {prod.brand || 'Thương hiệu Hàn Quốc'}
-                        </div>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <div style={{
                           fontWeight: 800,
-                          fontSize: '0.85rem',
+                          fontSize: '0.88rem',
                           color: '#0F172A',
-                          lineHeight: 1.3,
+                          lineHeight: 1.4,
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
@@ -528,104 +1106,107 @@ export default function AdminProductSourcing() {
                         }}>
                           {prod.name}
                         </div>
+
                         {prod.nameKr && (
-                          <div style={{ fontSize: '0.7rem', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: '0.72rem', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {prod.nameKr}
                           </div>
                         )}
-                      </div>
-                    </div>
 
-                    {/* Pricing Box */}
-                    <div style={{
-                      backgroundColor: '#F8FAFC',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}>
-                      <div>
-                        <div style={{ fontSize: '0.68rem', color: '#64748B' }}>Giá Won gốc:</div>
-                        <strong style={{ fontSize: '0.85rem', color: '#0F172A' }}>{won.toLocaleString('vi-VN')} ₩</strong>
+                        <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+                              {won.toLocaleString('vi-VN')} ₩
+                            </div>
+                            <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#2563EB' }}>
+                              {vnd.toLocaleString('vi-VN')} đ
+                            </div>
+                          </div>
+                          <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            color: prod.category === 'ginseng' ? '#047857' : (prod.category === 'supplements' ? '#B45309' : '#1D4ED8'),
+                            backgroundColor: prod.category === 'ginseng' ? '#ECFDF5' : (prod.category === 'supplements' ? '#FFFBEB' : '#EFF6FF'),
+                            padding: '2px 6px',
+                            borderRadius: '4px'
+                          }}>
+                            {getCategoryLabel(prod.category)}
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.68rem', color: '#64748B' }}>Giá bán VNĐ ước tính:</div>
-                        <strong style={{ fontSize: '0.95rem', color: '#2563EB' }}>{vnd.toLocaleString('vi-VN')} đ</strong>
-                      </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      paddingTop: '6px',
-                      borderTop: '1px solid #F1F5F9'
-                    }}>
-                      {/* Approve Button */}
-                      <button
-                        onClick={() => handleApproveSingle(prod)}
+                      <div
                         style={{
-                          flex: 1,
-                          backgroundColor: '#10B981',
-                          color: '#FFF',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '8px',
-                          fontSize: '0.78rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
+                          paddingTop: '10px',
+                          borderTop: '1px solid #F1F5F9',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '4px'
+                          justifyContent: 'space-between',
+                          gap: '6px'
                         }}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Check size={14} />
-                        <span>Duyệt Lên Web</span>
-                      </button>
+                        <button
+                          onClick={(e) => handleApproveSingle(e, prod)}
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#10B981',
+                            color: '#FFF',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '6px 10px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Check size={12} />
+                          <span>Duyệt Lên Web</span>
+                        </button>
 
-                      {/* Edit Button */}
-                      <button
-                        onClick={() => handleOpenEdit(prod)}
-                        style={{
-                          backgroundColor: '#F1F5F9',
-                          color: '#334155',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '8px 10px',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                      >
-                        <Edit3 size={13} />
-                        <span>Sửa</span>
-                      </button>
+                        <button
+                          onClick={() => handleOpenEdit(prod)}
+                          style={{
+                            backgroundColor: '#2563EB',
+                            color: '#FFF',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '6px 10px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}
+                        >
+                          <Edit3 size={12} />
+                          <span>Sửa</span>
+                        </button>
 
-                      {/* Reject Button */}
-                      <button
-                        onClick={() => handleRejectSingle(prod.goodsNo)}
-                        style={{
-                          backgroundColor: '#FEE2E2',
-                          color: '#DC2626',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '8px 10px',
-                          cursor: 'pointer'
-                        }}
-                        title="Xoá khỏi Hàng Chờ Duyệt"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                        <button
+                          title="Xoá"
+                          onClick={() => handleRejectSingle(prod.goodsNo || prod.id)}
+                          style={{
+                            backgroundColor: '#FEE2E2',
+                            color: '#DC2626',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '6px 8px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           )}
         </div>
@@ -654,7 +1235,7 @@ export default function AdminProductSourcing() {
             </div>
 
             <h2 style={{ fontSize: '1.3rem', fontWeight: 900, margin: '0 0 6px 0' }}>
-              🚀 Trung Tâm Tìm & Nạp Hàng Hàn Quốc Chuẩn Y Tế
+              Trung Tâm Tìm & Nạp Hàng Hàn Quốc Chuẩn Y Tế
             </h2>
             <p style={{ fontSize: '0.82rem', color: '#CBD5E1', margin: '0 0 16px 0' }}>
               Dán đường dẫn sản phẩm bất kỳ để tự động bóc tách ảnh HD, giá gốc và thành phần dinh dưỡng.
@@ -706,7 +1287,7 @@ export default function AdminProductSourcing() {
                 onClick={() => handleBatchImportToPending('naver')}
                 style={{ backgroundColor: '#03C75A', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
               >
-                🟢 Naver Brand Store
+                Naver Brand Store
               </button>
               <button
                 onClick={() => handleBatchImportToPending('kgc')}
@@ -730,7 +1311,7 @@ export default function AdminProductSourcing() {
                 onClick={() => handleBatchImportToPending('all')}
                 style={{ backgroundColor: '#F59E0B', color: '#000', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
               >
-                ⚡ Nhập Tất Cả Vào Hàng Chờ Duyệt
+                Nhập Tất Cả Vào Hàng Chờ Duyệt
               </button>
             </div>
           </div>

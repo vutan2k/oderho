@@ -283,11 +283,11 @@ export default function AdminProductCatalog() {
 
   const getCategoryLabel = (cat) => {
     switch (cat) {
-      case 'ginseng': return '🌿 Sâm Nấm';
-      case 'supplements': return '💊 TPCN';
-      case 'cosmetics': return '✨ Mỹ Phẩm';
-      case 'skincare': return '💆 Da & Body';
-      default: return '📦 Khác';
+      case 'ginseng': return 'Sâm Nấm';
+      case 'supplements': return 'TPCN';
+      case 'cosmetics': return 'Mỹ Phẩm';
+      case 'skincare': return 'Da & Body';
+      default: return 'Khác';
     }
   };
 
@@ -309,7 +309,7 @@ export default function AdminProductCatalog() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: '#0F172A' }}>
-              🏷️ Kho Sản Phẩm Đang Bán ({products.length})
+              Kho Sản Phẩm Đang Bán ({products.length})
             </h2>
             <span style={{
               backgroundColor: '#ECFDF5',
@@ -460,9 +460,9 @@ export default function AdminProductCatalog() {
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
           {[
             { id: 'all', label: 'Tất Cả' },
-            { id: 'ginseng', label: '🌿 Sâm Nấm' },
-            { id: 'supplements', label: '💊 TPCN' },
-            { id: 'cosmetics', label: '✨ Mỹ Phẩm' }
+            { id: 'ginseng', label: 'Sâm Nấm' },
+            { id: 'supplements', label: 'TPCN' },
+            { id: 'cosmetics', label: 'Mỹ Phẩm' }
           ].map(cat => (
             <button
               key={cat.id}
@@ -499,8 +499,8 @@ export default function AdminProductCatalog() {
             }}
           >
             <option value="all">Tất cả tình trạng kho</option>
-            <option value="in_stock">🟢 Còn hàng</option>
-            <option value="out_of_stock">🔴 Tạm hết hàng</option>
+            <option value="in_stock">Còn hàng</option>
+            <option value="out_of_stock">Tạm hết hàng</option>
           </select>
         </div>
       </div>
@@ -533,42 +533,42 @@ export default function AdminProductCatalog() {
               onClick={() => handleBatchSetStock(false)}
               style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
             >
-              🟢 Chuyển Còn Hàng
+              Chuyển Còn Hàng
             </button>
 
             <button
               onClick={() => handleBatchSetStock(true)}
               style={{ backgroundColor: '#EF4444', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
             >
-              🔴 Chuyển Hết Hàng
+              Chuyển Hết Hàng
             </button>
 
             <button
               onClick={() => handleBatchSetVisibility(false)}
               style={{ backgroundColor: '#3B82F6', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
             >
-              🌐 Hiện Lên Web
+              Hiện Lên Web
             </button>
 
             <button
               onClick={() => handleBatchSetVisibility(true)}
               style={{ backgroundColor: '#64748B', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
             >
-              👁️ Tạm Ẩn
+              Tạm Ẩn
             </button>
 
             <button
               onClick={handleBatchMoveToPending}
               style={{ backgroundColor: '#F59E0B', color: '#000', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
             >
-              📥 Về Chờ Duyệt
+              Về Chờ Duyệt
             </button>
 
             <button
               onClick={handleBatchDelete}
               style={{ backgroundColor: '#DC2626', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
             >
-              🗑️ Xoá
+              Xoá
             </button>
           </div>
         </div>
@@ -638,30 +638,14 @@ export default function AdminProductCatalog() {
 
                   <th
                     onClick={() => handleSort('foreignPrice')}
-                    style={{ width: '110px', padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                    style={{ width: '130px', padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-                      <span>Giá Won (₩)</span>
+                      <span>Giá Bán</span>
                       {sortField === 'foreignPrice' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                     </div>
                   </th>
 
-                  <th style={{ width: '125px', padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0', color: '#1D4ED8' }}>
-                    Giá Bán VNĐ
-                  </th>
-
-                  <th
-                    onClick={() => handleSort('rating')}
-                    style={{ width: '80px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                      <span>⭐ ĐG</span>
-                      {sortField === 'rating' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
-                    </div>
-                  </th>
-
-                  <th style={{ width: '110px', padding: '10px 10px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>Tồn Kho</th>
-                  <th style={{ width: '100px', padding: '10px 10px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>Web</th>
                   <th style={{ width: '130px', padding: '10px 12px', textAlign: 'center' }}>Thao Tác</th>
                 </tr>
               </thead>
@@ -670,7 +654,7 @@ export default function AdminProductCatalog() {
               <tbody>
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={13} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                    <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
                       <ShoppingBag size={36} style={{ margin: '0 auto 8px auto', opacity: 0.4 }} />
                       <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#475569' }}>Không tìm thấy sản phẩm nào phù hợp</div>
                     </td>
@@ -796,62 +780,14 @@ export default function AdminProductCatalog() {
                           </span>
                         </td>
 
-                        {/* Won Price */}
-                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: '#475569', borderRight: '1px solid #E2E8F0', fontFamily: 'monospace' }}>
-                          {won.toLocaleString('vi-VN')} ₩
-                        </td>
-
-                        {/* VNĐ Price */}
-                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 900, color: '#2563EB', borderRight: '1px solid #E2E8F0' }}>
-                          {vnd.toLocaleString('vi-VN')} đ
-                        </td>
-
-                        {/* Rating */}
-                        <td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', fontWeight: 700, color: '#D97706', fontSize: '0.78rem' }}>
-                            <Star size={12} fill="#F59E0B" color="#F59E0B" />
-                            <span>{prod.rating || 4.9}</span>
+                        {/* Merged Price (VNĐ & Won) */}
+                        <td style={{ padding: '8px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0' }}>
+                          <div style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '0.88rem' }}>
+                            {vnd.toLocaleString('vi-VN')} đ
                           </div>
-                        </td>
-
-                        {/* Stock Toggle */}
-                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => handleToggleStock(e, prod)}
-                            style={{
-                              backgroundColor: isOutOfStock ? '#FEE2E2' : '#ECFDF5',
-                              color: isOutOfStock ? '#DC2626' : '#059669',
-                              border: isOutOfStock ? '1px solid #FECACA' : '1px solid #A7F3D0',
-                              borderRadius: '6px',
-                              padding: '4px 8px',
-                              fontSize: '0.7rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              width: '85px'
-                            }}
-                          >
-                            {isOutOfStock ? '🔴 Hết hàng' : '🟢 Còn hàng'}
-                          </button>
-                        </td>
-
-                        {/* Web Visibility Toggle */}
-                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => handleToggleVisibility(e, prod)}
-                            style={{
-                              backgroundColor: isHidden ? '#F1F5F9' : '#EFF6FF',
-                              color: isHidden ? '#64748B' : '#2563EB',
-                              border: isHidden ? '1px solid #CBD5E1' : '1px solid #BFDBFE',
-                              borderRadius: '6px',
-                              padding: '4px 8px',
-                              fontSize: '0.7rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              width: '75px'
-                            }}
-                          >
-                            {isHidden ? '👁️ Ẩn' : '🌐 Hiện'}
-                          </button>
+                          <div style={{ fontSize: '0.72rem', color: '#64748B', fontFamily: 'monospace', marginTop: '2px' }}>
+                            {won.toLocaleString('vi-VN')} ₩
+                          </div>
                         </td>
 
                         {/* Action Buttons */}
@@ -1099,7 +1035,7 @@ export default function AdminProductCatalog() {
                           cursor: 'pointer'
                         }}
                       >
-                        {isOutOfStock ? '🔴 Hết' : '🟢 Còn'}
+                        {isOutOfStock ? 'Hết hàng' : 'Còn hàng'}
                       </button>
 
                       <button
