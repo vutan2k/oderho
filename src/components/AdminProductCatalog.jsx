@@ -6,7 +6,8 @@ import {
   Search, Plus, Trash2, Edit3, ExternalLink,
   Star, RefreshCw, Eye, EyeOff, Layers, ShoppingBag,
   CheckCircle2, AlertCircle, Filter, ArrowUpRight,
-  SlidersHorizontal, Check, ArrowRight
+  SlidersHorizontal, Check, ArrowRight, Table, LayoutGrid,
+  Download, Copy, ArrowUpDown, ChevronDown, ChevronUp, CheckCheck
 } from 'lucide-react';
 
 export default function AdminProductCatalog() {
@@ -20,27 +21,41 @@ export default function AdminProductCatalog() {
   } = useContext(AppContext);
   const showToast = useToast();
 
+  // View state: 'table' (Excel Spreadsheet) | 'grid' (Cards)
+  const [viewMode, setViewMode] = useState('table');
+
+  // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [stockFilter, setStockFilter] = useState('all'); // 'all' | 'in_stock' | 'out_of_stock'
+
+  // Sorting
+  const [sortField, setSortField] = useState('name'); // 'name' | 'foreignPrice' | 'vnd' | 'rating' | 'goodsNo'
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
+
+  // Batch Selection
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Modal State
   const [editingProduct, setEditingProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Hover image preview
+  const [previewImgUrl, setPreviewImgUrl] = useState(null);
+
   const krwRate = rates?.KRW?.rate || 19.5;
   const serviceFee = rates?.serviceFeePercent || 5;
 
-  // Lọc sản phẩm
+  // Lọc và sắp xếp sản phẩm
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
+    let result = products.filter(p => {
       const matchCat = selectedCategory === 'all' || p.category === selectedCategory;
       const matchSearch = !searchTerm.trim() ||
         (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.goodsNo && p.goodsNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.nameKr && p.nameKr.toLowerCase().includes(searchTerm.toLowerCase()));
-      
+
       const isOutOfStock = Boolean(p.isOutOfStock);
       const matchStock = stockFilter === 'all' ||
         (stockFilter === 'in_stock' && !isOutOfStock) ||
@@ -48,7 +63,58 @@ export default function AdminProductCatalog() {
 
       return matchCat && matchSearch && matchStock;
     });
-  }, [products, selectedCategory, searchTerm, stockFilter]);
+
+    // Sắp xếp
+    result.sort((a, b) => {
+      let valA = a[sortField];
+      let valB = b[sortField];
+
+      if (sortField === 'foreignPrice' || sortField === 'price') {
+        valA = a.foreignPrice || a.price || 0;
+        valB = b.foreignPrice || b.price || 0;
+      } else if (sortField === 'rating') {
+        valA = a.rating || 0;
+        valB = b.rating || 0;
+      } else if (typeof valA === 'string') {
+        return sortOrder === 'asc'
+          ? String(valA).localeCompare(String(valB))
+          : String(valB).localeCompare(String(valA));
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [products, selectedCategory, searchTerm, stockFilter, sortField, sortOrder]);
+
+  // Đổi chiều sắp xếp cột
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Checkbox select all / deselect all
+  const handleToggleSelectAll = () => {
+    if (selectedIds.length === filteredProducts.length && filteredProducts.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredProducts.map(p => p.goodsNo));
+    }
+  };
+
+  // Toggle single item checkbox
+  const handleToggleSelect = (e, goodsNo) => {
+    e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(goodsNo) ? prev.filter(id => id !== goodsNo) : [...prev, goodsNo]
+    );
+  };
 
   // Mở modal sửa nhanh
   const handleOpenEdit = (prod) => {
@@ -91,11 +157,12 @@ export default function AdminProductCatalog() {
     }
   };
 
-  // Xoá sản phẩm
+  // Xoá 1 sản phẩm
   const handleDeleteProduct = (goodsNo) => {
     if (window.confirm('Bạn có chắc chắn muốn xoá sản phẩm này khỏi Kho Hàng Live?')) {
       deleteProduct(goodsNo);
       setIsModalOpen(false);
+      setSelectedIds(prev => prev.filter(id => id !== goodsNo));
       if (showToast) showToast('Đã xoá sản phẩm khỏi kho!', 'info');
     }
   };
@@ -126,7 +193,101 @@ export default function AdminProductCatalog() {
     if (window.confirm(`Chuyển "${prod.name}" về lại Hàng Chờ Duyệt (gỡ khỏi web bán hàng)?`)) {
       addPendingProduct({ ...prod, isPublished: false, status: 'pending' });
       deleteProduct(prod.goodsNo);
+      setSelectedIds(prev => prev.filter(id => id !== prod.goodsNo));
       if (showToast) showToast(`Đã chuyển "${prod.name}" về Hàng Chờ Duyệt!`, 'warning');
+    }
+  };
+
+  // Sao chép mã SKU
+  const handleCopySku = (e, sku) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(sku);
+    if (showToast) showToast(`Đã sao chép mã SKU: ${sku}`, 'success');
+  };
+
+  // THAO TÁC HÀNG LOẠT (BATCH ACTIONS)
+  const handleBatchSetStock = (isOutOfStock) => {
+    if (selectedIds.length === 0) return;
+    selectedIds.forEach(id => updateProduct(id, { isOutOfStock }));
+    if (showToast) showToast(`Đã cập nhật tình trạng kho cho ${selectedIds.length} sản phẩm!`, 'success');
+  };
+
+  const handleBatchSetVisibility = (isHidden) => {
+    if (selectedIds.length === 0) return;
+    selectedIds.forEach(id => updateProduct(id, { isHidden }));
+    if (showToast) showToast(`Đã cập nhật trạng thái hiển thị cho ${selectedIds.length} sản phẩm!`, 'success');
+  };
+
+  const handleBatchMoveToPending = () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Chuyển ${selectedIds.length} sản phẩm đã chọn về lại Hàng Chờ Duyệt?`)) {
+      selectedIds.forEach(id => {
+        const target = products.find(p => p.goodsNo === id);
+        if (target) {
+          addPendingProduct({ ...target, isPublished: false, status: 'pending' });
+          deleteProduct(id);
+        }
+      });
+      setSelectedIds([]);
+      if (showToast) showToast(`Đã chuyển ${selectedIds.length} sản phẩm về Hàng Chờ Duyệt!`, 'warning');
+    }
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`⚠️ BẠN CÓ CHẮC CHẮN MUỐN XOÁ ${selectedIds.length} SẢN PHẨM ĐÃ CHỌN KHỎI KHO?`)) {
+      selectedIds.forEach(id => deleteProduct(id));
+      setSelectedIds([]);
+      if (showToast) showToast(`Đã xoá ${selectedIds.length} sản phẩm khỏi kho!`, 'info');
+    }
+  };
+
+  // Xuất file CSV / Excel
+  const handleExportCSV = () => {
+    if (filteredProducts.length === 0) {
+      alert('Không có dữ liệu sản phẩm để xuất!');
+      return;
+    }
+
+    const headers = ['STT', 'Mã SKU', 'Tên Tiếng Việt', 'Tên Tiếng Hàn', 'Thương Hiệu', 'Danh Mục', 'Giá Won (KRW)', 'Giá Bán VNĐ', 'Đánh Giá', 'Số Lượt Đánh Giá', 'Tồn Kho', 'Trạng Thái Web'];
+    const rows = filteredProducts.map((p, idx) => {
+      const won = p.foreignPrice || p.price || 0;
+      const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
+      return [
+        idx + 1,
+        `"${p.goodsNo || ''}"`,
+        `"${(p.name || '').replace(/"/g, '""')}"`,
+        `"${(p.nameKr || '').replace(/"/g, '""')}"`,
+        `"${(p.brand || '').replace(/"/g, '""')}"`,
+        `"${p.category || 'ginseng'}"`,
+        won,
+        vnd,
+        p.rating || 4.9,
+        p.reviewsCount || 120,
+        p.isOutOfStock ? 'Hết hàng' : 'Còn hàng',
+        p.isHidden ? 'Tạm ẩn' : 'Đang bán'
+      ];
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Tavy_Kho_San_Pham_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    if (showToast) showToast('Đã xuất file Excel / CSV thành công!', 'success');
+  };
+
+  const getCategoryLabel = (cat) => {
+    switch (cat) {
+      case 'ginseng': return '🌿 Sâm Nấm';
+      case 'supplements': return '💊 TPCN';
+      case 'cosmetics': return '✨ Mỹ Phẩm';
+      case 'skincare': return '💆 Da & Body';
+      default: return '📦 Khác';
     }
   };
 
@@ -136,7 +297,7 @@ export default function AdminProductCatalog() {
       <div style={{
         backgroundColor: '#FFF',
         borderRadius: '16px',
-        padding: '20px 24px',
+        padding: '18px 24px',
         border: '1px solid #E2E8F0',
         display: 'flex',
         alignItems: 'center',
@@ -146,7 +307,7 @@ export default function AdminProductCatalog() {
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: '#0F172A' }}>
               🏷️ Kho Sản Phẩm Đang Bán ({products.length})
             </h2>
@@ -163,20 +324,93 @@ export default function AdminProductCatalog() {
             </span>
           </div>
           <p style={{ margin: '4px 0 0 0', color: '#64748B', fontSize: '0.82rem' }}>
-            Toàn quyền quản trị: Bấm vào bất kỳ thẻ sản phẩm nào để <strong>Chỉnh Sửa Nhanh</strong> thông tin & giá bán.
+            Bảng danh sách chuẩn Excel: Nhấp vào dòng để <strong>Chỉnh Sửa Nhanh</strong>, sửa trực tiếp giá và trạng thái kho.
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* View Switcher: Table vs Grid */}
+          <div style={{
+            display: 'flex',
+            backgroundColor: '#F1F5F9',
+            padding: '3px',
+            borderRadius: '8px',
+            border: '1px solid #CBD5E1'
+          }}>
+            <button
+              onClick={() => setViewMode('table')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: viewMode === 'table' ? '#FFF' : 'transparent',
+                color: viewMode === 'table' ? '#0F172A' : '#64748B',
+                fontWeight: viewMode === 'table' ? 800 : 600,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                boxShadow: viewMode === 'table' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none'
+              }}
+            >
+              <Table size={14} />
+              <span>Bảng Excel</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('grid')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: viewMode === 'grid' ? '#FFF' : 'transparent',
+                color: viewMode === 'grid' ? '#0F172A' : '#64748B',
+                fontWeight: viewMode === 'grid' ? 800 : 600,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                boxShadow: viewMode === 'grid' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none'
+              }}
+            >
+              <LayoutGrid size={14} />
+              <span>Lưới Thẻ</span>
+            </button>
+          </div>
+
+          {/* Export CSV Button */}
+          <button
+            onClick={handleExportCSV}
+            style={{
+              backgroundColor: '#F8FAFC',
+              color: '#0F172A',
+              border: '1px solid #CBD5E1',
+              borderRadius: '8px',
+              padding: '8px 14px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Download size={14} color="#059669" />
+            <span>Xuất Excel/CSV</span>
+          </button>
+
+          {/* Add Product Button */}
           <button
             onClick={handleOpenCreateNew}
             style={{
               backgroundColor: '#2563EB',
               color: '#FFF',
               border: 'none',
-              borderRadius: '10px',
-              padding: '10px 18px',
-              fontSize: '0.85rem',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '0.82rem',
               fontWeight: 800,
               cursor: 'pointer',
               display: 'flex',
@@ -185,8 +419,8 @@ export default function AdminProductCatalog() {
               boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
             }}
           >
-            <Plus size={16} />
-            <span>Thêm Sản Phẩm Mới</span>
+            <Plus size={15} />
+            <span>Thêm Mới</span>
           </button>
         </div>
       </div>
@@ -195,7 +429,7 @@ export default function AdminProductCatalog() {
       <div style={{
         backgroundColor: '#FFF',
         borderRadius: '12px',
-        padding: '14px 18px',
+        padding: '12px 18px',
         border: '1px solid #E2E8F0',
         display: 'flex',
         flexWrap: 'wrap',
@@ -208,7 +442,7 @@ export default function AdminProductCatalog() {
           <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="Tìm theo tên sản phẩm, mã, thương hiệu..."
+            placeholder="Tìm theo tên sản phẩm, mã SKU, thương hiệu..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -271,277 +505,663 @@ export default function AdminProductCatalog() {
         </div>
       </div>
 
-      {/* Product Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '16px'
-      }}>
-        {filteredProducts.length === 0 ? (
+      {/* Floating / Inline Batch Actions Bar (when rows are selected) */}
+      {selectedIds.length > 0 && (
+        <div style={{
+          backgroundColor: '#0F172A',
+          color: '#FFF',
+          borderRadius: '12px',
+          padding: '12px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+          boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ backgroundColor: '#2563EB', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 900 }}>
+              {selectedIds.length} ĐÃ CHỌN
+            </span>
+            <span style={{ fontSize: '0.82rem', color: '#CBD5E1' }}>
+              Thao tác hàng loạt trên các sản phẩm đã chọn:
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => handleBatchSetStock(false)}
+              style={{ backgroundColor: '#10B981', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              🟢 Chuyển Còn Hàng
+            </button>
+
+            <button
+              onClick={() => handleBatchSetStock(true)}
+              style={{ backgroundColor: '#EF4444', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              🔴 Chuyển Hết Hàng
+            </button>
+
+            <button
+              onClick={() => handleBatchSetVisibility(false)}
+              style={{ backgroundColor: '#3B82F6', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              🌐 Hiện Lên Web
+            </button>
+
+            <button
+              onClick={() => handleBatchSetVisibility(true)}
+              style={{ backgroundColor: '#64748B', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              👁️ Tạm Ẩn
+            </button>
+
+            <button
+              onClick={handleBatchMoveToPending}
+              style={{ backgroundColor: '#F59E0B', color: '#000', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+            >
+              📥 Về Chờ Duyệt
+            </button>
+
+            <button
+              onClick={handleBatchDelete}
+              style={{ backgroundColor: '#DC2626', color: '#FFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              🗑️ Xoá
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* EXCEL SPREADSHEET TABLE VIEW (MẶC ĐỊNH)                          */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {viewMode === 'table' && (
+        <div style={{
+          backgroundColor: '#FFF',
+          borderRadius: '14px',
+          border: '1px solid #CBD5E1',
+          overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+        }}>
+          <div style={{ overflowX: 'auto', maxHeight: '72vh' }}>
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontSize: '0.82rem',
+              textAlign: 'left'
+            }}>
+              {/* Excel Table Header */}
+              <thead style={{
+                position: 'sticky',
+                top: 0,
+                backgroundColor: '#F1F5F9',
+                borderBottom: '2px solid #CBD5E1',
+                zIndex: 10
+              }}>
+                <tr style={{ color: '#334155', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                  {/* Select All Checkbox */}
+                  <th style={{ width: '40px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === filteredProducts.length && filteredProducts.length > 0}
+                      onChange={handleToggleSelectAll}
+                      style={{ width: '15px', height: '15px', accentColor: '#2563EB', cursor: 'pointer' }}
+                    />
+                  </th>
+                  <th style={{ width: '45px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>#</th>
+                  <th style={{ width: '60px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>Ảnh</th>
+                  
+                  <th
+                    onClick={() => handleSort('goodsNo')}
+                    style={{ width: '130px', padding: '10px 12px', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>Mã SKU</span>
+                      {sortField === 'goodsNo' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                    </div>
+                  </th>
+
+                  <th
+                    onClick={() => handleSort('name')}
+                    style={{ minWidth: '260px', padding: '10px 12px', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>Tên Sản Phẩm (Việt / Hàn)</span>
+                      {sortField === 'name' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                    </div>
+                  </th>
+
+                  <th style={{ width: '120px', padding: '10px 12px', borderRight: '1px solid #E2E8F0' }}>Thương Hiệu</th>
+                  <th style={{ width: '110px', padding: '10px 12px', borderRight: '1px solid #E2E8F0' }}>Ngành Hàng</th>
+
+                  <th
+                    onClick={() => handleSort('foreignPrice')}
+                    style={{ width: '110px', padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                      <span>Giá Won (₩)</span>
+                      {sortField === 'foreignPrice' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                    </div>
+                  </th>
+
+                  <th style={{ width: '125px', padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0', color: '#1D4ED8' }}>
+                    Giá Bán VNĐ
+                  </th>
+
+                  <th
+                    onClick={() => handleSort('rating')}
+                    style={{ width: '80px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                      <span>⭐ ĐG</span>
+                      {sortField === 'rating' && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                    </div>
+                  </th>
+
+                  <th style={{ width: '110px', padding: '10px 10px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>Tồn Kho</th>
+                  <th style={{ width: '100px', padding: '10px 10px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>Web</th>
+                  <th style={{ width: '130px', padding: '10px 12px', textAlign: 'center' }}>Thao Tác</th>
+                </tr>
+              </thead>
+
+              {/* Excel Table Body */}
+              <tbody>
+                {filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={13} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                      <ShoppingBag size={36} style={{ margin: '0 auto 8px auto', opacity: 0.4 }} />
+                      <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#475569' }}>Không tìm thấy sản phẩm nào phù hợp</div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredProducts.map((prod, idx) => {
+                    const won = prod.foreignPrice || prod.price || 0;
+                    const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
+                    const isOutOfStock = Boolean(prod.isOutOfStock);
+                    const isHidden = Boolean(prod.isHidden);
+                    const isSelected = selectedIds.includes(prod.goodsNo);
+
+                    return (
+                      <tr
+                        key={prod.goodsNo || prod.id}
+                        onClick={() => handleOpenEdit(prod)}
+                        style={{
+                          backgroundColor: isSelected ? '#EFF6FF' : (idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF'),
+                          borderBottom: '1px solid #E2E8F0',
+                          cursor: 'pointer',
+                          transition: 'background 0.1s',
+                          opacity: isHidden ? 0.65 : 1
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) e.currentTarget.style.backgroundColor = idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF';
+                        }}
+                      >
+                        {/* Checkbox */}
+                        <td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => handleToggleSelect(e, prod.goodsNo)}
+                            style={{ width: '15px', height: '15px', accentColor: '#2563EB', cursor: 'pointer' }}
+                          />
+                        </td>
+
+                        {/* STT */}
+                        <td style={{ padding: '8px', textAlign: 'center', color: '#94A3B8', fontWeight: 600, borderRight: '1px solid #E2E8F0' }}>
+                          {idx + 1}
+                        </td>
+
+                        {/* Thumbnail Image */}
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '6px',
+                            backgroundColor: '#FFF',
+                            border: '1px solid #E2E8F0',
+                            overflow: 'hidden',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <img
+                              src={prod.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'}
+                              alt=""
+                              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                              onError={(e) => {
+                                e.target.src = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80';
+                              }}
+                            />
+                          </div>
+                        </td>
+
+                        {/* SKU */}
+                        <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#334155', fontSize: '0.78rem' }}>
+                              {prod.goodsNo}
+                            </span>
+                            <button
+                              title="Sao chép mã SKU"
+                              onClick={(e) => handleCopySku(e, prod.goodsNo)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#94A3B8' }}
+                            >
+                              <Copy size={12} />
+                            </button>
+                          </div>
+                        </td>
+
+                        {/* Product Title */}
+                        <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                          <div style={{ fontWeight: 700, color: '#0F172A', lineHeight: 1.35 }}>
+                            {prod.name}
+                          </div>
+                          {prod.nameKr && (
+                            <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '2px' }}>
+                              {prod.nameKr}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Brand */}
+                        <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0', color: '#475569', fontWeight: 600 }}>
+                          <span style={{
+                            backgroundColor: '#F1F5F9',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            color: '#334155'
+                          }}>
+                            {prod.brand || 'Korea'}
+                          </span>
+                        </td>
+
+                        {/* Category */}
+                        <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                          <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            color: prod.category === 'ginseng' ? '#047857' : (prod.category === 'supplements' ? '#B45309' : '#1D4ED8'),
+                            backgroundColor: prod.category === 'ginseng' ? '#ECFDF5' : (prod.category === 'supplements' ? '#FFFBEB' : '#EFF6FF'),
+                            padding: '2px 8px',
+                            borderRadius: '4px'
+                          }}>
+                            {getCategoryLabel(prod.category)}
+                          </span>
+                        </td>
+
+                        {/* Won Price */}
+                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: '#475569', borderRight: '1px solid #E2E8F0', fontFamily: 'monospace' }}>
+                          {won.toLocaleString('vi-VN')} ₩
+                        </td>
+
+                        {/* VNĐ Price */}
+                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 900, color: '#2563EB', borderRight: '1px solid #E2E8F0' }}>
+                          {vnd.toLocaleString('vi-VN')} đ
+                        </td>
+
+                        {/* Rating */}
+                        <td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', fontWeight: 700, color: '#D97706', fontSize: '0.78rem' }}>
+                            <Star size={12} fill="#F59E0B" color="#F59E0B" />
+                            <span>{prod.rating || 4.9}</span>
+                          </div>
+                        </td>
+
+                        {/* Stock Toggle */}
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => handleToggleStock(e, prod)}
+                            style={{
+                              backgroundColor: isOutOfStock ? '#FEE2E2' : '#ECFDF5',
+                              color: isOutOfStock ? '#DC2626' : '#059669',
+                              border: isOutOfStock ? '1px solid #FECACA' : '1px solid #A7F3D0',
+                              borderRadius: '6px',
+                              padding: '4px 8px',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              width: '85px'
+                            }}
+                          >
+                            {isOutOfStock ? '🔴 Hết hàng' : '🟢 Còn hàng'}
+                          </button>
+                        </td>
+
+                        {/* Web Visibility Toggle */}
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => handleToggleVisibility(e, prod)}
+                            style={{
+                              backgroundColor: isHidden ? '#F1F5F9' : '#EFF6FF',
+                              color: isHidden ? '#64748B' : '#2563EB',
+                              border: isHidden ? '1px solid #CBD5E1' : '1px solid #BFDBFE',
+                              borderRadius: '6px',
+                              padding: '4px 8px',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              width: '75px'
+                            }}
+                          >
+                            {isHidden ? '👁️ Ẩn' : '🌐 Hiện'}
+                          </button>
+                        </td>
+
+                        {/* Action Buttons */}
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            <button
+                              title="Chỉnh sửa chi tiết"
+                              onClick={() => handleOpenEdit(prod)}
+                              style={{
+                                backgroundColor: '#2563EB',
+                                color: '#FFF',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '4px 8px',
+                                fontSize: '0.72rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}
+                            >
+                              <Edit3 size={11} />
+                              <span>Sửa</span>
+                            </button>
+
+                            <button
+                              title="Chuyển về Hàng Chờ Duyệt"
+                              onClick={(e) => handleMoveToPending(e, prod)}
+                              style={{
+                                backgroundColor: '#FFFBEB',
+                                color: '#D97706',
+                                border: '1px solid #FDE68A',
+                                borderRadius: '6px',
+                                padding: '4px 6px',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Nháp
+                            </button>
+
+                            <button
+                              title="Xoá sản phẩm"
+                              onClick={() => handleDeleteProduct(prod.goodsNo || prod.id)}
+                              style={{
+                                backgroundColor: '#FEE2E2',
+                                color: '#DC2626',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '4px 6px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Table Footer Summary */}
           <div style={{
-            gridColumn: '1 / -1',
-            padding: '50px 20px',
-            textAlign: 'center',
-            backgroundColor: '#FFF',
-            borderRadius: '16px',
-            border: '1px dashed #CBD5E1',
-            color: '#94A3B8'
+            padding: '10px 18px',
+            backgroundColor: '#F8FAFC',
+            borderTop: '1px solid #CBD5E1',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '0.78rem',
+            color: '#64748B',
+            fontWeight: 600
           }}>
-            <ShoppingBag size={40} style={{ margin: '0 auto 12px auto', opacity: 0.4 }} />
-            <div style={{ fontWeight: 800, fontSize: '1rem', color: '#475569' }}>
-              Không tìm thấy sản phẩm nào phù hợp
+            <div>
+              Hiển thị <strong>{filteredProducts.length}</strong> / <strong>{products.length}</strong> sản phẩm trong kho
             </div>
-            <div style={{ fontSize: '0.82rem', marginTop: '6px' }}>
-              Hãy thử tìm kiếm từ khoá khác hoặc sang tab <strong>"Kho Nạp Hàng"</strong> để duyệt sản phẩm mới!
+            <div>
+              Tỷ giá quy đổi: <strong>1 KRW = {krwRate} VNĐ</strong> (Phí {serviceFee}%)
             </div>
           </div>
-        ) : (
-          filteredProducts.map(prod => {
-            const won = prod.foreignPrice || prod.price || 0;
-            const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
-            const isOutOfStock = Boolean(prod.isOutOfStock);
-            const isHidden = Boolean(prod.isHidden);
+        </div>
+      )}
 
-            return (
-              <div
-                key={prod.goodsNo || prod.id}
-                onClick={() => handleOpenEdit(prod)}
-                style={{
-                  backgroundColor: '#FFF',
-                  borderRadius: '14px',
-                  border: isOutOfStock ? '1px solid #FECACA' : (isHidden ? '1px dashed #CBD5E1' : '1px solid #E2E8F0'),
-                  padding: '14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  position: 'relative',
-                  opacity: isHidden ? 0.75 : 1
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 8px 20px -4px rgba(0, 0, 0, 0.1)';
-                  e.currentTarget.style.borderColor = '#2563EB';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)';
-                  e.currentTarget.style.borderColor = isOutOfStock ? '#FECACA' : (isHidden ? '#CBD5E1' : '#E2E8F0');
-                }}
-              >
-                {/* Product Image & Badges */}
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  height: '190px',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  backgroundColor: '#F8FAFC',
-                  border: '1px solid #F1F5F9'
-                }}>
-                  <img
-                    src={prod.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'}
-                    alt={prod.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    onError={(e) => {
-                      e.target.src = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80';
-                    }}
-                  />
-
-                  {/* Brand Tag Top Left */}
-                  <span style={{
-                    position: 'absolute',
-                    top: '8px',
-                    left: '8px',
-                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                    color: '#FFF',
-                    fontSize: '0.68rem',
-                    fontWeight: 800,
-                    padding: '2px 8px',
-                    borderRadius: '4px'
-                  }}>
-                    {prod.brand || 'Hàn Quốc'}
-                  </span>
-
-                  {/* Status Tag Top Right */}
-                  <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
-                    {isOutOfStock && (
-                      <span style={{
-                        backgroundColor: '#EF4444',
-                        color: '#FFF',
-                        fontSize: '0.65rem',
-                        fontWeight: 800,
-                        padding: '2px 6px',
-                        borderRadius: '4px'
-                      }}>
-                        HẾT HÀNG
-                      </span>
-                    )}
-                    {isHidden && (
-                      <span style={{
-                        backgroundColor: '#64748B',
-                        color: '#FFF',
-                        fontSize: '0.65rem',
-                        fontWeight: 800,
-                        padding: '2px 6px',
-                        borderRadius: '4px'
-                      }}>
-                        TẠM ẨN
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Product Info */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{
-                    fontWeight: 800,
-                    fontSize: '0.88rem',
-                    color: '#0F172A',
-                    lineHeight: 1.4,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
-                    {prod.name}
-                  </div>
-
-                  {prod.nameKr && (
-                    <div style={{ fontSize: '0.72rem', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {prod.nameKr}
-                    </div>
-                  )}
-
-                  {/* Pricing Box */}
-                  <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
-                        {won.toLocaleString('vi-VN')} ₩
-                      </div>
-                      <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#2563EB' }}>
-                        {vnd.toLocaleString('vi-VN')} đ
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', color: '#F59E0B', fontWeight: 800 }}>
-                      <Star size={13} fill="#F59E0B" />
-                      <span>{prod.rating || 4.9}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Direct Action Toolbar */}
-                <div
-                  style={{
-                    paddingTop: '10px',
-                    borderTop: '1px solid #F1F5F9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '6px'
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {/* Toggle Stock */}
-                    <button
-                      title={isOutOfStock ? "Chuyển sang Còn hàng" : "Chuyển sang Hết hàng"}
-                      onClick={(e) => handleToggleStock(e, prod)}
-                      style={{
-                        backgroundColor: isOutOfStock ? '#FEE2E2' : '#F1F5F9',
-                        color: isOutOfStock ? '#DC2626' : '#475569',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '4px 8px',
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {isOutOfStock ? '🔴 Hết hàng' : '🟢 Còn hàng'}
-                    </button>
-
-                    {/* Toggle Visibility */}
-                    <button
-                      title={isHidden ? "Hiện lên website" : "Tạm ẩn khỏi website"}
-                      onClick={(e) => handleToggleVisibility(e, prod)}
-                      style={{
-                        backgroundColor: isHidden ? '#F1F5F9' : '#EFF6FF',
-                        color: isHidden ? '#64748B' : '#2563EB',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '4px 8px',
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {isHidden ? 'Ẩn' : 'Hiện'}
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {/* Quick Edit Button */}
-                    <button
-                      onClick={() => handleOpenEdit(prod)}
-                      style={{
-                        backgroundColor: '#2563EB',
-                        color: '#FFF',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '4px 10px',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '3px'
-                      }}
-                    >
-                      <Edit3 size={12} />
-                      <span>Sửa</span>
-                    </button>
-
-                    {/* Move to Pending Button */}
-                    <button
-                      title="Chuyển về Hàng Chờ Duyệt"
-                      onClick={(e) => handleMoveToPending(e, prod)}
-                      style={{
-                        backgroundColor: '#FFFBEB',
-                        color: '#D97706',
-                        border: '1px solid #FDE68A',
-                        borderRadius: '6px',
-                        padding: '4px 6px',
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Nháp
-                    </button>
-
-                    {/* Delete Button */}
-                    <button
-                      title="Xoá sản phẩm"
-                      onClick={() => handleDeleteProduct(prod.goodsNo || prod.id)}
-                      style={{
-                        backgroundColor: '#FEE2E2',
-                        color: '#DC2626',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '4px 6px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* GRID VIEW (KHI CHỌN XEM DẠNG THẺ ẢNH)                           */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {viewMode === 'grid' && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '16px'
+        }}>
+          {filteredProducts.length === 0 ? (
+            <div style={{
+              gridColumn: '1 / -1',
+              padding: '50px 20px',
+              textAlign: 'center',
+              backgroundColor: '#FFF',
+              borderRadius: '16px',
+              border: '1px dashed #CBD5E1',
+              color: '#94A3B8'
+            }}>
+              <ShoppingBag size={40} style={{ margin: '0 auto 12px auto', opacity: 0.4 }} />
+              <div style={{ fontWeight: 800, fontSize: '1rem', color: '#475569' }}>
+                Không tìm thấy sản phẩm nào phù hợp
               </div>
-            );
-          })
-        )}
-      </div>
+            </div>
+          ) : (
+            filteredProducts.map(prod => {
+              const won = prod.foreignPrice || prod.price || 0;
+              const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
+              const isOutOfStock = Boolean(prod.isOutOfStock);
+              const isHidden = Boolean(prod.isHidden);
+              const isSelected = selectedIds.includes(prod.goodsNo);
+
+              return (
+                <div
+                  key={prod.goodsNo || prod.id}
+                  onClick={() => handleOpenEdit(prod)}
+                  style={{
+                    backgroundColor: '#FFF',
+                    borderRadius: '14px',
+                    border: isSelected ? '2px solid #2563EB' : (isOutOfStock ? '1px solid #FECACA' : (isHidden ? '1px dashed #CBD5E1' : '1px solid #E2E8F0')),
+                    padding: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    position: 'relative',
+                    opacity: isHidden ? 0.75 : 1
+                  }}
+                >
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '190px',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #F1F5F9'
+                  }}>
+                    <img
+                      src={prod.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'}
+                      alt={prod.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      onError={(e) => {
+                        e.target.src = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80';
+                      }}
+                    />
+
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      left: '8px',
+                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                      color: '#FFF',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '4px'
+                    }}>
+                      {prod.brand || 'Hàn Quốc'}
+                    </span>
+
+                    <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+                      {isOutOfStock && (
+                        <span style={{ backgroundColor: '#EF4444', color: '#FFF', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                          HẾT HÀNG
+                        </span>
+                      )}
+                      {isHidden && (
+                        <span style={{ backgroundColor: '#64748B', color: '#FFF', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                          TẠM ẨN
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      color: '#0F172A',
+                      lineHeight: 1.4,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}>
+                      {prod.name}
+                    </div>
+
+                    {prod.nameKr && (
+                      <div style={{ fontSize: '0.72rem', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {prod.nameKr}
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+                          {won.toLocaleString('vi-VN')} ₩
+                        </div>
+                        <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#2563EB' }}>
+                          {vnd.toLocaleString('vi-VN')} đ
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', color: '#F59E0B', fontWeight: 800 }}>
+                        <Star size={13} fill="#F59E0B" />
+                        <span>{prod.rating || 4.9}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      paddingTop: '10px',
+                      borderTop: '1px solid #F1F5F9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '6px'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button
+                        onClick={(e) => handleToggleStock(e, prod)}
+                        style={{
+                          backgroundColor: isOutOfStock ? '#FEE2E2' : '#F1F5F9',
+                          color: isOutOfStock ? '#DC2626' : '#475569',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {isOutOfStock ? '🔴 Hết' : '🟢 Còn'}
+                      </button>
+
+                      <button
+                        onClick={(e) => handleToggleVisibility(e, prod)}
+                        style={{
+                          backgroundColor: isHidden ? '#F1F5F9' : '#EFF6FF',
+                          color: isHidden ? '#64748B' : '#2563EB',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {isHidden ? 'Ẩn' : 'Hiện'}
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button
+                        onClick={() => handleOpenEdit(prod)}
+                        style={{
+                          backgroundColor: '#2563EB',
+                          color: '#FFF',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <Edit3 size={12} />
+                        <span>Sửa</span>
+                      </button>
+
+                      <button
+                        title="Xoá"
+                        onClick={() => handleDeleteProduct(prod.goodsNo || prod.id)}
+                        style={{
+                          backgroundColor: '#FEE2E2',
+                          color: '#DC2626',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '4px 6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
 
       {/* Quick Edit Modal */}
       <AdminProductModal
