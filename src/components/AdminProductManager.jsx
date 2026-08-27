@@ -88,15 +88,6 @@ function AdminProductManager() {
     );
   };
 
-  // Auto Timer for Price Sync Bot
-  useEffect(() => {
-    if (!priceSyncConfig.enabled) return;
-    const intervalMs = (priceSyncConfig.intervalMins || 60) * 60 * 1000;
-    const timer = setInterval(() => {
-      handleRunManualPriceSync();
-    }, intervalMs);
-    return () => clearInterval(timer);
-  }, [priceSyncConfig.enabled, priceSyncConfig.intervalMins, products]);
 
   const handleTogglePriceSync = () => {
     const updated = { ...priceSyncConfig, enabled: !priceSyncConfig.enabled };
@@ -330,6 +321,16 @@ function AdminProductManager() {
       if (showToast) showToast(`Lỗi quét giá: ${err.message}`, 'error');
     }
   };
+
+  // Auto Timer for Price Sync Bot
+  useEffect(() => {
+    if (!priceSyncConfig.enabled) return;
+    const intervalMs = (priceSyncConfig.intervalMins || 60) * 60 * 1000;
+    const timer = setInterval(() => {
+      handleRunManualPriceSync();
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [priceSyncConfig.enabled, priceSyncConfig.intervalMins, products]);
 
   // Export CSV
   const handleExportProductCSV = () => {

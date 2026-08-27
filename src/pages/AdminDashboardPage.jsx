@@ -58,8 +58,18 @@ export default function AdminDashboardPage() {
   // Settings inputs
   const [krwRateInput, setKrwRateInput] = useState(rates?.KRW?.rate || 19.5);
   const [serviceFeeInput, setServiceFeeInput] = useState(rates?.serviceFeePercent || 5);
+  const [isSavingRates, setIsSavingRates] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const prevOrdersLengthRef = useRef(orders.length);
+
+  useEffect(() => {
+    if (rates?.KRW?.rate !== undefined) {
+      setKrwRateInput(rates.KRW.rate);
+    }
+    if (rates?.serviceFeePercent !== undefined) {
+      setServiceFeeInput(rates.serviceFeePercent);
+    }
+  }, [rates?.KRW?.rate, rates?.serviceFeePercent]);
 
   // Current time clocks (Seoul KST & Vietnam ICT)
   const [timeNow, setTimeNow] = useState(new Date());
@@ -175,7 +185,7 @@ export default function AdminDashboardPage() {
     return vals.length > 0 ? Math.max(...vals, 1000000) : 1000000;
   }, [monthlyStats]);
 
-  const handleUpdateKrw = (e) => {
+  const handleUpdateKrw = async (e) => {
     e.preventDefault();
     const cleanStr = String(krwRateInput ?? '').replace(',', '.').trim();
     const val = parseFloat(cleanStr);
@@ -187,12 +197,19 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    updateRates({
-      ...rates,
-      KRW: { ...rates.KRW, rate: val },
-      serviceFeePercent: feeVal
-    });
-    if (showToast) showToast(`Đã lưu Tỷ giá = ${val}đ và Phí dịch vụ = ${feeVal}%!`, 'success');
+    try {
+      setIsSavingRates(true);
+      await updateRates({
+        ...rates,
+        KRW: { ...rates.KRW, rate: val },
+        serviceFeePercent: feeVal
+      });
+      if (showToast) showToast(`Đã lưu Tỷ giá = ${val}đ và Phí dịch vụ = ${feeVal}%!`, 'success');
+    } catch (err) {
+      if (showToast) showToast(`Lỗi khi lưu tỷ giá: ${err?.message || err}`, 'error');
+    } finally {
+      setIsSavingRates(false);
+    }
   };
 
   const handleExportCSV = () => {
@@ -396,7 +413,19 @@ export default function AdminDashboardPage() {
             </div>
             <button
               type="submit"
-              style={{ backgroundColor: 'var(--purple-primary)', color: '#FFF', border: 'none', padding: '8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', marginTop: '4px' }}
+              disabled={isSavingRates}
+              style={{
+                backgroundColor: 'var(--purple-primary)',
+                color: '#FFF',
+                border: 'none',
+                padding: '8px',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: isSavingRates ? 'not-allowed' : 'pointer',
+                opacity: isSavingRates ? 0.7 : 1,
+                marginTop: '4px'
+              }}
             >
               {isSavingRates ? 'Đang lưu...' : 'Lưu tỷ giá & phí'}
             </button>
