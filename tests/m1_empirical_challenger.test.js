@@ -185,7 +185,8 @@ runEmpiricalTest('[CHALLENGE-F2-02] Won to VND Auto-Conversion Under Extreme Rat
   const krwPrice = 50000;
 
   // Zero rate
-  const vndZero = Math.round(krwPrice * 0);
+  const zeroRate = 0;
+  const vndZero = Math.round(krwPrice * zeroRate);
   assertEquals(vndZero, 0);
 
   // Standard rate 19.5

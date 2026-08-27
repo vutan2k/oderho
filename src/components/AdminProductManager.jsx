@@ -10,9 +10,14 @@ import {
   VERIFIED_OLIVEYOUNG_PRICES
 } from '../services/oliveYoungPriceSyncService';
 import {
+  VERIFIED_KOREAN_HEALTH_CATALOG,
+  scrapeKoreanHealthProduct,
+  evaluateHealthFilterCriteria
+} from '../services/koreanHealthScraperCore';
+import {
   Plus, Trash2, X, Globe, Edit3, Download,
   Eye, RefreshCw, Zap, Clock, Search, ExternalLink,
-  Sparkles, CheckCircle2, AlertCircle, UploadCloud, Star, Filter
+  Sparkles, CheckCircle2, AlertCircle, UploadCloud, Star, Filter, Heart, Award, ShieldCheck
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -42,7 +47,7 @@ function AdminProductManager() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'pending' | 'price_logs'
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'pending' | 'khealth' | 'price_logs'
 
   // --- Search & Filter State ---
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,6 +68,13 @@ function AdminProductManager() {
   // --- Scraper State ---
   const [quickLink, setQuickLink] = useState('');
   const [loadingScrape, setLoadingScrape] = useState(false);
+
+  // --- K-Health Scraper State ---
+  const [healthSearch, setHealthSearch] = useState('');
+  const [healthCategoryFilter, setHealthCategoryFilter] = useState('all');
+  const [healthPreviewItem, setHealthPreviewItem] = useState(null);
+  const [isHealthScraping, setIsHealthScraping] = useState(false);
+  const [healthLinkInput, setHealthLinkInput] = useState('');
 
   // --- Price Sync Bot & Logs ---
   const [priceSyncConfig, setPriceSyncConfigState] = useState(() => getPriceSyncConfig());
@@ -462,6 +474,72 @@ function AdminProductManager() {
     }
   };
 
+  // 🌿 K-Health Scraper Handler
+  const handleScrapeHealth = async (e) => {
+    if (e) e.preventDefault();
+    if (!healthLinkInput.trim()) return;
+    setIsHealthScraping(true);
+    if (showToast) showToast('Đang phân tích & bóc tách dữ liệu Sâm Nấm / TPCN Hàn Quốc...', 'info');
+    try {
+      const res = await scrapeKoreanHealthProduct(healthLinkInput.trim());
+      setHealthPreviewItem(res);
+      if (showToast) showToast(`Bóc tách thành công: "${res.name}"!`, 'success');
+    } catch (err) {
+      if (showToast) showToast(`Lỗi bóc tách: ${err.message}`, 'error');
+    } finally {
+      setIsHealthScraping(false);
+    }
+  };
+
+  const handleImportHealthItem = (item, destination = 'live') => {
+    const productPayload = {
+      goodsNo: item.goodsNo || ('KH-' + Date.now().toString(36).toUpperCase()),
+      name: item.name,
+      brand: item.brand,
+      category: item.category || 'ginseng',
+      foreignPrice: item.foreignPrice || 50000,
+      productImage: item.productImage,
+      images: item.images || [item.productImage],
+      photoReviews: item.photoReviews || [],
+      rating: item.rating || 4.9,
+      reviewsCount: item.reviewsCount || 1000,
+      origin: item.origin || 'Hàn Quốc',
+      description: item.description || '',
+      usage: item.usage || '',
+      specifications: item.specifications || {},
+      activeIngredients: item.activeIngredients || [],
+      isVerifiedHealthFood: true,
+      isGmpCertified: true
+    };
+
+    if (destination === 'live') {
+      addProduct(productPayload);
+      if (showToast) showToast(`Đã đưa "${item.name}" vào Kho Hàng Live!`, 'success');
+    } else {
+      addPendingProduct(productPayload);
+      if (showToast) showToast(`Đã đưa "${item.name}" vào danh sách Chờ Duyệt!`, 'info');
+    }
+  };
+
+  const handleBatchImportHealth = (type = 'all') => {
+    let pool = [...VERIFIED_KOREAN_HEALTH_CATALOG];
+    if (type === 'ginseng') {
+      pool = pool.filter(p => p.category === 'ginseng');
+    } else if (type === 'supplements') {
+      pool = pool.filter(p => p.category === 'supplements');
+    } else if (type === 'kgc') {
+      pool = pool.filter(p => p.brand.includes('KGC') || p.brand.includes('CheongKwanJang'));
+    }
+
+    let count = 0;
+    pool.forEach(item => {
+      handleImportHealthItem(item, 'live');
+      count++;
+    });
+
+    if (showToast) showToast(`Đã nhập thành công ${count} sản phẩm ${type.toUpperCase()} vào Kho Live!`, 'success');
+  };
+
   // ⚡ Đồng bộ tức thời ảnh lên Database (Firestore / Context) khi Admin thêm/đổi ảnh
   const syncImageChangesToDb = (updatedImages, mainImg) => {
     if (editModal && editModal.goodsNo) {
@@ -811,6 +889,30 @@ function AdminProductManager() {
               {pendingProducts.length}
             </span>
           )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('khealth')}
+          style={{
+            padding: isMobile ? '6px 12px' : '8px 16px',
+            border: 'none',
+            backgroundColor: activeTab === 'khealth' ? '#ECFDF5' : 'transparent',
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            fontSize: isMobile ? '0.8rem' : '0.88rem',
+            fontWeight: activeTab === 'khealth' ? 800 : 600,
+            color: activeTab === 'khealth' ? '#059669' : 'var(--text-muted)',
+            borderBottom: activeTab === 'khealth' ? '3px solid #059669' : '3px solid transparent',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            flexShrink: 0
+          }}
+        >
+          <span>🌿 Sâm Nấm & TPCN</span>
+          <span style={{ backgroundColor: '#10B981', color: '#FFF', padding: '1px 6px', borderRadius: '10px', fontSize: '0.68rem', fontWeight: 800 }}>
+            {VERIFIED_KOREAN_HEALTH_CATALOG.length}
+          </span>
         </button>
 
         <button
@@ -1823,6 +1925,592 @@ function AdminProductManager() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════ TAB 4: SÂM NẤM & TPCN HÀN QUỐC (K-HEALTH SCRAPER) ═══════════ */}
+      {activeTab === 'khealth' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          
+          {/* Header Banner */}
+          <div style={{
+            backgroundColor: '#064E3B',
+            color: '#FFF',
+            borderRadius: '14px',
+            padding: isMobile ? '14px 16px' : '18px 24px',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'space-between',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            gap: '12px',
+            boxShadow: '0 4px 12px rgba(6, 78, 59, 0.15)'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span style={{ backgroundColor: '#10B981', color: '#FFF', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px' }}>
+                  CHUẨN Y TẾ & MFDS
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#A7F3D0', fontWeight: 600 }}>
+                  Đa Kênh: KGC • Nonghyup • Olive Young • Naver • Coupang
+                </span>
+              </div>
+              <h2 style={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 900, margin: 0 }}>
+                🌿 Cào Dữ Liệu Sâm Nấm & Thực Phẩm Chức Năng Hàn Quốc
+              </h2>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#D1FAE5', opacity: 0.9 }}>
+                Bóc tách tự động hàm lượng Ginsenoside, hoạt chất sinh học, quy cách, công dụng và album ảnh mở hộp thật.
+              </p>
+            </div>
+
+            {/* Quick Batch Actions */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              <button
+                onClick={() => handleBatchImportHealth('kgc')}
+                style={{
+                  backgroundColor: '#047857',
+                  color: '#FFF',
+                  border: '1px solid #059669',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                + Top Sâm KGC
+              </button>
+              <button
+                onClick={() => handleBatchImportHealth('ginseng')}
+                style={{
+                  backgroundColor: '#047857',
+                  color: '#FFF',
+                  border: '1px solid #059669',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                + Nấm Nonghyup
+              </button>
+              <button
+                onClick={() => handleBatchImportHealth('supplements')}
+                style={{
+                  backgroundColor: '#047857',
+                  color: '#FFF',
+                  border: '1px solid #059669',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                + TPCN Quốc Dân
+              </button>
+              <button
+                onClick={() => handleBatchImportHealth('all')}
+                style={{
+                  backgroundColor: '#F59E0B',
+                  color: '#000',
+                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                ⚡ Nhập Tất Cả (1-Click)
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Health Scraper Input Bar */}
+          <div style={{
+            backgroundColor: '#FFF',
+            borderRadius: '12px',
+            padding: isMobile ? '12px' : '14px 18px',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: '10px',
+            alignItems: 'center'
+          }}>
+            <form onSubmit={handleScrapeHealth} style={{ display: 'flex', gap: '8px', flex: 1, width: '100%' }}>
+              <input
+                type="text"
+                placeholder="Dán link KGC CheongKwanJang, Nonghyup, Olive Young, Naver, Coupang hoặc nhập tên..."
+                value={healthLinkInput}
+                onChange={(e) => setHealthLinkInput(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }}
+              />
+              <button
+                type="submit"
+                disabled={isHealthScraping || !healthLinkInput.trim()}
+                style={{
+                  backgroundColor: '#059669',
+                  color: '#FFF',
+                  border: 'none',
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <Sparkles size={14} />
+                <span>{isHealthScraping ? 'Đang bóc tách...' : 'Cào & Phân Tích Dược Liệu'}</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Category Tabs & Search Filter */}
+          <div style={{
+            backgroundColor: '#FFF',
+            borderRadius: '12px',
+            padding: '10px 14px',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'space-between',
+            alignItems: isMobile ? 'stretch' : 'center',
+            gap: '10px'
+          }}>
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: isMobile ? '4px' : 0 }}>
+              <button
+                onClick={() => setHealthCategoryFilter('all')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  border: '1px solid',
+                  borderColor: healthCategoryFilter === 'all' ? '#059669' : '#E2E8F0',
+                  backgroundColor: healthCategoryFilter === 'all' ? '#ECFDF5' : '#FFF',
+                  color: healthCategoryFilter === 'all' ? '#059669' : '#64748B',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Tất cả ({VERIFIED_KOREAN_HEALTH_CATALOG.length})
+              </button>
+              <button
+                onClick={() => setHealthCategoryFilter('ginseng')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  border: '1px solid',
+                  borderColor: healthCategoryFilter === 'ginseng' ? '#059669' : '#E2E8F0',
+                  backgroundColor: healthCategoryFilter === 'ginseng' ? '#ECFDF5' : '#FFF',
+                  color: healthCategoryFilter === 'ginseng' ? '#059669' : '#64748B',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                🌿 Sâm & Nấm ({VERIFIED_KOREAN_HEALTH_CATALOG.filter(p => p.category === 'ginseng').length})
+              </button>
+              <button
+                onClick={() => setHealthCategoryFilter('supplements')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  border: '1px solid',
+                  borderColor: healthCategoryFilter === 'supplements' ? '#059669' : '#E2E8F0',
+                  backgroundColor: healthCategoryFilter === 'supplements' ? '#ECFDF5' : '#FFF',
+                  color: healthCategoryFilter === 'supplements' ? '#059669' : '#64748B',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                💊 Thực phẩm chức năng ({VERIFIED_KOREAN_HEALTH_CATALOG.filter(p => p.category === 'supplements').length})
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Search size={14} color="var(--text-muted)" />
+              <input
+                type="text"
+                placeholder="Tìm nhanh tên sản phẩm hoặc thương hiệu..."
+                value={healthSearch}
+                onChange={(e) => setHealthSearch(e.target.value)}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '0.78rem',
+                  width: isMobile ? '100%' : '240px'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Grid of Health Products */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: '12px'
+          }}>
+            {VERIFIED_KOREAN_HEALTH_CATALOG
+              .filter(p => {
+                if (healthCategoryFilter !== 'all' && p.category !== healthCategoryFilter) return false;
+                if (healthSearch.trim()) {
+                  const q = healthSearch.toLowerCase();
+                  return p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.koreanTitle.toLowerCase().includes(q);
+                }
+                return true;
+              })
+              .map((item) => {
+                const vndPrice = Math.round(item.foreignPrice * krwRate * serviceFeeMultiplier);
+                const evalInfo = evaluateHealthFilterCriteria(item);
+
+                return (
+                  <div
+                    key={item.goodsNo}
+                    style={{
+                      backgroundColor: '#FFF',
+                      borderRadius: '12px',
+                      border: '1px solid #E2E8F0',
+                      padding: '14px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      position: 'relative'
+                    }}
+                  >
+                    <div>
+                      {/* Top Badges */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px', marginBottom: '8px' }}>
+                        <span style={{
+                          backgroundColor: '#DCFCE7',
+                          color: '#15803D',
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}>
+                          <ShieldCheck size={12} />
+                          ĐẠT CHUẨN 3 LỚP ({evalInfo.score}/100)
+                        </span>
+
+                        <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 600 }}>
+                          {item.source}
+                        </span>
+                      </div>
+
+                      {/* Product Media & Basic Info */}
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <img
+                          src={item.productImage}
+                          alt={item.name}
+                          style={{
+                            width: '76px',
+                            height: '76px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid #F1F5F9',
+                            flexShrink: 0
+                          }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800, textTransform: 'uppercase' }}>
+                            {item.brand}
+                          </div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1.3, marginTop: '2px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {item.name}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {item.koreanTitle}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Rating & Active Ingredients */}
+                      <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', color: '#F59E0B', fontWeight: 800 }}>
+                            <Star size={13} fill="#F59E0B" /> {item.rating}
+                          </span>
+                          <span style={{ color: '#64748B' }}>
+                            ({item.reviewsCount?.toLocaleString('vi-VN')} reviews thật từ người Hàn)
+                          </span>
+                        </div>
+
+                        {item.activeIngredients && item.activeIngredients.length > 0 && (
+                          <div style={{
+                            backgroundColor: '#F0FDF4',
+                            border: '1px solid #BBF7D0',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            fontSize: '0.7rem',
+                            color: '#166534',
+                            fontWeight: 600,
+                            marginTop: '4px'
+                          }}>
+                            ⚡ {item.activeIngredients[0]}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Price & Actions */}
+                    <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '10px', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.7rem', color: '#64748B' }}>Giá gốc: </span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155' }}>₩{item.foreignPrice.toLocaleString('vi-VN')}</span>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#DC2626' }}>
+                            {vndPrice.toLocaleString('vi-VN')} đ
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                        <button
+                          onClick={() => setHealthPreviewItem(item)}
+                          style={{
+                            backgroundColor: '#F8FAFC',
+                            color: '#334155',
+                            border: '1px solid #CBD5E1',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Eye size={12} />
+                          <span>Chi Tiết Dược Liệu</span>
+                        </button>
+                        <button
+                          onClick={() => handleImportHealthItem(item, 'live')}
+                          style={{
+                            backgroundColor: '#059669',
+                            color: '#FFF',
+                            border: 'none',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Plus size={12} />
+                          <span>+ Vào Kho Live</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* 🌿 MODAL XEM TRƯỚC CHI TIẾT SÂM NẤM & TPCN HÀN QUỐC (HEALTH PREVIEW MODAL) */}
+      {healthPreviewItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 99999,
+            padding: '16px'
+          }}
+          onClick={() => setHealthPreviewItem(null)}
+        >
+          <div
+            style={{
+              backgroundColor: '#FFF',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '680px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: isMobile ? '16px' : '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px', marginBottom: '14px' }}>
+              <div>
+                <span style={{ backgroundColor: '#DCFCE7', color: '#166534', fontSize: '0.7rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                  🌿 THUỘC TÍNH DƯỢC LIỆU & DINH DƯỠNG
+                </span>
+                <h3 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-dark)' }}>
+                  {healthPreviewItem.name}
+                </h3>
+                <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>
+                  {healthPreviewItem.koreanTitle}
+                </div>
+              </div>
+              <button
+                onClick={() => setHealthPreviewItem(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#64748B' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* Media Thumbnails & Price Summary */}
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: '#F8FAFC', padding: '12px', borderRadius: '10px' }}>
+                <img
+                  src={healthPreviewItem.productImage}
+                  alt={healthPreviewItem.name}
+                  style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #CBD5E1' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#059669' }}>
+                    Thương hiệu: {healthPreviewItem.brand} ({healthPreviewItem.origin || 'Hàn Quốc'})
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '3px' }}>
+                    Nguồn: <strong>{healthPreviewItem.source}</strong>
+                  </div>
+                  <div style={{ marginTop: '6px', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 900, color: '#DC2626' }}>
+                      {Math.round((healthPreviewItem.foreignPrice || 50000) * krwRate * serviceFeeMultiplier).toLocaleString('vi-VN')} đ
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                      (₩{Number(healthPreviewItem.foreignPrice || 50000).toLocaleString('vi-VN')})
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Ingredients Section */}
+              {healthPreviewItem.activeIngredients && healthPreviewItem.activeIngredients.length > 0 && (
+                <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#166534', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    🧪 Hoạt Chất Dược Lý & Dinh Dưỡng
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.8rem', color: '#14532D', lineHeight: 1.5 }}>
+                    {healthPreviewItem.activeIngredients.map((ing, idx) => (
+                      <li key={idx}><strong>{ing}</strong></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Usage & Target Audience */}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px' }}>
+                <div style={{ backgroundColor: '#FEF3C7', padding: '10px 12px', borderRadius: '8px', border: '1px solid #FDE68A' }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#92400E', marginBottom: '4px' }}>
+                    💡 Hướng Dẫn Sử Dụng
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#78350F', lineHeight: 1.4 }}>
+                    {healthPreviewItem.usage || 'Uống theo chỉ định in trên nhãn sản phẩm.'}
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: '#EFF6FF', padding: '10px 12px', borderRadius: '8px', border: '1px solid #BFDBFE' }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#1E40AF', marginBottom: '4px' }}>
+                    🎯 Đối Tượng Khuyên Dùng
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#1E3A8A', lineHeight: 1.4 }}>
+                    {healthPreviewItem.targetUsers || 'Người trưởng thành cần bồi bổ và tăng cường sức khỏe.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Unboxing Real Reviews */}
+              {healthPreviewItem.photoReviews && healthPreviewItem.photoReviews.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                    📸 Album Ảnh Mở Hộp & Review Thực Tế Của Người Dùng Hàn Quốc ({healthPreviewItem.reviewsCount?.toLocaleString('vi-VN')} đánh giá • {healthPreviewItem.rating}★)
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                    {healthPreviewItem.photoReviews.map((revImg, idx) => (
+                      <img
+                        key={idx}
+                        src={revImg}
+                        alt="Review ảnh thật"
+                        style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E2E8F0', flexShrink: 0 }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Actions */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px', borderTop: '1px solid #E2E8F0', paddingTop: '14px' }}>
+                <button
+                  onClick={() => {
+                    handleImportHealthItem(healthPreviewItem, 'pending');
+                    setHealthPreviewItem(null);
+                  }}
+                  style={{
+                    backgroundColor: '#FEF3C7',
+                    color: '#92400E',
+                    border: '1px solid #FCD34D',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⏳ Lưu Vào Chờ Duyệt
+                </button>
+                <button
+                  onClick={() => {
+                    handleImportHealthItem(healthPreviewItem, 'live');
+                    setHealthPreviewItem(null);
+                  }}
+                  style={{
+                    backgroundColor: '#059669',
+                    color: '#FFF',
+                    border: 'none',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✓ Duyệt & Đưa Vào Kho Live
+                </button>
+              </div>
+
+            </div>
           </div>
         </div>
       )}

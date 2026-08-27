@@ -6,6 +6,7 @@
  */
 
 import { lookupKnownGoods } from './productScraperService';
+import { scrapeKoreanHealthProduct } from './koreanHealthScraperCore';
 import {
   cleanHighResImageUrl,
   isOliveYoungJunkImage,
@@ -165,7 +166,20 @@ export async function runAIScraperAgent(url) {
     const cleanUrl = url.trim();
     console.log(`🤖 AI Scraper Agent đang xử lý đường dẫn: ${cleanUrl}...`);
 
-    // 1. Cache đã verify trước
+    // 1. Kiểm tra Sâm Nấm & TPCN Hàn Quốc hoặc CSDL Xác Thực K-Health
+    const isKoreanHealthSource = /kgcshop|kgc\.co\.kr|nhmall|nonghyup|KGC-|NONGHYUP-|CKD-|ORTHOMOL-|BBLAB-|KHEALTH-/i.test(cleanUrl);
+    if (isKoreanHealthSource) {
+      try {
+        const healthProd = await scrapeKoreanHealthProduct(cleanUrl);
+        if (healthProd) {
+          return { success: true, product: healthProd };
+        }
+      } catch (e) {
+        console.warn('Korean Health Scraper error, falling back to generic scraper:', e);
+      }
+    }
+
+    // 2. Cache đã verify trước
     const cached = await lookupKnownGoods(cleanUrl);
     if (cached.success && cached.product) {
       return { success: true, product: cached.product };

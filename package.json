@@ -8,6 +8,8 @@
     "build": "vite build",
     "lint": "oxlint",
     "test": "node tests/run_all_tests.js",
+    "scrape:health": "node scripts/scrape_korean_health_products.js --all",
+    "scrape:ginseng": "node scripts/scrape_korean_health_products.js --category=ginseng",
     "scrape:playwright": "node scripts/playwright_ai_scraper.js",
     "scrape:playwright:headful": "HEADLESS=false MAX_PRODUCTS=10 node scripts/playwright_ai_scraper.js",
     "sync:prices": "node scripts/cron_price_sync_bot.js",
