@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import AdminProductCatalog from '../components/AdminProductCatalog';
@@ -38,11 +38,35 @@ export default function AdminDashboardPage() {
     pendingProducts
   } = useContext(AppContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const showToast = useToast();
 
   // 4 Tabs chuẩn E-commerce
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'orders' | 'products' | 'settings'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'orders' | 'products' | 'sourcing' | 'settings'
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Sync activeTab from URL pathname
+  useEffect(() => {
+    const path = (location.pathname || '').toLowerCase();
+    if (path.includes('/products') || path.includes('/catalog')) {
+      setActiveTab('products');
+    } else if (path.includes('/sourcing') || path.includes('/pending')) {
+      setActiveTab('sourcing');
+    } else if (path.includes('/orders')) {
+      setActiveTab('orders');
+    } else if (path.includes('/settings') || path.includes('/rates')) {
+      setActiveTab('settings');
+    } else if (path.includes('/overview') || path.includes('/dashboard') || path === '/admin' || path === '/admin/') {
+      setActiveTab('overview');
+    }
+  }, [location.pathname]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAdminAuthenticated) {
+      navigate('/admin/login', { replace: true });
+    }
+  }, [isAdminAuthenticated, navigate]);
 
   // Quick Currency Converter state
   const [calcWon, setCalcWon] = useState('50000');
@@ -94,6 +118,12 @@ export default function AdminDashboardPage() {
       return sum + getOrderTotalVnd(order, krwRate, serviceFee);
     }, 0);
   }, [orders, krwRate, serviceFee]);
+
+  const handleSwitchTab = (tabId) => {
+    setActiveTab(tabId);
+    setSidebarOpen(false);
+    navigate(`/admin/${tabId}`, { replace: true });
+  };
 
   const handleSaveRates = async (e) => {
     e.preventDefault();
@@ -237,10 +267,7 @@ export default function AdminDashboardPage() {
             return (
               <button
                 key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSwitchTab(item.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -349,7 +376,7 @@ export default function AdminDashboardPage() {
 
               {/* Card 2: Đơn Chờ Báo Giá */}
               <div
-                onClick={() => setActiveTab('orders')}
+                onClick={() => handleSwitchTab('orders')}
                 style={{
                   backgroundColor: '#FFF',
                   borderRadius: '12px',
@@ -374,7 +401,7 @@ export default function AdminDashboardPage() {
 
               {/* Card 3: Đơn Cần Đặt Mua Hàn Quốc */}
               <div
-                onClick={() => setActiveTab('orders')}
+                onClick={() => handleSwitchTab('orders')}
                 style={{
                   backgroundColor: '#FFF',
                   borderRadius: '12px',
@@ -398,7 +425,7 @@ export default function AdminDashboardPage() {
 
               {/* Card 4: Sản Phẩm Đang Bán */}
               <div
-                onClick={() => setActiveTab('products')}
+                onClick={() => handleSwitchTab('products')}
                 style={{
                   backgroundColor: '#FFF',
                   borderRadius: '12px',
@@ -422,7 +449,7 @@ export default function AdminDashboardPage() {
 
               {/* Card 5: Hàng Chờ Duyệt */}
               <div
-                onClick={() => setActiveTab('sourcing')}
+                onClick={() => handleSwitchTab('sourcing')}
                 style={{
                   backgroundColor: '#FFF',
                   borderRadius: '12px',
@@ -462,7 +489,7 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
                 <button
-                  onClick={() => setActiveTab('orders')}
+                  onClick={() => handleSwitchTab('orders')}
                   style={{ background: 'none', border: 'none', color: '#2563EB', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
                 >
                   Xem toàn bộ Kanban ➔
@@ -480,7 +507,7 @@ export default function AdminDashboardPage() {
                   {[...urgentQueue.needQuote, ...urgentQueue.needPurchase].map(order => (
                     <div
                       key={order.id}
-                      onClick={() => setActiveTab('orders')}
+                      onClick={() => handleSwitchTab('orders')}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -558,7 +585,7 @@ export default function AdminDashboardPage() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
-                  onClick={() => setActiveTab('settings')}
+                  onClick={() => handleSwitchTab('settings')}
                   style={{
                     backgroundColor: '#F1F5F9',
                     border: '1px solid #CBD5E1',
@@ -570,7 +597,7 @@ export default function AdminDashboardPage() {
                     cursor: 'pointer'
                   }}
                 >
-                  ⚙️ Cài Đặt Tỷ Giá Won Mới ➔
+                  Cài Đặt Tỷ Giá Won Mới ➔
                 </button>
               </div>
             </div>

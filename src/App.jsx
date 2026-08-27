@@ -33,16 +33,46 @@ export default function App() {
             <ChatWidget />
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
+                {/* Trang chủ & Aliases */}
                 <Route path="/" element={<KROrderHomePage />} />
+                <Route path="/home" element={<KROrderHomePage />} />
+                <Route path="/products" element={<KROrderHomePage />} />
+                <Route path="/catalog" element={<KROrderHomePage />} />
+                <Route path="/kr-order" element={<KROrderHomePage />} />
+
+                {/* Khách hàng & Mua hàng */}
                 <Route path="/cart" element={<><Navbar /><CartPage /></>} />
+                <Route path="/gio-hang" element={<><Navbar /><CartPage /></>} />
+                <Route path="/checkout" element={<><Navbar /><CartPage /></>} />
                 <Route path="/login" element={<><Navbar /><LoginPage /></>} />
+                <Route path="/dang-nhap" element={<><Navbar /><LoginPage /></>} />
                 <Route path="/orders" element={<><Navbar /><OrdersPage /></>} />
+                <Route path="/order" element={<><Navbar /><OrdersPage /></>} />
+                <Route path="/don-hang" element={<><Navbar /><OrdersPage /></>} />
+                <Route path="/tra-cuu" element={<><Navbar /><OrdersPage /></>} />
+                <Route path="/tracking" element={<><Navbar /><OrdersPage /></>} />
                 <Route path="/profile" element={<><Navbar /><UserProfilePage /></>} />
+                <Route path="/tai-khoan" element={<><Navbar /><UserProfilePage /></>} />
                 <Route path="/payment/:orderId" element={<><Navbar /><PaymentPage /></>} />
+                <Route path="/thanh-toan/:orderId" element={<><Navbar /><PaymentPage /></>} />
                 <Route path="/policy" element={<><Navbar /><PolicyPage /></>} />
+                <Route path="/chinh-sach" element={<><Navbar /><PolicyPage /></>} />
+
+                {/* Admin & Quản trị */}
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+                <Route path="/admin/overview" element={<AdminDashboardPage />} />
+                <Route path="/admin/products" element={<AdminDashboardPage />} />
+                <Route path="/admin/catalog" element={<AdminDashboardPage />} />
+                <Route path="/admin/sourcing" element={<AdminDashboardPage />} />
+                <Route path="/admin/pending" element={<AdminDashboardPage />} />
+                <Route path="/admin/orders" element={<AdminDashboardPage />} />
+                <Route path="/admin/settings" element={<AdminDashboardPage />} />
+                <Route path="/admin/rates" element={<AdminDashboardPage />} />
+                <Route path="/admin/*" element={<AdminDashboardPage />} />
+
+                {/* Catch-all 404 */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>

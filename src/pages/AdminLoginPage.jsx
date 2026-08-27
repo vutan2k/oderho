@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { Lock, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -9,9 +9,11 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  if (isAdminAuthenticated) {
-    navigate('/admin/dashboard');
-  }
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isAdminAuthenticated, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
