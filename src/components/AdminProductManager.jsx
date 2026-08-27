@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useContext, useMemo, useEffect, useRef, memo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { runAIScraperAgent } from '../services/aiScraperAgentEngine';
@@ -21,7 +21,7 @@ const CATEGORIES = [
   { value: 'supplements', label: 'Thực phẩm chức năng' }
 ];
 
-export default function AdminProductManager() {
+function AdminProductManager() {
   const {
     products, addProduct, updateProduct, deleteProduct,
     pendingProducts, addPendingProduct, updatePendingProduct,
@@ -269,18 +269,37 @@ export default function AdminProductManager() {
     await updateProduct(prod.goodsNo, synced);
     const diff = (synced.foreignPrice || 0) - (prod.foreignPrice || 0);
     const diffMsg = diff !== 0 ? ` (Giá mới: ₩${synced.foreignPrice.toLocaleString('vi-VN')})` : ' (Giá đã chuẩn)';
-    if (showToast) showToast(`⚡ Đã neo giá OY cho "${synced.name || prod.goodsNo}": ₩${synced.foreignPrice.toLocaleString('vi-VN')}${diffMsg}`, 'success');
+    if (synced.priceSyncStatus === 'synced_oliveyoung') {
+      if (showToast) showToast(`⚡ Đã đối chiếu giá OY chính thức cho "${synced.name || prod.goodsNo}": ₩${synced.foreignPrice.toLocaleString('vi-VN')}${diffMsg}`, 'success');
+    } else {
+      if (showToast) showToast(`ℹ️ Sản phẩm "${prod.name || prod.goodsNo}" chưa có trong CSDL xác thực OY (giữ nguyên: ₩${(synced.foreignPrice || 0).toLocaleString('vi-VN')})`, 'info');
+    }
   };
 
   // ⚡ Batch Anchor Price
   const handleBatchAnchorPrice = async () => {
     if (selectedProducts.length === 0) return;
     const targetProds = products.filter(p => selectedProducts.includes(p.goodsNo));
+    let matchedCount = 0;
+    let unverifiedCount = 0;
     for (const prod of targetProds) {
       const synced = syncProductPriceWithOliveYoung(prod);
+      if (synced.priceSyncStatus === 'synced_oliveyoung') {
+        matchedCount++;
+      } else {
+        unverifiedCount++;
+      }
       await updateProduct(prod.goodsNo, synced);
     }
-    if (showToast) showToast(`⚡ Đã neo giá Olive Young cho ${targetProds.length} sản phẩm đã chọn!`, 'success');
+    if (showToast) {
+      if (matchedCount > 0 && unverifiedCount > 0) {
+        showToast(`⚡ Đã cập nhật ${targetProds.length} sản phẩm: ${matchedCount} sản phẩm chuẩn OY, ${unverifiedCount} sản phẩm chưa xác thực.`, 'success');
+      } else if (matchedCount > 0) {
+        showToast(`⚡ Đã neo giá Olive Young chuẩn cho ${matchedCount} sản phẩm đã chọn!`, 'success');
+      } else {
+        showToast(`ℹ️ ${unverifiedCount} sản phẩm đã chọn chưa có trong CSDL xác thực Olive Young (giữ nguyên giá).`, 'info');
+      }
+    }
   };
 
   // Quét & cập nhật toàn bộ kho sản phẩm chuẩn Olive Young
@@ -300,10 +319,10 @@ export default function AdminProductManager() {
       setPriceSyncConfigState(getPriceSyncConfig());
       setPriceSyncLogs(updatedLogs);
       if (showToast) {
-        if (res.updatedCount > 0) {
-          showToast(`⚡ Đã đồng bộ giá chuẩn Olive Young cho ${res.updatedCount}/${res.totalScanned} sản phẩm!`, 'success');
+        if (res.verifiedCount > 0) {
+          showToast(`⚡ Đã quét ${res.totalScanned} sản phẩm: ${res.verifiedCount} sản phẩm chuẩn OY (${res.updatedCount} thay đổi), ${res.unverifiedCount} chưa xác thực.`, 'success');
         } else {
-          showToast(`✅ Toàn bộ ${res.totalScanned} sản phẩm đã khớp 100% với giá Olive Young!`, 'success');
+          showToast(`ℹ️ Đã quét ${res.totalScanned} sản phẩm: Không có sản phẩm nào trong CSDL xác thực OY (giữ nguyên giá).`, 'info');
         }
       }
     } catch (err) {
@@ -2214,7 +2233,7 @@ export default function AdminProductManager() {
                   <Zap size={16} color="#D97706" /> Báo Cáo Đối Chiếu Giá OY
                 </h3>
                 <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  Quét {priceSyncSummaryModal.totalScanned} SP | Cập nhật {priceSyncSummaryModal.updatedCount} SP biến động
+                  Quét {priceSyncSummaryModal.totalScanned} SP | Khớp CSDL OY: {priceSyncSummaryModal.verifiedCount ?? 0} SP | Cập nhật: {priceSyncSummaryModal.updatedCount} SP | Chưa xác thực: {priceSyncSummaryModal.unverifiedCount ?? 0} SP
                 </p>
               </div>
               <button onClick={() => setPriceSyncSummaryModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -2226,7 +2245,11 @@ export default function AdminProductManager() {
               {priceSyncSummaryModal.changes.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '30px 10px', color: '#059669' }}>
                   <CheckCircle2 size={36} style={{ margin: '0 auto 6px auto' }} />
-                  <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>Kho hàng đã khớp 100% với Olive Young!</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>
+                    {priceSyncSummaryModal.verifiedCount > 0
+                      ? 'Các sản phẩm trong CSDL xác thực Olive Young đã khớp 100%!'
+                      : 'Không phát hiện biến động giá (Các sản phẩm giữ nguyên giá gốc).'}
+                  </div>
                 </div>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.76rem' }}>
@@ -2286,7 +2309,8 @@ export default function AdminProductManager() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
+
+export default memo(AdminProductManager);

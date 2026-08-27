@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { ORDER_STEPS, getStatusConfig } from '../../data/orderStatuses';
 import { calculateStepProgress, getProofBadges } from '../../services/guestTrackingService';
+import { getOrderTotalVnd, formatVnd } from '../../utils/priceCalculator';
 import ProofMediaModal from './ProofMediaModal';
 
 /**
@@ -52,19 +53,7 @@ export default function GuestOrderStatusCard({
   const proofData = getProofBadges(order);
 
   // Compute total VND amount
-  let totalOrderVnd = 0;
-  if (order.totalVnd && order.totalVnd > 0) {
-    totalOrderVnd = order.totalVnd;
-  } else if (order.quote?.totalVnd && order.quote.totalVnd > 0) {
-    totalOrderVnd = order.quote.totalVnd;
-  } else if (Array.isArray(order.items) && order.items.length > 0) {
-    totalOrderVnd = order.items.reduce((sum, item) => {
-      const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate * serviceFeeMultiplier);
-      return sum + itemPrice * (item.qty || item.quantity || 1);
-    }, 0);
-  } else if (order.foreignPrice) {
-    totalOrderVnd = Math.round(order.foreignPrice * krwRate * serviceFeeMultiplier * (order.quantity || 1));
-  }
+  const totalOrderVnd = getOrderTotalVnd(order, rates);
 
   // Items list
   const items = Array.isArray(order.items) && order.items.length > 0

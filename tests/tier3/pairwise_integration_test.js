@@ -7,10 +7,8 @@ import { test, setTier } from '../framework/runner.js';
 import {
   assert,
   assertEquals,
-  assertDeepEquals,
   assertContains,
   assertGreaterThan,
-  assertThrows,
 } from '../framework/assert.js';
 
 import { OLIVE_YOUNG_CATALOG } from '../../src/data/catalog.js';

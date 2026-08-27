@@ -8,6 +8,7 @@ import {
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 import ProductDetailModal from '../components/ProductDetailModal';
 import { ORDER_STEPS, getOrderStepIndex } from '../data/orderStatuses';
+import { getOrderTotalVnd, formatVnd, formatKrw } from '../utils/priceCalculator';
 
 export default function UserProfilePage() {
   const { currentUser, updateUserProfile, changePassword, logoutUser, orders, rates, oliveYoungCatalog, addToCart } = useContext(AppContext);
@@ -585,19 +586,7 @@ export default function UserProfilePage() {
   const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
 
                     // Tính tổng hóa đơn 100% chuẩn xác
-                    let displayTotal = 0;
-                    if (order.totalVnd && order.totalVnd > 0) {
-                      displayTotal = order.totalVnd;
-                    } else if (order.quote?.totalVnd && order.quote.totalVnd > 0) {
-                      displayTotal = order.quote.totalVnd;
-                    } else if (Array.isArray(order.items) && order.items.length > 0) {
-                      displayTotal = order.items.reduce((sum, item) => {
-                        const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate * serviceFeeMultiplier);
-                        return sum + itemPrice * (item.qty || 1);
-                      }, 0);
-                    } else {
-                      displayTotal = Math.round((order.foreignPrice || 0) * krwRate * serviceFeeMultiplier * (order.qty || 1));
-                    }
+                    const displayTotal = getOrderTotalVnd(order, rates);
 
                     return (
                       <div

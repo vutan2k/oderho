@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import ProductDetailModal from '../components/ProductDetailModal';
 import { ORDER_STEPS, getOrderStepIndex, getStatusConfig } from '../data/orderStatuses';
+import { getOrderTotalVnd, formatVnd, formatKrw, getVndFromWon } from '../utils/priceCalculator';
 
 export default function OrdersPage() {
   const { currentUser, orders, rates, oliveYoungCatalog } = useContext(AppContext);
@@ -149,19 +150,7 @@ export default function OrdersPage() {
             const isPaidOrAdvanced = order.paymentStatus === 'paid' || ['deposit_paid', 'confirmed', 'purchased', 'packed_kr', 'in_transit_air', 'customs_cleared', 'completed', 'in_kr_warehouse', 'transit', 'in_vn_warehouse', 'delivering'].includes(order.status);
 
             // Tính tổng thanh toán
-            let displayTotal = 0;
-            if (order.totalVnd && order.totalVnd > 0) {
-              displayTotal = order.totalVnd;
-            } else if (order.quote?.totalVnd && order.quote.totalVnd > 0) {
-              displayTotal = order.quote.totalVnd;
-            } else if (Array.isArray(order.items) && order.items.length > 0) {
-              displayTotal = order.items.reduce((sum, item) => {
-                const itemPrice = item.price || Math.round((item.foreignPrice || 0) * krwRate * serviceFeeMultiplier);
-                return sum + itemPrice * (item.qty || 1);
-              }, 0);
-            } else {
-              displayTotal = Math.round((order.foreignPrice || 0) * krwRate * serviceFeeMultiplier * (order.qty || 1));
-            }
+            const displayTotal = getOrderTotalVnd(order, rates);
 
             return (
               <div

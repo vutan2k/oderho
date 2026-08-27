@@ -7,10 +7,8 @@ import { test, setTier } from '../framework/runner.js';
 import {
   assert,
   assertEquals,
-  assertDeepEquals,
   assertContains,
   assertGreaterThan,
-  assertThrows,
 } from '../framework/assert.js';
 
 import { OLIVE_YOUNG_CATALOG } from '../../src/data/catalog.js';
@@ -128,10 +126,7 @@ test('[SCENARIO-1] Full Overseas Customer Purchase & VietQR Payment Lifecycle (F
 
 // 2. Scenario 2: Admin Order Quotation, Exchange Rate Config & Weight Calculation Workflow (F6, F7, F8)
 test('[SCENARIO-2] Admin Order Quotation, Exchange Rate Config & Weight Calculation Workflow (F6, F7, F8)', () => {
-  // Step 1: Admin authenticates
-  const adminAuth = { isAuthenticated: true, user: 'admin@tavykorea.vn' };
-
-  // Step 2: Admin updates KRW rate to 20.0
+  // Step 1: Admin updates KRW rate to 20.0
   const ratesConfig = { KRW: { rate: 19.5 }, USD: { rate: 25500 } };
   ratesConfig.KRW.rate = 20.0;
   assertEquals(ratesConfig.KRW.rate, 20.0, 'KRW rate updated to 20.0');

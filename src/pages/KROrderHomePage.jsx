@@ -90,19 +90,22 @@ export default function KROrderHomePage() {
     setHasSearched(false);
   };
 
-  const filteredProducts = oliveYoungCatalog ? oliveYoungCatalog.filter((product) => {
-    if (product.isPublished === false || product.status === 'pending' || product.isHidden === true) return false;
+  const filteredProducts = useMemo(() => {
+    if (!oliveYoungCatalog) return [];
+    return oliveYoungCatalog.filter((product) => {
+      if (product.isPublished === false || product.status === 'pending' || product.isHidden === true) return false;
 
-    if (activeCategory === 'all') return true;
-    const cat = (product.category || '').toLowerCase();
-    
-    if (cat === activeCategory) return true;
-    if (activeCategory === 'cosmetics') return cat.includes('mỹ phẩm') || cat.includes('skin') || cat.includes('dưỡng') || cat.includes('make') || cat.includes('trang') || cat.includes('hair') || cat.includes('body');
-    if (activeCategory === 'ginseng') return cat.includes('sâm') || cat.includes('nấm');
-    if (activeCategory === 'supplements') return cat.includes('thực phẩm') || cat.includes('chức năng') || cat.includes('health') || cat.includes('collagen') || cat.includes('pharm') || cat.includes('thuốc');
-    
-    return false;
-  }) : [];
+      if (activeCategory === 'all') return true;
+      const cat = (product.category || '').toLowerCase();
+      
+      if (cat === activeCategory) return true;
+      if (activeCategory === 'cosmetics') return cat.includes('mỹ phẩm') || cat.includes('skin') || cat.includes('dưỡng') || cat.includes('make') || cat.includes('trang') || cat.includes('hair') || cat.includes('body');
+      if (activeCategory === 'ginseng') return cat.includes('sâm') || cat.includes('nấm');
+      if (activeCategory === 'supplements') return cat.includes('thực phẩm') || cat.includes('chức năng') || cat.includes('health') || cat.includes('collagen') || cat.includes('pharm') || cat.includes('thuốc');
+      
+      return false;
+    });
+  }, [oliveYoungCatalog, activeCategory]);
 
   const handleNavCategoryClick = (e, catId) => {
     e.preventDefault();

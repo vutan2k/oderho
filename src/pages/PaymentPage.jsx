@@ -5,6 +5,7 @@ import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase';
 import { Helmet } from 'react-helmet-async';
 import { Clock, Upload, CheckCircle, AlertTriangle, Copy, CreditCard, RefreshCw } from 'lucide-react';
+import { getOrderTotalVnd, formatVnd, formatKrw } from '../utils/priceCalculator';
 import Footer from '../components/Footer';
 
 const BANK_ACCOUNTS = {
@@ -175,9 +176,7 @@ export default function PaymentPage() {
   const krwRate = rates?.KRW?.rate || 19.5;
   const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
   
-  const transferVnd = order.quote?.totalVnd || order.totalVnd || (Array.isArray(order.items) && order.items.length > 0
-    ? order.items.reduce((sum, i) => sum + (i.price || Math.round((i.foreignPrice || 0) * krwRate * serviceFeeMultiplier)) * (i.qty || 1), 0)
-    : Math.round((order.foreignPrice || 0) * krwRate * serviceFeeMultiplier * (order.qty || 1)));
+  const transferVnd = getOrderTotalVnd(order, rates);
 
   const transferKrw = (Array.isArray(order.items) && order.items.length > 0)
     ? order.items.reduce((sum, i) => sum + (i.foreignPrice || 0) * (i.qty || 1), 0)

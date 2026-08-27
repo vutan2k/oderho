@@ -7,8 +7,7 @@ import {
 import {
   fetchVietnamProvinces,
   fetchVietnamSubDivisions,
-  ALL_63_VIETNAM_PROVINCES,
-  COMMON_SUB_DIVISIONS
+  ALL_63_VIETNAM_PROVINCES
 } from '../../src/services/vietnamAddressService.js';
 
 setTier('Tier 2: Boundary & Corner Cases');

@@ -1,0 +1,93 @@
+/**
+ * Centralized Price Calculation & Currency Formatting Utility
+ * Standardized across all customer & admin workflows in TAVY Korea.
+ */
+
+/**
+ * Calculates the total VND of an order based on:
+ * 1. Explicit order.totalVnd if > 0
+ * 2. Admin quote order.quote.totalVnd if > 0
+ * 3. Multi-item cart order (order.items) with serviceFeeMultiplier
+ * 4. Single-item fallback: foreignPrice * krwRate * serviceFeeMultiplier * qty
+ *
+ * @param {Object} order - The order object
+ * @param {Object} rates - Exchange rates config from AppContext/Firestore
+ * @returns {number} Total amount in VND (rounded integer)
+ */
+export function getOrderTotalVnd(order, rates) {
+  if (!order || typeof order !== 'object') return 0;
+
+  // 1. Explicit order.totalVnd if valid number > 0
+  if (typeof order.totalVnd === 'number' && order.totalVnd > 0) {
+    return Math.round(order.totalVnd);
+  }
+
+  // 2. Admin Quotation total if available
+  if (order.quote && typeof order.quote.totalVnd === 'number' && order.quote.totalVnd > 0) {
+    return Math.round(order.quote.totalVnd);
+  }
+
+  const country = order.country || 'KRW';
+  const rateInfo = rates && rates[country] ? rates[country] : rates?.KRW;
+  const krwRate = rateInfo?.rate || rates?.KRW?.rate || 19.5;
+  const serviceFeePercent = rates?.serviceFeePercent !== undefined ? rates.serviceFeePercent : 5;
+  const serviceFeeMultiplier = 1 + (serviceFeePercent / 100);
+
+  // 3. Multi-item cart order
+  if (Array.isArray(order.items) && order.items.length > 0) {
+    return order.items.reduce((sum, item) => {
+      if (!item) return sum;
+      const qty = Number(item.qty || item.quantity) || 1;
+      let itemPriceVnd;
+      if (typeof item.price === 'number' && item.price > 0) {
+        itemPriceVnd = item.price;
+      } else {
+        const itemWon = Number(item.foreignPrice || item.priceKrw || item.priceWon) || 0;
+        itemPriceVnd = Math.round(itemWon * krwRate * serviceFeeMultiplier);
+      }
+      return sum + (itemPriceVnd * qty);
+    }, 0);
+  }
+
+  // 4. Single-item order fallback
+  const foreignPrice = Number(order.foreignPrice) || 0;
+  const qty = Number(order.qty || order.quantity) || 1;
+  return Math.round(foreignPrice * krwRate * serviceFeeMultiplier * qty);
+}
+
+/**
+ * Calculates single VND price from Korean Won (KRW) with exchange rate and service fee.
+ *
+ * @param {number|string} won - Price in Won (KRW)
+ * @param {Object} rates - Exchange rates config
+ * @returns {number} Price in VND (rounded integer)
+ */
+export function getVndFromWon(won, rates) {
+  const numWon = Number(won) || 0;
+  const krwRate = rates?.KRW?.rate || 19.5;
+  const serviceFeePercent = rates?.serviceFeePercent !== undefined ? rates.serviceFeePercent : 5;
+  const serviceFeeMultiplier = 1 + (serviceFeePercent / 100);
+  return Math.round(numWon * krwRate * serviceFeeMultiplier);
+}
+
+/**
+ * Formats a number into Vietnamese Dong currency format (e.g., "150.000 VNĐ").
+ *
+ * @param {number|string} amount
+ * @returns {string} Formatted VND string
+ */
+export function formatVnd(amount) {
+  if (amount == null || isNaN(amount)) return '0 VNĐ';
+  return `${new Intl.NumberFormat('vi-VN').format(Math.round(amount))} VNĐ`;
+}
+
+/**
+ * Formats a number into Korean Won currency format (e.g., "₩25,000").
+ *
+ * @param {number|string} amount
+ * @returns {string} Formatted KRW string
+ */
+export function formatKrw(amount) {
+  if (amount == null || isNaN(amount)) return '₩0';
+  return `₩${new Intl.NumberFormat('ko-KR').format(Math.round(amount))}`;
+}

@@ -189,8 +189,8 @@ export const syncProductPriceWithOliveYoung = (product) => {
     };
   }
 
-  const defaultPrice = product.foreignPrice || product.price || 25000;
-  const defaultOrig = product.originalPrice || Math.round(defaultPrice * 1.2);
+  const defaultPrice = product.foreignPrice || product.price || 0;
+  const defaultOrig = product.originalPrice || defaultPrice;
 
   return {
     ...product,
@@ -198,7 +198,7 @@ export const syncProductPriceWithOliveYoung = (product) => {
     foreignPrice: defaultPrice,
     originalPrice: defaultOrig,
     price: defaultPrice,
-    priceSyncStatus: 'synced_oliveyoung',
+    priceSyncStatus: 'unverified',
     priceLastSyncedAt: new Date().toISOString()
   };
 };
@@ -207,9 +207,14 @@ export const syncProductPriceWithOliveYoung = (product) => {
  * Quét và đồng bộ toàn bộ kho sản phẩm
  */
 export const syncAllProductsWithOliveYoung = (products = [], onProgress = null) => {
-  if (!Array.isArray(products)) return { updatedProducts: [], changes: [], updatedCount: 0 };
+  if (!Array.isArray(products)) {
+    return { updatedProducts: [], changes: [], updatedCount: 0, verifiedCount: 0, unverifiedCount: 0, totalScanned: 0 };
+  }
 
   const changes = [];
+  let verifiedCount = 0;
+  let unverifiedCount = 0;
+
   const updatedProducts = products.map((prod, idx) => {
     if (onProgress && typeof onProgress === 'function') {
       onProgress(idx + 1, products.length, prod.name);
@@ -217,6 +222,12 @@ export const syncAllProductsWithOliveYoung = (products = [], onProgress = null) 
     const currentPrice = Number(prod.foreignPrice || prod.price) || 0;
     const synced = syncProductPriceWithOliveYoung(prod);
     const newPrice = Number(synced.foreignPrice) || 0;
+
+    if (synced.priceSyncStatus === 'synced_oliveyoung') {
+      verifiedCount++;
+    } else {
+      unverifiedCount++;
+    }
 
     if (currentPrice !== newPrice) {
       changes.push({
@@ -227,6 +238,7 @@ export const syncAllProductsWithOliveYoung = (products = [], onProgress = null) 
         newPrice: newPrice,
         originalPrice: synced.originalPrice,
         diffWon: newPrice - currentPrice,
+        priceSyncStatus: synced.priceSyncStatus,
         timestamp: new Date().toISOString()
       });
     }
@@ -237,6 +249,8 @@ export const syncAllProductsWithOliveYoung = (products = [], onProgress = null) 
     updatedProducts,
     changes,
     updatedCount: changes.length,
+    verifiedCount,
+    unverifiedCount,
     totalScanned: products.length,
     timestamp: new Date().toISOString()
   };

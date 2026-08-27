@@ -1,6 +1,5 @@
 import { setTier, test } from '../framework/runner.js';
 import {
-  assert,
   assertEquals,
 } from '../framework/assert.js';
 import { scrapeProductMetadata } from '../../src/services/productScraperService.js';

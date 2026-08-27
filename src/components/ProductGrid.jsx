@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { ShoppingBag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatVnd, formatKrw } from '../utils/priceCalculator';
 
-export default function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
+function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 48;
 
@@ -9,16 +10,12 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
     setCurrentPage(1);
   }, [products]);
 
-  const formatVnd = (num) =>
-    (num || num === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(num))} VNĐ` : '0 VNĐ';
-
-  const formatKrw = (num) =>
-    '₩' + new Intl.NumberFormat('ko-KR').format(num || 0);
-
   // Logic phân trang
   const totalPages = Math.ceil((products?.length || 0) / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentProducts = products?.slice(startIndex, startIndex + itemsPerPage) || [];
+  const currentProducts = useMemo(() => {
+    return products?.slice(startIndex, startIndex + itemsPerPage) || [];
+  }, [products, startIndex, itemsPerPage]);
 
   return (
     <div>
@@ -246,3 +243,5 @@ export default function ProductGrid({ products, krwRate, onSelectProduct, onView
     </div>
   );
 }
+
+export default memo(ProductGrid);

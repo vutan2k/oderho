@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { getStatusConfig, getOrderStepIndex, ORDER_STEPS } from '../../data/orderStatuses';
+import { getOrderTotalVnd, formatVnd, formatKrw } from '../../utils/priceCalculator';
 import { Search, Package, Check, ExternalLink, Video, FileText, PackageCheck, Scale, Plane, Truck, ArrowLeft } from 'lucide-react';
 
 export default function OrderTrackerLookup({ onBack, isMobile }) {
@@ -215,7 +216,7 @@ export default function OrderTrackerLookup({ onBack, isMobile }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', paddingTop: '4px' }}>
               <span style={{ color: '#6B7280' }}>Tổng thanh toán:</span>
               <strong style={{ color: 'var(--text-dark)', fontSize: '0.88rem' }}>
-                {formatVnd(searchedOrder.totalVnd || searchedOrder.quote?.totalVnd || (searchedOrder.foreignPrice ? searchedOrder.foreignPrice * krwRate * serviceFeeMultiplier : 0))}
+                {formatVnd(getOrderTotalVnd(searchedOrder, rates))}
               </strong>
             </div>
           </div>

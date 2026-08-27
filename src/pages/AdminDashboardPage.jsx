@@ -1,36 +1,26 @@
-import React, { useContext, useState, useMemo, useEffect } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import AdminProductManager from '../components/AdminProductManager';
 import AdminOrderManager from '../components/AdminOrderManager';
 import { APP_VERSION } from '../data/appVersion';
+import { getOrderTotalVnd } from '../utils/priceCalculator';
 import {
   BarChart3,
   ShoppingBag,
   FileSpreadsheet,
-  Settings,
   LogOut,
-  DollarSign,
-  Tag,
   RefreshCw,
   FileText,
   TrendingUp,
   Download,
   CreditCard,
-  CheckCircle,
-  XCircle,
-  Eye,
-  Clock,
-  ArrowRight,
   Calculator,
   ChevronRight,
   Menu,
   X,
-  Plane,
-  PackageCheck,
   AlertTriangle,
-  Sparkles,
   ExternalLink
 } from 'lucide-react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -44,7 +34,6 @@ export default function AdminDashboardPage() {
     rates,
     updateRates,
     publishToWeb,
-    revertFromWeb,
     products,
     pendingProducts
   } = useContext(AppContext);
@@ -53,21 +42,24 @@ export default function AdminDashboardPage() {
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'orders' | 'products' | 'payments' | 'settings'
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [proofModal, setProofModal] = useState(null);
 
   // Quick Currency Converter state
   const [calcWon, setCalcWon] = useState('30000');
-  const [calcVnd, setCalcVnd] = useState('');
-  const [calcMode, setCalcMode] = useState('wonToVnd'); // 'wonToVnd' | 'vndToWon'
+
+  const krwRate = rates?.KRW?.rate || 19.5;
+  const serviceFee = rates?.serviceFeePercent || 5;
+
+  const calcVnd = useMemo(() => {
+    const won = parseFloat(String(calcWon).replace(/,/g, '')) || 0;
+    const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
+    return vnd.toLocaleString('vi-VN');
+  }, [calcWon, krwRate, serviceFee]);
 
   // Settings inputs
   const [krwRateInput, setKrwRateInput] = useState(rates?.KRW?.rate || 19.5);
-  const [usdRateInput, setUsdRateInput] = useState(rates?.USD?.rate || 25500);
   const [serviceFeeInput, setServiceFeeInput] = useState(rates?.serviceFeePercent || 5);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isReverting, setIsReverting] = useState(false);
-  const [isSavingRates, setIsSavingRates] = useState(false);
-  const [prevOrdersLength, setPrevOrdersLength] = useState(orders.length);
+  const prevOrdersLengthRef = useRef(orders.length);
 
   // Current time clocks (Seoul KST & Vietnam ICT)
   const [timeNow, setTimeNow] = useState(new Date());
@@ -84,18 +76,10 @@ export default function AdminDashboardPage() {
     return timeNow.toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }, [timeNow]);
 
-  useEffect(() => {
-    if (rates) {
-      if (rates.KRW?.rate) setKrwRateInput(rates.KRW.rate);
-      if (rates.USD?.rate) setUsdRateInput(rates.USD.rate);
-      if (rates.serviceFeePercent !== undefined) setServiceFeeInput(rates.serviceFeePercent);
-    }
-  }, [rates]);
-
   // Audio notification on new order
   useEffect(() => {
-    if (orders.length > prevOrdersLength) {
-      if (prevOrdersLength > 0) {
+    if (orders.length > prevOrdersLengthRef.current) {
+      if (prevOrdersLengthRef.current > 0) {
         const newestOrder = orders[0];
         if (newestOrder && (newestOrder.status === 'pending' || newestOrder.status === 'paid')) {
           if (showToast) {
@@ -117,20 +101,8 @@ export default function AdminDashboardPage() {
         }
       }
     }
-    setPrevOrdersLength(orders.length);
-  }, [orders, prevOrdersLength, showToast]);
-
-  const krwRate = rates?.KRW?.rate || 19.5;
-  const serviceFee = rates?.serviceFeePercent || 5;
-
-  // Rate calculator effect
-  useEffect(() => {
-    if (calcMode === 'wonToVnd') {
-      const won = parseFloat(String(calcWon).replace(/,/g, '')) || 0;
-      const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
-      setCalcVnd(vnd.toLocaleString('vi-VN'));
-    }
-  }, [calcWon, krwRate, serviceFee, calcMode]);
+    prevOrdersLengthRef.current = orders.length;
+  }, [orders, showToast]);
 
   // Action Queue (Việc cần làm ngay)
   const urgentQueue = useMemo(() => {
@@ -154,24 +126,18 @@ export default function AdminDashboardPage() {
   const estimatedRevenue = useMemo(() => {
     return orders.reduce((sum, order) => {
       if (order.status === 'cancelled') return sum;
-      const displayTotal = order.quote
-        ? order.quote.totalVnd
-        : Math.round((order.foreignPrice || 0) * (rates[order.country]?.rate || krwRate) * (order.qty || 1));
-      return sum + displayTotal;
+      return sum + getOrderTotalVnd(order, rates);
     }, 0);
-  }, [orders, rates, krwRate]);
+  }, [orders, rates]);
 
   const receivedRevenue = useMemo(() => {
     return orders.reduce((sum, order) => {
       if (order.status === 'paid' || order.status === 'completed' || order.status === 'purchased' || order.status === 'packed_kr' || order.status === 'shipping_vn') {
-        const displayTotal = order.quote
-          ? order.quote.totalVnd
-          : Math.round((order.foreignPrice || 0) * (rates[order.country]?.rate || krwRate) * (order.qty || 1));
-        return sum + displayTotal;
+        return sum + getOrderTotalVnd(order, rates);
       }
       return sum;
     }, 0);
-  }, [orders, rates, krwRate]);
+  }, [orders, rates]);
 
   const totalOrders = orders.length;
   const catalogCount = products?.length || 0;
@@ -186,10 +152,7 @@ export default function AdminDashboardPage() {
       const month = date.getMonth() + 1;
       const year = date.getFullYear();
       const key = `${month.toString().padStart(2, '0')}/${year}`;
-      const rateInfo = rates[order.country] || rates.KRW;
-      const value = order.quote
-        ? order.quote.totalVnd
-        : Math.round((order.foreignPrice || 0) * (rateInfo?.rate || 19.5) * (order.qty || 1));
+      const value = getOrderTotalVnd(order, rates);
 
       if (!stats[key]) {
         stats[key] = { key, month, year, total: 0, received: 0, orderCount: 0 };
@@ -235,11 +198,7 @@ export default function AdminDashboardPage() {
   const handleExportCSV = () => {
     const headers = ['Mã Đơn', 'Khách Hàng', 'SĐT', 'Ngày Đặt', 'Trạng Thái', 'Tổng Tiền (VND)', 'Mã Vận Đơn'];
     const rows = orders.map(order => {
-      const rateInfo = rates[order.country] || rates.KRW;
-      const value = order.quote
-        ? order.quote.totalVnd
-        : Math.round((order.foreignPrice || 0) * (rateInfo?.rate || 19.5) * (order.qty || 1));
-
+      const value = getOrderTotalVnd(order, rates);
       const dateStr = new Date(order.createdAt).toLocaleDateString('vi-VN');
       return [
         order.id,

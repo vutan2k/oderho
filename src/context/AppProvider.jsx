@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { OLIVE_YOUNG_CATALOG } from '../data/catalog';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppContext } from './AppContext';
 import {
   subscribeToOrders,
@@ -410,7 +409,7 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('tavy_custom_products', JSON.stringify(publishedProducts));
   };
 
-  const createOrder = async (orderData) => {
+  const createOrder = useCallback(async (orderData) => {
     const payload = {
       ...orderData,
       userEmail: authUser?.email || 'guest@tavy.vn',
@@ -439,9 +438,9 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('beauty_orders', JSON.stringify(updated));
     }
     return res;
-  };
+  }, [authUser, activePendingOrder, orders]);
 
-  const createManualOrder = async (orderData) => {
+  const createManualOrder = useCallback(async (orderData) => {
     const orderId = orderData.id || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
     const payload = {
       id: orderId,
@@ -468,7 +467,7 @@ export const AppProvider = ({ children }) => {
     } catch {}
 
     return { success: true, id: orderId, order: newOrder };
-  };
+  }, []);
 
   const deleteOrder = async (orderId) => {
     const res = await deleteOrderFromDB(orderId);
@@ -509,6 +508,29 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('tavy_pending_products', JSON.stringify(pendingProducts));
     } catch {}
   }, [pendingProducts]);
+
+  const addPendingProduct = (product) => {
+    if (!product) return;
+    const sanitized = sanitizeProducts([product])[0] || product;
+    const cleanProduct = {
+      ...sanitized,
+      goodsNo: sanitized.goodsNo || product.goodsNo || `SP-${Date.now()}`
+    };
+    setPendingProducts(prev => {
+      const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
+      return [cleanProduct, ...filtered];
+    });
+    savePendingProductToDB(cleanProduct).catch(e => console.warn("Lỗi lưu pending Firestore:", e));
+  };
+
+  const updatePendingProduct = (goodsNo, updates) => {
+    setPendingProducts(prev => {
+      const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
+      const target = updated.find(p => p.goodsNo === goodsNo);
+      if (target) savePendingProductToDB(target).catch(() => {});
+      return updated;
+    });
+  };
 
   // Listener CÁCH 1: Nhận tin nhắn trực tiếp trong bộ nhớ Browser từ Extension (ZERO Limit & KHÔNG NẢY TAB)
   useEffect(() => {
@@ -601,29 +623,6 @@ export const AppProvider = ({ children }) => {
       console.warn("Global autoFill listener error:", e);
     }
   }, []);
-
-  const addPendingProduct = (product) => {
-    if (!product) return;
-    const sanitized = sanitizeProducts([product])[0] || product;
-    const cleanProduct = {
-      ...sanitized,
-      goodsNo: sanitized.goodsNo || product.goodsNo || `SP-${Date.now()}`
-    };
-    setPendingProducts(prev => {
-      const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
-      return [cleanProduct, ...filtered];
-    });
-    savePendingProductToDB(cleanProduct).catch(e => console.warn("Lỗi lưu pending Firestore:", e));
-  };
-
-  const updatePendingProduct = (goodsNo, updates) => {
-    setPendingProducts(prev => {
-      const updated = prev.map(p => p.goodsNo === goodsNo ? { ...p, ...updates } : p);
-      const target = updated.find(p => p.goodsNo === goodsNo);
-      if (target) savePendingProductToDB(target).catch(() => {});
-      return updated;
-    });
-  };
 
   const addProduct = (product) => {
     if (!product) return;
@@ -798,17 +797,20 @@ export const AppProvider = ({ children }) => {
   });
 
   // Tự động đồng bộ giỏ hàng với Đơn hàng chờ cọc khi chưa cọc 100%
+  const pendingItemsJson = activePendingOrder?.items ? JSON.stringify(activePendingOrder.items) : '';
+  const activePendingOrderId = activePendingOrder?.id;
   useEffect(() => {
     if (activePendingOrder && Array.isArray(activePendingOrder.items) && activePendingOrder.items.length > 0) {
       setCart(activePendingOrder.items);
     }
-  }, [activePendingOrder?.id, JSON.stringify(activePendingOrder?.items)]);
+  }, [activePendingOrderId, pendingItemsJson]);
 
   const syncActivePendingOrderItems = (newItems) => {
     if (!activePendingOrder) return;
     const krwRate = rates?.KRW?.rate || 19.5;
+    const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
     const newTotalVnd = newItems.reduce((sum, item) => {
-      const price = item.price || Math.round((item.foreignPrice || 0) * krwRate);
+      const price = item.price || Math.round((item.foreignPrice || 0) * krwRate * serviceFeeMultiplier);
       return sum + price * (item.qty || 1);
     }, 0);
 

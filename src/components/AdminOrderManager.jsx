@@ -1,7 +1,8 @@
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo, memo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { ORDER_STATUSES, ORDER_STEPS, getStatusConfig, getOrderStepIndex } from '../data/orderStatuses';
+import { getOrderTotalVnd, formatVnd, formatKrw } from '../utils/priceCalculator';
 import CascadingAddressSelector from './CascadingAddressSelector';
 import {
   Search, Edit3, Trash2,
@@ -12,7 +13,7 @@ import {
   CreditCard, Play, LayoutGrid, List, Plus
 } from 'lucide-react';
 
-export default function AdminOrderManager() {
+function AdminOrderManager() {
   const { orders, rates, updateOrderStatus, updateOrderQuote, updateOrderTracking, deleteOrder, createManualOrder } = useContext(AppContext);
   const showToast = useToast();
 
@@ -369,7 +370,7 @@ export default function AdminOrderManager() {
       const fPrice = getOrderForeignPrice(o);
       const qty = getOrderQty(o);
       const oName = getOrderProductName(o);
-      const total = o.quote ? o.quote.totalVnd : Math.round(fPrice * krwRate * qty);
+      const total = getOrderTotalVnd(o, rates);
       return `"${o.id}","${o.customerName || ''}","${o.customerPhone || ''}","${(o.customerAddress || '').replace(/"/g, '""')}","${(oName || '').replace(/"/g, '""')}",${fPrice || 0},${qty || 1},${total},"${st}","${o.trackingCode || ''}","${o.domesticTrackingCode || ''}","${o.packageWeightKg || ''}"`;
     }).join('\n');
 
@@ -605,7 +606,7 @@ export default function AdminOrderManager() {
               const currentStepIdx = getOrderStepIndex(order);
               const statusCfg = getStatusConfig(order.status);
               const isPaid = order.paymentStatus === 'paid' || ['deposit_paid', 'confirmed', 'purchased', 'packed_kr', 'in_transit_air', 'customs_cleared', 'completed'].includes(order.status);
-              const totalVndVal = order.totalVnd || (order.quote ? order.quote.totalVnd : (Array.isArray(order.items) && order.items.length > 0 ? order.items.reduce((sum, item) => sum + (item.price || Math.round((item.foreignPrice || 0) * krwRate)) * (item.qty || 1), 0) : Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1))));
+              const totalVndVal = getOrderTotalVnd(order, rates);
 
               return (
                 <div
@@ -966,7 +967,7 @@ export default function AdminOrderManager() {
                   filteredOrders.map((order) => {
                     const stCfg = getStatusConfig(order.status);
                     const isSelected = selectedOrderIds.includes(order.id);
-                    const totalVndVal = order.totalVnd || (order.quote ? order.quote.totalVnd : (Array.isArray(order.items) && order.items.length > 0 ? order.items.reduce((sum, item) => sum + (item.price || Math.round((item.foreignPrice || 0) * krwRate)) * (item.qty || 1), 0) : Math.round((order.foreignPrice || 0) * krwRate * (order.qty || 1))));
+                    const totalVndVal = getOrderTotalVnd(order, rates);
                     const stepIndex = getOrderStepIndex(order);
 
                     return (
@@ -1755,7 +1756,8 @@ export default function AdminOrderManager() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
+
+export default memo(AdminOrderManager);
