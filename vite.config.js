@@ -50,30 +50,7 @@ export default defineConfig({
     }
   ],
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('firebase/firestore') || id.includes('@firebase/firestore')) {
-              return 'vendor-firebase-firestore';
-            }
-            if (id.includes('firebase/auth') || id.includes('@firebase/auth')) {
-              return 'vendor-firebase-auth';
-            }
-            if (id.includes('firebase')) {
-              return 'vendor-firebase-core';
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            if (id.includes('react-router-dom') || id.includes('react-helmet-async') || id.includes('/react/') || id.includes('/react-dom/')) {
-              return 'vendor-react';
-            }
-          }
-        }
-      }
-    },
-    chunkSizeWarningLimit: 600
+    chunkSizeWarningLimit: 1000
   },
   server: {
     port: 3000,

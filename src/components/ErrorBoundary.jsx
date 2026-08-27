@@ -38,22 +38,47 @@ export default class ErrorBoundary extends React.Component {
             <p style={{ color: '#666', fontSize: '1rem', marginBottom: '24px', lineHeight: '1.6' }}>
               Trang web gặp sự cố không mong muốn. Vui lòng thử tải lại trang.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                padding: '12px 32px',
-                borderRadius: '30px',
-                border: 'none',
-                background: '#7A4B9E',
-                color: '#fff',
-                fontSize: '0.9rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                letterSpacing: '1px'
-              }}
-            >
-              TẢI LẠI TRANG
-            </button>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  padding: '12px 28px',
+                  borderRadius: '30px',
+                  border: 'none',
+                  background: '#7A4B9E',
+                  color: '#fff',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                TẢI LẠI TRANG
+              </button>
+              <button
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('tavy_custom_products');
+                    localStorage.removeItem('tavy_published_products');
+                    localStorage.removeItem('tavy_pending_products');
+                    localStorage.removeItem('beauty_orders');
+                  } catch {}
+                  window.location.href = '/';
+                }}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '30px',
+                  border: '1px solid #7A4B9E',
+                  background: '#FFF',
+                  color: '#7A4B9E',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                LÀM MỚI DỮ LIỆU
+              </button>
+            </div>
           </div>
         </div>
       );
