@@ -243,6 +243,29 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : initialMockOrders;
   });
 
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('tavy_cart');
+      if (savedCart) {
+        const parsed = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('Error reading tavy_cart:', e);
+    }
+    return [];
+  });
+
+  // Tìm Đơn hàng chờ cọc (Active Pending Order) duy nhất của người dùng hiện tại
+  const activePendingOrder = useMemo(() => {
+    return orders.find(o => {
+      const isUserOrder = (currentUser?.email && o.userEmail && o.userEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+                          (currentUser?.phone && o.customerPhone && o.customerPhone === currentUser.phone);
+      const isUnpaidPending = (o.status === 'pending' || o.status === 'quoted') && o.paymentStatus !== 'paid';
+      return isUserOrder && isUnpaidPending;
+    });
+  }, [orders, currentUser?.email, currentUser?.phone]);
+
   // Realtime Orders Subscription (Đồng bộ thời gian thực 100% giữa Admin và Khách hàng)
   useEffect(() => {
     const unsubscribe = subscribeToOrders(
@@ -774,27 +797,6 @@ export const AppProvider = ({ children }) => {
     setPendingProducts(prev => prev.filter(p => p.goodsNo !== goodsNo));
     deletePendingProductFromDB(goodsNo).catch(e => console.warn("Lỗi xoá pending Firestore:", e));
   };
-
-  const [cart, setCart] = useState(() => {
-    try {
-      const savedCart = localStorage.getItem('tavy_cart');
-      if (savedCart) {
-        const parsed = JSON.parse(savedCart);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {
-      console.warn('Error reading tavy_cart:', e);
-    }
-    return [];
-  });
-
-  // Tìm Đơn hàng chờ cọc (Active Pending Order) duy nhất của người dùng hiện tại
-  const activePendingOrder = orders.find(o => {
-    const isUserOrder = (currentUser?.email && o.userEmail && o.userEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
-                        (currentUser?.phone && o.customerPhone && o.customerPhone === currentUser.phone);
-    const isUnpaidPending = (o.status === 'pending' || o.status === 'quoted') && o.paymentStatus !== 'paid';
-    return isUserOrder && isUnpaidPending;
-  });
 
   // Tự động đồng bộ giỏ hàng với Đơn hàng chờ cọc khi chưa cọc 100%
   const pendingItemsJson = activePendingOrder?.items ? JSON.stringify(activePendingOrder.items) : '';
