@@ -70,11 +70,11 @@ test('[F18-4] 3-Tier Filter Evaluation (Best Seller, Rating >= 4.7, Reviews >= 5
 });
 
 test('[F18-5] Dynamic Multi-Source Health Scraper execution and price conversion', async () => {
-  const res = await scrapeKoreanHealthProduct('KGC-EVERYTIME-30');
+  const res = await scrapeKoreanHealthProduct('A000000213255');
   assert(res !== null, 'Scraped object exists');
-  assertEquals(res.goodsNo, 'KGC-EVERYTIME-30', 'GoodsNo matches KGC Everytime');
+  assertEquals(res.goodsNo, 'A000000213255', 'GoodsNo matches KGC Everytime');
   assertEquals(res.brand, 'KGC CheongKwanJang (Sâm Chính Phủ)', 'Brand is verified');
-  assertEquals(res.foreignPrice, 102000, 'Exact Won price 102,000 W');
+  assertEquals(res.foreignPrice, 52750, 'Exact Won price 52,750 W');
   assert(res.photoReviews.length >= 1, 'Contains unboxing customer review photos');
   assert(res.filterEvaluation.passed, 'Passed filter evaluation');
 });
