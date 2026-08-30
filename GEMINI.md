@@ -49,3 +49,18 @@
 - **4.4. Chuẩn Hóa Nội Dung Chuyển Khoản**:
   - Nội dung chuyển khoản chuẩn hóa tự động theo cú pháp: `TAVY <Số_điện_thoại>` (Ví dụ: `TAVY 0912345678`).
 
+---
+
+## 5. QUY TẮC BẮT BUỘC ĐỒNG BỘ & HỖ TRỢ VERCEL (MANDATORY VERCEL DEPLOYMENT & PARITY RULE)
+- **5.1. Tự Động Đồng Bộ & Triển Khai Vercel (Auto Vercel Parity)**:
+  - Dự án sử dụng song song hai nền tảng: **Firebase Hosting** (`https://tavyorder.web.app`) và **Vercel** (`https://oderho.vercel.app`).
+  - Mọi thay đổi về mã nguồn, cấu hình hệ thống, biến môi trường, hoặc triển khai (deploy) **BẮT BUỘC phải thực hiện và đồng bộ song song cho cả Vercel và Firebase**.
+  - Mỗi khi thực hiện deploy hoặc push git, luôn đảm bảo nhánh `main` được cập nhật để Vercel tự động build và triển khai, đồng thời kiểm tra tính khả dụng trên `https://oderho.vercel.app`.
+- **5.2. Vercel Serverless Functions (`api/`)**:
+  - Toàn bộ backend xử lý cổng thanh toán PayOS (tạo link thanh toán `api/createPayOSPaymentLink.js` và webhook đối soát `api/payosWebhook.js`) chạy trên Vercel Serverless Functions.
+  - Luôn đảm bảo cấu hình CORS headers đầy đủ trong `vercel.json` để cho phép `tavyorder.web.app` gọi chéo API sang `oderho.vercel.app` mà không bị chặn.
+  - Khi thay đổi logic mã đơn hàng, giá tiền hoặc trạng thái đơn, BẮT BUỘC phải cập nhật tương ứng trong các Serverless Functions trong thư mục `api/`.
+- **5.3. Hỗ Trợ Đa Tên Miền (Multi-Origin Support)**:
+  - Mọi URL chuyển hướng callback (`returnUrl`, `cancelUrl`) và metadata phải tự động phát hiện tên miền hiện tại của khách hàng (`req.headers.origin` / `req.headers.referer`), đảm bảo hoạt động hoàn hảo trên cả `tavyorder.web.app`, `oderho.vercel.app` và môi trường local/preview.
+
+

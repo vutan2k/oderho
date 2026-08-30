@@ -35,12 +35,16 @@ export default async function handler(req, res) {
     const numericPart = parseInt((orderId || '').replace(/\D/g, ''), 10) || Math.floor(Date.now() / 1000);
     const orderCode = Number(numericPart);
 
+    const origin = req.headers.origin || (req.headers.referer ? new URL(req.headers.referer).origin : '') || 'https://tavyorder.web.app';
+    const cleanPhone = (orderId || '').replace(/\D/g, '').slice(-10);
+    const description = cleanPhone ? `TAVY ${cleanPhone}` : `TAVY ${orderId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15)}`;
+
     const body = {
       orderCode: orderCode,
       amount: Number(amount),
-      description: `Coc ${orderId.slice(0, 15)}`,
-      returnUrl: `https://tavyorder.web.app/payment/${orderId}`,
-      cancelUrl: `https://tavyorder.web.app/payment/${orderId}`,
+      description: description.slice(0, 25),
+      returnUrl: `${origin}/payment/${orderId}`,
+      cancelUrl: `${origin}/payment/${orderId}`,
     };
 
     const paymentLinkData = await payos.paymentRequests.create(body);

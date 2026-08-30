@@ -50,15 +50,27 @@ export default async function handler(req, res) {
 
     if (verifiedData && (verifiedData.orderCode || verifiedData.amount)) {
       const orderCodeNum = Number(verifiedData.orderCode);
-      const searchId = `ORD-${orderCodeNum}`;
+      const strCode = String(orderCodeNum);
+      const phoneCandidate = strCode.startsWith('0') ? strCode : ('0' + strCode);
 
-      console.log(`⚡ [PayOS Webhook] Nhận thanh toán: ${verifiedData.amount} đ cho đơn ${searchId} / code ${orderCodeNum}`);
+      console.log(`⚡ [PayOS Webhook] Nhận thanh toán: ${verifiedData.amount} đ cho đơn code ${orderCodeNum} (SĐT: ${phoneCandidate})`);
 
-      // 1. Tìm đơn theo ID trực tiếp
-      let targetDocRef = doc(db, 'orders', searchId);
+      // 1. Tìm đơn theo SĐT chuẩn hoặc chuỗi số
+      let targetDocRef = doc(db, 'orders', phoneCandidate);
       let snap = await getDoc(targetDocRef);
 
-      // 2. Tìm theo orderCode nếu ID không khớp
+      if (!snap.exists()) {
+        targetDocRef = doc(db, 'orders', strCode);
+        snap = await getDoc(targetDocRef);
+      }
+
+      // 2. Tìm theo ORD prefix cũ (backward compatibility)
+      if (!snap.exists()) {
+        targetDocRef = doc(db, 'orders', `ORD-${orderCodeNum}`);
+        snap = await getDoc(targetDocRef);
+      }
+
+      // 3. Tìm theo orderCode nếu ID không khớp
       if (!snap.exists() && orderCodeNum) {
         const q = query(collection(db, 'orders'), where('orderCode', '==', orderCodeNum));
         const qSnap = await getDocs(q);
@@ -68,11 +80,21 @@ export default async function handler(req, res) {
         }
       }
 
-      // 3. Tìm theo exactPaymentAmount (số tiền lẻ độc nhất)
+      // 4. Tìm theo customerPhone
+      if (!snap.exists() && phoneCandidate) {
+        const qPhone = query(collection(db, 'orders'), where('customerPhone', '==', phoneCandidate));
+        const qPhoneSnap = await getDocs(qPhone);
+        if (!qPhoneSnap.empty) {
+          targetDocRef = qPhoneSnap.docs[0].ref;
+          snap = qPhoneSnap.docs[0];
+        }
+      }
+
+      // 5. Tìm theo totalVnd / exactPaymentAmount
       if (!snap.exists() && verifiedData.amount) {
         const qAmount = query(
           collection(db, 'orders'),
-          where('exactPaymentAmount', '==', Number(verifiedData.amount)),
+          where('totalVnd', '==', Number(verifiedData.amount)),
           where('paymentStatus', '==', 'unpaid')
         );
         const qAmountSnap = await getDocs(qAmount);
