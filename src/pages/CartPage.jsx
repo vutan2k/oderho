@@ -68,7 +68,7 @@ export default function CartPage() {
       const country = 'KRW';
       const bankInfo = country === 'KRW'
         ? { bankName: '우라은행', accountNumber: '1002959863658' }
-        : { bankName: 'MBbank', accountNumber: '34966778899' };
+        : { bankName: 'MBbank', accountNumber: '1330042000' };
 
       const orderData = {
         customerName: name,

@@ -106,8 +106,8 @@ export const CHATBOT_REPLIES = {
     title: '💳 Thông tin Chuyển khoản & Đặt cọc:',
     text: `1. VietQR (VND - Tự động duyệt):
 • Ngân hàng: MBBank (Quân Đội)
-• Số tài khoản: 34966778899
-• Chủ tài khoản: VU VAN TAN
+• Số tài khoản: 1330042000
+• Chủ tài khoản: LE THI HA VY
 • Nội dung: Mã đơn hàng (VD: ORD-XXXXXX)
 
 2. Chuyển khoản Hàn Quốc (KRW):

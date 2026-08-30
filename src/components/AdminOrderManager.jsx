@@ -699,6 +699,47 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
               </div>
             </div>
 
+            {/* 2.5 Biên Lai Chuyển Tiền / Bill Quét Mã (Nếu Khách Đã Tải Lên) */}
+            {activeDrawerOrder.depositProofImage && (
+              <div style={{ backgroundColor: isDark ? '#1E293B' : '#ECFDF5', border: isDark ? '1px solid #10B981' : '1px solid #A7F3D0', borderRadius: '10px', padding: '14px' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#34D399' : '#065F46', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>📸 BIÊN LAI CHUYỂN TIỀN KHÁCH ĐÃ GỬI</span>
+                  {activeDrawerOrder.depositProofUploadedAt && (
+                    <span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#6B7280' }}>
+                      {new Date(activeDrawerOrder.depositProofUploadedAt).toLocaleString('vi-VN')}
+                    </span>
+                  )}
+                </div>
+                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                  <a href={activeDrawerOrder.depositProofImage} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={activeDrawerOrder.depositProofImage}
+                      alt="Biên lai cọc"
+                      style={{ maxHeight: '180px', maxWidth: '100%', borderRadius: '8px', border: '1px solid #D1D5DB', objectFit: 'contain', cursor: 'zoom-in' }}
+                    />
+                  </a>
+                </div>
+                {activeDrawerOrder.status !== 'deposit_paid' && activeDrawerOrder.paymentStatus !== 'paid' && (
+                  <button
+                    onClick={() => handleQuickStatusChange(activeDrawerOrder.id, 'deposit_paid')}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#10B981',
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ✓ Duyệt Xác Nhận Đã Nhận Cọc 100%
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* 3. Danh Sách Sản Phẩm Mua Hộ */}
             <div style={{ backgroundColor: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', marginBottom: '8px' }}>
@@ -735,8 +776,13 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: isDark ? '1px dashed #334155' : '1px dashed #CBD5E1', fontSize: '1rem', fontWeight: 900, color: '#38BDF8' }}>
                 <span>Tổng Tiền Về VN:</span>
-                <span>{getOrderTotalVnd(activeDrawerOrder, krwRate, serviceFee).toLocaleString('vi-VN')} đ</span>
+                <span>{(activeDrawerOrder.exactPaymentAmount || getOrderTotalVnd(activeDrawerOrder, krwRate, serviceFee)).toLocaleString('vi-VN')} đ</span>
               </div>
+              {activeDrawerOrder.exactPaymentAmount && (
+                <div style={{ fontSize: '0.74rem', color: '#10B981', marginTop: '4px', textAlign: 'right', fontWeight: 600 }}>
+                  ⚡ Số tiền độc nhất đối soát: {activeDrawerOrder.exactPaymentAmount.toLocaleString('vi-VN')} đ
+                </div>
+              )}
             </div>
 
             {/* Delete Order Action */}

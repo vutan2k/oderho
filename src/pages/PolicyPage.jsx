@@ -281,8 +281,8 @@ export default function PolicyPage() {
                 </h3>
                 <div style={{ fontSize: '0.88rem', color: 'var(--text-muted, #374151)', lineHeight: '1.6' }}>
                   <div><strong>Ngân hàng:</strong> MBBank (Quân Đội)</div>
-                  <div><strong>Số tài khoản:</strong> 34966778899</div>
-                  <div><strong>Chủ TK:</strong> VU VAN TAN</div>
+                  <div><strong>Số tài khoản:</strong> 1330042000</div>
+                  <div><strong>Chủ TK:</strong> LE THI HA VY</div>
                 </div>
               </div>
 

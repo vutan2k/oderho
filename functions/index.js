@@ -1,7 +1,6 @@
 // Firebase Cloud Function: proxy Jina AI Reader + PayOS Webhook Auto Confirmation
 const { onRequest } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
-const PayOS = require('@payos/node');
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -9,11 +8,22 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 // Khởi tạo PayOS SDK với biến môi trường
-const payOS = new PayOS(
-  process.env.PAYOS_CLIENT_ID || 'dummy_client_id',
-  process.env.PAYOS_API_KEY || 'dummy_api_key',
-  process.env.PAYOS_CHECKSUM_KEY || 'dummy_checksum_key'
-);
+const { PayOS } = require('@payos/node');
+
+let payOSInstance = null;
+function getPayOS() {
+  const clientId = process.env.PAYOS_CLIENT_ID || '';
+  const apiKey = process.env.PAYOS_API_KEY || '';
+  const checksumKey = process.env.PAYOS_CHECKSUM_KEY || '';
+
+  if (!clientId || !apiKey || !checksumKey || clientId.includes('dummy') || clientId.includes('your_')) {
+    return null;
+  }
+  if (!payOSInstance) {
+    payOSInstance = new PayOS({ clientId, apiKey, checksumKey });
+  }
+  return payOSInstance;
+}
 
 exports.scrapeJina = onRequest({ cors: true }, async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
@@ -65,7 +75,18 @@ exports.createPayOSPaymentLink = onRequest({ cors: true }, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Thiếu orderId hoặc amount' });
     }
 
-    // Chuyển orderId chuỗi (VD: ORD-509218) sang số duy nhất cho PayOS
+    const payOS = getPayOS();
+    // Nếu chưa cấu hình PayOS keys, báo hiệu frontend chuyển sang chế độ VietQR dự phòng
+    if (!payOS) {
+      return res.json({
+        success: false,
+        isConfigured: false,
+        fallback: true,
+        message: 'Chưa cấu hình khóa kết nối PayOS, sử dụng VietQR MB Bank'
+      });
+    }
+
+    // Chuyển orderId chuỗi (VD: ORD-509218) sang số duy nhất cho PayOS (giới hạn an toàn số nguyên)
     const numericPart = parseInt(orderId.replace(/\D/g, ''), 10) || Math.floor(Date.now() / 1000);
     const orderCode = Number(numericPart);
 
@@ -73,15 +94,31 @@ exports.createPayOSPaymentLink = onRequest({ cors: true }, async (req, res) => {
       orderCode: orderCode,
       amount: Number(amount),
       description: `Coc ${orderId.slice(0, 15)}`,
-      returnUrl: `https://tavyorder.web.app/orders`,
-      cancelUrl: `https://tavyorder.web.app/orders`,
+      returnUrl: `https://tavyorder.web.app/payment/${orderId}`,
+      cancelUrl: `https://tavyorder.web.app/payment/${orderId}`,
     };
 
-    const paymentLinkData = await payOS.createPaymentLink(body);
-    return res.json({ success: true, data: paymentLinkData, orderCode });
+    const paymentLinkData = await payOS.paymentRequests.create(body);
+
+    // Lưu orderCode vào đơn hàng trong Firestore để webhook dễ dàng đối chiếu
+    try {
+      await db.collection('orders').doc(orderId).set({
+        orderCode: orderCode,
+        payosPaymentLinkId: paymentLinkData.paymentLinkId || '',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    } catch (saveErr) {
+      console.warn('Lỗi lưu orderCode vào order:', saveErr.message);
+    }
+
+    return res.json({ success: true, isConfigured: true, data: paymentLinkData, orderCode });
   } catch (err) {
     console.error('Lỗi tạo PayOS Payment Link:', err);
-    return res.status(500).json({ success: false, error: err.message || 'Lỗi kết nối cổng PayOS' });
+    return res.status(200).json({
+      success: false,
+      fallback: true,
+      error: err.message || 'Lỗi kết nối cổng PayOS'
+    });
   }
 });
 
@@ -95,10 +132,15 @@ exports.payosWebhook = onRequest({ cors: true }, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Dữ liệu webhook rỗng' });
     }
 
+    const payOS = getPayOS();
     // Verify HMAC Signature chữ ký từ PayOS
     let verifiedData;
     try {
-      verifiedData = payOS.verifyPaymentWebhookData(webhookData);
+      if (payOS) {
+        verifiedData = await payOS.webhooks.verify(webhookData);
+      } else {
+        verifiedData = webhookData.data || webhookData;
+      }
     } catch (err) {
       // Trong môi trường testing/local giả lập, nếu không có chữ ký thật thì ghi nhận cảnh báo
       if (process.env.NODE_ENV === 'test' || process.env.FUNCTIONS_EMULATOR) {
@@ -125,6 +167,14 @@ exports.payosWebhook = onRequest({ cors: true }, async (req, res) => {
         let querySnap = await db.collection('orders').where('orderCode', '==', orderCodeNum).limit(1).get();
         if (querySnap.empty) {
           querySnap = await db.collection('orders').where('id', '==', searchId).limit(1).get();
+        }
+        // Dự phòng đối soát chính xác theo số tiền lẻ độc nhất (exactPaymentAmount)
+        if (querySnap.empty && verifiedData.amount) {
+          querySnap = await db.collection('orders')
+            .where('exactPaymentAmount', '==', Number(verifiedData.amount))
+            .where('paymentStatus', '==', 'unpaid')
+            .limit(1)
+            .get();
         }
         if (!querySnap.empty) {
           orderDocRef = querySnap.docs[0].ref;

@@ -31,7 +31,7 @@ test('[F8-2] FAQ Replies contain correct 8-step transparency data and bank info'
   assertContains(CHATBOT_REPLIES.workflow_8steps.text, '8.', 'Must explain step 8');
 
   // Payment
-  assertContains(CHATBOT_REPLIES.payment_info.text, '34966778899', 'Must contain MBBank account number');
+  assertContains(CHATBOT_REPLIES.payment_info.text, '1330042000', 'Must contain MBBank account number');
   assertContains(CHATBOT_REPLIES.payment_info.text, '1002959863658', 'Must contain Woori Bank account number');
   assertContains(CHATBOT_REPLIES.payment_info.text, 'VU VAN TAN', 'Must contain account owner name');
 
