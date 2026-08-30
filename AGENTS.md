@@ -32,3 +32,20 @@
 ## 3. BƯỚC 3: THỰC THI CHÍNH XÁC & KIỂM ĐỊNH TỰ ĐỘNG
 - Triển khai code/task bám sát 100% theo bản kế hoạch đã lập.
 - Tự động kiểm tra chất lượng (Verification Loop), đối chiếu dữ liệu thật, đảm bảo không phát sinh lỗi trước khi bàn giao kết quả.
+
+---
+
+## 4. QUY TẮC ĐẶC THÙ HỆ THỐNG E-COMMERCE & THANH TOÁN (SYSTEM GUARDRAILS)
+- **4.1. Single Source of Truth cho Giá Tiền**:
+  - Giá VND hiển thị ở thẻ sản phẩm, chi tiết sản phẩm, giỏ hàng và thanh toán chuyển khoản cọc 100% phải được tính toán từ một hàm thống nhất (`getVndFromWon` / `getOrderTotalVnd`).
+  - Tuyệt đối không tự ý thêm bớt số lẻ delta (như 101đ - 990đ) vào số tiền chuyển khoản của khách hàng.
+  - Số tiền chuyển khoản trên mã QR phải trùng khớp 100% với tổng tiền giỏ hàng hiển thị.
+- **4.2. Định Danh & Tra Cứu Đơn Hàng Theo Số Điện Thoại**:
+  - Số điện thoại là khóa định danh chính (Primary Identifier) trong toàn bộ UX và tra cứu đơn hàng.
+  - Loại bỏ hoàn toàn tiền tố mã đơn dạng `ORD-` trên giao diện người dùng.
+- **4.3. Kiểm Tra Dữ Liệu Khách Vãng Lai**:
+  - Bắt buộc kiểm tra định dạng Số điện thoại Việt Nam chuẩn 10 số (`^0(3|5|7|8|9)[0-9]{8}$`).
+  - Bắt buộc kiểm tra Họ tên và Địa chỉ giao hàng đầy đủ trước khi cho phép tạo đơn hàng.
+- **4.4. Chuẩn Hóa Nội Dung Chuyển Khoản**:
+  - Nội dung chuyển khoản chuẩn hóa tự động theo cú pháp: `TAVY <Số_điện_thoại>` (Ví dụ: `TAVY 0912345678`).
+

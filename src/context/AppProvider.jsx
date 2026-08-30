@@ -508,7 +508,8 @@ export const AppProvider = ({ children }) => {
 
     const res = await createOrderInDB(payload);
     if (!res.success) {
-      const newOrder = { id: `ORD-${Math.floor(100000 + Math.random() * 900000)}`, ...payload };
+      const fallbackPhone = payload.customerPhone ? payload.customerPhone.replace(/\D/g, '') : '';
+      const newOrder = { id: payload.id || fallbackPhone || `${Date.now()}`, ...payload };
       const updated = [newOrder, ...orders];
       setOrders(updated);
       localStorage.setItem('beauty_orders', JSON.stringify(updated));
@@ -517,7 +518,8 @@ export const AppProvider = ({ children }) => {
   }, [authUser, activePendingOrder, orders]);
 
   const createManualOrder = useCallback(async (orderData) => {
-    const orderId = orderData.id || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+    const manualPhone = orderData.customerPhone ? orderData.customerPhone.replace(/\D/g, '') : '';
+    const orderId = orderData.id || manualPhone || `${Date.now()}`;
     const payload = {
       id: orderId,
       ...orderData,

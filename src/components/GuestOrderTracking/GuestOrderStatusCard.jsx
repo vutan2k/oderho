@@ -115,14 +115,14 @@ export default function GuestOrderStatusCard({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <span
               style={{
-                fontFamily: 'monospace',
-                fontSize: '1.2rem',
+                fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+                fontSize: '1.15rem',
                 fontWeight: 800,
                 color: 'var(--purple-primary, #7A4B9E)',
                 letterSpacing: '0.5px'
               }}
             >
-              #{order.id}
+              {order.customerPhone ? `SĐT: ${order.customerPhone}` : `#${order.id}`}
             </span>
 
             {/* Status Badge */}
@@ -529,7 +529,7 @@ export default function GuestOrderStatusCard({
                   type: 'video',
                   badgeType: 'pov_video',
                   url: proofData.povVideoUrl,
-                  title: `Video POV Mua Hàng Tại Store — Đơn #${order.id}`,
+                  title: `Video POV Mua Hàng Tại Store — Đơn ${order.customerPhone || order.id}`,
                   subtitle: 'Nhân viên TAVY trực tiếp ghé kệ Olive Young / Store Hàn Quốc'
                 })
               }
@@ -563,7 +563,7 @@ export default function GuestOrderStatusCard({
                   type: 'image',
                   badgeType: 'receipt_bill',
                   url: proofData.receiptImageUrl,
-                  title: `Hóa Đơn Bill Store — Đơn #${order.id}`,
+                  title: `Hóa Đơn Bill Store — Đơn ${order.customerPhone || order.id}`,
                   subtitle: 'Hóa đơn gốc xuất từ quầy thanh toán Olive Young / Cửa hàng Hàn Quốc'
                 })
               }
@@ -597,7 +597,7 @@ export default function GuestOrderStatusCard({
                   type: 'video',
                   badgeType: 'packing_video',
                   url: proofData.packingVideoUrl,
-                  title: `Video Đóng Kiện & Cân Nặng — Đơn #${order.id}`,
+                  title: `Video Đóng Kiện & Cân Nặng — Đơn ${order.customerPhone || order.id}`,
                   subtitle: 'Bọc chống sốc 3 lớp, kiểm tra seal và niêm phong tại kho Seoul'
                 })
               }

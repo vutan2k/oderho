@@ -31,7 +31,8 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
 
   if (!product) return null;
 
-  const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
+  const won = Number(product?.foreignPrice ?? product?.priceKrw ?? product?.priceWon ?? product?.price) || 0;
+  const calculatedVnd = Math.round(won * krwRate);
   const formatVnd = (n) => (n || n === 0) ? `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VNĐ` : '0 VNĐ';
   const formatKrw = (n) => `₩${(n || 0).toLocaleString('vi-VN')}`;
 

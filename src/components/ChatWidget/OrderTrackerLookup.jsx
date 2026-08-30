@@ -63,7 +63,7 @@ export default function OrderTrackerLookup({ onBack, isMobile }) {
         <div style={{ position: 'relative', flex: 1 }}>
           <input
             type="text"
-            placeholder="Nhập mã đơn (VD: ORD-827192) hoặc SĐT..."
+            placeholder="Nhập Số điện thoại đặt hàng (VD: 0912345678)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -105,7 +105,7 @@ export default function OrderTrackerLookup({ onBack, isMobile }) {
             <Package size={28} style={{ margin: '0 auto 6px auto', color: '#EF4444', display: 'block' }} />
             <strong>Không tìm thấy đơn hàng!</strong>
             <p style={{ margin: '4px 0 0 0', color: '#B91C1C' }}>
-              Vui lòng kiểm tra lại mã đơn hoặc số điện thoại đã đặt hàng.
+              Vui lòng kiểm tra lại số điện thoại nhận hàng đã đặt.
             </p>
           </div>
         )}
@@ -116,10 +116,10 @@ export default function OrderTrackerLookup({ onBack, isMobile }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #F3F4F6', paddingBottom: '8px' }}>
               <div>
                 <span style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 700 }}>
-                  Mã đơn hàng
+                  SĐT Đơn hàng
                 </span>
                 <div style={{ fontSize: isMobile ? '0.9rem' : '0.95rem', fontWeight: 800, color: 'var(--purple-primary)' }}>
-                  {searchedOrder.id}
+                  {searchedOrder.customerPhone || searchedOrder.id}
                 </div>
               </div>
               {(() => {

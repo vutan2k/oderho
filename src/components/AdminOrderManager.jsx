@@ -652,7 +652,7 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
                 TIẾN ĐỘ XỬ LÝ ĐƠN HÀNG (9 BƯỚC)
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                {ORDER_STATUSES.map((st) => {
+                {Object.values(ORDER_STATUSES).filter(st => ['pending', 'deposit_paid', 'confirmed', 'purchased', 'packed_kr', 'in_transit_air', 'customs_cleared', 'completed', 'cancelled'].includes(st.id)).map((st) => {
                   const isCurrent = activeDrawerOrder.status === st.id;
                   return (
                     <button
@@ -670,7 +670,7 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
                         textAlign: 'center'
                       }}
                     >
-                      {st.label}
+                      {st.shortLabel || st.label}
                     </button>
                   );
                 })}

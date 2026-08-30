@@ -52,13 +52,31 @@ export default function CartPage() {
     e.preventDefault();
     if (cart.length === 0 || isSubmitting) return;
 
+    // 1. Kiểm tra đơn hàng tối thiểu
     if (!isMinOrderMet) {
       setErrorMsg(`Đơn hàng hiện tại là ${formatVnd(subTotalVnd)}, chưa đạt mức tối thiểu 1.000.000 VNĐ. Vui lòng chọn thêm ${formatVnd(shortfallVnd)} để tiến hành thanh toán.`);
       return;
     }
 
-    if (!name.trim() || !phone.trim() || !address.trim()) {
-      setErrorMsg('Vui lòng điền đầy đủ Họ Tên, Số điện thoại và Địa chỉ giao hàng.');
+    // 2. Validate Họ và Tên (bắt buộc, tối thiểu 2 ký tự)
+    const trimmedName = name.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setErrorMsg('Vui lòng điền đầy đủ Họ và Tên của người nhận hàng.');
+      return;
+    }
+
+    // 3. Validate Số điện thoại (bắt buộc đúng 10 số, chuẩn đầu số VN 03, 05, 07, 08, 09)
+    const cleanPhone = phone.replace(/\D/g, '');
+    const vnPhoneRegex = /^0(3|5|7|8|9)[0-9]{8}$/;
+    if (!cleanPhone || !vnPhoneRegex.test(cleanPhone)) {
+      setErrorMsg('Số điện thoại không hợp lệ! Vui lòng nhập đúng số điện thoại di động Việt Nam gồm 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09) để kiểm tra mã đơn hàng và đối soát tiền cọc.');
+      return;
+    }
+
+    // 4. Validate Địa chỉ giao hàng (bắt buộc tối thiểu 6 ký tự)
+    const trimmedAddress = address.trim();
+    if (!trimmedAddress || trimmedAddress.length < 6) {
+      setErrorMsg('Vui lòng chọn hoặc điền đầy đủ Địa chỉ nhận hàng (Tỉnh/Thành phố, Quận/Huyện, Phường/Xã).');
       return;
     }
     setErrorMsg('');
@@ -70,16 +88,25 @@ export default function CartPage() {
         ? { bankName: '우라은행', accountNumber: '1002959863658' }
         : { bankName: 'MBbank', accountNumber: '1330042000' };
 
+      const totalAmountVnd = Math.round(subTotalVnd);
       const orderData = {
-        customerName: name,
-        customerPhone: phone,
-        customerAddress: address,
-        customerNote: note,
+        id: cleanPhone, // Dùng trực tiếp SĐT khách hàng làm định danh chính, bỏ hoàn toàn mã ORD
+        customerName: trimmedName,
+        customerPhone: cleanPhone,
+        customerAddress: trimmedAddress,
+        customerNote: note.trim(),
         country,
-        items: cart,
+        items: cart.map(item => ({
+          ...item,
+          priceVnd: Math.round((Number(item.foreignPrice ?? item.priceKrw ?? item.priceWon ?? item.price) || 0) * krwRate * serviceFeeMultiplier)
+        })),
+        totalVnd: totalAmountVnd,
+        totalAmount: totalAmountVnd,
+        subTotalKrw: subTotalKrw,
         paymentMethod: country === 'KRW' ? 'bank_kr' : 'bank_vn',
         bankAccount: bankInfo.accountNumber,
         bankName: bankInfo.bankName,
+        paymentDue: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
         expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 phút
       };
 
@@ -92,9 +119,9 @@ export default function CartPage() {
         colors: ['#00FF00', '#10B981', '#F4EAD3'],
       });
 
-      // Navigate tới trang thanh toán cọc 100%
-      const newOrderId = res?.id || activePendingOrder?.id || orderData.id || 'unknown';
-      navigate(`/payment/${newOrderId}`);
+      // Navigate tới trang thanh toán cọc 100% bằng định danh SĐT
+      const targetOrderId = res?.id || activePendingOrder?.id || cleanPhone;
+      navigate(`/payment/${targetOrderId}`);
     } catch (error) {
       console.error('Error submitting order:', error);
       setIsSubmitting(false);
@@ -142,7 +169,7 @@ export default function CartPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
               <Zap size={18} style={{ marginTop: '2px', flexShrink: 0 }} />
               <div>
-                Bạn đang có <strong>1 Giỏ Hàng Chờ Cọc (Mã: {activePendingOrder.id})</strong>. Mọi sản phẩm bạn thêm/xóa sẽ tự động cập nhật giỏ hàng này. Giỏ hàng sẽ chính thức chuyển thành Đơn hàng hoàn chỉnh sau khi bạn cọc 100%!
+                Bạn đang có <strong>1 Giỏ Hàng Chờ Cọc (SĐT: {activePendingOrder.customerPhone || activePendingOrder.id})</strong>. Mọi sản phẩm bạn thêm/xóa sẽ tự động cập nhật giỏ hàng này. Giỏ hàng sẽ chính thức chuyển thành Đơn hàng hoàn chỉnh sau khi bạn cọc 100%!
               </div>
             </div>
             <button
@@ -288,20 +315,50 @@ export default function CartPage() {
 
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                  <label className="form-label">Họ và tên</label>
-                  <input type="text" required className="input" placeholder="Nhập họ và tên người nhận..." value={name} onChange={e => setName(e.target.value)} />
+                  <label className="form-label">
+                    Họ và tên người nhận <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="input"
+                    placeholder="Nhập họ và tên người nhận..."
+                    value={name}
+                    onChange={e => {
+                      setName(e.target.value);
+                      if (errorMsg) setErrorMsg('');
+                    }}
+                  />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Số điện thoại</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label className="form-label" style={{ margin: 0 }}>
+                      Số điện thoại nhận hàng <span style={{ color: '#EF4444' }}>*</span>
+                    </label>
+                    {phone && (
+                      <span style={{ fontSize: '0.75rem', color: /^0(3|5|7|8|9)[0-9]{8}$/.test(phone.replace(/\D/g, '')) ? '#10B981' : '#EF4444', fontWeight: 600 }}>
+                        {phone.replace(/\D/g, '').length}/10 số {/^0(3|5|7|8|9)[0-9]{8}$/.test(phone.replace(/\D/g, '')) ? '✓ Hợp lệ' : '(Chưa đúng định dạng)'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     required
                     className="input"
-                    placeholder="Nhập số điện thoại (10 số)..."
+                    placeholder="VD: 0912345678 (Dùng để kiểm tra đơn hàng)"
                     value={phone}
-                    onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                    maxLength={11}
+                    onChange={e => {
+                      setPhone(e.target.value.replace(/\D/g, ''));
+                      if (errorMsg) setErrorMsg('');
+                    }}
+                    maxLength={10}
+                    style={{
+                      borderColor: phone && !/^0(3|5|7|8|9)[0-9]{8}$/.test(phone.replace(/\D/g, '')) && phone.length === 10 ? '#EF4444' : undefined
+                    }}
                   />
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #6B7280)', marginTop: '4px' }}>
+                    💡 Bắt buộc số điện thoại di động chính xác để tra cứu đơn hàng và đối soát chuyển khoản.
+                  </div>
                 </div>
                 
                 <div className="form-group">

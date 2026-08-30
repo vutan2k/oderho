@@ -11,7 +11,7 @@ export default function GuestOrderTrackingBar({
   onClear,
   initialValue = '',
   isLoading = false,
-  placeholder = 'Nhập SĐT hoặc Mã đơn (VD: 0912345678, ORD-100001)...'
+  placeholder = 'Nhập Số điện thoại đặt hàng (VD: 0912345678)...'
 }) {
   const [query, setQuery] = useState(initialValue || '');
   const [prevInitial, setPrevInitial] = useState(initialValue);

@@ -21,7 +21,8 @@ function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
     <div>
       <div className="product-grid-container">
         {currentProducts.map((product, pIdx) => {
-          const calculatedVnd = Math.round((product.foreignPrice || 0) * krwRate);
+          const won = Number(product.foreignPrice ?? product.priceKrw ?? product.priceWon ?? product.price) || 0;
+          const calculatedVnd = Math.round(won * krwRate);
           const defaultImg = 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80';
 
           return (

@@ -50,8 +50,8 @@ export default function KROrderHomePage() {
     }
     if (list.length === 0) {
       list.push(
-        { label: 'Thử mã: ORD-100001', value: 'ORD-100001' },
-        { label: 'Thử SĐT: 0912345678', value: '0912345678' }
+        { label: 'Thử SĐT: 0912345678', value: '0912345678' },
+        { label: 'Thử SĐT: 0935861690', value: '0935861690' }
       );
     }
     return list;
@@ -399,7 +399,7 @@ export default function KROrderHomePage() {
                     </button>
                   </div>
                   <p style={{ fontSize: '0.85rem', color: '#7F1D1D', margin: '6px 0 10px 0', lineHeight: 1.4 }}>
-                    Không tìm thấy đơn hàng nào khớp với thông tin "<strong>{trackingQuery}</strong>". Quý khách vui lòng kiểm tra lại Số điện thoại (VD: 0912345678) hoặc Mã đơn hàng (VD: ORD-100001).
+                    Không tìm thấy đơn hàng nào khớp với thông tin "<strong>{trackingQuery}</strong>". Quý khách vui lòng kiểm tra lại Số điện thoại (VD: 0912345678).
                   </p>
                   <div style={{ fontSize: '0.82rem', color: '#991B1B', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <span>Cần hỗ trợ tra cứu nhanh?</span>
@@ -448,7 +448,7 @@ export default function KROrderHomePage() {
               </div>
 
               <a
-                href="https://m.me/100062954372060"
+                href="https://www.facebook.com/messages/t/100062954372060"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="consult-banner-btn"

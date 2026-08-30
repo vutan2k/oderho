@@ -70,7 +70,8 @@ export const subscribeToOrders = (onUpdate, onError, userEmail) => {
  */
 export const createOrderInDB = async (orderData) => {
   try {
-    const orderId = orderData.id || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+    const rawPhone = orderData.customerPhone ? String(orderData.customerPhone).replace(/\D/g, '') : '';
+    const orderId = orderData.id || rawPhone || `${Date.now()}`;
     const docRef = doc(db, ORDERS_COLLECTION, orderId);
     const nowIso = new Date().toISOString();
     

@@ -108,7 +108,7 @@ export const CHATBOT_REPLIES = {
 • Ngân hàng: MBBank (Quân Đội)
 • Số tài khoản: 1330042000
 • Chủ tài khoản: LE THI HA VY
-• Nội dung: Mã đơn hàng (VD: ORD-XXXXXX)
+• Nội dung: TAVY [Số điện thoại] (VD: TAVY 0912345678)
 
 2. Chuyển khoản Hàn Quốc (KRW):
 • Ngân hàng: Woori Bank (우리은행)

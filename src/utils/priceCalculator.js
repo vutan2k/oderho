@@ -17,9 +17,12 @@
 export function getOrderTotalVnd(order, rates) {
   if (!order || typeof order !== 'object') return 0;
 
-  // 1. Explicit order.totalVnd if valid number > 0
+  // 1. Explicit order.totalVnd or order.totalAmount if valid number > 0
   if (typeof order.totalVnd === 'number' && order.totalVnd > 0) {
     return Math.round(order.totalVnd);
+  }
+  if (typeof order.totalAmount === 'number' && order.totalAmount > 0) {
+    return Math.round(order.totalAmount);
   }
 
   // 2. Admin Quotation total if available
@@ -39,11 +42,15 @@ export function getOrderTotalVnd(order, rates) {
       if (!item) return sum;
       const qty = Number(item.qty || item.quantity) || 1;
       let itemPriceVnd;
-      if (typeof item.price === 'number' && item.price > 0) {
+      if (typeof item.priceVnd === 'number' && item.priceVnd > 0) {
+        itemPriceVnd = item.priceVnd;
+      } else if (item.foreignPrice !== undefined || item.priceKrw !== undefined || item.priceWon !== undefined) {
+        const itemWon = Number(item.foreignPrice ?? item.priceKrw ?? item.priceWon) || 0;
+        itemPriceVnd = Math.round(itemWon * krwRate * serviceFeeMultiplier);
+      } else if (typeof item.price === 'number' && item.price > 0) {
         itemPriceVnd = item.price;
       } else {
-        const itemWon = Number(item.foreignPrice || item.priceKrw || item.priceWon) || 0;
-        itemPriceVnd = Math.round(itemWon * krwRate * serviceFeeMultiplier);
+        itemPriceVnd = 0;
       }
       return sum + (itemPriceVnd * qty);
     }, 0);

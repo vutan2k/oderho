@@ -116,27 +116,17 @@ export default function PaymentPage() {
     }
   }, [timeLeft, order, orderId]);
 
-  // 4. Số tiền VND chính xác độc nhất (Exact Unique Payment Amount)
+  // 4. Số tiền VND cọc 100% đồng nhất hoàn toàn với giá tiền giỏ hàng (không delta)
   const transferVnd = useMemo(() => {
     if (!order) return 0;
-    if (order.exactPaymentAmount && typeof order.exactPaymentAmount === 'number' && order.exactPaymentAmount > 0) {
-      return order.exactPaymentAmount;
+    if (typeof order.totalVnd === 'number' && order.totalVnd > 0) {
+      return Math.round(order.totalVnd);
     }
-    const baseTotal = getOrderTotalVnd(order, rates);
-    if (baseTotal <= 0) return 0;
-    // Sinh số lẻ ổn định dựa trên orderId để mỗi đơn có 1 số tiền phân biệt duy nhất (101đ - 990đ)
-    const charSum = (orderId || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const delta = (charSum % 890) + 101;
-    return Math.floor(baseTotal / 1000) * 1000 + delta;
-  }, [order, rates, orderId]);
-
-  // Tự động lưu exactPaymentAmount vào Firestore nếu đơn chưa có
-  useEffect(() => {
-    if (!order || !orderId || transferVnd <= 0 || order.exactPaymentAmount === transferVnd) return;
-    updateDoc(doc(db, 'orders', orderId), {
-      exactPaymentAmount: transferVnd,
-    }).catch(console.warn);
-  }, [order, orderId, transferVnd]);
+    if (typeof order.totalAmount === 'number' && order.totalAmount > 0) {
+      return Math.round(order.totalAmount);
+    }
+    return getOrderTotalVnd(order, rates);
+  }, [order, rates]);
 
   useEffect(() => {
     if (!orderId || transferVnd <= 0 || order?.paymentStatus === 'paid') return;
@@ -192,8 +182,10 @@ export default function PaymentPage() {
     return order.foreignPrice || (order.quote?.totalVnd ? Math.round(order.quote.totalVnd / krwRate) : 0);
   }, [order, krwRate]);
 
-  // Nội dung chuyển khoản đơn giản (Không bắt buộc mã đơn vì đã định danh bằng số tiền chính xác)
-  const transferMemo = 'TAVY';
+  // Nội dung chuyển khoản làm sạch: TAVY [Số điện thoại]
+  const rawCustomerPhone = order?.customerPhone || currentUser?.phone || '';
+  const cleanCustomerPhone = rawCustomerPhone.replace(/\D/g, '');
+  const transferMemo = cleanCustomerPhone ? `TAVY ${cleanCustomerPhone}` : (orderId ? `TAVY ${orderId.replace(/^(ord-?|#)/i, '')}` : 'TAVY');
 
   // Link mã QR VietQR chuẩn NAPAS MB Bank (Chứa số tiền chính xác đến từng đồng)
   const directVietQRUrl = useMemo(() => {
@@ -325,7 +317,7 @@ export default function PaymentPage() {
   if (isPaid) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark, #1A1A2E)' }}>
-        <Helmet><title>Thanh toán thành công đơn {orderId} - TAVY Korea</title></Helmet>
+        <Helmet><title>Thanh toán thành công đơn {cleanCustomerPhone || orderId} - TAVY Korea</title></Helmet>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 16px' }}>
           <div style={{ textAlign: 'center', backgroundColor: '#FFFFFF', border: '1px solid #D1FAE5', padding: '48px 28px', borderRadius: '28px', maxWidth: '520px', width: '100%', boxShadow: '0 8px 30px rgba(16, 185, 129, 0.12)' }}>
             <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
@@ -335,7 +327,7 @@ export default function PaymentPage() {
               Thanh Toán Thành Công!
             </h1>
             <p style={{ color: 'var(--text-muted, #4B5563)', fontSize: '0.92rem', marginBottom: '24px', lineHeight: 1.5 }}>
-              Đơn hàng <strong>#{orderId}</strong> đã được hệ thống tự động ghi nhận cọc 100%. Đội ngũ TAVY tại Hàn Quốc sẽ tiến hành mua hàng cho bạn ngay!
+              Đơn hàng theo SĐT <strong>{cleanCustomerPhone || orderId}</strong> đã được hệ thống tự động ghi nhận cọc 100%. Đội ngũ TAVY tại Hàn Quốc sẽ tiến hành mua hàng cho bạn ngay!
             </p>
 
             <div style={{ backgroundColor: '#F9FAFB', borderRadius: '16px', padding: '16px', marginBottom: '28px', textAlign: 'left', fontSize: '0.85rem' }}>
@@ -344,8 +336,8 @@ export default function PaymentPage() {
                 <span style={{ fontWeight: 700, color: '#10B981' }}>{transferVnd.toLocaleString('vi-VN')} đ</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px dashed #E5E7EB' }}>
-                <span style={{ color: '#6B7280' }}>Mã đơn hàng:</span>
-                <span style={{ fontWeight: 700 }}>#{orderId}</span>
+                <span style={{ color: '#6B7280' }}>SĐT nhận hàng:</span>
+                <span style={{ fontWeight: 700 }}>{cleanCustomerPhone || orderId}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
                 <span style={{ color: '#6B7280' }}>Thời gian ghi nhận:</span>
@@ -380,7 +372,7 @@ export default function PaymentPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark, #1A1A2E)' }}>
       <Helmet>
-        <title>Thanh toán đơn hàng #{orderId} - TAVY Korea</title>
+        <title>Thanh toán đơn hàng {cleanCustomerPhone || orderId} - TAVY Korea</title>
         <meta name="description" content="Quét mã VietQR để thanh toán đơn hàng mua hộ Hàn Quốc nhanh chóng và tự động 24/7." />
       </Helmet>
 
@@ -394,7 +386,7 @@ export default function PaymentPage() {
           >
             <ArrowLeft size={16} /> Quay lại danh sách đơn
           </Link>
-          <span style={{ fontSize: '0.82rem', color: '#9CA3AF' }}>Mã đơn: <strong style={{ color: 'var(--text-dark)' }}>#{orderId}</strong></span>
+          <span style={{ fontSize: '0.82rem', color: '#9CA3AF' }}>SĐT đặt hàng: <strong style={{ color: 'var(--text-dark)' }}>{cleanCustomerPhone || orderId}</strong></span>
         </div>
 
         {/* Thanh đếm ngược & Thông báo gia hạn */}
@@ -686,7 +678,7 @@ export default function PaymentPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <div>
                     <div style={{ fontSize: '0.76rem', color: '#1E40AF', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      ⚡ SỐ TIỀN CẦN CHUYỂN CHÍNH XÁC (ĐẾN TỪNG ĐỒNG)
+                      ⚡ SỐ TIỀN THANH TOÁN CỌC 100% (ĐỒNG NHẤT VỚI GIỎ HÀNG)
                     </div>
                     <div style={{ fontSize: '1.55rem', fontWeight: 900, color: '#1D4ED8', marginTop: '2px' }}>
                       {transferVnd.toLocaleString('vi-VN')} VNĐ
@@ -710,22 +702,22 @@ export default function PaymentPage() {
                     }}
                   >
                     {copied === 'amount' ? <Check size={14} /> : <Copy size={14} />}
-                    {copied === 'amount' ? 'Đã sao chép!' : 'Copy số tiền chuẩn'}
+                    {copied === 'amount' ? 'Đã sao chép!' : 'Copy số tiền'}
                   </button>
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#1E40AF', marginTop: '8px', lineHeight: 1.45 }}>
-                  ⚠️ <strong>Lưu ý:</strong> Vui lòng chuyển <strong>CHÍNH XÁC</strong> số tiền trên (không làm tròn). Hệ thống tự động kích hoạt đơn hàng trong 3 giây nhờ số tiền độc nhất này mà không cần nhập mã đơn!
+                  ⚠️ <strong>Lưu ý:</strong> Quý khách chuyển cọc 100% để nhân viên TAVY tại Hàn Quốc tiến hành mua hàng tại Store ngay lập tức.
                 </div>
               </div>
 
-              {/* 2. Nội dung chuyển khoản (Tùy chọn - Không bắt buộc mã đơn) */}
+              {/* 2. Nội dung chuyển khoản (Tự động theo SĐT nhận hàng) */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: '#F9FAFB', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
                 <div>
                   <div style={{ fontSize: '0.74rem', color: '#6B7280', fontWeight: 600 }}>
-                    NỘI DUNG CHUYỂN KHOẢN (TÙY CHỌN - KHÔNG BẮT BUỘC MÃ ĐƠN)
+                    NỘI DUNG CHUYỂN KHOẢN (QUÉT QR TỰ ĐIỀN)
                   </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-dark)' }}>
-                    {transferMemo} <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 400 }}>(Hoặc để trống / Tên bạn)</span>
+                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--purple-dark, #581C87)' }}>
+                    {transferMemo}
                   </div>
                 </div>
                 <button
