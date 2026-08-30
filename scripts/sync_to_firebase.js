@@ -38,8 +38,8 @@ const data = JSON.parse(fs.readFileSync('./public/data/playwright_scraped_produc
         photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String) : [],
         description: String(product.description || ''),
         origin: String(product.origin || 'Store Olive Young Korea'),
-        rating: 4.9,
-        reviewsCount: 120,
+        rating: Number.isFinite(Number(product.rating)) ? Number(product.rating) : 0,
+        reviewsCount: Number.isFinite(Number(product.reviewsCount)) ? Number(product.reviewsCount) : 0,
         productUrl: String(product.productUrl || ''),
         scrapedAt: new Date().toISOString()
       };

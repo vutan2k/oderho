@@ -71,7 +71,7 @@ export async function runFirecrawlScraper(url) {
     const data = scrapeResult.extract;
     const goodsNoMatch = url.match(/goodsNo=([A-Za-z0-9_]+)/i);
     const goodsNo = goodsNoMatch ? goodsNoMatch[1] : `FC-${Date.now()}`;
-    const cleanPrice = Number(data.foreignPrice) || 25000;
+    const cleanPrice = Number(data.foreignPrice) || 0;
 
     const finalProduct = {
       goodsNo: goodsNo,
@@ -85,8 +85,8 @@ export async function runFirecrawlScraper(url) {
       images: Array.isArray(data.images) && data.images.length > 0 ? data.images : [data.productImage || ''],
       description: data.description || 'Sản phẩm nhập khẩu Hàn Quốc chính hãng.',
       origin: 'Store Olive Young Seoul, Hàn Quốc',
-      rating: 4.9,
-      reviewsCount: Math.floor(Math.random() * 500) + 50,
+      rating: Number(data.rating) || 0,
+      reviewsCount: Number(data.reviewsCount) || 0,
       productUrl: url,
       source: 'FIRECRAWL_AI',
       scrapedAt: new Date().toISOString()

@@ -674,8 +674,8 @@ export const AppProvider = ({ children }) => {
             origin: 'Store Olive Young Korea',
             description: decoded.description || decoded.d || 'Sản phẩm chính hãng nội địa Hàn Quốc.',
             usage: decoded.usage || decoded.u || 'Xem chi tiết trên bao bì.',
-            rating: decoded.rating || 4.9,
-            reviewsCount: (decoded.photoReviews && decoded.photoReviews.length) || decoded.reviewsCount || 120,
+            rating: Number.isFinite(Number(decoded.rating)) ? Number(decoded.rating) : 0,
+            reviewsCount: (decoded.photoReviews && decoded.photoReviews.length) || (Number.isFinite(Number(decoded.reviewsCount)) ? Number(decoded.reviewsCount) : 0),
             productUrl: decoded.url || decoded.u || '',
             scrapedAt: new Date().toISOString()
           };

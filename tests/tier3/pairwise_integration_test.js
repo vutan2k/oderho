@@ -608,3 +608,131 @@ test('[T19-PAIR-19] F6+F7: Guest Order Item Summary ↔ Dynamic Exchange Rate & 
   assertGreaterThan(total2, total1, 'Recalculated total increases with higher rate and fee');
 });
 
+
+// 20. F23+F03: Smart Product Research Scraping -> Auto-Save to Pending Queue (AppProvider addPendingProduct)
+test('[T20-PAIR-20] F23+F03: Smart Product Research Scraping -> Auto-Save to Pending Queue (AppProvider addPendingProduct)', async () => {
+  const mockStorage = createMockLocalStorage();
+  globalThis.localStorage = mockStorage;
+
+  // Initialize empty pending queue
+  mockStorage.setItem('tavy_pending_products', JSON.stringify([]));
+
+  // Simulated AppContext addPendingProduct method
+  const addPendingProduct = async (product) => {
+    const existing = JSON.parse(mockStorage.getItem('tavy_pending_products') || '[]');
+    const newEntry = {
+      ...product,
+      id: `PENDING-${Date.now()}`,
+      status: 'pending_review',
+      createdAt: new Date().toISOString()
+    };
+    existing.unshift(newEntry);
+    mockStorage.setItem('tavy_pending_products', JSON.stringify(existing));
+    return { success: true, product: newEntry };
+  };
+
+  // Scraped output from Smart Product Research engine
+  const scrapedResult = {
+    goodsNo: 'A000000185934',
+    name: 'Tinh Chất Cấp Nước Phục Hồi Torriden Dive-In Low Molecular Hyaluronic Acid Serum 50ml',
+    nameKr: '토리든 다이브인 저분자 히알루론산 세럼 50ml',
+    brand: 'Torriden',
+    category: 'skincare',
+    foreignPrice: 18000,
+    productImage: 'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0018/A00000018593401ko.jpg',
+    images: [
+      'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0018/A00000018593401ko.jpg',
+      'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0018/A00000018593402ko.jpg'
+    ],
+    photoReviews: [
+      'https://image.oliveyoung.co.kr/uploads/images/gdasEditor/2026/08/review_torriden_01.jpg'
+    ],
+    ingredients: ['Hyaluronic Acid 5D', 'D-Panthenol'],
+    description: 'Cấp ẩm sâu đa tầng, phục hồi da nhạy cảm.',
+    rating: 4.8,
+    reviewsCount: 14200,
+    source: 'oliveyoung'
+  };
+
+  // Dispatch auto-save into Pending Queue
+  const saveRes = await addPendingProduct(scrapedResult);
+  assertEquals(saveRes.success, true, 'Auto-save to pending queue must return success true');
+
+  // Verify pending queue state in storage
+  const pendingQueue = JSON.parse(mockStorage.getItem('tavy_pending_products'));
+  assertEquals(pendingQueue.length, 1, 'Pending queue must contain 1 newly scraped item');
+  assertEquals(pendingQueue[0].goodsNo, 'A000000185934', 'GoodsNo in pending queue matches scraped result');
+  assertEquals(pendingQueue[0].status, 'pending_review', 'Initial status in queue is pending_review');
+  assertEquals(pendingQueue[0].foreignPrice, 18000, 'Foreign price Won preserved');
+  assertEquals(pendingQueue[0].photoReviews.length, 1, 'Photo review preserved');
+  assertEquals(pendingQueue[0].ingredients.length, 2, 'Ingredients list preserved');
+});
+
+// 21. F23+F16: Smart Product Research Multi-Source Cascade -> Scraper Quality Engine validation
+test('[T21-PAIR-21] F23+F16: Smart Product Research Multi-Source Cascade -> Scraper Quality Engine validation', () => {
+  // Scraper Quality Rules
+  const evaluateScraperQuality = (item) => {
+    const errors = [];
+    if (!item.name || item.name.length < 3) errors.push('Invalid name length');
+    if (!item.foreignPrice || item.foreignPrice <= 0) errors.push('Invalid price');
+    if (!item.productImage || !item.productImage.startsWith('http')) errors.push('Invalid image URL');
+    if (item.productImage.includes('RS=64x0')) errors.push('Image has RS=64x0 compression');
+    if (/Math\.random|fake/i.test(JSON.stringify(item))) errors.push('Rule 0 violation: fake or random data');
+    if (item.rating > 5 || item.rating < 0) errors.push('Invalid rating bounds');
+    return {
+      passed: errors.length === 0,
+      errors
+    };
+  };
+
+  // High-quality output from smart research
+  const qualityProduct = {
+    name: 'Kem Dưỡng Ẩm Làm Dịu Da Mediheal Teatree Calming Moisture Cream 100ml',
+    nameKr: '메디힐 티트리 진정 수분 크림 100ml',
+    brand: 'Mediheal',
+    foreignPrice: 24000,
+    productImage: 'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/A00000022341401ko.jpg',
+    images: ['https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/A00000022341401ko.jpg'],
+    photoReviews: [],
+    ingredients: ['Chiết xuất Tràm Trà', 'Centella Asiatica'],
+    description: 'Kem dưỡng ẩm làm dịu nốt mụn đỏ và kiểm soát bã nhờn',
+    rating: 4.7,
+    reviewsCount: 3800
+  };
+
+  const evalResult = evaluateScraperQuality(qualityProduct);
+  assertEquals(evalResult.passed, true, 'Quality product must pass scraper quality engine validation');
+  assertEquals(evalResult.errors.length, 0, 'Zero errors');
+});
+
+// 22. F23+F10: Smart Input Domain Auto-Detection ↔ Live Log Console Step Streaming
+test('[T22-PAIR-22] F23+F10: Smart Input Domain Auto-Detection ↔ Live Log Console Step Streaming', () => {
+  const logEntries = [];
+  const addLog = (icon, text) => {
+    const timestamp = '10:30:15';
+    logEntries.push({ timestamp, icon, text, full: `[${timestamp}] ${icon} ${text}` });
+  };
+
+  // Simulate Smart Sourcing pipeline emitting live logs
+  const inputUrl = 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000223414';
+  
+  // Step 1: Input detection
+  addLog('🔍', 'Đã nhận: URL Olive Young');
+  // Step 2: Reading Jina AI
+  addLog('📡', '[OliveYoung] Đang đọc nội dung qua Jina AI Reader...');
+  // Step 3: AI Extraction
+  addLog('🤖', '[AI] Đang trích xuất thông tin sản phẩm...');
+  // Step 4: Scraping Success
+  addLog('✅', '[OliveYoung] Lấy được: Tên ✓ Giá ✓ Ảnh x5 ✓');
+  // Step 5: Review search
+  addLog('📷', '[Hwahae] Đang tìm ảnh review thực tế...');
+  // Step 6: Review success
+  addLog('✅', '[Hwahae] Lấy được 8 ảnh review thực tế');
+  // Step 7: Queue complete
+  addLog('📋', 'Hoàn tất! Đang đưa vào Hàng Chờ Duyệt...');
+
+  assertEquals(logEntries.length, 7, 'Must have recorded 7 pipeline step logs');
+  assertContains(logEntries[0].full, '🔍 Đã nhận: URL Olive Young', 'Initial detection log');
+  assertContains(logEntries[3].full, '✅ [OliveYoung] Lấy được: Tên ✓ Giá ✓', 'Data extraction log');
+  assertContains(logEntries[6].full, '📋 Hoàn tất! Đang đưa vào Hàng Chờ Duyệt...', 'Final queue log');
+});

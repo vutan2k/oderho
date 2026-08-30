@@ -8,11 +8,23 @@ import {
 } from '../services/koreanHealthScraperCore';
 import { scrapeProductMetadata } from '../services/productScraperService';
 import {
-  Zap, Search, Plus, Trash2, Edit3, Check,
-  CheckCircle2, AlertCircle, RefreshCw, Layers,
-  ExternalLink, ArrowRight, X, Sparkles, Box, CheckCheck,
-  Table, LayoutGrid, Download, Copy, ChevronDown, ChevronUp, ShoppingBag
+  Zap, Search, Trash2, Edit3, Check,
+  CheckCircle2, RefreshCw, Layers,
+  X, CheckCheck,
+  Table, LayoutGrid, Download, Copy, ChevronDown, ChevronUp, ShoppingBag,
+  TrendingDown, TrendingUp, Bot, Activity, Clock, Terminal, Sliders, History, ShieldCheck,
+  ScanSearch
 } from 'lucide-react';
+import {
+  getPriceSyncConfig,
+  savePriceSyncConfig,
+  executeAutoPriceSync,
+  clearPriceSyncLogs,
+  getRecentPriceAlerts
+} from '../services/autoScraperBotService';
+import { calculateVndPrice } from '../services/oliveYoungPriceSyncService';
+import AdminProductResearchTab from './AdminProductResearchTab';
+
 
 export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
   const isDark = isDarkProp !== undefined
@@ -28,11 +40,13 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
     approveAllPendingProducts,
     rejectPendingProduct,
     addProduct,
+    products,
+    updateProduct,
     rates
   } = useContext(AppContext);
   const showToast = useToast();
 
-  const [activeSubTab, setActiveSubTab] = useState('pending'); // 'pending' | 'scraper'
+  const [activeSubTab, setActiveSubTab] = useState('pending'); // 'pending' | 'scraper' | 'scheduler' | 'research'
 
   // View state: 'table' (Excel Spreadsheet) | 'grid' (Cards)
   const [viewMode, setViewMode] = useState('table');
@@ -280,12 +294,12 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
       nameKr: prod.koreanTitle || prod.nameKr || '',
       brand: prod.brand,
       category: prod.category || 'ginseng',
-      foreignPrice: prod.foreignPrice || prod.price || 30000,
-      price: prod.foreignPrice || prod.price || 30000,
+      foreignPrice: Number(prod.foreignPrice) || Number(prod.price) || 0,
+      price: Number(prod.foreignPrice) || Number(prod.price) || 0,
       productImage: prod.productImage,
-      images: prod.images || [prod.productImage],
-      rating: prod.rating || 4.9,
-      reviewsCount: prod.reviewsCount || 1500,
+      images: prod.images || (prod.productImage ? [prod.productImage] : []),
+      rating: Number(prod.rating) || 0,
+      reviewsCount: Number(prod.reviewsCount) || 0,
       origin: prod.origin || 'Hàn Quốc',
       description: prod.description || '',
       usage: prod.usage || '',
@@ -309,12 +323,12 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
       nameKr: prod.koreanTitle || prod.nameKr || '',
       brand: prod.brand,
       category: prod.category || 'ginseng',
-      foreignPrice: prod.foreignPrice || prod.price || 30000,
-      price: prod.foreignPrice || prod.price || 30000,
+      foreignPrice: Number(prod.foreignPrice) || Number(prod.price) || 0,
+      price: Number(prod.foreignPrice) || Number(prod.price) || 0,
       productImage: prod.productImage,
-      images: prod.images || [prod.productImage],
-      rating: prod.rating || 4.9,
-      reviewsCount: prod.reviewsCount || 1500,
+      images: prod.images || (prod.productImage ? [prod.productImage] : []),
+      rating: Number(prod.rating) || 0,
+      reviewsCount: Number(prod.reviewsCount) || 0,
       origin: prod.origin || 'Hàn Quốc',
       description: prod.description || '',
       usage: prod.usage || '',
@@ -366,6 +380,111 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
     setActiveSubTab('pending');
   };
 
+  // ════════════════════════════════════════════════════════════════════════
+  // AUTO-SCHEDULER & PRICE WATCHER STATE & HANDLERS
+  // ════════════════════════════════════════════════════════════════════════
+  const [schedulerConfig, setSchedulerConfig] = useState(() => getPriceSyncConfig());
+  const [isSyncingPrices, setIsSyncingPrices] = useState(false);
+  const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0, currentName: '', percent: 0 });
+  const [terminalLogs, setTerminalLogs] = useState(() => {
+    const cfg = getPriceSyncConfig();
+    return (cfg.logs || []).slice(0, 40).map(l => ({
+      id: l.id || `LOG-${Math.random()}`,
+      time: l.timestamp ? new Date(l.timestamp).toLocaleTimeString('vi-VN') : '',
+      text: `${l.changeType === 'drop' ? '🔻 GIẢM GIÁ' : '🔺 TĂNG GIÁ'} [${l.brand || 'Korea'}] ${l.name}: ${Number(l.oldPrice).toLocaleString()}₩ ➔ ${Number(l.newPrice).toLocaleString()}₩ (${l.changePercent > 0 ? '+' : ''}${l.changePercent}%)`,
+      type: l.changeType === 'drop' ? 'success' : 'alert'
+    }));
+  });
+  const [priceHistoryModalItem, setPriceHistoryModalItem] = useState(null);
+  const [alertFilter, setAlertFilter] = useState('all'); // 'all' | 'drops' | 'increases'
+
+  // Toggle Scheduler Auto-Run
+  const handleToggleScheduler = () => {
+    const newEnabled = !schedulerConfig.enabled;
+    const updated = { ...schedulerConfig, enabled: newEnabled };
+    setSchedulerConfig(updated);
+    savePriceSyncConfig(updated);
+    if (showToast) {
+      showToast(newEnabled ? 'Đã BẬT Auto-Scheduler giám sát giá tự động!' : 'Đã TẮT Auto-Scheduler.', newEnabled ? 'success' : 'info');
+    }
+  };
+
+  // Change Interval Hours
+  const handleChangeInterval = (hours) => {
+    const updated = { ...schedulerConfig, intervalHours: hours, intervalMins: hours * 60 };
+    setSchedulerConfig(updated);
+    savePriceSyncConfig(updated);
+    if (showToast) showToast(`Đã thiết lập chu kỳ quét: Mỗi ${hours} Giờ`, 'info');
+  };
+
+  // Run Now Instant Sync
+  const handleRunSchedulerNow = async () => {
+    if (isSyncingPrices) return;
+    setIsSyncingPrices(true);
+    setSyncProgress({ current: 0, total: products?.length || 0, currentName: 'Khởi động...', percent: 0 });
+
+    const newTerminalLogs = [...terminalLogs];
+    const addLog = (msg, type = 'info') => {
+      const entry = {
+        id: `LOG-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        time: new Date().toLocaleTimeString('vi-VN'),
+        text: msg,
+        type: type
+      };
+      newTerminalLogs.unshift(entry);
+      setTerminalLogs([...newTerminalLogs].slice(0, 60));
+    };
+
+    addLog(`🚀 Bắt đầu quét & đối chiếu giá cho ${products?.length || 0} sản phẩm trong kho hàng...`, 'info');
+
+    try {
+      const res = await executeAutoPriceSync(products || [], updateProduct, {
+        rates,
+        onProgress: (current, total, name) => {
+          const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+          setSyncProgress({ current, total, currentName: name, percent });
+        },
+        onLog: (msg, type) => {
+          addLog(msg, type);
+        }
+      });
+
+      setSchedulerConfig(getPriceSyncConfig());
+
+      if (res.success) {
+        if (showToast) showToast(res.message, 'success');
+      } else {
+        if (showToast) showToast(res.message || 'Quét giá hoàn tất', 'info');
+      }
+    } catch (err) {
+      addLog(`❌ Lỗi phiên đồng bộ: ${err.message}`, 'alert');
+      if (showToast) showToast(`Lỗi đồng bộ: ${err.message}`, 'error');
+    } finally {
+      setIsSyncingPrices(false);
+      setSyncProgress({ current: 0, total: 0, currentName: '', percent: 100 });
+    }
+  };
+
+  // Clear Terminal Logs
+  const handleClearLogs = () => {
+    clearPriceSyncLogs();
+    setTerminalLogs([]);
+    setSchedulerConfig(prev => ({ ...prev, logs: [] }));
+    if (showToast) showToast('Đã làm sạch lịch sử log!', 'info');
+  };
+
+  // Lọc sản phẩm có biến động giá
+  const priceAlertProducts = useMemo(() => {
+    const list = getRecentPriceAlerts(products || []);
+    if (alertFilter === 'drops') {
+      return list.filter(p => p.priceChangeAlert?.changeType === 'drop' || (p.priceHistory && p.priceHistory[0]?.changeType === 'drop'));
+    }
+    if (alertFilter === 'increases') {
+      return list.filter(p => p.priceChangeAlert?.changeType === 'increase' || (p.priceHistory && p.priceHistory[0]?.changeType === 'increase'));
+    }
+    return list;
+  }, [products, alertFilter]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Sub Navigation */}
@@ -381,7 +500,7 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
         gap: '12px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
       }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             onClick={() => setActiveSubTab('pending')}
             style={{
@@ -432,6 +551,58 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
           >
             <Zap size={16} />
             <span>Cào & Nạp Dữ Liệu Hàn Quốc</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('scheduler')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              backgroundColor: activeSubTab === 'scheduler' ? '#3B82F6' : 'transparent',
+              color: activeSubTab === 'scheduler' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Bot size={16} />
+            <span>Auto-Bot & Giám Sát Giá</span>
+            {schedulerConfig.enabled && (
+              <span style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: '#10B981',
+                boxShadow: '0 0 8px #10B981'
+              }} />
+            )}
+          </button>
+
+          {/* Tab 4: Cào Sản Phẩm Thông Minh */}
+          <button
+            onClick={() => setActiveSubTab('research')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              backgroundColor: activeSubTab === 'research' ? '#8B5CF6' : 'transparent',
+              color: activeSubTab === 'research' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <ScanSearch size={16} />
+            <span>Cào Sản Phẩm</span>
           </button>
         </div>
 
@@ -1439,6 +1610,711 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* SUB-VIEW 3: AUTO-BOT SCHEDULER & GIÁM SÁT BIẾN ĐỘNG GIÁ          */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {activeSubTab === 'scheduler' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Top 4 Metrics Summary Cards */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '14px'
+          }}>
+            {/* Card 1: Scheduler Status */}
+            <div style={{
+              backgroundColor: isDark ? '#1E293B' : '#FFF',
+              borderRadius: '14px',
+              padding: '18px',
+              border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.78rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 800, textTransform: 'uppercase' }}>
+                  Trạng Thái Auto-Bot
+                </span>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: schedulerConfig.enabled ? (isDark ? 'rgba(16,185,129,0.2)' : '#ECFDF5') : (isDark ? 'rgba(148,163,184,0.2)' : '#F1F5F9'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Bot size={18} color={schedulerConfig.enabled ? '#10B981' : '#94A3B8'} />
+                </div>
+              </div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: schedulerConfig.enabled ? '#10B981' : (isDark ? '#CBD5E1' : '#64748B') }}>
+                {schedulerConfig.enabled ? 'Đang Hoạt Động (ON)' : 'Tạm Dừng (OFF)'}
+              </div>
+              <div style={{ fontSize: '0.74rem', color: isDark ? '#94A3B8' : '#64748B' }}>
+                Chu kỳ: <strong>Mỗi {schedulerConfig.intervalHours || 1} Giờ</strong> • Chạy cuối: {schedulerConfig.lastSyncTime ? new Date(schedulerConfig.lastSyncTime).toLocaleTimeString('vi-VN') : 'Chưa chạy'}
+              </div>
+            </div>
+
+            {/* Card 2: Monitored Products */}
+            <div style={{
+              backgroundColor: isDark ? '#1E293B' : '#FFF',
+              borderRadius: '14px',
+              padding: '18px',
+              border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.78rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 800, textTransform: 'uppercase' }}>
+                  Kho Hàng Theo Dõi
+                </span>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(56,189,248,0.2)' : '#E0F2FE',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Activity size={18} color="#0284C7" />
+                </div>
+              </div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                {products?.length || 0} Sản Phẩm
+              </div>
+              <div style={{ fontSize: '0.74rem', color: '#0284C7', fontWeight: 700 }}>
+                100% Neo Giá Trực Tiếp Olive Young
+              </div>
+            </div>
+
+            {/* Card 3: Price Drops (Sale) */}
+            <div style={{
+              backgroundColor: isDark ? '#1E293B' : '#FFF',
+              borderRadius: '14px',
+              padding: '18px',
+              border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.78rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 800, textTransform: 'uppercase' }}>
+                  Ưu Đãi Giảm Giá (Sale)
+                </span>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(16,185,129,0.2)' : '#ECFDF5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <TrendingDown size={18} color="#10B981" />
+                </div>
+              </div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#10B981' }}>
+                {priceAlertProducts.filter(p => p.priceChangeAlert?.changeType === 'drop' || (p.priceHistory && p.priceHistory[0]?.changeType === 'drop')).length} Sản Phẩm
+              </div>
+              <div style={{ fontSize: '0.74rem', color: isDark ? '#94A3B8' : '#64748B' }}>
+                Phát hiện giảm giá $\ge 1\%$ từ Hàn Quốc
+              </div>
+            </div>
+
+            {/* Card 4: Price Increases */}
+            <div style={{
+              backgroundColor: isDark ? '#1E293B' : '#FFF',
+              borderRadius: '14px',
+              padding: '18px',
+              border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.78rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 800, textTransform: 'uppercase' }}>
+                  Biến Động Tăng Giá
+                </span>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(245,158,11,0.2)' : '#FEF3C7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <TrendingUp size={18} color="#F59E0B" />
+                </div>
+              </div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#F59E0B' }}>
+                {priceAlertProducts.filter(p => p.priceChangeAlert?.changeType === 'increase' || (p.priceHistory && p.priceHistory[0]?.changeType === 'increase')).length} Sản Phẩm
+              </div>
+              <div style={{ fontSize: '0.74rem', color: isDark ? '#94A3B8' : '#64748B' }}>
+                Đã tự động tính toán lại giá VNĐ
+              </div>
+            </div>
+          </div>
+
+          {/* Scheduler Control Panel Bar */}
+          <div style={{
+            backgroundColor: isDark ? '#1E293B' : '#FFF',
+            borderRadius: '16px',
+            padding: '20px 24px',
+            border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              {/* Toggle Switch */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button
+                  onClick={handleToggleScheduler}
+                  style={{
+                    backgroundColor: schedulerConfig.enabled ? '#10B981' : (isDark ? '#334155' : '#CBD5E1'),
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '24px',
+                    padding: '8px 16px',
+                    fontWeight: 800,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Bot size={16} />
+                  <span>{schedulerConfig.enabled ? 'Auto-Scheduler: ĐANG BẬT' : 'Auto-Scheduler: ĐÃ TẮT'}</span>
+                </button>
+              </div>
+
+              {/* Cycle Dropdown */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Clock size={16} color={isDark ? '#94A3B8' : '#64748B'} />
+                <span style={{ fontSize: '0.82rem', color: isDark ? '#CBD5E1' : '#475569', fontWeight: 700 }}>
+                  Chu kỳ quét:
+                </span>
+                <select
+                  value={schedulerConfig.intervalHours || 1}
+                  onChange={(e) => handleChangeInterval(parseInt(e.target.value, 10))}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#FFF',
+                    color: isDark ? '#F8FAFC' : '#0F172A',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value={1}>Mỗi 1 Giờ (Khuyên Dùng)</option>
+                  <option value={6}>Mỗi 6 Giờ</option>
+                  <option value={12}>Mỗi 12 Giờ</option>
+                  <option value={24}>Mỗi 24 Giờ</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Run Now & Clear Logs Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                onClick={handleClearLogs}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: isDark ? '#94A3B8' : '#64748B',
+                  border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  padding: '8px 14px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Làm Sạch Log
+              </button>
+
+              <button
+                onClick={handleRunSchedulerNow}
+                disabled={isSyncingPrices}
+                style={{
+                  backgroundColor: isSyncingPrices ? '#64748B' : '#10B981',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '10px 22px',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  cursor: isSyncingPrices ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <RefreshCw size={16} className={isSyncingPrices ? 'animate-spin' : ''} />
+                <span>{isSyncingPrices ? 'Đang đồng bộ...' : '⚡ Đồng Bộ Giá Ngay (Run Now)'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Live Progress Bar Banner */}
+          {isSyncingPrices && (
+            <div style={{
+              backgroundColor: isDark ? '#0F172A' : '#F0FDF4',
+              border: '2px solid #10B981',
+              borderRadius: '14px',
+              padding: '16px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#10B981', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <RefreshCw size={16} className="animate-spin" />
+                  Đang quét và đối chiếu giá: {syncProgress.currentName || 'Đang chuẩn bị...'}
+                </span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 900, color: '#10B981' }}>
+                  {syncProgress.current} / {syncProgress.total} ({syncProgress.percent}%)
+                </span>
+              </div>
+              <div style={{
+                width: '100%',
+                height: '8px',
+                backgroundColor: isDark ? '#1E293B' : '#DCFCE7',
+                borderRadius: '999px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: `${syncProgress.percent}%`,
+                  height: '100%',
+                  backgroundColor: '#10B981',
+                  borderRadius: '999px',
+                  transition: 'width 0.2s ease'
+                }} />
+              </div>
+            </div>
+          )}
+
+          {/* Two-Column Grid: Live Terminal Logs + Price Volatility Table */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(320px, 420px) 1fr',
+            gap: '20px',
+            alignItems: 'start'
+          }}>
+            {/* Left Column: Live Terminal Log Console */}
+            <div style={{
+              backgroundColor: '#090D16',
+              borderRadius: '16px',
+              border: isDark ? '1px solid #334155' : '1px solid #1E293B',
+              padding: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1E293B', paddingBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Terminal size={16} color="#10B981" />
+                  <span style={{ color: '#F8FAFC', fontWeight: 800, fontSize: '0.85rem' }}>
+                    Live Terminal Logs ({terminalLogs.length})
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.7rem', color: '#64748B', fontFamily: 'monospace' }}>
+                  PLAYWRIGHT BOT v20.0
+                </span>
+              </div>
+
+              <div style={{
+                height: '400px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                fontFamily: 'monospace',
+                fontSize: '0.74rem',
+                lineHeight: '1.4'
+              }}>
+                {terminalLogs.length === 0 ? (
+                  <div style={{ color: '#64748B', textAlign: 'center', marginTop: '60px' }}>
+                    Chưa có log hoạt động. Bấm "Run Now" để khởi chạy quét giá.
+                  </div>
+                ) : (
+                  terminalLogs.map(log => {
+                    let color = '#CBD5E1';
+                    if (log.type === 'success') color = '#34D399';
+                    else if (log.type === 'alert') color = '#FBBF24';
+                    else if (log.type === 'warning') color = '#F87171';
+
+                    return (
+                      <div key={log.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span style={{ color: '#64748B', flexShrink: 0 }}>[{log.time || '--:--:--'}]</span>
+                        <span style={{ color, wordBreak: 'break-word' }}>{log.text}</span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Price Volatility & Alerts Table */}
+            <div style={{
+              backgroundColor: isDark ? '#1E293B' : '#FFF',
+              borderRadius: '16px',
+              border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sliders size={18} color="#10B981" />
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                    Bảng Giám Sát Biến Động Giá Kho Hàng
+                  </h3>
+                </div>
+
+                {/* Filter Pills */}
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    onClick={() => setAlertFilter('all')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: alertFilter === 'all' ? '#10B981' : (isDark ? '#0F172A' : '#F1F5F9'),
+                      color: alertFilter === 'all' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Tất Cả ({getRecentPriceAlerts(products || []).length})
+                  </button>
+                  <button
+                    onClick={() => setAlertFilter('drops')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: alertFilter === 'drops' ? '#10B981' : (isDark ? '#0F172A' : '#F1F5F9'),
+                      color: alertFilter === 'drops' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔻 Giảm Giá
+                  </button>
+                  <button
+                    onClick={() => setAlertFilter('increases')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: alertFilter === 'increases' ? '#F59E0B' : (isDark ? '#0F172A' : '#F1F5F9'),
+                      color: alertFilter === 'increases' ? '#000' : (isDark ? '#94A3B8' : '#64748B'),
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔺 Tăng Giá
+                  </button>
+                </div>
+              </div>
+
+              {/* Table / List */}
+              {priceAlertProducts.length === 0 ? (
+                <div style={{
+                  padding: '40px 20px',
+                  textAlign: 'center',
+                  color: isDark ? '#94A3B8' : '#64748B',
+                  backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+                  borderRadius: '12px',
+                  border: isDark ? '1px dashed #334155' : '1px dashed #E2E8F0'
+                }}>
+                  <ShieldCheck size={32} color="#10B981" style={{ margin: '0 auto 8px auto' }} />
+                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                    Tất cả sản phẩm đều khớp giá 100%
+                  </div>
+                  <div style={{ fontSize: '0.78rem', marginTop: '4px' }}>
+                    Chưa phát hiện biến động giá bất thường $\ge 1\%$ trong các phiên quét gần đây.
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
+                  {priceAlertProducts.map(prod => {
+                    const alert = prod.priceChangeAlert || {};
+                    const isDrop = alert.changeType === 'drop' || (prod.priceHistory && prod.priceHistory[0]?.changeType === 'drop');
+                    const changePct = alert.changePercent || (prod.priceHistory && prod.priceHistory[0]?.changePercent) || 0;
+                    const foreignWon = prod.foreignPrice || prod.price || 0;
+                    const vndPrice = prod.priceVnd || calculateVndPrice(foreignWon, krwRate, serviceFee);
+
+                    return (
+                      <div
+                        key={prod.goodsNo}
+                        style={{
+                          backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+                          borderRadius: '12px',
+                          border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+                          padding: '12px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        {/* Thumbnail & Title */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '220px' }}>
+                          <img
+                            src={prod.productImage || (prod.images && prod.images[0]) || ''}
+                            alt=""
+                            style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain', backgroundColor: '#FFF' }}
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 700 }}>
+                              {prod.brand || 'Korea Brand'} • SKU: {prod.goodsNo}
+                            </span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                              {prod.name}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Price & Badge */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                              <span style={{
+                                backgroundColor: isDrop ? (isDark ? '#064E3B' : '#ECFDF5') : (isDark ? '#78350F' : '#FEF3C7'),
+                                color: isDrop ? '#10B981' : '#F59E0B',
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                fontSize: '0.72rem',
+                                fontWeight: 900
+                              }}>
+                                {isDrop ? `🔻 ${Math.abs(changePct)}%` : `🔺 +${changePct}%`}
+                              </span>
+                              <strong style={{ fontSize: '0.92rem', color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                                {foreignWon.toLocaleString()} ₩
+                              </strong>
+                            </div>
+                            <div style={{ fontSize: '0.76rem', color: '#38BDF8', fontWeight: 700, marginTop: '2px' }}>
+                              {vndPrice.toLocaleString('vi-VN')} đ
+                            </div>
+                          </div>
+
+                          {/* Action button */}
+                          <button
+                            onClick={() => setPriceHistoryModalItem(prod)}
+                            style={{
+                              backgroundColor: isDark ? '#1E293B' : '#FFF',
+                              color: isDark ? '#CBD5E1' : '#475569',
+                              border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <History size={14} />
+                            <span>Lịch Sử</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* SUB-VIEW 4: CÀO SẢN PHẨM THÔNG MINH & NGHIÊN CỨU ĐA NGUỒN         */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {activeSubTab === 'research' && (
+        <AdminProductResearchTab
+          isDark={isDark}
+          rates={rates}
+          addPendingProduct={addPendingProduct}
+          showToast={showToast}
+          onNavigateToPending={() => setActiveSubTab('pending')}
+        />
+      )}
+
+      {/* Price History Timeline Modal */}
+      {priceHistoryModalItem && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: isDark ? '#1E293B' : '#FFF',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '560px',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header */}
+            <div style={{ padding: '18px 20px', borderBottom: isDark ? '1px solid #334155' : '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <History size={18} color="#10B981" />
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                  Lịch Sử Biến Động Giá Bán
+                </h3>
+              </div>
+              <button
+                onClick={() => setPriceHistoryModalItem(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: isDark ? '#94A3B8' : '#64748B' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Product Summary */}
+            <div style={{ padding: '16px 20px', borderBottom: isDark ? '1px solid #334155' : '1px solid #E2E8F0', display: 'flex', gap: '14px', alignItems: 'center', backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}>
+              <img
+                src={priceHistoryModalItem.productImage || (priceHistoryModalItem.images && priceHistoryModalItem.images[0]) || ''}
+                alt=""
+                style={{ width: '56px', height: '56px', borderRadius: '8px', objectFit: 'contain', backgroundColor: '#FFF' }}
+              />
+              <div>
+                <div style={{ fontSize: '0.75rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 700 }}>
+                  {priceHistoryModalItem.brand} • SKU: {priceHistoryModalItem.goodsNo}
+                </div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 900, color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                  {priceHistoryModalItem.name}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#10B981', fontWeight: 800, marginTop: '2px' }}>
+                  Giá hiện tại: {Number(priceHistoryModalItem.foreignPrice || priceHistoryModalItem.price || 0).toLocaleString()} ₩ ({(priceHistoryModalItem.priceVnd || calculateVndPrice(priceHistoryModalItem.foreignPrice, krwRate, serviceFee)).toLocaleString('vi-VN')} đ)
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline List */}
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {(!priceHistoryModalItem.priceHistory || priceHistoryModalItem.priceHistory.length === 0) ? (
+                <div style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: '0.85rem', textAlign: 'center', padding: '20px 0' }}>
+                  Chưa có bản ghi biến động giá nào được lưu.
+                </div>
+              ) : (
+                priceHistoryModalItem.priceHistory.map((item, idx) => {
+                  const isDrop = item.changeType === 'drop';
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        position: 'relative',
+                        paddingLeft: '24px',
+                        borderLeft: isDrop ? '2px solid #10B981' : '2px solid #F59E0B',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}
+                    >
+                      <div style={{
+                        position: 'absolute',
+                        left: '-6px',
+                        top: '0',
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        backgroundColor: isDrop ? '#10B981' : '#F59E0B'
+                      }} />
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                        <span style={{ color: isDark ? '#94A3B8' : '#64748B', fontWeight: 700 }}>
+                          {item.timestamp ? new Date(item.timestamp).toLocaleString('vi-VN') : 'Gần đây'}
+                        </span>
+                        <span style={{
+                          backgroundColor: isDrop ? (isDark ? '#064E3B' : '#ECFDF5') : (isDark ? '#78350F' : '#FEF3C7'),
+                          color: isDrop ? '#10B981' : '#F59E0B',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontWeight: 900,
+                          fontSize: '0.72rem'
+                        }}>
+                          {isDrop ? `🔻 ${Math.abs(item.changePercent)}%` : `🔺 +${item.changePercent}%`}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                        {item.oldForeignPrice?.toLocaleString()} ₩ ➔ {item.newForeignPrice?.toLocaleString()} ₩
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#38BDF8', fontWeight: 700 }}>
+                        {item.oldPriceVnd?.toLocaleString('vi-VN')} đ ➔ {item.newPriceVnd?.toLocaleString('vi-VN')} đ
+                      </div>
+                      {item.reason && (
+                        <div style={{ fontSize: '0.72rem', color: isDark ? '#CBD5E1' : '#64748B', fontStyle: 'italic', marginTop: '2px' }}>
+                          {item.reason}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '14px 20px', borderTop: isDark ? '1px solid #334155' : '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setPriceHistoryModalItem(null)}
+                style={{
+                  backgroundColor: '#10B981',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 18px',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

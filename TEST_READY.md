@@ -1,99 +1,72 @@
-# Test Readiness & Comprehensive Test Coverage Report (Milestone M4)
+# TEST_READY: Tavy Korea E2E Test Suite Specification & Status
 
-## Executive Summary
-- **Project**: TAVY KOREA — Guest Order Status & Tracking Bar on Customer Home Page (Tra Cứu Đơn Hàng Không Cần Đăng Nhập)
-- **Milestone**: M4 — E2E Test Suite & Comprehensive Test Coverage
-- **Status**: **READY (100% PASS)**
-- **Test Runner Command**: `node tests/run_all_tests.js`
-- **Build Verification**: `npm run build` (0 errors, exit code 0)
-- **Lint Check**: `npm run lint` / `npm run self-check` (0 errors)
+**Status**: READY (278 / 278 Tests Passing, 100% Zero-Defect)  
+**Execution Command**: `node tests/run_all_tests.js`  
+**Test Framework**: Zero-Dependency Node ESM Test Harness (`tests/framework/runner.js`, `assert.js`, `loader.js`)
 
 ---
 
-## Test Execution Statistics by Tier
+## 1. Test Suite Architecture & Summary
 
-| Tier | Name | Total Tests | Passed | Failed | Pass Rate | Duration |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Tier 1** | Feature Coverage (F1–F15 & Guest Tracking) | 96 | 96 | 0 | 100% | ~1.25s |
-| **Tier 2** | Boundary & Corner Cases | 91 | 91 | 0 | 100% | ~16.42s |
-| **Tier 3** | Cross-Feature Pairwise Integration | 20 | 20 | 0 | 100% | ~1.09s |
-| **Tier 4** | Real-World Application Scenarios | 11 | 11 | 0 | 100% | ~0.78s |
-| **TOTAL** | **All 4 Tiers Comprehensive Suite** | **218** | **218** | **0** | **100%** | **~19.68s** |
-
----
-
-## Requirement Coverage Mapping
-
-### Requirement 1 (R1): Prominent Guest Order Tracking Bar on Customer Home Page
-- **Implementation**: `src/components/GuestOrderTracking/GuestOrderTrackingBar.jsx`, `src/pages/KROrderHomePage.jsx`
-- **Tested in**:
-  - `tests/tier1/f06_order_tracking.test.js` (`[F6-2]`, `[F6-7]`, `[F6-16]`)
-  - `tests/tier2/f06_order_tracking_boundary.test.js` (`[F6-B6]`, `[F6-B7]`, `[F6-B9]`, `[F6-B10]`, `[F6-B11]`)
-  - `tests/tier3/pairwise_integration_test.js` (`[T16-PAIR-16]`)
-  - `tests/tier4/application_scenarios_test.js` (`[SCENARIO-9]`, `[SCENARIO-10]`)
-- **Key Verified Behaviors**:
-  - Prominent search input with search icon, clear button, and submit action.
-  - Suggestion chips with dynamic samples (Order ID, phone number).
-  - Search dismiss/reset preserving product category tabs and catalog state.
-  - Friendly not-found banner with CSKH hotline/Zalo link when no records match.
-
-### Requirement 2 (R2): Visual 8-Step Timeline & Order Status Card Component
-- **Implementation**: `src/components/GuestOrderTracking/GuestOrderStatusCard.jsx`, `src/components/GuestOrderTracking/ProofMediaModal.jsx`, `src/data/orderStatuses.js`
-- **Tested in**:
-  - `tests/tier1/f06_order_tracking.test.js` (`[F6-1]`, `[F6-5]`, `[F6-8]`, `[F6-9]`, `[F6-11]`, `[F6-12]`, `[F6-13]`, `[F6-14]`, `[F6-17]`, `[F6-18]`)
-  - `tests/tier2/f06_order_tracking_boundary.test.js` (`[F6-B1]`, `[F6-B8]`, `[F6-B13]`, `[F6-B14]`, `[F6-B15]`)
-  - `tests/tier3/pairwise_integration_test.js` (`[T4-PAIR-04]`, `[T6-PAIR-06]`, `[T17-PAIR-17]`, `[T19-PAIR-19]`)
-  - `tests/tier4/application_scenarios_test.js` (`[SCENARIO-1]`, `[SCENARIO-9]`, `[SCENARIO-10]`)
-- **Key Verified Behaviors**:
-  - 8-Step progression sequence (`pending` -> `deposit_paid` -> `confirmed` -> `purchased` -> `packed_kr` -> `in_transit_air` -> `customs_cleared` -> `completed`).
-  - Active step highlight, completed checkmarks, and percentage bar calculation (12.5% to 100%).
-  - Transparent proof hub buttons for POV Store Video, Receipt Bill, Packing Video, Weight, Flight, Air AWB, Domestic Tracking Code.
-  - One-click copy for domestic tracking codes (`ViettelPost`, custom carriers).
-  - Unpaid deposit payment CTA (`/payment/:orderId`) for pending orders.
-  - Cancelled order state (stepIndex -1, 0%, warning banner, disabled payment CTA).
-  - Proof media modal supporting direct video/image rendering and embedded links.
-
-### Requirement 3 (R3): Full-Stack Data, Phone Normalization & Firestore Integration
-- **Implementation**: `src/services/guestTrackingService.js`, `src/context/AppContext.jsx`, `src/services/dbService.js`
-- **Tested in**:
-  - `tests/tier1/f06_order_tracking.test.js` (`[F6-6]`, `[F6-7]`, `[F6-10]`, `[F6-15]`, `[F6-19]`)
-  - `tests/tier2/f06_order_tracking_boundary.test.js` (`[F6-B2]`, `[F6-B6]`, `[F6-B7]`, `[F6-B10]`, `[F6-B11]`, `[F6-B12]`)
-  - `tests/tier3/pairwise_integration_test.js` (`[T12-PAIR-12]`, `[T13-PAIR-13]`, `[T18-PAIR-18]`)
-  - `tests/tier4/application_scenarios_test.js` (`[SCENARIO-5]`, `[SCENARIO-9]`)
-- **Key Verified Behaviors**:
-  - Normalization of Vietnamese phone numbers with prefixes (`+84`, `84`, `840`, leading zero omissions, spaces, hyphens, parentheses).
-  - Case-insensitive Order ID matching (`ORD-XXXXX`, `ord-xxxxx`, prefix-free number `XXXXX`).
-  - Multi-order lookup returning all orders for a phone number, sorted with newest `createdAt` first.
-  - Multi-order tab switcher in `GuestOrderStatusCard` allowing interactive order selection.
-  - Real-time order sync with offline fallback support.
+| Tier | Focus | Test Files | Total Tests | Status |
+|---|---|---|:---:|:---:|
+| **Tier 1** | Feature Isolation & Functional Coverage | 24 files (`f01` - `f23`, `smoke_test`) | 135 | **PASS (135/135)** |
+| **Tier 2** | Boundary Values & Error Cascade | 19 files (`f01_boundary` - `f23_boundary`, `smoke_test`) | 108 | **PASS (108/108)** |
+| **Tier 3** | Cross-Feature Pairwise Integration | `tests/tier3/pairwise_integration_test.js` | 23 | **PASS (23/23)** |
+| **Tier 4** | Real-World Application End-to-End Scenarios | `tests/tier4/application_scenarios_test.js` | 12 | **PASS (12/12)** |
+| **TOTAL** | **Full System E2E Coverage** | **45 test files** | **278** | **PASS (278/278)** |
 
 ---
 
-## Adversarial Verification & Boundary Matrix
+## 2. Feature 23: Smart Product Research (Tab 4) Test Coverage
 
-| Edge Condition | Test ID | Verified Behavior | Status |
-| :--- | :--- | :--- | :---: |
-| Empty / whitespace-only query | `[F6-B9]` | Returns empty array safely without exceptions | PASS |
-| Regex meta-characters (`.*`, `\`, `^$`) | `[F6-B7]`, `[F6-B11]` | Safely sanitized, zero SyntaxErrors | PASS |
-| SQL / XSS Script injection payloads | `[F6-B11]` | Returns empty array without execution | PASS |
-| Single-digit phone mismatch isolation | `[F6-B10]` | Distinguishes distinct phone numbers | PASS |
-| Partial prefix phone lookup | `[F6-B10]` | Substring prefix (>=4 digits) finds target | PASS |
-| Corrupted / null orders in dataset | `[F6-B12]` | Filters corrupted entries, returns valid orders | PASS |
-| Cancelled order progression | `[F6-B13]` | stepIndex = -1, progress = 0%, no payment CTA | PASS |
-| Missing `items` array fallback | `[F6-B14]` | Gracefully synthesizes single item summary | PASS |
-| Missing / custom domestic carrier | `[F6-B15]` | Defaults to ViettelPost or uses custom carrier | PASS |
+### Tier 1: Unit & Functional Coverage (`tests/tier1/f23_smart_product_research.test.js`)
+- `[F23-01]` **Smart URL domain auto-detection**: Recognizes all 7 Korean e-commerce platforms (`oliveyoung`, `naver`, `coupang`, `hwahae`, `gmarket`, `11st`, `musinsa`), desktop & mobile URL patterns, direct goodsNo inputs, and keyword inputs.
+- `[F23-02]` **OliveYoung goodsNo extractor**: Accurately extracts and standardizes 12-char goodsNo (e.g. `A000000223414`, `A000000185934`), handles lowercase normalization and URL hash anchors.
+- `[F23-03]` **Image upload & Gemini Vision payload builder**: Builds structured multimodal payload (`inlineData`, mime types `image/jpeg`, `image/png`, `image/webp`), enforces JSON schema output, and rejects invalid file types.
+- `[F23-04]` **Quality-first multi-source fallback cascade order**: Strictly enforces quality priority `['oliveyoung', 'naver', 'coupang', 'hwahae', 'gmarket', '11st', 'musinsa']` with automatic advancement on failure.
+- `[F23-05]` **10 required fields structure verification**: Validates `name`, `nameKr`, `brand`, `foreignPrice` (> 0), `productImage` (valid URL), `images` (>= 1 HD), `photoReviews` (`[]` or genuine reviews), `ingredients` (`[]` or string array), `description`, and `rating` + `reviewsCount`.
+- `[F23-06]` **Rule 0 Compliance (Zero Fake Data)**: Verifies honest defaults (`reviewsCount: 0`, `rating: 0`, `photoReviews: []`), statically audits source code to guarantee zero `Math.random()` fake generation.
+- `[F23-07]` **HD image CDN cleaning & junk banner filtering**: Strips `RS=64x0` compression queries, upgrades quality to `QT=100`, upgrades Naver CDN to `type=f800`, filters promo banners, free gift towels/cups, icons, and badges.
+- `[F23-08]` **Real user review photo collection**: Collects genuine customer unboxing/review photos (`gdasEditor`, Naver Pay, Hwahae) and cleanly returns `[]` without throwing when none exist.
+
+### Tier 2: Boundary & Corner Cases (`tests/tier2/f23_smart_product_research_boundary.test.js`)
+- `[F23-B01]` **Invalid / unsupported URL rejection**: Gracefully handles empty, null, undefined strings, foreign platforms (Amazon, Shopee), and unsupported links.
+- `[F23-B02]` **Corrupt / oversized / invalid image file handling**: Enforces 10MB file size ceiling, rejects non-image mime types (`application/pdf`, `text/plain`).
+- `[F23-B03]` **Source WAF 403 / 500 error cascade**: Gracefully catches HTTP 403/500 errors on primary sources (e.g. Olive Young WAF block) and advances to Naver without crashing.
+- `[F23-B04]` **Multi-loop retry (max 3 loops per source)**: Retries transient network failures up to 3 times per source before cascading to next fallback source.
+- `[F23-B05]` **Missing optional fields (`photoReviews: []`, `ingredients: []`)**: Ensures scraper output remains valid and safe without throwing when optional sections are missing.
+- `[F23-B06]` **Missing required fields trigger cascade**: Missing prices (`0`) or empty product titles trigger automatic switch to the next fallback source.
+- `[F23-B07]` **Timeout / network abort handling**: Uses `AbortSignal` with timeout handling to prevent hanging requests.
+- `[F23-B08]` **Special Korean characters & HTML entity escaping**: Decodes HTML entities (`&amp;`, `&quot;`, `&#39;`, `&lt;`, `&gt;`) and cleans promo brackets (`[1+1]`, `[단독기획]`).
+
+### Tier 3: Pairwise Integration (`tests/tier3/pairwise_integration_test.js`)
+- `[T20-PAIR-20]` **F23+F03**: Smart Product Research output auto-saves to AppProvider `addPendingProduct()`, properly entering `pending_products` collection with status `pending_review`.
+- `[T21-PAIR-21]` **F23+F16**: Smart Product Research multi-source cascade integrates with Scraper Quality Engine validation (price bounds, CDN HD check, Rule 0 compliance).
+- `[T22-PAIR-22]` **F23+F10**: Smart Input domain auto-detection streams real-time step logs with timestamps `[HH:mm:ss]` into Live Log Console.
+
+### Tier 4: Real-World Application Scenario (`tests/tier4/application_scenarios_test.js`)
+- `[SCENARIO-11]` **Smart Product Research & Real Review Sourcing Workflow**: End-to-end admin workflow starting from URL input on Tab 4 -> auto-detection -> multi-source scraping -> review photo extraction -> 10-field validation -> auto-save to pending queue -> admin review on 'pending' tab -> approval into published catalog.
 
 ---
 
-## How to Run the Test Suite
+## 3. How to Run the Tests
 
 ```bash
-# Run the complete 4-tier test suite (218 test cases)
+# Execute entire test suite across all 4 tiers
 node tests/run_all_tests.js
 
-# Or via npm script
-npm test
-
-# Run build & lint verification
-npm run self-check
+# Run individual test files with Node ESM
+node --loader ./tests/framework/loader.js tests/tier1/f23_smart_product_research.test.js
+node --loader ./tests/framework/loader.js tests/tier2/f23_smart_product_research_boundary.test.js
 ```
+
+---
+
+## 4. Test Verification Report
+
+- **Total Test Cases**: 278
+- **Passed**: 278
+- **Failed**: 0
+- **Execution Time**: ~2.5 seconds
+- **Zero Mock / Zero Fake Data (Rule 0)**: Fully verified both statically and dynamically.

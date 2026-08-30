@@ -286,7 +286,7 @@ export const scrapeProductMetadata = async (url) => {
         origin: known.origin,
         rating: known.rating,
         productUrl: cleanUrl,
-        reviewsCount: 280
+        reviewsCount: Number(known.reviewsCount) || 0
       }
     };
   }
@@ -321,7 +321,7 @@ export const lookupKnownGoods = async (url) => {
       origin: known.origin,
       rating: known.rating,
       productUrl: url.trim(),
-      reviewsCount: 280
+      reviewsCount: Number(known.reviewsCount) || 0
     }
   };
 };

@@ -1,52 +1,89 @@
-# Project: Guest Order Status & Tracking Bar on Customer Home Page (Tra Cứu Đơn Hàng Không Cần Đăng Nhập)
+# Project: Tavy Korea Smart Product Research Tab & Multi-Source Engine
 
 ## Architecture
-- **Overview**: Replaced legacy product search input on customer Home Page (`KROrderHomePage.jsx`) with a modern, intuitive Guest Order Status & Tracking Bar. Enables guest users to track their orders in real time using their Phone Number or Order ID without login, displaying a rich 8-step visual timeline, transparent proof hub (POV video, bill, packing video, weight, domestic tracking), and order summary.
-- **Frontend Stack**: React 19, Vite, Lucide-React icons, Tailwind CSS / Custom CSS variables (`index.css`), responsive touch-friendly layout.
-- **Data Layer**: React Context (`AppContext`), Firestore `orders` collection with real-time `onSnapshot` sync (`dbService.js`), LocalStorage offline fallback (`beauty_orders`).
-- **Module Boundaries**:
-  1. `src/services/guestTrackingService.js`: Phone normalization, case-insensitive ID lookup, multi-order filtering and sorting.
-  2. `src/components/GuestOrderTracking/`:
-     - `GuestOrderTrackingBar.jsx`: Prominent search bar with search/clear buttons, input validation, and quick search hints.
-     - `GuestOrderStatusCard.jsx`: Order status header, status badge, multi-order tabs, 8-step stepper, proof hub, order summary, unpaid deposit CTA, and dismiss button.
-     - `ProofMediaModal.jsx`: Lightbox modal to view POV video, store receipt bill, and packing video.
-  3. `src/pages/KROrderHomePage.jsx`: Integrates `<GuestOrderTrackingBar />` and `<GuestOrderStatusCard />` at the top of the products section, preserving category tabs and product browsing.
-  4. `tests/`: Tier 1 to Tier 4 comprehensive automated test suites integrated with `tests/run_all_tests.js`.
-
-## Code Layout
-- `src/services/guestTrackingService.js` (NEW): Core normalization & lookup business logic.
-- `src/components/GuestOrderTracking/GuestOrderTrackingBar.jsx` (NEW): Search input bar component.
-- `src/components/GuestOrderTracking/GuestOrderStatusCard.jsx` (NEW): Visual 8-step timeline & order status card.
-- `src/components/GuestOrderTracking/ProofMediaModal.jsx` (NEW): Media lightbox modal for proof assets.
-- `src/components/GuestOrderTracking/index.js` (NEW): Barrel re-export.
-- `src/pages/KROrderHomePage.jsx` (MODIFIED): Replace legacy search with guest order tracking bar and status card.
-- `tests/tier1/f06_order_tracking.test.js` (EXTENDED): Unit & Interface tests for 8-step stepper and guest lookup.
-- `tests/tier2/f06_order_tracking_boundary.test.js` (EXTENDED): Boundary & edge cases for phone formats and Order IDs.
-- `tests/tier3/pairwise_integration_test.js` (EXTENDED): Pairwise integration between Home Page, tracking bar, and payment flow.
-- `tests/tier4/application_scenarios_test.js` (EXTENDED): Real-world guest tracking journeys.
+- **Framework**: React 19 + Vite + Tailwind CSS + Node ESM Testing Harness.
+- **Service Layer**:
+  - `src/services/aiScraperAgentEngine.js`: Olive Young Jina AI Reader + AI extraction (Rule 0 remediated).
+  - `src/services/naverHealthScraperEngine.js`: Naver Brand Store / SmartStore scraper.
+  - `src/services/oliveYoungScraperCore.js`: CDN image cleaning & junk filtering algorithms.
+  - `src/services/smartProductResearchEngine.js`: Unified multi-source scraper cascade (OliveYoung, Naver, Coupang, Hwahae, Gmarket, 11st, Musinsa) + Gemini Vision OCR/multimodal search + quality-first 3-loop fallback.
+- **UI Layer**:
+  - `src/components/AdminProductResearchTab.jsx`: Modular Tab 4 component containing Smart Input Box (URL auto-detect vs Drag & Drop image upload), Live Step-by-Step Log Console (dark slate, auto-scrolling terminal), Product Preview Card, and auto-save handler.
+  - `src/components/AdminProductSourcing.jsx`: Navigation bar integration with Tab 4 button (`activeSubTab === 'research'`), badge `MULTI-SOURCE`, and routing to `<AdminProductResearchTab />`.
+- **State & Storage**:
+  - `src/context/AppProvider.jsx`: `addPendingProduct(product)` for auto-queueing scraped items to Firestore / localStorage pending queue.
 
 ## Feature Inventory
-| # | Feature | Description | Milestone | Status |
+| # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Guest Tracking Bar UI (R1) | Prominent search bar on Home Page with icon, placeholder, submit & clear buttons | M3 | DONE |
-| 2 | Phone Normalization (R3) | Normalize +84/84/spaces/dashes/leading-0 to standard Vietnamese phone | M1 | DONE |
-| 3 | Order ID Matching (R3) | Case-insensitive match for `ORD-XXXXXX` and numeric prefix-free IDs | M1 | DONE |
-| 4 | Multi-Order Tab Switcher (R3) | Switch between multiple orders placed by the same phone number | M2 | DONE |
-| 5 | Visual 8-Step Timeline (R2) | 8-step visual stepper with completed/active/pending states & progress bar | M2 | DONE |
-| 6 | Order Header & Status Badge (R2) | Header displaying Order ID, customer name, date, and colored status badge | M2 | DONE |
-| 7 | Transparent Proof Hub (R2) | Interactive buttons for POV Video, Bill, Packing Video, Weight, Air AWB, Domestic tracking | M2 | DONE |
-| 8 | Order Items & Price Summary (R2) | Summary of items with thumbnails, options, quantities, and total VNĐ amount | M2 | DONE |
-| 9 | Unpaid Order Payment CTA (R2) | Direct "Thanh toán cọc ngay" link to payment page for pending orders | M2 | DONE |
-| 10 | Realtime Firestore Sync (R3) | Live status updates via AppContext and Firestore listener without page reload | M1, M3 | DONE |
-| 11 | Error Handling & Not Found (R3) | Friendly banner when order/phone is not found or input is invalid | M3 | DONE |
-| 12 | Responsive & Thumb-friendly (R4) | Mobile-first touch-friendly design (>=44px touch targets, horizontal scroll) | M2, M3 | DONE |
-| 13 | 4-Tier Automated Test Suite (R4) | 100% pass across Tier 1 (Feature), Tier 2 (Boundary), Tier 3 (Pairwise), Tier 4 (Scenarios) | M4 | DONE |
-| 14 | Production Build Verification (R4) | `npm run build` succeeds cleanly with 0 errors | M4 | DONE |
+| F1 | Rule 0 Compliance | Remove `Math.random()`, hardcoded `rating: 4.9`, fake `reviewsCount`, ensure honest defaults | M1 | Survey / R7 |
+| F2 | Smart Input Box (URL) | Auto-detect 7 Korean domains (oliveyoung, naver, coupang, hwahae, gmarket, 11st, musinsa) & goodsNo | M2, M3 | Survey / R1 |
+| F3 | Smart Input Box (Image) | Drag & drop + file picker + paste image upload, base64 compression & Gemini Vision analysis | M2, M3 | Survey / R1 |
+| F4 | Multi-Source Scraper Cascade | Quality-first 3-loop fallback across 7 Korean e-commerce/review sources | M2 | Survey / R2 |
+| F5 | HD Image Extraction | 3-8 HD product images from original CDNs, filtering junk banners/logos/gifts | M2 | Survey / R3 |
+| F6 | Real User Review Photos | 2-10 genuine user review photos (GDAS, Naver Pay, Hwahae), no junk/gift, fallback to `[]` with log | M2 | Survey / R3 |
+| F7 | 10 Required Fields Capture | `name`, `nameKr`, `brand`, `foreignPrice`, `productImage`, `images`, `photoReviews`, `ingredients`, `description`, `rating` + `reviewsCount` | M2 | Survey / R4 |
+| F8 | Live Step-by-Step Log Console | Dark Slate terminal UI with auto-scroll, pipeline stepper, colored source badges, timestamp `[HH:mm:ss]` | M3 | Survey / R5 |
+| F9 | Auto-Save to Pending Queue | Auto-dispatch `addPendingProduct()` on success, navigate/link to 'pending' sub-tab | M3 | Survey / R6 |
+| F10 | UI Integration in Sourcing | Tab 4 button in `AdminProductSourcing.jsx` navbar, clean modular component mounting | M3 | Survey / R1-R6 |
+| F11 | E2E Test Suite (Tiers 1-4) | Comprehensive Node ESM test coverage: Feature (T1), Boundary (T2), Pairwise (T3), Real-World (T4) | E2E Track / M4 | Survey / Acceptance |
+| F12 | Adversarial Hardening (Tier 5) | White-box stress testing, coverage gap audit, adversarial test cases | M4 | Survey / Pattern |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Search & Lookup Data Layer | Implement `src/services/guestTrackingService.js` with phone normalization, case-insensitive ID matching, multi-order sorting | none | DONE |
-| M2 | Visual 8-Step Timeline & Card Component | Implement `GuestOrderStatusCard.jsx`, `ProofMediaModal.jsx` with 8 steps, badges, proof hub, order summary, payment CTA, collapse action | M1 | DONE |
-| M3 | KROrderHomePage Integration | Replace legacy search in `KROrderHomePage.jsx` with `<GuestOrderTrackingBar />`, wire up state, multi-order tabs, not-found UI, responsive layout | M1, M2 | DONE |
-| M4 | E2E Testing, Adversarial Verification & Build | Integrate comprehensive Tier 1-4 tests in `tests/`, run `node tests/run_all_tests.js`, verify `npm run build` | M1, M2, M3 | DONE |
+| E2E | E2E Testing Suite Track | Design & implement Tiers 1-4 tests (`f23_smart_product_research.test.js`, boundary, pairwise, scenario), publish `TEST_READY.md` | none | DONE |
+| M1 | Rule 0 Remediation & Integrity Fixes | Clean all fake data / `Math.random` / hardcoded ratings across scrapers, establish honest fallbacks | none | DONE |
+| M2 | Smart Product Research Engine & Vision Service | Implement `src/services/smartProductResearchEngine.js` with multi-source cascade, Gemini Vision, HD images & review photo collection | M1 | DONE |
+| M3 | UI Component & Tab 4 Integration | Implement `src/components/AdminProductResearchTab.jsx` and integrate into `src/components/AdminProductSourcing.jsx` | M2 | DONE |
+| M4 | Final Milestone E2E & Adversarial Hardening | Phase 1: 100% E2E tests passing (278/278). Phase 2: Adversarial coverage hardening (Tier 5 & stress harnesses) | M3, E2E | DONE |
+
+## Interface Contracts
+### `smartProductResearchEngine.js` ↔ `AdminProductResearchTab.jsx`
+- `detectInputType(input: string | File): { type: 'url' | 'image' | 'keyword', domain?: string, goodsNo?: string, normalizedInput: string }`
+- `analyzeProductImage(file: File | string, onProgress?: (msg: LogEntry) => void): Promise<{ detectedProduct: string, brand?: string, searchKeywords: string[] }>`
+- `researchProduct(input: string | File, options?: { onProgress?: (log: LogEntry) => void }): Promise<ScrapeResult>`
+- `ScrapeResult`:
+  ```typescript
+  {
+    success: boolean;
+    source: 'oliveyoung' | 'naver' | 'coupang' | 'hwahae' | 'gmarket' | '11st' | 'musinsa' | 'vision';
+    data: {
+      name: string;             // Vietnamese translation
+      nameKr: string;           // Original Korean name
+      brand: string;            // Brand name
+      foreignPrice: number;     // KRW price (sale price prioritized, > 0)
+      productImage: string;     // Primary HD image URL
+      images: string[];         // 3-8 HD product images
+      photoReviews: string[];   // 2-10 genuine user review photos (or [] if none)
+      ingredients: string[];    // Ingredients in VN/KR (or [] if none)
+      description: string;      // Vietnamese description + benefits
+      rating: number;           // Actual rating (0-5)
+      reviewsCount: number;     // Actual count (>= 0)
+      goodsNo?: string;
+      originUrl?: string;
+    };
+    logs: LogEntry[];
+    warnings: string[];
+  }
+  ```
+
+### `AdminProductResearchTab.jsx` ↔ `AppProvider.jsx` / `AdminProductSourcing.jsx`
+- Props for `AdminProductResearchTab`:
+  - `isDark: boolean`
+  - `rates: { KRW: number, USD: number }`
+  - `addPendingProduct: (product: object) => Promise<boolean>`
+  - `showToast?: (msg: string, type?: string) => void`
+  - `onNavigateToPending?: () => void`
+
+## Code Layout
+- `src/services/aiScraperAgentEngine.js` (Cleaned Rule 0)
+- `src/services/naverHealthScraperEngine.js` (Cleaned Rule 0)
+- `src/services/oliveYoungScraperCore.js` (Cleaned Rule 0)
+- `src/services/smartProductResearchEngine.js` (New unified multi-source & vision engine)
+- `src/components/AdminProductResearchTab.jsx` (New Tab 4 component)
+- `src/components/AdminProductSourcing.jsx` (Tab 4 navigation & mount)
+- `tests/tier1/f23_smart_product_research.test.js` (Tier 1 tests)
+- `tests/tier2/f23_smart_product_research_boundary.test.js` (Tier 2 tests)
+- `tests/tier3/pairwise_integration_test.js` (Tier 3 integration)
+- `tests/tier4/application_scenarios_test.js` (Tier 4 scenario)

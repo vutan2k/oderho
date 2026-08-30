@@ -37,13 +37,42 @@ const OLIVE_YOUNG_DISCOVERY_POOL = [
   { goodsNo: 'A000000156789', url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000156789' },
 ];
 
+// In-memory fallback store for Node.js / CLI environments where window.localStorage is not present
+const memoryStore = new Map();
+const safeStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof localStorage !== 'undefined') return localStorage.getItem(key);
+      return memoryStore.has(key) ? memoryStore.get(key) : null;
+    } catch {
+      return memoryStore.has(key) ? memoryStore.get(key) : null;
+    }
+  },
+  setItem: (key, val) => {
+    try {
+      if (typeof localStorage !== 'undefined') localStorage.setItem(key, String(val));
+      memoryStore.set(key, String(val));
+    } catch {
+      memoryStore.set(key, String(val));
+    }
+  },
+  removeItem: (key) => {
+    try {
+      if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+      memoryStore.delete(key);
+    } catch {
+      memoryStore.delete(key);
+    }
+  }
+};
+
 export const getBotStateFromStorage = () => {
   try {
-    const isRunning = localStorage.getItem('tavy_bot_is_running') === 'true';
-    const pendingJson = localStorage.getItem('tavy_pending_products');
+    const isRunning = safeStorage.getItem('tavy_bot_is_running') === 'true';
+    const pendingJson = safeStorage.getItem('tavy_pending_products');
     const pendingProducts = pendingJson ? JSON.parse(pendingJson) : [];
-    const lastRun = localStorage.getItem('tavy_bot_last_run') || null;
-    const intervalMins = parseInt(localStorage.getItem('tavy_bot_interval_mins')) || 30;
+    const lastRun = safeStorage.getItem('tavy_bot_last_run') || null;
+    const intervalMins = parseInt(safeStorage.getItem('tavy_bot_interval_mins'), 10) || 30;
     return { isRunning, intervalMins, lastRun, pendingProducts };
   } catch (e) {
     return { isRunning: false, intervalMins: 30, lastRun: null, pendingProducts: [] };
@@ -51,47 +80,97 @@ export const getBotStateFromStorage = () => {
 };
 
 export const saveBotStateToStorage = (state) => {
-  if (state.isRunning !== undefined) localStorage.setItem('tavy_bot_is_running', state.isRunning ? 'true' : 'false');
-  if (state.pendingProducts) localStorage.setItem('tavy_pending_products', JSON.stringify(state.pendingProducts));
-  if (state.lastRun) localStorage.setItem('tavy_bot_last_run', state.lastRun);
-  if (state.intervalMins) localStorage.setItem('tavy_bot_interval_mins', state.intervalMins.toString());
+  if (state.isRunning !== undefined) safeStorage.setItem('tavy_bot_is_running', state.isRunning ? 'true' : 'false');
+  if (state.pendingProducts) safeStorage.setItem('tavy_pending_products', JSON.stringify(state.pendingProducts));
+  if (state.lastRun) safeStorage.setItem('tavy_bot_last_run', state.lastRun);
+  if (state.intervalMins) safeStorage.setItem('tavy_bot_interval_mins', state.intervalMins.toString());
 };
 
 // =========================================================================
-// AI PRICE SYNC BOT (METHOD 3: Periodic Price Anchoring to Olive Young)
+// AI PRICE SYNC BOT & AUTO-SCHEDULER (PERIODIC PRICE ANCHORING & VOLATILITY WATCHER)
 // =========================================================================
 export const getPriceSyncConfig = () => {
   try {
-    const enabled = localStorage.getItem('tavy_price_sync_enabled') === 'true';
-    const intervalMins = parseInt(localStorage.getItem('tavy_price_sync_interval')) || 60;
-    const lastSyncTime = localStorage.getItem('tavy_price_sync_last_time') || null;
-    const logsJson = localStorage.getItem('tavy_price_sync_logs');
+    const enabled = safeStorage.getItem('tavy_price_sync_enabled') === 'true';
+    const intervalMins = parseInt(safeStorage.getItem('tavy_price_sync_interval'), 10) || 60;
+    const intervalHours = intervalMins >= 60 ? Math.round(intervalMins / 60) : 1;
+    const lastSyncTime = safeStorage.getItem('tavy_price_sync_last_time') || null;
+    const logsJson = safeStorage.getItem('tavy_price_sync_logs');
     const logs = logsJson ? JSON.parse(logsJson) : [];
-    return { enabled, intervalMins, lastSyncTime, logs };
+    const statsJson = safeStorage.getItem('tavy_price_sync_stats');
+    const stats = statsJson ? JSON.parse(statsJson) : { totalScanned: 0, totalDrops: 0, totalIncreases: 0, lastRunCount: 0 };
+    return { enabled, intervalMins, intervalHours, lastSyncTime, logs, stats };
   } catch (e) {
-    return { enabled: false, intervalMins: 60, lastSyncTime: null, logs: [] };
+    return { enabled: false, intervalMins: 60, intervalHours: 1, lastSyncTime: null, logs: [], stats: { totalScanned: 0, totalDrops: 0, totalIncreases: 0, lastRunCount: 0 } };
   }
 };
 
 export const savePriceSyncConfig = (config) => {
-  if (config.enabled !== undefined) localStorage.setItem('tavy_price_sync_enabled', config.enabled ? 'true' : 'false');
-  if (config.intervalMins !== undefined) localStorage.setItem('tavy_price_sync_interval', config.intervalMins.toString());
-  if (config.lastSyncTime !== undefined) localStorage.setItem('tavy_price_sync_last_time', config.lastSyncTime);
-  if (config.logs) localStorage.setItem('tavy_price_sync_logs', JSON.stringify(config.logs.slice(-100))); // Keep last 100 logs
+  if (config.enabled !== undefined) safeStorage.setItem('tavy_price_sync_enabled', config.enabled ? 'true' : 'false');
+  if (config.intervalMins !== undefined) safeStorage.setItem('tavy_price_sync_interval', config.intervalMins.toString());
+  else if (config.intervalHours !== undefined) safeStorage.setItem('tavy_price_sync_interval', (config.intervalHours * 60).toString());
+  if (config.lastSyncTime !== undefined) safeStorage.setItem('tavy_price_sync_last_time', config.lastSyncTime);
+  if (config.logs) safeStorage.setItem('tavy_price_sync_logs', JSON.stringify(config.logs.slice(-150))); // Keep last 150 logs
+  if (config.stats) safeStorage.setItem('tavy_price_sync_stats', JSON.stringify(config.stats));
+};
+
+export const clearPriceSyncLogs = () => {
+  try {
+    safeStorage.removeItem('tavy_price_sync_logs');
+    safeStorage.setItem('tavy_price_sync_logs', '[]');
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Lọc danh sách các sản phẩm đang có cảnh báo biến động giá hoặc giảm giá sâu
+ */
+export const getRecentPriceAlerts = (products = []) => {
+  if (!Array.isArray(products)) return [];
+  return products.filter(p => {
+    if (p.priceChangeAlert && p.priceChangeAlert.hasChanged) return true;
+    if (Array.isArray(p.priceHistory) && p.priceHistory.length > 0) {
+      const latest = p.priceHistory[0];
+      return latest && Math.abs(latest.changePercent) >= 1.0;
+    }
+    return false;
+  });
 };
 
 /**
  * Execute Auto Price Sync across inventory products anchored to Olive Young
  * @param {Array} products Current products list
  * @param {Function} updateProductFn Callback function to update product in DB
+ * @param {Object} options Configuration & callbacks (rates, onProgress, onLog)
  */
-export const executeAutoPriceSync = async (products = [], updateProductFn = null) => {
+export const executeAutoPriceSync = async (products = [], updateProductFn = null, options = {}) => {
   if (!products || products.length === 0) {
+    if (options.onLog && typeof options.onLog === 'function') {
+      options.onLog('⚠️ Kho hàng trống, không có sản phẩm nào để đồng bộ giá.', 'warning');
+    }
     return { success: false, message: 'Kho hàng trống, không có sản phẩm nào để neo giá!' };
   }
 
-  const syncResult = syncAllProductsWithOliveYoung(products);
-  
+  const onLog = (msg, type = 'info') => {
+    if (options.onLog && typeof options.onLog === 'function') {
+      options.onLog(msg, type);
+    }
+  };
+
+  onLog(`🚀 Bắt đầu quét & đồng bộ biến động giá cho ${products.length} sản phẩm trong kho hàng...`, 'info');
+
+  const syncResult = syncAllProductsWithOliveYoung(products, {
+    krwRate: options.rates?.KRW?.rate || options.krwRate || 19.5,
+    serviceFeePercent: options.rates?.serviceFeePercent || options.serviceFeePercent || 5
+  }, (current, total, name) => {
+    if (options.onProgress && typeof options.onProgress === 'function') {
+      options.onProgress(current, total, name);
+    }
+  });
+
+  // Cập nhật từng sản phẩm nếu có callback
   if (updateProductFn && typeof updateProductFn === 'function') {
     for (const prod of syncResult.updatedProducts) {
       updateProductFn(prod.goodsNo, prod);
@@ -100,23 +179,54 @@ export const executeAutoPriceSync = async (products = [], updateProductFn = null
 
   const syncTime = syncResult.timestamp;
   const existingConfig = getPriceSyncConfig();
-  const newLogs = [...syncResult.changes, ...(existingConfig.logs || [])].slice(0, 100);
+
+  // Log chi tiết từng biến động giá
+  syncResult.changes.forEach(change => {
+    const isDrop = change.changeType === 'drop';
+    const tag = isDrop ? '🔻 GIẢM GIÁ' : '🔺 TĂNG GIÁ';
+    const logType = isDrop ? 'success' : 'alert';
+    onLog(`${tag} [${change.brand}] ${change.name}: ${change.oldPrice.toLocaleString('vi-VN')}₩ ➔ ${change.newPrice.toLocaleString('vi-VN')}₩ (${change.changePercent > 0 ? '+' : ''}${change.changePercent}%)`, logType);
+  });
+
+  if (syncResult.changes.length === 0) {
+    onLog(`✅ Toàn bộ ${syncResult.totalScanned} sản phẩm đều khớp giá 100% với Olive Young Hàn Quốc.`, 'success');
+  } else {
+    onLog(`✨ Đã đồng bộ hoàn tất! Phát hiện ${syncResult.priceDropsCount} sản phẩm giảm giá, ${syncResult.priceIncreasesCount} sản phẩm tăng giá.`, 'success');
+  }
+
+  // Kết hợp logs & stats mới
+  const formattedChanges = syncResult.changes.map(c => ({
+    ...c,
+    id: `LOG-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+  }));
+
+  const newLogs = [...formattedChanges, ...(existingConfig.logs || [])].slice(0, 150);
+  const newStats = {
+    totalScanned: (existingConfig.stats?.totalScanned || 0) + syncResult.totalScanned,
+    totalDrops: (existingConfig.stats?.totalDrops || 0) + (syncResult.priceDropsCount || 0),
+    totalIncreases: (existingConfig.stats?.totalIncreases || 0) + (syncResult.priceIncreasesCount || 0),
+    lastRunCount: syncResult.updatedCount,
+    lastRunTime: syncTime
+  };
 
   savePriceSyncConfig({
     enabled: existingConfig.enabled,
     intervalMins: existingConfig.intervalMins,
     lastSyncTime: syncTime,
-    logs: newLogs
+    logs: newLogs,
+    stats: newStats
   });
 
   return {
     success: true,
     scannedCount: syncResult.totalScanned,
     updatedCount: syncResult.updatedCount,
+    priceDropsCount: syncResult.priceDropsCount || 0,
+    priceIncreasesCount: syncResult.priceIncreasesCount || 0,
     priceChanges: syncResult.changes,
     timestamp: syncTime,
     message: syncResult.updatedCount > 0
-      ? `Đã quét ${syncResult.totalScanned} sản phẩm, phát hiện & tự động cập nhật giá chuẩn cho ${syncResult.updatedCount} sản phẩm theo Olive Young!`
+      ? `Đã quét ${syncResult.totalScanned} sản phẩm, phát hiện & tự động cập nhật giá chuẩn cho ${syncResult.updatedCount} sản phẩm (${syncResult.priceDropsCount} giảm giá, ${syncResult.priceIncreasesCount} tăng giá)!`
       : `Đã quét ${syncResult.totalScanned} sản phẩm: Tất cả sản phẩm đều đang chuẩn xác 100% theo giá Olive Young!`
   };
 };

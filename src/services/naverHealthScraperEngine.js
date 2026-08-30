@@ -80,8 +80,8 @@ export function parseNaverProductPayload({
   reviewPhotos = [],
   storeBrand = '',
   sourceUrl = '',
-  rating = 4.9,
-  reviewsCount = 1200
+  rating = 0,
+  reviewsCount = 0
 }) {
   const cleanTitle = rawTitle.replace(/\[원산지:.*?\]/g, '').trim();
   const translatedTitle = translateKoreanHealthTitle(cleanTitle);
@@ -90,25 +90,28 @@ export function parseNaverProductPayload({
   const usageGuide = generateHealthUsageGuide(translatedTitle, category);
 
   // Lọc và nâng cấp ảnh CDN
+  const safeRawImages = Array.isArray(rawImages) ? rawImages : [];
   const validImages = Array.from(new Set(
-    rawImages
+    safeRawImages
       .map(cleanNaverCdnImageUrl)
       .filter(img => img && !isNaverJunkImage(img))
   ));
 
   const mainImage = validImages[0] || 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/400/10/0000/0021/A00000021325505ko.jpg?l=ko';
 
+  const safeReviewPhotos = Array.isArray(reviewPhotos) ? reviewPhotos : [];
   const validReviewPhotos = Array.from(new Set(
-    reviewPhotos
+    safeReviewPhotos
       .map(cleanNaverCdnImageUrl)
       .filter(img => img && !isNaverJunkImage(img))
   ));
 
   const parsedWonPrice = typeof priceWon === 'string'
-    ? (parseInt(priceWon.replace(/[^0-9]/g, ''), 10) || 35000)
-    : (Number(priceWon) || 35000);
+    ? (parseInt(priceWon.replace(/[^0-9-]/g, ''), 10) || 0)
+    : (typeof priceWon === 'number' && !Number.isNaN(priceWon) ? priceWon : 0);
 
-  const productId = 'NAVER-' + (sourceUrl.match(/\/products\/([0-9]+)/)?.[1] || Math.random().toString(36).substring(2, 9).toUpperCase());
+  const prodIdMatch = sourceUrl.match(/\/products\/([0-9]+)/)?.[1];
+  const productId = 'NAVER-' + (prodIdMatch || Date.now().toString());
 
   return {
     goodsNo: productId,
@@ -122,9 +125,9 @@ export function parseNaverProductPayload({
     originalPrice: parsedWonPrice,
     productImage: mainImage,
     images: validImages.length > 0 ? validImages : [mainImage],
-    photoReviews: validReviewPhotos.length > 0 ? validReviewPhotos : [mainImage],
-    rating: rating || 4.9,
-    reviewsCount: reviewsCount || 2500,
+    photoReviews: validReviewPhotos,
+    rating: typeof rating === 'number' && !Number.isNaN(rating) ? rating : (parseFloat(rating) || 0),
+    reviewsCount: typeof reviewsCount === 'number' && !Number.isNaN(reviewsCount) ? reviewsCount : (parseInt(reviewsCount, 10) || 0),
     origin: 'Hàn Quốc (Naver Pay Verified Purchase)',
     ranking: 'Top Đánh Giá Cao Nhất Trên Naver Shopping & Brand Store',
     activeIngredients: activeIngredients.length > 0 ? activeIngredients : ['Thành phần đạt chứng nhận Y tế MFDS / GMP Hàn Quốc'],

@@ -266,8 +266,8 @@ export default function AdminProductCatalog({ isDark: isDarkProp } = {}) {
         `"${p.category || 'ginseng'}"`,
         won,
         vnd,
-        p.rating || 4.9,
-        p.reviewsCount || 120,
+        p.rating ?? 0,
+        p.reviewsCount ?? 0,
         p.isOutOfStock ? 'Hết hàng' : 'Còn hàng',
         p.isHidden ? 'Tạm ẩn' : 'Đang bán'
       ];
@@ -791,8 +791,20 @@ export default function AdminProductCatalog({ isDark: isDarkProp } = {}) {
 
                         {/* Merged Price (VNĐ & Won) */}
                         <td style={{ padding: '8px 12px', textAlign: 'right', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
-                          <div style={{ fontWeight: 800, color: isDark ? '#38BDF8' : '#1D4ED8', fontSize: '0.88rem' }}>
-                            {vnd.toLocaleString('vi-VN')} đ
+                          <div style={{ fontWeight: 800, color: isDark ? '#38BDF8' : '#1D4ED8', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                            {prod.priceChangeAlert?.hasChanged && (
+                              <span style={{
+                                backgroundColor: prod.priceChangeAlert.changeType === 'drop' ? (isDark ? '#064E3B' : '#ECFDF5') : (isDark ? '#78350F' : '#FEF3C7'),
+                                color: prod.priceChangeAlert.changeType === 'drop' ? '#10B981' : '#F59E0B',
+                                fontSize: '0.68rem',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                fontWeight: 900
+                              }}>
+                                {prod.priceChangeAlert.changeType === 'drop' ? `🔻 ${Math.abs(prod.priceChangeAlert.changePercent)}%` : `🔺 +${prod.priceChangeAlert.changePercent}%`}
+                              </span>
+                            )}
+                            <span>{vnd.toLocaleString('vi-VN')} đ</span>
                           </div>
                           <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B', fontFamily: 'monospace', marginTop: '2px' }}>
                             {won.toLocaleString('vi-VN')} ₩
@@ -1014,7 +1026,7 @@ export default function AdminProductCatalog({ isDark: isDarkProp } = {}) {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', color: '#F59E0B', fontWeight: 800 }}>
                         <Star size={13} fill="#F59E0B" />
-                        <span>{prod.rating || 4.9}</span>
+                        <span>{prod.rating ?? 0}</span>
                       </div>
                     </div>
                   </div>

@@ -513,6 +513,11 @@ async function runPlaywrightAIScraper() {
             // Review thực tế của người dùng (lấy tối đa 10 ảnh GDAS)
             const finalReviews = cleanReview.filter(r => !finalAlbum.includes(r));
 
+            const scoreEl = document.querySelector('#repReview .total, .grade_my .num, .score_area .num, .star_area .num, .review_point');
+            const scoreTxt = scoreEl ? scoreEl.textContent.trim() : '0';
+            const countEl = document.querySelector('#repReview .total_num, .review_count, .goods_recom_box .num, .score_area .count');
+            const countTxt = countEl ? countEl.textContent.trim() : '0';
+
             return {
               brand: extractedBrand,
               nameKr: nameKr,
@@ -521,21 +526,24 @@ async function runPlaywrightAIScraper() {
               albumImgs: finalAlbum.slice(0, 10),
               reviewImgs: finalReviews.slice(0, 12),
               descText: '',
-              reviewScoreTxt: '4.9'
+              reviewScoreTxt: scoreTxt,
+              reviewCountTxt: countTxt
             };
           }).catch(() => ({
           brand: 'Olive Young',
           nameKr: 'Sản phẩm Korea',
-          priceTxt: '25000',
+          priceTxt: '0',
           mainImg: '',
           albumImgs: [],
+          reviewImgs: [],
           descText: '',
-          reviewScoreTxt: '4.9'
+          reviewScoreTxt: '0',
+          reviewCountTxt: '0'
         }));
 
         const brand = detailData.brand || 'Olive Young';
         const nameKr = detailData.nameKr || 'Sản phẩm Korea';
-        const foreignPrice = parseInt(detailData.priceTxt.replace(/[^0-9]/g, '') || '25000', 10);
+        const foreignPrice = parseInt(detailData.priceTxt.replace(/[^0-9]/g, '') || '0', 10) || 0;
         
         let mainImg = detailData.mainImg;
         if (mainImg && mainImg.startsWith('//')) mainImg = 'https:' + mainImg;
@@ -548,7 +556,8 @@ async function runPlaywrightAIScraper() {
         if (mainImg && !albumImgs.includes(mainImg)) albumImgs.unshift(mainImg);
 
         const cleanDesc = detailData.descText ? detailData.descText.replace(/\s+/g, ' ').substring(0, 300) : '';
-        const rating = parseFloat(detailData.reviewScoreTxt.replace(/[^0-9.]/g, '') || '4.9');
+        const rating = parseFloat(detailData.reviewScoreTxt?.replace(/[^0-9.]/g, '') || '0') || 0;
+        const reviewsCount = parseInt(detailData.reviewCountTxt?.replace(/[^0-9]/g, '') || '0', 10) || 0;
 
         // Xử lý ảnh review riêng biệt
         const reviewImgs = [];
@@ -585,8 +594,8 @@ async function runPlaywrightAIScraper() {
           photoReviews: reviewImgs,
           description: cleanDesc ? `Mô tả sản phẩm Olive Young: ${cleanDesc}...` : `Sản phẩm chính hãng nhập khẩu trực tiếp từ Store Olive Young Hàn Quốc. Mã SP: ${goodsNo}.`,
           origin: 'Store Olive Young Seoul, Hàn Quốc',
-          rating: rating > 0 && rating <= 5 ? rating : 4.9,
-          reviewsCount: Math.floor(Math.random() * 300) + 80,
+          rating: rating > 0 && rating <= 5 ? rating : 0,
+          reviewsCount: reviewsCount > 0 ? reviewsCount : 0,
           inStock: true,
           source: 'PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER',
           scrapedAt: new Date().toISOString()
@@ -663,8 +672,8 @@ async function runPlaywrightAIScraper() {
           photoReviews: Array.isArray(product.photoReviews) ? product.photoReviews.map(String) : [],
           description: String(product.description || ''),
           origin: String(product.origin || 'Store Olive Young Korea'),
-          rating: 4.9,
-          reviewsCount: 120,
+          rating: Number.isFinite(Number(product.rating)) ? Number(product.rating) : 0,
+          reviewsCount: Number.isFinite(Number(product.reviewsCount)) ? Number(product.reviewsCount) : 0,
           productUrl: String(product.productUrl || ''),
           source: 'PLAYWRIGHT_DEEP_CLICK_AI_SCRAPER',
           scrapedAt: new Date().toISOString()

@@ -48,9 +48,12 @@ Trích xuất JSON CHÍNH XÁC, TUYỆT ĐỐI KHÔNG bịa dữ liệu. Nếu k
   "brand": "thương hiệu tiếng Anh hoặc Việt (ví dụ: Mediheal, COSRX, Round Lab, Medicube)",
   "category": "skincare|makeup|haircare|bodycare|health|pharmacy",
   "price": 27000,
+  "rating": 4.8,
+  "reviewsCount": 1250,
   "image": "URL ảnh sản phẩm chính (bắt đầu bằng https://image.oliveyoung.co.kr, KHÔNG phải logo/menu/icon/quà tặng)",
   "images": ["danh sách 3-8 URL ảnh sản phẩm HD chính hãng"],
   "photoReviews": ["danh sách 2-10 URL ảnh đánh giá thực tế gdasEditor của khách hàng"],
+  "ingredients": ["danh sách thành phần tiếng Việt"],
   "description": "mô tả ngắn tiếng Việt"
 }
 Lưu ý giá: nếu có "~~X원~~ _Y%_" thì giá sale = X × (100-Y)/100, làm tròn. Ưu tiên giá sale.
@@ -211,6 +214,10 @@ export async function runAIScraperAgent(url) {
                   foreignPrice: { type: "number" },
                   productImage: { type: "string" },
                   images: { type: "array", items: { type: "string" } },
+                  photoReviews: { type: "array", items: { type: "string" } },
+                  ingredients: { type: "array", items: { type: "string" } },
+                  rating: { type: "number" },
+                  reviewsCount: { type: "number" },
                   description: { type: "string" }
                 },
                 required: ["name", "nameKr", "brand", "foreignPrice", "productImage", "category"]
@@ -224,7 +231,7 @@ export async function runAIScraperAgent(url) {
           if (fcData.success && fcData.data && fcData.data.extract) {
             const ext = fcData.data.extract;
             const goodsNoMatch = cleanUrl.match(/goodsNo=([A-Za-z0-9_]+)/i);
-            const cleanPrice = Number(ext.foreignPrice) || 25000;
+            const cleanPrice = Number(ext.foreignPrice) || 0;
             const finalProduct = {
               goodsNo: goodsNoMatch ? goodsNoMatch[1] : `FC-${Date.now()}`,
               name: ext.name || 'Sản phẩm Hàn Quốc',
@@ -235,10 +242,12 @@ export async function runAIScraperAgent(url) {
               price: cleanPrice,
               productImage: ext.productImage || '',
               images: Array.isArray(ext.images) && ext.images.length > 0 ? ext.images : [ext.productImage || ''],
+              photoReviews: Array.isArray(ext.photoReviews) ? ext.photoReviews : [],
+              ingredients: Array.isArray(ext.ingredients) ? ext.ingredients : [],
               description: ext.description || 'Sản phẩm nhập khẩu Hàn Quốc chính hãng.',
               origin: 'Store Olive Young Seoul, Hàn Quốc',
-              rating: 4.9,
-              reviewsCount: Math.floor(Math.random() * 500) + 50,
+              rating: Number(ext.rating) || 0,
+              reviewsCount: Number(ext.reviewsCount) || 0,
               productUrl: cleanUrl,
               source: 'FIRECRAWL_AI',
               scrapedAt: new Date().toISOString()
@@ -337,6 +346,7 @@ export async function runAIScraperAgent(url) {
 
     if (!markdown || markdown.length < 300) {
       if (extractedGoodsNo) {
+        console.warn(`⚠️ Jina AI không đọc được nội dung đầy đủ cho mã: ${extractedGoodsNo}`);
         const fallbackProduct = {
           goodsNo: extractedGoodsNo,
           name: `Sản phẩm Olive Young (Mã: ${extractedGoodsNo})`,
@@ -344,13 +354,16 @@ export async function runAIScraperAgent(url) {
           brand: 'Olive Young Korea',
           brandKr: '올리브영',
           category: 'skincare',
-          foreignPrice: 28000,
+          foreignPrice: 0,
           productImage: `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${extractedGoodsNo}01ko.jpg`,
+          images: [`https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${extractedGoodsNo}01ko.jpg`],
+          photoReviews: [],
+          ingredients: [],
           description: `Sản phẩm chính hãng bóc tách từ Olive Young Hàn Quốc. Mã sản phẩm: ${extractedGoodsNo}`,
           origin: 'Store Olive Young Seoul, Hàn Quốc',
-          rating: 4.9,
+          rating: 0,
           productUrl: cleanUrl,
-          reviewsCount: 120,
+          reviewsCount: 0,
           scrapedAt: new Date().toISOString(),
           source: 'smart-fallback-goodsNo'
         };
@@ -378,6 +391,7 @@ export async function runAIScraperAgent(url) {
     const ai = await aiExtractProduct(markdown, cleanUrl);
     if (!ai || !ai.nameKr) {
       if (extractedGoodsNo) {
+        console.warn(`⚠️ AI extraction không phân tích được nội dung cho mã: ${extractedGoodsNo}`);
         const fallbackProduct = {
           goodsNo: extractedGoodsNo,
           name: `Sản phẩm Olive Young (${extractedGoodsNo})`,
@@ -385,13 +399,16 @@ export async function runAIScraperAgent(url) {
           brand: 'Olive Young',
           brandKr: '올리브영',
           category: 'skincare',
-          foreignPrice: 25000,
+          foreignPrice: 0,
           productImage: `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${extractedGoodsNo}01ko.jpg`,
+          images: [`https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${extractedGoodsNo}01ko.jpg`],
+          photoReviews: [],
+          ingredients: [],
           description: `Sản phẩm bóc tách Olive Young Hàn Quốc. Mã: ${extractedGoodsNo}`,
           origin: 'Store Olive Young Seoul, Hàn Quốc',
-          rating: 4.9,
+          rating: 0,
           productUrl: cleanUrl,
-          reviewsCount: 95,
+          reviewsCount: 0,
           scrapedAt: new Date().toISOString(),
           source: 'smart-fallback-ai'
         };
@@ -435,15 +452,16 @@ export async function runAIScraperAgent(url) {
       brandKr: brandInfo.brandKr || ai.brandKr || '올리브영',
       category: categoryInfo.category || 'cosmetics',
       subCategory: categoryInfo.subCategory || 'skincare',
-      foreignPrice: Number(ai.price) || 25000,
+      foreignPrice: Number(ai.price) || 0,
       productImage: image,
       images: finalAlbum.length > 0 ? finalAlbum.slice(0, 10) : [image],
       photoReviews: finalReviews.slice(0, 12),
+      ingredients: Array.isArray(ai.ingredients) ? ai.ingredients : [],
       description: ai.description || `Sản phẩm Olive Young Korea. Tên gốc: ${ai.nameKr}`,
       origin: 'Store Olive Young Seoul, Hàn Quốc',
-      rating: 4.9,
+      rating: Number(ai.rating) || 0,
       productUrl: cleanUrl,
-      reviewsCount: finalReviews.length > 0 ? finalReviews.length * 15 : 120,
+      reviewsCount: Number(ai.reviewsCount) || 0,
       scrapedAt: new Date().toISOString(),
       source: 'ai-v5-deep-url'
     };
@@ -464,13 +482,16 @@ export async function runAIScraperAgent(url) {
           brand: 'Olive Young',
           brandKr: '올리브영',
           category: 'skincare',
-          foreignPrice: 25000,
+          foreignPrice: 0,
           productImage: `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${extractedGoodsNo}01ko.jpg`,
+          images: [`https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${extractedGoodsNo}01ko.jpg`],
+          photoReviews: [],
+          ingredients: [],
           description: `Sản phẩm Olive Young Korea. Mã: ${extractedGoodsNo}`,
           origin: 'Store Olive Young Seoul, Hàn Quốc',
-          rating: 4.9,
+          rating: 0,
           productUrl: cleanUrl,
-          reviewsCount: 50,
+          reviewsCount: 0,
           scrapedAt: new Date().toISOString(),
           source: 'catch-fallback'
         }

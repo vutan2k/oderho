@@ -481,7 +481,7 @@ export async function scrapeKoreanHealthProduct(urlOrCode = '') {
 
     const naverPayload = parseNaverProductPayload({
       rawTitle: cleanInput.split('/').pop() || 'Sản phẩm Sức Khỏe Naver Korea',
-      priceWon: 45000,
+      priceWon: 0,
       rawImages: [
         'https://shop-phinf.pstatic.net/20260806_59/1786007625721fkLpX_JPEG/40533958083576298_2012085661.jpg?type=f800'
       ],
@@ -497,7 +497,7 @@ export async function scrapeKoreanHealthProduct(urlOrCode = '') {
   let brand = 'Hàn Quốc Chính Hãng';
   let source = 'Website Hàn Quốc';
   let category = 'supplements';
-  let extractedGoodsNo = cleanInput.match(/goodsNo=([A-Z0-9]+)/i)?.[1] || ('KHEALTH-' + Math.random().toString(36).substring(2, 9).toUpperCase());
+  let extractedGoodsNo = cleanInput.match(/goodsNo=([A-Z0-9]+)/i)?.[1] || ('KHEALTH-' + Date.now().toString());
   let realCdnImage = '';
 
   if (/kgcshop\.co\.kr|kgc\.co\.kr/i.test(cleanInput)) {
@@ -536,13 +536,13 @@ export async function scrapeKoreanHealthProduct(urlOrCode = '') {
     koreanTitle: cleanInput,
     name: autoTitle,
     category: autoCategory,
-    foreignPrice: 28000,
-    originalPrice: 28000,
+    foreignPrice: 0,
+    originalPrice: 0,
     productImage: fallbackCdn,
     images: [fallbackCdn],
-    photoReviews: [fallbackCdn],
-    rating: 4.8,
-    reviewsCount: 1500,
+    photoReviews: [],
+    rating: 0,
+    reviewsCount: 0,
     origin: 'Hàn Quốc',
     ranking: 'Top Đánh Giá Cao Từ Người Tiêu Dùng Hàn Quốc',
     activeIngredients: activeIngs.length > 0 ? activeIngs : ['Thành phần dược liệu tự nhiên đạt chuẩn MFDS'],

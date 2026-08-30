@@ -166,78 +166,173 @@ export const getOliveYoungVerifiedPrice = (goodsNo) => {
 };
 
 /**
- * Đồng bộ giá cho 1 sản phẩm đơn lẻ
+ * Tính toán giá VND ước tính từ giá Won, tỷ giá và phí dịch vụ
  */
-export const syncProductPriceWithOliveYoung = (product) => {
+export const calculateVndPrice = (foreignPriceWon = 0, krwRate = 19.5, serviceFeePercent = 5) => {
+  const won = Number(foreignPriceWon) || 0;
+  const rate = Number(krwRate) || 19.5;
+  const fee = Number(serviceFeePercent) || 5;
+  return Math.round(won * rate * (1 + fee / 100));
+};
+
+/**
+ * Đồng bộ giá cho 1 sản phẩm đơn lẻ kèm phát hiện biến động giá & lưu lịch sử
+ */
+export const syncProductPriceWithOliveYoung = (product, options = {}) => {
   if (!product) return product;
   const gNo = product.goodsNo || product.id;
   const verified = getOliveYoungVerifiedPrice(gNo);
 
+  const krwRate = options.krwRate || options.rates?.KRW?.rate || 19.5;
+  const serviceFee = options.serviceFeePercent || options.rates?.serviceFeePercent || 5;
+
   const isCosmetic = !product.category || product.category === 'cosmetics' || product.category === 'skincare' || product.category === 'makeup' || product.category === 'haircare' || product.category === 'bodycare';
   const cleanCat = isCosmetic ? 'cosmetics' : product.category;
 
+  const currentWon = Number(product.foreignPrice || product.price) || 0;
+  const oldPriceVnd = Number(product.priceVnd) || calculateVndPrice(currentWon, krwRate, serviceFee);
+
+  let newWon = currentWon;
+  let newOriginalWon = Number(product.originalPrice) || currentWon;
+  let syncStatus = product.priceSyncStatus || 'unverified';
+  let verifiedName = product.name;
+
   if (verified) {
-    return {
-      ...product,
-      category: cleanCat,
-      name: verified.name || product.name,
-      foreignPrice: verified.foreignPrice,
-      originalPrice: verified.originalPrice,
-      price: verified.foreignPrice,
-      priceSyncStatus: 'synced_oliveyoung',
-      priceLastSyncedAt: new Date().toISOString()
-    };
+    newWon = verified.foreignPrice;
+    newOriginalWon = verified.originalPrice || verified.foreignPrice;
+    syncStatus = 'synced_oliveyoung';
+    verifiedName = verified.name || product.name;
+  } else if (options.scrapedWon && Number(options.scrapedWon) > 0) {
+    newWon = Number(options.scrapedWon);
+    newOriginalWon = Number(options.scrapedOriginalWon) || newWon;
+    syncStatus = 'synced_live_scrape';
   }
 
-  const defaultPrice = product.foreignPrice || product.price || 0;
-  const defaultOrig = product.originalPrice || defaultPrice;
+  const newPriceVnd = calculateVndPrice(newWon, krwRate, serviceFee);
+  const diffWon = newWon - currentWon;
+  const diffVnd = newPriceVnd - oldPriceVnd;
+
+  // Tính tỷ lệ % biến động giá
+  let changePercent = 0;
+  let changeType = 'unchanged';
+  if (currentWon > 0 && newWon !== currentWon) {
+    changePercent = Math.round(((newWon - currentWon) / currentWon) * 1000) / 10;
+    changeType = changePercent < 0 ? 'drop' : 'increase';
+  }
+
+  // Phát hiện biến động giá từ 1% trở lên
+  const hasSignificantChange = Math.abs(changePercent) >= 1.0;
+
+  // Cập nhật mảng lịch sử giá (priceHistory)
+  const existingHistory = Array.isArray(product.priceHistory) ? product.priceHistory : [];
+  let updatedHistory = [...existingHistory];
+
+  if (hasSignificantChange) {
+    const historyEntry = {
+      timestamp: new Date().toISOString(),
+      oldForeignPrice: currentWon,
+      newForeignPrice: newWon,
+      oldPriceVnd: oldPriceVnd,
+      newPriceVnd: newPriceVnd,
+      diffWon: diffWon,
+      diffVnd: diffVnd,
+      changePercent: changePercent,
+      changeType: changeType,
+      source: syncStatus === 'synced_oliveyoung' ? 'Olive Young Korea (Verified)' : 'Live Web Scraping',
+      reason: changeType === 'drop' ? `Giảm giá sale ${Math.abs(changePercent)}% tại Hàn Quốc` : `Tăng giá ${changePercent}% tại Hàn Quốc`
+    };
+    // Giới hạn 50 bản ghi lịch sử gần nhất
+    updatedHistory = [historyEntry, ...existingHistory].slice(0, 50);
+  }
+
+  // Cờ cảnh báo biến động giá (priceChangeAlert)
+  const priceChangeAlert = hasSignificantChange ? {
+    hasChanged: true,
+    changePercent: changePercent,
+    changeType: changeType,
+    lastChecked: new Date().toISOString(),
+    badgeText: changeType === 'drop' ? `Giảm ${Math.abs(changePercent)}%` : `Tăng +${changePercent}%`,
+    diffWon: diffWon,
+    diffVnd: diffVnd
+  } : (product.priceChangeAlert || {
+    hasChanged: false,
+    changePercent: 0,
+    changeType: 'unchanged',
+    lastChecked: new Date().toISOString(),
+    badgeText: ''
+  });
 
   return {
     ...product,
     category: cleanCat,
-    foreignPrice: defaultPrice,
-    originalPrice: defaultOrig,
-    price: defaultPrice,
-    priceSyncStatus: 'unverified',
-    priceLastSyncedAt: new Date().toISOString()
+    name: verifiedName,
+    foreignPrice: newWon,
+    originalPrice: newOriginalWon,
+    price: newWon,
+    priceVnd: newPriceVnd,
+    priceSyncStatus: syncStatus,
+    priceLastSyncedAt: new Date().toISOString(),
+    priceHistory: updatedHistory,
+    priceChangeAlert: priceChangeAlert
   };
 };
 
 /**
  * Quét và đồng bộ toàn bộ kho sản phẩm
  */
-export const syncAllProductsWithOliveYoung = (products = [], onProgress = null) => {
+export const syncAllProductsWithOliveYoung = (products = [], options = {}, onProgress = null) => {
+  // Hỗ trợ truyền onProgress làm tham số thứ 2 nếu options là hàm
+  let opt = options;
+  let progressFn = onProgress;
+  if (typeof options === 'function') {
+    progressFn = options;
+    opt = {};
+  }
+
   if (!Array.isArray(products)) {
-    return { updatedProducts: [], changes: [], updatedCount: 0, verifiedCount: 0, unverifiedCount: 0, totalScanned: 0 };
+    return { updatedProducts: [], changes: [], updatedCount: 0, verifiedCount: 0, unverifiedCount: 0, totalScanned: 0, priceDropsCount: 0, priceIncreasesCount: 0 };
   }
 
   const changes = [];
   let verifiedCount = 0;
   let unverifiedCount = 0;
+  let priceDropsCount = 0;
+  let priceIncreasesCount = 0;
 
   const updatedProducts = products.map((prod, idx) => {
-    if (onProgress && typeof onProgress === 'function') {
-      onProgress(idx + 1, products.length, prod.name);
+    if (progressFn && typeof progressFn === 'function') {
+      progressFn(idx + 1, products.length, prod.name);
     }
     const currentPrice = Number(prod.foreignPrice || prod.price) || 0;
-    const synced = syncProductPriceWithOliveYoung(prod);
+    const synced = syncProductPriceWithOliveYoung(prod, opt);
     const newPrice = Number(synced.foreignPrice) || 0;
 
-    if (synced.priceSyncStatus === 'synced_oliveyoung') {
+    if (synced.priceSyncStatus === 'synced_oliveyoung' || synced.priceSyncStatus === 'synced_live_scrape') {
       verifiedCount++;
     } else {
       unverifiedCount++;
     }
 
     if (currentPrice !== newPrice) {
+      const diffWon = newPrice - currentPrice;
+      const changePct = currentPrice > 0 ? Math.round((diffWon / currentPrice) * 1000) / 10 : 0;
+      
+      if (changePct < 0) priceDropsCount++;
+      else if (changePct > 0) priceIncreasesCount++;
+
       changes.push({
         goodsNo: prod.goodsNo,
         name: synced.name,
         brand: synced.brand,
+        productImage: synced.productImage || (synced.images && synced.images[0]) || '',
         oldPrice: currentPrice,
         newPrice: newPrice,
+        oldPriceVnd: prod.priceVnd || calculateVndPrice(currentPrice, opt.krwRate, opt.serviceFeePercent),
+        newPriceVnd: synced.priceVnd,
         originalPrice: synced.originalPrice,
-        diffWon: newPrice - currentPrice,
+        diffWon: diffWon,
+        changePercent: changePct,
+        changeType: changePct < 0 ? 'drop' : 'increase',
         priceSyncStatus: synced.priceSyncStatus,
         timestamp: new Date().toISOString()
       });
@@ -251,6 +346,8 @@ export const syncAllProductsWithOliveYoung = (products = [], onProgress = null) 
     updatedCount: changes.length,
     verifiedCount,
     unverifiedCount,
+    priceDropsCount,
+    priceIncreasesCount,
     totalScanned: products.length,
     timestamp: new Date().toISOString()
   };

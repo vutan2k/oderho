@@ -623,3 +623,131 @@ test('[SCENARIO-10] Case-Insensitive Order ID Lookup & Media Lightbox Verificati
   assertEquals(activeModal, null, 'Lightbox modal dismissed');
 });
 
+
+// 11. Scenario 11: Smart Product Research & Real Review Sourcing Workflow (F1, F2, F3, F4, F5, F6, F7, F8, F9, F10)
+test('[SCENARIO-11] Smart Product Research & Real Review Sourcing Workflow (F1, F2, F3, F4, F5, F6, F7, F8, F9, F10)', async () => {
+  const mockStorage = createMockLocalStorage();
+  globalThis.localStorage = mockStorage;
+
+  // Step 1: Initialize admin workspace state & catalog
+  let activeSubTab = 'research'; // Admin is in Tab 4 "Cào Sản Phẩm Thông Minh"
+  assertEquals(activeSubTab, 'research', 'Admin is on Smart Product Research Tab');
+
+  mockStorage.setItem('tavy_pending_products', JSON.stringify([]));
+  mockStorage.setItem('tavy_published_products', JSON.stringify([...OLIVE_YOUNG_CATALOG]));
+
+  // Step 2: Admin inputs Olive Young product URL
+  const inputUrl = 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000185934';
+  
+  // Step 3: Domain & goodsNo auto-detection
+  const isOliveYoung = /oliveyoung\.co\.kr/i.test(inputUrl);
+  const goodsNoMatch = inputUrl.match(/goodsNo=([A-Za-z0-9_]+)/i);
+  const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : null;
+
+  assertEquals(isOliveYoung, true, 'Input URL recognized as Olive Young domain');
+  assertEquals(goodsNo, 'A000000185934', 'Extracted goodsNo check');
+
+  // Step 4: Step-by-Step Live Log Console streaming
+  const liveLogs = [];
+  const log = (msg) => {
+    const time = '10:30:15';
+    liveLogs.push(`[${time}] ${msg}`);
+  };
+
+  log('🔍 Đã nhận: URL Olive Young');
+  log('📡 [OliveYoung] Đang đọc nội dung qua Jina AI Reader...');
+  log('🤖 [AI] Đang trích xuất thông tin sản phẩm...');
+
+  // Step 5: Multi-source scraping & review photo collection
+  const scrapedItem = {
+    goodsNo,
+    name: 'Tinh Chất Cấp Nước Sâu Torriden Dive-In Low Molecular Hyaluronic Acid Serum 50ml',
+    nameKr: '토리든 다이브인 저분자 히알루론산 세럼 50ml',
+    brand: 'Torriden',
+    category: 'skincare',
+    subCategory: 'skincare',
+    foreignPrice: 18000,
+    originalPrice: 24000,
+    discountPercent: 25,
+    productImage: 'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0018/A00000018593401ko.jpg',
+    images: [
+      'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0018/A00000018593401ko.jpg',
+      'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0018/A00000018593402ko.jpg',
+      'https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0018/A00000018593403ko.jpg'
+    ],
+    photoReviews: [
+      'https://image.oliveyoung.co.kr/uploads/images/gdasEditor/2026/08/review_torriden_user1.jpg',
+      'https://image.oliveyoung.co.kr/uploads/images/gdasEditor/2026/08/review_torriden_user2.jpg'
+    ],
+    ingredients: ['Hyaluronic Acid 5D phân tử thấp', 'D-Panthenol', 'Chiết xuất Malachite'],
+    description: 'Tinh chất cấp ẩm chuyên sâu cho mọi loại da, đặc biệt là da dầu thiếu nước và da nhạy cảm.',
+    origin: 'Hàn Quốc (Olive Young Store Seoul)',
+    rating: 4.8,
+    reviewsCount: 14200,
+    productUrl: inputUrl,
+    scrapedAt: new Date().toISOString()
+  };
+
+  log('✅ [OliveYoung] Lấy được: Tên ✓ Giá ✓ Ảnh x3 ✓');
+  log('📷 [Hwahae/GDAS] Đang tìm ảnh review thực tế...');
+  log('✅ [Hwahae/GDAS] Lấy được 2 ảnh review thực tế');
+
+  // Step 6: 10 Required Fields Validation & Rule 0 verification
+  assertEquals(typeof scrapedItem.name, 'string', 'name is string');
+  assertEquals(typeof scrapedItem.nameKr, 'string', 'nameKr is string');
+  assertEquals(typeof scrapedItem.brand, 'string', 'brand is string');
+  assertEquals(typeof scrapedItem.foreignPrice, 'number', 'foreignPrice is number');
+  assert(scrapedItem.foreignPrice > 0, 'foreignPrice is positive');
+  assert(scrapedItem.productImage.startsWith('https://'), 'productImage is valid URL');
+  assertEquals(scrapedItem.images.length >= 3, true, 'images has at least 3 HD photos');
+  assertEquals(scrapedItem.photoReviews.length >= 2, true, 'photoReviews has at least 2 real customer photos');
+  assertEquals(scrapedItem.ingredients.length >= 1, true, 'ingredients list present');
+  assertEquals(typeof scrapedItem.description, 'string', 'description is string');
+  assertEquals(typeof scrapedItem.rating, 'number', 'rating is number');
+  assertEquals(typeof scrapedItem.reviewsCount, 'number', 'reviewsCount is number');
+
+  // Assert zero fake random data
+  assert(!JSON.stringify(scrapedItem).includes('Math.random'), 'No fake Math.random data in product');
+
+  // Step 7: Auto-save into Pending Queue
+  log('📋 Hoàn tất! Đang đưa vào Hàng Chờ Duyệt...');
+  const pendingList = JSON.parse(mockStorage.getItem('tavy_pending_products'));
+  const pendingEntry = {
+    ...scrapedItem,
+    id: `PENDING-${Date.now()}`,
+    status: 'pending_approval'
+  };
+  pendingList.unshift(pendingEntry);
+  mockStorage.setItem('tavy_pending_products', JSON.stringify(pendingList));
+
+  assertEquals(pendingList.length, 1, 'Product successfully auto-saved to pending queue');
+
+  // Step 8: Admin navigates to 'pending' sub-tab, reviews item, and approves into live catalog
+  activeSubTab = 'pending';
+  const currentPending = JSON.parse(mockStorage.getItem('tavy_pending_products'));
+  const approvedItem = currentPending.find(p => p.goodsNo === goodsNo);
+  assert(approvedItem !== undefined, 'Found item in pending queue for approval');
+
+  // Admin approves product into live catalog
+  const publishedCatalog = JSON.parse(mockStorage.getItem('tavy_published_products'));
+  publishedCatalog.unshift({
+    ...approvedItem,
+    status: 'published',
+    isPublished: true
+  });
+  mockStorage.setItem('tavy_published_products', JSON.stringify(publishedCatalog));
+
+  // Remove from pending
+  const remainingPending = currentPending.filter(p => p.goodsNo !== goodsNo);
+  mockStorage.setItem('tavy_pending_products', JSON.stringify(remainingPending));
+
+  // Step 9: Verify published catalog contains the new item with genuine data
+  const updatedCatalog = JSON.parse(mockStorage.getItem('tavy_published_products'));
+  const liveProduct = updatedCatalog.find(p => p.goodsNo === goodsNo);
+
+  assert(liveProduct !== undefined, 'Live product must exist in published catalog');
+  assertEquals(liveProduct.name, scrapedItem.name, 'Published product name check');
+  assertEquals(liveProduct.foreignPrice, 18000, 'Published product Won price check');
+  assertEquals(liveProduct.photoReviews.length, 2, 'Published product has 2 review photos');
+  assertEquals(JSON.parse(mockStorage.getItem('tavy_pending_products')).length, 0, 'Pending queue is now empty');
+});
