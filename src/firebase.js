@@ -10,14 +10,14 @@ import {
 } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
-// Cấu hình Firebase qua environment variables
+// Cấu hình Firebase qua environment variables (kèm fallback công khai để chạy được trên Vercel/Production)
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyCQ_cpZLNbZdgGpDzea9GlpCL8vbeb_emo',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'tavyorder.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'tavyorder',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'tavyorder.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '307372781687',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:307372781687:web:356e2963e0cf23b018d672'
 };
 
 // Khởi tạo Firebase App an toàn

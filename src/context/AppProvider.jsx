@@ -194,27 +194,35 @@ export const AppProvider = ({ children }) => {
 
   // Listen for Firebase auth changes and load/create profile
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setAuthUser(user);
-      if (user) {
-        try {
-          const profileRef = doc(db, 'users', user.uid);
-          const snap = await getDoc(profileRef);
-          if (snap.exists()) {
-            setProfile(snap.data());
-          } else {
-            const newProfile = { name: user.displayName || '', email: user.email, phone: '', address: '', addressBook: [] };
-            await setDoc(profileRef, newProfile).catch(() => {});
-            setProfile(newProfile);
+    if (!auth || !auth.app || typeof onAuthStateChanged !== 'function') return;
+    let unsubscribe;
+    try {
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setAuthUser(user);
+        if (user) {
+          try {
+            const profileRef = doc(db, 'users', user.uid);
+            const snap = await getDoc(profileRef);
+            if (snap.exists()) {
+              setProfile(snap.data());
+            } else {
+              const newProfile = { name: user.displayName || '', email: user.email, phone: '', address: '', addressBook: [] };
+              await setDoc(profileRef, newProfile).catch(() => {});
+              setProfile(newProfile);
+            }
+          } catch (err) {
+            console.warn("Profile fetch permission warning:", err);
           }
-        } catch (err) {
-          console.warn("Profile fetch permission warning:", err);
+        } else {
+          setProfile(null);
         }
-      } else {
-        setProfile(null);
-      }
-    });
-    return () => unsubscribe();
+      });
+    } catch (authErr) {
+      console.warn("Firebase onAuthStateChanged setup error:", authErr);
+    }
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, []);
 
   // Tự động tạo & đồng bộ tài khoản test tan123 vào Database Firestore
