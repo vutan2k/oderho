@@ -116,9 +116,9 @@ export default function OrdersPage() {
             style={{
               padding: '8px 16px',
               borderRadius: '20px',
-              border: activeTab === tab.id ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
-              backgroundColor: activeTab === tab.id ? 'var(--purple-primary)' : '#FFF',
-              color: activeTab === tab.id ? '#FFF' : '#374151',
+              border: activeTab === tab.id ? '2px solid var(--purple-primary)' : '1px solid var(--border-color, #E5E7EB)',
+              backgroundColor: activeTab === tab.id ? 'var(--purple-primary)' : 'var(--bg-white, #FFF)',
+              color: activeTab === tab.id ? '#FFF' : 'var(--text-dark, #374151)',
               fontWeight: activeTab === tab.id ? 700 : 500,
               fontSize: '0.85rem',
               cursor: 'pointer',
@@ -132,9 +132,9 @@ export default function OrdersPage() {
       </div>
 
       {filteredOrders.length === 0 ? (
-        <div style={{ backgroundColor: '#FFF', border: '1px dashed #D1D5DB', borderRadius: '16px', padding: '60px 20px', textAlign: 'center' }}>
+        <div style={{ backgroundColor: 'var(--bg-white, #FFF)', border: '1px dashed var(--border-color, #D1D5DB)', borderRadius: '16px', padding: '60px 20px', textAlign: 'center' }}>
           <ShoppingBag size={48} style={{ color: 'var(--purple-primary)', marginBottom: '12px' }} />
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px' }}>Chưa tìm thấy đơn hàng nào</h3>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-dark)' }}>Chưa tìm thấy đơn hàng nào</h3>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '20px' }}>Hãy chọn mua các sản phẩm Mỹ phẩm & Thực phẩm chức năng Hàn Quốc chất lượng!</p>
           <button className="btn-gold" onClick={() => navigate('/')}>
             Khám phá sản phẩm ngay
@@ -156,9 +156,9 @@ export default function OrdersPage() {
               <div
                 key={order.id}
                 style={{
-                  backgroundColor: '#FFF',
+                  backgroundColor: 'var(--bg-white, #FFF)',
                   borderRadius: '16px',
-                  border: '1px solid rgba(0,0,0,0.08)',
+                  border: '1px solid var(--border-color, rgba(0,0,0,0.08))',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
                   overflow: 'hidden'
                 }}
@@ -166,8 +166,8 @@ export default function OrdersPage() {
                 {/* Order Top Bar */}
                 <div style={{
                   padding: '16px 24px',
-                  backgroundColor: '#FAF9F6',
-                  borderBottom: '1px solid #EAE6DF',
+                  backgroundColor: 'var(--bg-subtle-purple, #FAF9F6)',
+                  borderBottom: '1px solid var(--border-color, #EAE6DF)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -235,7 +235,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Progress Bar 8 Bước Minh Bạch */}
-                <div style={{ padding: '24px 20px', backgroundColor: '#FDFBFF', borderBottom: '1px solid #EAE6DF' }}>
+                <div style={{ padding: '24px 20px', backgroundColor: 'var(--bg-subtle-purple, #FDFBFF)', borderBottom: '1px solid var(--border-color, #EAE6DF)' }}>
                   <div className="order-timeline">
                     {steps.map((st, idx) => {
                       const isCompleted = idx <= currentStepIdx;
@@ -252,8 +252,9 @@ export default function OrdersPage() {
                             width: '28px',
                             height: '28px',
                             borderRadius: '50%',
-                            backgroundColor: isCompleted ? 'var(--purple-primary)' : '#E5E7EB',
-                            color: isCompleted ? '#FFF' : '#6B7280',
+                            backgroundColor: isCompleted ? 'var(--purple-primary)' : 'var(--bg-white, #E5E7EB)',
+                            color: isCompleted ? '#FFF' : 'var(--text-muted, #6B7280)',
+                            border: isCompleted ? 'none' : '1px solid var(--border-color)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -266,7 +267,7 @@ export default function OrdersPage() {
 
                           <span style={{
                             fontWeight: isCurrent ? 800 : (isCompleted ? 700 : 500),
-                            color: isCompleted ? 'var(--purple-primary)' : '#6B7280',
+                            color: isCompleted ? 'var(--purple-primary)' : 'var(--text-muted, #6B7280)',
                             lineHeight: 1.3
                           }}>
                             {st.shortLabel || st.title}
@@ -281,8 +282,8 @@ export default function OrdersPage() {
                 {(order.povVideoUrl || order.receiptImageUrl || order.packingVideoUrl || order.packageWeightKg || order.flightCode || order.domesticTrackingCode) && (
                   <div style={{
                     padding: '18px 24px',
-                    backgroundColor: '#F7F4EB',
-                    borderBottom: '1px solid #EAE6DF',
+                    backgroundColor: 'var(--bg-subtle-purple, #F7F4EB)',
+                    borderBottom: '1px solid var(--border-color, #EAE6DF)',
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: '16px',
@@ -291,7 +292,7 @@ export default function OrdersPage() {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <ShieldCheck size={20} style={{ color: 'var(--purple-primary)' }} />
-                      <strong style={{ fontSize: '0.88rem', color: '#1F2937' }}>
+                      <strong style={{ fontSize: '0.88rem', color: 'var(--text-dark, #1F2937)' }}>
                         Minh bạch 100% từ TAVY Korea:
                       </strong>
                     </div>
@@ -307,13 +308,13 @@ export default function OrdersPage() {
                             gap: '6px',
                             padding: '6px 12px',
                             borderRadius: '8px',
-                            backgroundColor: '#FFFFFF',
+                            backgroundColor: 'var(--bg-white, #FFFFFF)',
                             border: '1px solid var(--purple-primary)',
                             color: 'var(--purple-primary)',
                             fontSize: '0.8rem',
                             fontWeight: 700,
                             cursor: 'pointer',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+                            boxShadow: 'var(--shadow-sm)'
                           }}
                         >
                           <Video size={15} />
@@ -331,13 +332,13 @@ export default function OrdersPage() {
                             gap: '6px',
                             padding: '6px 12px',
                             borderRadius: '8px',
-                            backgroundColor: '#FFFFFF',
-                            border: '1px solid #4B5563',
-                            color: '#374151',
+                            backgroundColor: 'var(--bg-white, #FFFFFF)',
+                            border: '1px solid var(--border-color, #4B5563)',
+                            color: 'var(--text-dark, #374151)',
                             fontSize: '0.8rem',
                             fontWeight: 700,
                             cursor: 'pointer',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+                            boxShadow: 'var(--shadow-sm)'
                           }}
                         >
                           <FileText size={15} />
@@ -355,13 +356,13 @@ export default function OrdersPage() {
                             gap: '6px',
                             padding: '6px 12px',
                             borderRadius: '8px',
-                            backgroundColor: '#FFFFFF',
+                            backgroundColor: 'var(--bg-white, #FFFFFF)',
                             border: '1px solid #DB2777',
                             color: '#DB2777',
                             fontSize: '0.8rem',
                             fontWeight: 700,
                             cursor: 'pointer',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+                            boxShadow: 'var(--shadow-sm)'
                           }}
                         >
                           <PackageCheck size={15} />
@@ -377,11 +378,11 @@ export default function OrdersPage() {
                           gap: '4px',
                           padding: '6px 12px',
                           borderRadius: '8px',
-                          backgroundColor: '#FFFFFF',
-                          border: '1px solid #D1D5DB',
+                          backgroundColor: 'var(--bg-white, #FFFFFF)',
+                          border: '1px solid var(--border-color, #D1D5DB)',
                           fontSize: '0.8rem',
                           fontWeight: 600,
-                          color: '#374151'
+                          color: 'var(--text-dark, #374151)'
                         }}>
                           <Scale size={14} style={{ color: '#059669' }} />
                           <span>Cân nặng: <strong>{order.packageWeightKg} kg</strong></span>
@@ -469,11 +470,11 @@ export default function OrdersPage() {
 
                   {/* Thông tin Vận đơn Air & Nội Địa */}
                   {(order.trackingCode || order.domesticTrackingCode) && (
-                    <div style={{ backgroundColor: '#FAF9F6', padding: '16px', borderRadius: '12px', border: '1px solid #EAE6DF', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ backgroundColor: 'var(--bg-subtle-purple, #FAF9F6)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color, #EAE6DF)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {order.trackingCode && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <span style={{ fontSize: '0.75rem', color: '#6B7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <Plane size={13} style={{ color: '#0891B2' }} /> MÃ VẬN ĐƠN AIR (HÀN - VIỆT)
                             </span>
                             <strong style={{ fontSize: '0.95rem', fontFamily: 'monospace', color: 'var(--purple-primary)' }}>
@@ -503,9 +504,9 @@ export default function OrdersPage() {
                       )}
 
                       {order.domesticTrackingCode && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: order.trackingCode ? '1px dashed #E5E7EB' : 'none', paddingTop: order.trackingCode ? '10px' : 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: order.trackingCode ? '1px dashed var(--border-color, #E5E7EB)' : 'none', paddingTop: order.trackingCode ? '10px' : 0 }}>
                           <div>
-                            <span style={{ fontSize: '0.75rem', color: '#6B7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <Truck size={13} style={{ color: '#059669' }} /> VẬN CHUYỂN NỘI ĐỊA ({order.domesticCarrier || 'ViettelPost'})
                             </span>
                             <strong style={{ fontSize: '0.95rem', fontFamily: 'monospace', color: '#059669' }}>
@@ -552,36 +553,38 @@ export default function OrdersPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)',
-          zIndex: 1000,
+          backgroundColor: 'rgba(0,0,0,0.75)',
+          backdropFilter: 'blur(5px)',
+          zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '20px'
         }}>
           <div style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--bg-white, #FFFFFF)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             maxWidth: '640px',
             width: '100%',
             overflow: 'hidden',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            boxShadow: 'var(--shadow-lg)',
             animation: 'fadeIn 0.2s ease'
           }}>
             <div style={{
               padding: '16px 20px',
-              borderBottom: '1px solid #EAE6DF',
+              borderBottom: '1px solid var(--border-color, #EAE6DF)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: '#FAF9F6'
+              backgroundColor: 'var(--bg-subtle-purple, #FAF9F6)'
             }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1F2937', margin: 0 }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-dark, #1F2937)', margin: 0 }}>
                 {activeMediaModal.title}
               </h3>
               <button
                 onClick={() => setActiveMediaModal(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: '4px' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #6B7280)', padding: '4px' }}
               >
                 <X size={20} />
               </button>
@@ -606,7 +609,7 @@ export default function OrdersPage() {
               )}
             </div>
 
-            <div style={{ padding: '12px 20px', textAlign: 'right', backgroundColor: '#FAF9F6', borderTop: '1px solid #EAE6DF' }}>
+            <div style={{ padding: '12px 20px', textAlign: 'right', backgroundColor: 'var(--bg-subtle-purple, #FAF9F6)', borderTop: '1px solid var(--border-color, #EAE6DF)' }}>
               <button
                 onClick={() => setActiveMediaModal(null)}
                 style={{

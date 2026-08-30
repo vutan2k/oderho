@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { User, LogOut, Package, ShoppingCart, HelpCircle } from 'lucide-react';
+import { User, LogOut, Package, ShoppingCart, HelpCircle, Sun, Moon } from 'lucide-react';
 
 export default function Navbar({ logoSrc: _logoSrc } = {}) {
-  const { currentUser, logoutUser, cart } = useContext(AppContext);
+  const { currentUser, logoutUser, cart, userTheme, toggleUserTheme } = useContext(AppContext);
   const navigate = useNavigate();
 
   return (
@@ -12,9 +12,9 @@ export default function Navbar({ logoSrc: _logoSrc } = {}) {
       position: 'sticky',
       top: 0,
       zIndex: 100,
-      background: 'rgba(255,255,255,0.92)',
+      background: 'var(--nav-bg, rgba(255,255,255,0.92))',
       backdropFilter: 'blur(12px)',
-      borderBottom: '1px solid var(--border)',
+      borderBottom: '1px solid var(--border-color, var(--border))',
       height: '64px',
       display: 'flex',
       alignItems: 'center',
@@ -38,7 +38,28 @@ export default function Navbar({ logoSrc: _logoSrc } = {}) {
         </Link>
 
         {/* User Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          {/* Nút chuyển đổi Dark/Light mode */}
+          <button
+            onClick={toggleUserTheme}
+            className="icon-btn"
+            aria-label={userTheme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+            title={userTheme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--text-dark)',
+              padding: '4px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {userTheme === 'dark' ? <Sun size={22} color="#FBBF24" /> : <Moon size={22} />}
+          </button>
+
           {/* Chính sách & Quy định */}
           <Link to="/policy" className="icon-btn" aria-label="Chính sách & Quy định" title="Quy định & Hướng dẫn thanh toán" style={{ color: 'var(--text-dark)', textDecoration: 'none' }}>
             <HelpCircle size={24} />
@@ -50,11 +71,13 @@ export default function Navbar({ logoSrc: _logoSrc } = {}) {
             {cart && cart.length > 0 && (
               <span style={{
                 position: 'absolute', top: '-8px', right: '-12px',
-                backgroundColor: 'var(--purple-primary)', color: '#FFF', fontSize: '0.75rem',
+                backgroundColor: 'var(--purple-primary)',
+                color: userTheme === 'dark' ? '#111827' : '#FFFFFF',
+                fontSize: '0.75rem',
                 fontWeight: 800, width: '22px', height: '22px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 borderRadius: '50%',
-                border: '2px solid #FFFFFF',
+                border: '2px solid var(--nav-bg, #FFFFFF)',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
               }}>
                 {cart.length > 99 ? '99+' : cart.length}

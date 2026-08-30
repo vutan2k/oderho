@@ -30,7 +30,7 @@ export default class ErrorBoundary extends React.Component {
             <h1 style={{
               fontSize: '2rem',
               fontFamily: 'Georgia, serif',
-              color: '#7A4B9E',
+              color: 'var(--purple-primary, #00FF00)',
               marginBottom: '16px'
             }}>
               Đã xảy ra lỗi
@@ -65,10 +65,10 @@ export default class ErrorBoundary extends React.Component {
                   padding: '12px 28px',
                   borderRadius: '30px',
                   border: 'none',
-                  background: '#7A4B9E',
-                  color: '#fff',
+                  background: 'var(--purple-primary, #00FF00)',
+                  color: '#000000',
                   fontSize: '0.9rem',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   cursor: 'pointer',
                   letterSpacing: '0.5px'
                 }}
@@ -86,9 +86,9 @@ export default class ErrorBoundary extends React.Component {
                 style={{
                   padding: '12px 24px',
                   borderRadius: '30px',
-                  border: '1px solid #7A4B9E',
+                  border: '1px solid var(--purple-primary, #00FF00)',
                   background: '#FFF',
-                  color: '#7A4B9E',
+                  color: 'var(--purple-primary, #00FF00)',
                   fontSize: '0.85rem',
                   fontWeight: 700,
                   cursor: 'pointer'

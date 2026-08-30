@@ -8,7 +8,7 @@ export default function NotFoundPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #F9F6FA 0%, #EDE6F2 100%)',
+      background: 'linear-gradient(135deg, #F9FDF9 0%, #E6FFE6 100%)',
       padding: '40px 20px',
       textAlign: 'center'
     }}>
@@ -16,7 +16,7 @@ export default function NotFoundPage() {
         <h1 style={{
           fontSize: '6rem',
           fontFamily: 'Georgia, serif',
-          color: '#7A4B9E',
+          color: 'var(--purple-primary, #00FF00)',
           lineHeight: 1,
           marginBottom: '8px'
         }}>
@@ -39,10 +39,10 @@ export default function NotFoundPage() {
             display: 'inline-block',
             padding: '12px 32px',
             borderRadius: '30px',
-            background: '#7A4B9E',
-            color: '#fff',
+            background: 'var(--purple-primary, #00FF00)',
+            color: '#000000',
             fontSize: '0.9rem',
-            fontWeight: 700,
+            fontWeight: 800,
             textDecoration: 'none',
             letterSpacing: '1px'
           }}

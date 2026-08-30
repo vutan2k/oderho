@@ -31,8 +31,8 @@ function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
               style={{
                 borderRadius: '14px',
                 overflow: 'hidden',
-                border: '1px solid rgba(0,0,0,0.08)',
-                backgroundColor: '#FFF',
+                border: '1px solid var(--border-color, rgba(0,0,0,0.08))',
+                backgroundColor: 'var(--bg-white, #FFF)',
                 display: 'flex',
                 flexDirection: 'column',
                 boxShadow: 'var(--shadow-sm)',
@@ -66,15 +66,17 @@ function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
                     position: 'absolute',
                     top: '8px',
                     left: '8px',
-                    backgroundColor: 'var(--purple-primary)',
-                    color: '#FFF',
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     fontSize: '0.66rem',
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: '20px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.3px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                    backdropFilter: 'blur(4px)'
                   }}
                 >
                   {product.brand || 'Olive Young'}
@@ -119,21 +121,21 @@ function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
                   {/* 2 Dòng Giá Rõ Ràng: Giá tại Hàn & Giá về tay */}
                   <div
                     className="product-card-price-box"
-                    style={{ marginBottom: '10px', background: '#F8F6FA', padding: '8px 10px', borderRadius: '10px' }}
+                    style={{ marginBottom: '10px', background: 'var(--bg-subtle-purple, #F8F6FA)', padding: '8px 10px', borderRadius: '10px' }}
                   >
                     <div
                       className="product-card-price-krw-row"
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#6B7280', marginBottom: '2px' }}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: 'var(--text-muted, #6B7280)', marginBottom: '2px' }}
                     >
                       <span>Giá Hàn:</span>
-                      <strong style={{ color: '#374151', fontWeight: 700 }}>{formatKrw(product.foreignPrice)}</strong>
+                      <strong style={{ color: 'var(--text-dark, #374151)', fontWeight: 700 }}>{formatKrw(product.foreignPrice)}</strong>
                     </div>
                     <div
                       className="product-card-price-vnd-row"
                       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
                     >
                       <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-dark)' }}>Về tay:</span>
-                      <strong style={{ fontSize: '0.98rem', color: 'var(--purple-primary)', fontWeight: 800 }}>{formatVnd(calculatedVnd)}</strong>
+                      <strong style={{ fontSize: '0.98rem', color: 'var(--text-dark)', fontWeight: 800 }}>{formatVnd(calculatedVnd)}</strong>
                     </div>
                   </div>
 
@@ -148,9 +150,9 @@ function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
                       style={{
                         padding: '8px 0',
                         borderRadius: '24px',
-                        border: '1px solid var(--purple-primary)',
-                        backgroundColor: '#FFF',
-                        color: 'var(--purple-primary)',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--bg-white, #FFF)',
+                        color: 'var(--text-dark)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -200,8 +202,8 @@ function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
               padding: '6px 12px',
               borderRadius: '8px',
               border: '1px solid var(--border-color)',
-              backgroundColor: currentPage === 1 ? '#F3F4F6' : '#FFFFFF',
-              color: currentPage === 1 ? '#9CA3AF' : 'var(--text-dark)',
+              backgroundColor: currentPage === 1 ? 'var(--bg-subtle-purple, #F3F4F6)' : 'var(--bg-white, #FFFFFF)',
+              color: currentPage === 1 ? 'var(--text-muted, #9CA3AF)' : 'var(--text-dark)',
               cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -225,8 +227,8 @@ function ProductGrid({ products, krwRate, onSelectProduct, onViewDetail }) {
               padding: '6px 12px',
               borderRadius: '8px',
               border: '1px solid var(--border-color)',
-              backgroundColor: currentPage === totalPages ? '#F3F4F6' : '#FFFFFF',
-              color: currentPage === totalPages ? '#9CA3AF' : 'var(--text-dark)',
+              backgroundColor: currentPage === totalPages ? 'var(--bg-subtle-purple, #F3F4F6)' : 'var(--bg-white, #FFFFFF)',
+              color: currentPage === totalPages ? 'var(--text-muted, #9CA3AF)' : 'var(--text-dark)',
               cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',

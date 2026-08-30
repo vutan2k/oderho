@@ -16,21 +16,21 @@ export const ORDER_WORKFLOW_STEPS = [
   {
     step: 1,
     title: 'Chọn Hàng & Gửi Link',
-    desc: 'Quý khách chọn sản phẩm trực tiếp trên web TAVY hoặc gửi link sản phẩm từ Olive Young, Musinsa, hiệu thuốc Hàn Quốc.',
+    desc: 'Quý khách chọn sản phẩm trên web TAVY hoặc gửi link từ Olive Young, KGC, Nonghyup, hiệu thuốc Hàn Quốc.',
     icon: Search,
     badge: 'Bước 1'
   },
   {
     step: 2,
-    title: 'Cọc Đơn Hàng',
-    desc: 'Thanh toán cọc 100% tiền hàng nhanh chóng qua VietQR tự động (MBBank) hoặc Woori Bank (KRW).',
+    title: 'Cọc Đơn Hàng 100%',
+    desc: 'Thanh toán cọc 100% trọn gói giá về tay nhanh chóng qua VietQR tự động (MBBank) hoặc Woori Bank (KRW).',
     icon: CreditCard,
     badge: 'Bước 2'
   },
   {
     step: 3,
     title: 'TAVY Xác Nhận Đơn',
-    desc: 'Hệ thống tự động ghi nhận thanh toán, admin kiểm tra thông tin phân loại sản phẩm và lên lịch mua hàng tại Hàn.',
+    desc: 'Hệ thống tự động ghi nhận thanh toán, admin kiểm tra thông tin phân loại sản phẩm và lên lịch gom hàng tại Hàn.',
     icon: CheckCircle2,
     badge: 'Bước 3'
   },
@@ -53,7 +53,7 @@ export const ORDER_WORKFLOW_STEPS = [
   {
     step: 6,
     title: 'Gửi Hàng Bay Về Việt Nam',
-    desc: 'Hàng được vận chuyển bằng đường bay chuyên tuyến Incheon ✈️ Hà Nội / TP.HCM trong 3-5 ngày làm việc.',
+    desc: 'Hàng được vận chuyển bằng đường bay chuyên tuyến Incheon ✈️ Hà Nội / TP.HCM trong 3-7 ngày làm việc.',
     icon: Plane,
     badge: 'Bước 6'
   },
@@ -67,7 +67,7 @@ export const ORDER_WORKFLOW_STEPS = [
   {
     step: 8,
     title: 'Giao Hàng & Hoàn Tất',
-    desc: 'Giao hàng tận nơi qua đơn vị vận chuyển. Quý khách đồng kiểm kiện hàng, thanh toán cước ship và hoàn tất.',
+    desc: 'Giao hàng tận nơi qua đơn vị vận chuyển nội địa. Quý khách đồng kiểm kiện hàng nguyên vẹn và hoàn tất đơn hàng.',
     icon: Package,
     badge: 'Bước 8'
   }
@@ -113,11 +113,11 @@ export default function HowItWorksSection() {
               <div
                 key={step.step}
                 style={{
-                  background: '#FFFFFF',
+                  background: 'var(--bg-white, #FFFFFF)',
                   borderRadius: '16px',
                   padding: '24px 20px',
-                  border: step.highlight ? '1.5px solid var(--purple-primary)' : '1px solid #E8E5DF',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                  border: step.highlight ? '1.5px solid var(--workflow-highlight-border, #D8B4FE)' : '1px solid var(--border-color, #E8E5DF)',
+                  boxShadow: step.highlight ? '0 4px 16px rgba(126, 34, 206, 0.08)' : '0 2px 10px rgba(0,0,0,0.03)',
                   display: 'flex',
                   flexDirection: 'column',
                 }}
@@ -128,8 +128,8 @@ export default function HowItWorksSection() {
                     width: '40px',
                     height: '40px',
                     borderRadius: '10px',
-                    backgroundColor: step.highlight ? 'var(--purple-light, #F5F0FA)' : '#F4F4F6',
-                    color: step.highlight ? 'var(--purple-primary)' : '#4B5563',
+                    backgroundColor: step.highlight ? 'var(--workflow-highlight-icon-bg, #7E22CE)' : 'var(--bg-subtle-purple, #F4F4F6)',
+                    color: step.highlight ? 'var(--workflow-highlight-icon-color, #FFFFFF)' : 'var(--text-muted, #4B5563)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -142,21 +142,22 @@ export default function HowItWorksSection() {
                     fontWeight: 700,
                     padding: '3px 8px',
                     borderRadius: '6px',
-                    backgroundColor: step.highlight ? 'var(--purple-primary)' : '#F3F4F6',
-                    color: step.highlight ? '#FFFFFF' : '#6B7280'
+                    backgroundColor: step.highlight ? 'var(--workflow-highlight-badge-bg, #7E22CE)' : 'var(--bg-subtle-purple, #F3F4F6)',
+                    color: step.highlight ? 'var(--workflow-highlight-badge-color, #FFFFFF)' : 'var(--text-muted, #6B7280)',
+                    border: step.highlight ? '1px solid var(--workflow-highlight-border, transparent)' : 'none'
                   }}>
                     {step.badge}
                   </span>
                 </div>
 
                 {/* Step Title */}
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#1F2937', marginBottom: '6px', lineHeight: 1.4 }}>
-                  <span style={{ color: 'var(--purple-primary)', marginRight: '6px' }}>#{step.step}</span>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-dark, #1F2937)', marginBottom: '6px', lineHeight: 1.4 }}>
+                  <span style={{ color: step.highlight ? 'var(--workflow-highlight-accent, #7E22CE)' : 'var(--text-dark)', marginRight: '6px' }}>#{step.step}</span>
                   {step.title}
                 </h3>
 
                 {/* Step Description */}
-                <p style={{ fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.5, margin: 0, flex: 1 }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #6B7280)', lineHeight: 1.5, margin: 0, flex: 1 }}>
                   {step.desc}
                 </p>
               </div>

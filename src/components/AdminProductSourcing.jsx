@@ -14,7 +14,11 @@ import {
   Table, LayoutGrid, Download, Copy, ChevronDown, ChevronUp, ShoppingBag
 } from 'lucide-react';
 
-export default function AdminProductSourcing() {
+export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
+  const isDark = isDarkProp !== undefined
+    ? isDarkProp
+    : (typeof window !== 'undefined' && localStorage.getItem('tavy_admin_theme') === 'dark');
+
   const {
     pendingProducts,
     addPendingProduct,
@@ -369,10 +373,10 @@ export default function AdminProductSourcing() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#FFF',
+        backgroundColor: isDark ? '#1E293B' : '#FFF',
         borderRadius: '16px',
         padding: '12px 18px',
-        border: '1px solid #E2E8F0',
+        border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
         flexWrap: 'wrap',
         gap: '12px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
@@ -388,7 +392,7 @@ export default function AdminProductSourcing() {
               borderRadius: '10px',
               border: 'none',
               backgroundColor: activeSubTab === 'pending' ? '#F59E0B' : 'transparent',
-              color: activeSubTab === 'pending' ? '#FFF' : '#64748B',
+              color: activeSubTab === 'pending' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
               fontWeight: 800,
               fontSize: '0.88rem',
               cursor: 'pointer',
@@ -398,8 +402,8 @@ export default function AdminProductSourcing() {
             <Layers size={16} />
             <span>Hàng Chờ Duyệt</span>
             <span style={{
-              backgroundColor: activeSubTab === 'pending' ? 'rgba(255,255,255,0.3)' : '#F1F5F9',
-              color: activeSubTab === 'pending' ? '#FFF' : '#475569',
+              backgroundColor: activeSubTab === 'pending' ? 'rgba(255,255,255,0.3)' : (isDark ? '#0F172A' : '#F1F5F9'),
+              color: activeSubTab === 'pending' ? '#FFF' : (isDark ? '#CBD5E1' : '#475569'),
               fontSize: '0.72rem',
               padding: '2px 8px',
               borderRadius: '999px',
@@ -419,7 +423,7 @@ export default function AdminProductSourcing() {
               borderRadius: '10px',
               border: 'none',
               backgroundColor: activeSubTab === 'scraper' ? '#10B981' : 'transparent',
-              color: activeSubTab === 'scraper' ? '#FFF' : '#64748B',
+              color: activeSubTab === 'scraper' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
               fontWeight: 800,
               fontSize: '0.88rem',
               cursor: 'pointer',
@@ -463,10 +467,10 @@ export default function AdminProductSourcing() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Top Banner & Control */}
           <div style={{
-            backgroundColor: '#FFF',
+            backgroundColor: isDark ? '#1E293B' : '#FFF',
             borderRadius: '16px',
             padding: '18px 24px',
-            border: '1px solid #E2E8F0',
+            border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -476,22 +480,22 @@ export default function AdminProductSourcing() {
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: '#0F172A' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: isDark ? '#F8FAFC' : '#0F172A' }}>
                   Kho Hàng Chờ Duyệt ({pendingProducts.length})
                 </h2>
                 <span style={{
-                  backgroundColor: '#FEF3C7',
-                  color: '#D97706',
+                  backgroundColor: isDark ? '#78350F' : '#FEF3C7',
+                  color: isDark ? '#FDE68A' : '#D97706',
                   fontSize: '0.72rem',
                   fontWeight: 800,
                   padding: '3px 8px',
                   borderRadius: '6px',
-                  border: '1px solid #FDE68A'
+                  border: isDark ? '1px solid #B45309' : '1px solid #FDE68A'
                 }}>
                   CHƯA HIỂN THỊ TRÊN WEB
                 </span>
               </div>
-              <p style={{ margin: '4px 0 0 0', color: '#64748B', fontSize: '0.82rem' }}>
+              <p style={{ margin: '4px 0 0 0', color: isDark ? '#94A3B8' : '#64748B', fontSize: '0.82rem' }}>
                 Bảng danh sách chuẩn Excel: Nhấp vào dòng để <strong>Chỉnh Sửa Nhanh</strong> thông tin và giá trước khi bấm <strong>Duyệt</strong> đưa lên website.
               </p>
             </div>
@@ -500,10 +504,10 @@ export default function AdminProductSourcing() {
               {/* View Switcher: Table vs Grid */}
               <div style={{
                 display: 'flex',
-                backgroundColor: '#F1F5F9',
+                backgroundColor: isDark ? '#0F172A' : '#F1F5F9',
                 padding: '3px',
                 borderRadius: '8px',
-                border: '1px solid #CBD5E1'
+                border: isDark ? '1px solid #334155' : '1px solid #CBD5E1'
               }}>
                 <button
                   onClick={() => setViewMode('table')}
@@ -514,8 +518,8 @@ export default function AdminProductSourcing() {
                     padding: '6px 12px',
                     borderRadius: '6px',
                     border: 'none',
-                    backgroundColor: viewMode === 'table' ? '#FFF' : 'transparent',
-                    color: viewMode === 'table' ? '#0F172A' : '#64748B',
+                    backgroundColor: viewMode === 'table' ? (isDark ? '#334155' : '#FFF') : 'transparent',
+                    color: viewMode === 'table' ? (isDark ? '#F8FAFC' : '#0F172A') : (isDark ? '#94A3B8' : '#64748B'),
                     fontWeight: viewMode === 'table' ? 800 : 600,
                     fontSize: '0.78rem',
                     cursor: 'pointer',
@@ -535,8 +539,8 @@ export default function AdminProductSourcing() {
                     padding: '6px 12px',
                     borderRadius: '6px',
                     border: 'none',
-                    backgroundColor: viewMode === 'grid' ? '#FFF' : 'transparent',
-                    color: viewMode === 'grid' ? '#0F172A' : '#64748B',
+                    backgroundColor: viewMode === 'grid' ? (isDark ? '#334155' : '#FFF') : 'transparent',
+                    color: viewMode === 'grid' ? (isDark ? '#F8FAFC' : '#0F172A') : (isDark ? '#94A3B8' : '#64748B'),
                     fontWeight: viewMode === 'grid' ? 800 : 600,
                     fontSize: '0.78rem',
                     cursor: 'pointer',
@@ -552,9 +556,9 @@ export default function AdminProductSourcing() {
               <button
                 onClick={handleExportCSV}
                 style={{
-                  backgroundColor: '#F8FAFC',
-                  color: '#0F172A',
-                  border: '1px solid #CBD5E1',
+                  backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+                  color: isDark ? '#F8FAFC' : '#0F172A',
+                  border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
                   borderRadius: '8px',
                   padding: '8px 14px',
                   fontSize: '0.8rem',
@@ -565,7 +569,7 @@ export default function AdminProductSourcing() {
                   gap: '6px'
                 }}
               >
-                <Download size={14} color="#059669" />
+                <Download size={14} color="#10B981" />
                 <span>Xuất Excel/CSV</span>
               </button>
 
@@ -595,10 +599,10 @@ export default function AdminProductSourcing() {
 
           {/* Filter & Search Bar */}
           <div style={{
-            backgroundColor: '#FFF',
+            backgroundColor: isDark ? '#1E293B' : '#FFF',
             borderRadius: '12px',
             padding: '12px 18px',
-            border: '1px solid #E2E8F0',
+            border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
@@ -607,7 +611,7 @@ export default function AdminProductSourcing() {
           }}>
             {/* Search */}
             <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: '380px' }}>
-              <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <Search size={15} color={isDark ? '#94A3B8' : '#64748B'} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 type="text"
                 placeholder="Tìm theo tên sản phẩm, mã SKU, thương hiệu..."
@@ -617,7 +621,9 @@ export default function AdminProductSourcing() {
                   width: '100%',
                   padding: '8px 12px 8px 36px',
                   borderRadius: '8px',
-                  border: '1px solid #CBD5E1',
+                  border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                  backgroundColor: isDark ? '#0F172A' : '#FFF',
+                  color: isDark ? '#F8FAFC' : '#0F172A',
                   fontSize: '0.82rem',
                   outline: 'none'
                 }}
@@ -638,9 +644,9 @@ export default function AdminProductSourcing() {
                   style={{
                     padding: '6px 12px',
                     borderRadius: '6px',
-                    border: selectedCategory === cat.id ? '1px solid #2563EB' : '1px solid #E2E8F0',
-                    backgroundColor: selectedCategory === cat.id ? '#EFF6FF' : '#FFF',
-                    color: selectedCategory === cat.id ? '#1D4ED8' : '#475569',
+                    border: selectedCategory === cat.id ? '1px solid #38BDF8' : (isDark ? '1px solid #334155' : '1px solid #E2E8F0'),
+                    backgroundColor: selectedCategory === cat.id ? (isDark ? '#1E3A8A' : '#EFF6FF') : (isDark ? '#0F172A' : '#FFF'),
+                    color: selectedCategory === cat.id ? (isDark ? '#F8FAFC' : '#1D4ED8') : (isDark ? '#94A3B8' : '#475569'),
                     fontWeight: selectedCategory === cat.id ? 700 : 500,
                     fontSize: '0.78rem',
                     cursor: 'pointer'
@@ -699,9 +705,9 @@ export default function AdminProductSourcing() {
           {/* ════════════════════════════════════════════════════════════ */}
           {viewMode === 'table' && (
             <div style={{
-              backgroundColor: '#FFF',
+              backgroundColor: isDark ? '#1E293B' : '#FFF',
               borderRadius: '14px',
-              border: '1px solid #CBD5E1',
+              border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
               overflow: 'hidden',
               boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
             }}>
@@ -716,13 +722,13 @@ export default function AdminProductSourcing() {
                   <thead style={{
                     position: 'sticky',
                     top: 0,
-                    backgroundColor: '#F1F5F9',
-                    borderBottom: '2px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#F1F5F9',
+                    borderBottom: isDark ? '2px solid #334155' : '2px solid #CBD5E1',
                     zIndex: 10
                   }}>
-                    <tr style={{ color: '#334155', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                    <tr style={{ color: isDark ? '#94A3B8' : '#334155', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                       {/* Select All Checkbox */}
-                      <th style={{ width: '40px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
+                      <th style={{ width: '40px', padding: '10px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                         <input
                           type="checkbox"
                           checked={selectedIds.length === filteredPending.length && filteredPending.length > 0}
@@ -730,12 +736,12 @@ export default function AdminProductSourcing() {
                           style={{ width: '15px', height: '15px', accentColor: '#2563EB', cursor: 'pointer' }}
                         />
                       </th>
-                      <th style={{ width: '45px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>#</th>
-                      <th style={{ width: '60px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>Ảnh</th>
+                      <th style={{ width: '45px', padding: '10px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>#</th>
+                      <th style={{ width: '60px', padding: '10px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>Ảnh</th>
 
                       <th
                         onClick={() => handleSort('goodsNo')}
-                        style={{ width: '130px', padding: '10px 12px', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                        style={{ width: '130px', padding: '10px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span>Mã SKU</span>
@@ -745,7 +751,7 @@ export default function AdminProductSourcing() {
 
                       <th
                         onClick={() => handleSort('name')}
-                        style={{ minWidth: '260px', padding: '10px 12px', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                        style={{ minWidth: '260px', padding: '10px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span>Tên Sản Phẩm (Việt / Hàn)</span>
@@ -753,12 +759,12 @@ export default function AdminProductSourcing() {
                         </div>
                       </th>
 
-                      <th style={{ width: '120px', padding: '10px 12px', borderRight: '1px solid #E2E8F0' }}>Thương Hiệu</th>
-                      <th style={{ width: '110px', padding: '10px 12px', borderRight: '1px solid #E2E8F0' }}>Ngành Hàng</th>
+                      <th style={{ width: '120px', padding: '10px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>Thương Hiệu</th>
+                      <th style={{ width: '110px', padding: '10px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>Ngành Hàng</th>
 
                       <th
                         onClick={() => handleSort('foreignPrice')}
-                        style={{ width: '130px', padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                        style={{ width: '130px', padding: '10px 12px', textAlign: 'right', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                           <span>Giá Bán</span>
@@ -774,9 +780,9 @@ export default function AdminProductSourcing() {
                   <tbody>
                     {filteredPending.length === 0 ? (
                       <tr>
-                        <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                        <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: isDark ? '#64748B' : '#94A3B8' }}>
                           <ShoppingBag size={36} style={{ margin: '0 auto 8px auto', opacity: 0.4 }} />
-                          <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#475569' }}>Không tìm thấy sản phẩm nào trong Hàng Chờ Duyệt</div>
+                          <div style={{ fontWeight: 800, fontSize: '0.95rem', color: isDark ? '#CBD5E1' : '#475569' }}>Không tìm thấy sản phẩm nào trong Hàng Chờ Duyệt</div>
                         </td>
                       </tr>
                     ) : (
@@ -790,20 +796,20 @@ export default function AdminProductSourcing() {
                             key={prod.goodsNo || prod.id}
                             onClick={() => handleOpenEdit(prod)}
                             style={{
-                              backgroundColor: isSelected ? '#EFF6FF' : (idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF'),
-                              borderBottom: '1px solid #E2E8F0',
+                              backgroundColor: isSelected ? (isDark ? '#1E3A8A' : '#EFF6FF') : (idx % 2 === 1 ? (isDark ? '#162032' : '#F8FAFC') : (isDark ? '#1E293B' : '#FFFFFF')),
+                              borderBottom: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
                               cursor: 'pointer',
                               transition: 'background 0.1s'
                             }}
                             onMouseEnter={(e) => {
-                              if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                              if (!isSelected) e.currentTarget.style.backgroundColor = isDark ? '#243044' : '#F1F5F9';
                             }}
                             onMouseLeave={(e) => {
-                              if (!isSelected) e.currentTarget.style.backgroundColor = idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF';
+                              if (!isSelected) e.currentTarget.style.backgroundColor = isSelected ? (isDark ? '#1E3A8A' : '#EFF6FF') : (idx % 2 === 1 ? (isDark ? '#162032' : '#F8FAFC') : (isDark ? '#1E293B' : '#FFFFFF'));
                             }}
                           >
                             {/* Checkbox */}
-                            <td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
+                            <td style={{ padding: '8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="checkbox"
                                 checked={isSelected}
@@ -813,18 +819,18 @@ export default function AdminProductSourcing() {
                             </td>
 
                             {/* STT */}
-                            <td style={{ padding: '8px', textAlign: 'center', color: '#94A3B8', fontWeight: 600, borderRight: '1px solid #E2E8F0' }}>
+                            <td style={{ padding: '8px', textAlign: 'center', color: isDark ? '#64748B' : '#94A3B8', fontWeight: 600, borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                               {idx + 1}
                             </td>
 
                             {/* Thumbnail Image */}
-                            <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
+                            <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                               <div style={{
                                 width: '42px',
                                 height: '42px',
                                 borderRadius: '6px',
-                                backgroundColor: '#FFF',
-                                border: '1px solid #E2E8F0',
+                                backgroundColor: isDark ? '#0F172A' : '#FFF',
+                                border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
                                 overflow: 'hidden',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -842,15 +848,15 @@ export default function AdminProductSourcing() {
                             </td>
 
                             {/* SKU */}
-                            <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                            <td style={{ padding: '8px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#334155', fontSize: '0.78rem' }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: isDark ? '#93C5FD' : '#334155', fontSize: '0.78rem' }}>
                                   {prod.goodsNo}
                                 </span>
                                 <button
                                   title="Sao chép mã SKU"
                                   onClick={(e) => handleCopySku(e, prod.goodsNo)}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#94A3B8' }}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: isDark ? '#64748B' : '#94A3B8' }}
                                 >
                                   <Copy size={12} />
                                 </button>
@@ -858,38 +864,40 @@ export default function AdminProductSourcing() {
                             </td>
 
                             {/* Product Title */}
-                            <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
-                              <div style={{ fontWeight: 700, color: '#0F172A', lineHeight: 1.35 }}>
+                            <td style={{ padding: '8px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
+                              <div style={{ fontWeight: 700, color: isDark ? '#F8FAFC' : '#0F172A', lineHeight: 1.35 }}>
                                 {prod.name}
                               </div>
                               {prod.nameKr && (
-                                <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '2px' }}>
+                                <div style={{ fontSize: '0.7rem', color: isDark ? '#94A3B8' : '#94A3B8', marginTop: '2px' }}>
                                   {prod.nameKr}
                                 </div>
                               )}
                             </td>
 
                             {/* Brand */}
-                            <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0', color: '#475569', fontWeight: 600 }}>
+                            <td style={{ padding: '8px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0', color: isDark ? '#CBD5E1' : '#475569', fontWeight: 600 }}>
                               <span style={{
-                                backgroundColor: '#F1F5F9',
+                                backgroundColor: isDark ? '#0F172A' : '#F1F5F9',
+                                border: isDark ? '1px solid #334155' : 'none',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
                                 fontSize: '0.72rem',
                                 fontWeight: 700,
-                                color: '#334155'
+                                color: isDark ? '#E2E8F0' : '#334155'
                               }}>
                                 {prod.brand || 'Korea'}
                               </span>
                             </td>
 
                             {/* Category */}
-                            <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                            <td style={{ padding: '8px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                               <span style={{
                                 fontSize: '0.72rem',
                                 fontWeight: 700,
-                                color: prod.category === 'ginseng' ? '#047857' : (prod.category === 'supplements' ? '#B45309' : '#1D4ED8'),
-                                backgroundColor: prod.category === 'ginseng' ? '#ECFDF5' : (prod.category === 'supplements' ? '#FFFBEB' : '#EFF6FF'),
+                                color: prod.category === 'ginseng' ? '#34D399' : (prod.category === 'supplements' ? '#FBBF24' : '#60A5FA'),
+                                backgroundColor: prod.category === 'ginseng' ? (isDark ? '#064E3B' : '#ECFDF5') : (prod.category === 'supplements' ? (isDark ? '#78350F' : '#FFFBEB') : (isDark ? '#1E3A8A' : '#EFF6FF')),
+                                border: isDark ? '1px solid #334155' : 'none',
                                 padding: '2px 8px',
                                 borderRadius: '4px'
                               }}>
@@ -898,11 +906,11 @@ export default function AdminProductSourcing() {
                             </td>
 
                             {/* Merged Price (VNĐ & Won) */}
-                            <td style={{ padding: '8px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0' }}>
-                              <div style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '0.88rem' }}>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
+                              <div style={{ fontWeight: 800, color: isDark ? '#38BDF8' : '#1D4ED8', fontSize: '0.88rem' }}>
                                 {vnd.toLocaleString('vi-VN')} đ
                               </div>
-                              <div style={{ fontSize: '0.72rem', color: '#64748B', fontFamily: 'monospace', marginTop: '2px' }}>
+                              <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B', fontFamily: 'monospace', marginTop: '2px' }}>
                                 {won.toLocaleString('vi-VN')} ₩
                               </div>
                             </td>
@@ -956,9 +964,9 @@ export default function AdminProductSourcing() {
                                   title="Xoá khỏi Hàng Chờ Duyệt"
                                   onClick={() => handleRejectSingle(prod.goodsNo || prod.id)}
                                   style={{
-                                    backgroundColor: '#FEE2E2',
-                                    color: '#DC2626',
-                                    border: 'none',
+                                    backgroundColor: isDark ? '#450A0A' : '#FEE2E2',
+                                    color: '#EF4444',
+                                    border: isDark ? '1px solid #7F1D1D' : 'none',
                                     borderRadius: '6px',
                                     padding: '4px 6px',
                                     cursor: 'pointer'
@@ -979,13 +987,13 @@ export default function AdminProductSourcing() {
               {/* Table Footer Summary */}
               <div style={{
                 padding: '10px 18px',
-                backgroundColor: '#F8FAFC',
-                borderTop: '1px solid #CBD5E1',
+                backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+                borderTop: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 fontSize: '0.78rem',
-                color: '#64748B',
+                color: isDark ? '#94A3B8' : '#64748B',
                 fontWeight: 600
               }}>
                 <div>
@@ -1012,13 +1020,13 @@ export default function AdminProductSourcing() {
                   gridColumn: '1 / -1',
                   padding: '50px 20px',
                   textAlign: 'center',
-                  backgroundColor: '#FFF',
+                  backgroundColor: isDark ? '#1E293B' : '#FFF',
                   borderRadius: '16px',
-                  border: '1px dashed #CBD5E1',
-                  color: '#94A3B8'
+                  border: isDark ? '1px dashed #334155' : '1px dashed #CBD5E1',
+                  color: isDark ? '#64748B' : '#94A3B8'
                 }}>
                   <ShoppingBag size={40} style={{ margin: '0 auto 12px auto', opacity: 0.4 }} />
-                  <div style={{ fontWeight: 800, fontSize: '1rem', color: '#475569' }}>
+                  <div style={{ fontWeight: 800, fontSize: '1rem', color: isDark ? '#CBD5E1' : '#475569' }}>
                     Không tìm thấy sản phẩm nào phù hợp
                   </div>
                 </div>
@@ -1033,9 +1041,9 @@ export default function AdminProductSourcing() {
                       key={prod.goodsNo || prod.id}
                       onClick={() => handleOpenEdit(prod)}
                       style={{
-                        backgroundColor: '#FFF',
+                        backgroundColor: isDark ? '#1E293B' : '#FFF',
                         borderRadius: '14px',
-                        border: isSelected ? '2px solid #2563EB' : '1px solid #E2E8F0',
+                        border: isSelected ? '2px solid #38BDF8' : (isDark ? '1px solid #334155' : '1px solid #E2E8F0'),
                         padding: '14px',
                         display: 'flex',
                         flexDirection: 'column',
@@ -1052,8 +1060,8 @@ export default function AdminProductSourcing() {
                         height: '190px',
                         borderRadius: '10px',
                         overflow: 'hidden',
-                        backgroundColor: '#F8FAFC',
-                        border: '1px solid #F1F5F9'
+                        backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+                        border: isDark ? '1px solid #334155' : '1px solid #F1F5F9'
                       }}>
                         <img
                           src={prod.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'}
@@ -1082,8 +1090,8 @@ export default function AdminProductSourcing() {
                           position: 'absolute',
                           top: '8px',
                           right: '8px',
-                          backgroundColor: '#FEF3C7',
-                          color: '#D97706',
+                          backgroundColor: isDark ? '#78350F' : '#FEF3C7',
+                          color: isDark ? '#FDE68A' : '#D97706',
                           fontSize: '0.65rem',
                           fontWeight: 800,
                           padding: '2px 6px',
@@ -1097,7 +1105,7 @@ export default function AdminProductSourcing() {
                         <div style={{
                           fontWeight: 800,
                           fontSize: '0.88rem',
-                          color: '#0F172A',
+                          color: isDark ? '#F8FAFC' : '#0F172A',
                           lineHeight: 1.4,
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
@@ -1115,18 +1123,19 @@ export default function AdminProductSourcing() {
 
                         <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                           <div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+                            <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>
                               {won.toLocaleString('vi-VN')} ₩
                             </div>
-                            <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#2563EB' }}>
+                            <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#38BDF8' }}>
                               {vnd.toLocaleString('vi-VN')} đ
                             </div>
                           </div>
                           <span style={{
                             fontSize: '0.72rem',
                             fontWeight: 700,
-                            color: prod.category === 'ginseng' ? '#047857' : (prod.category === 'supplements' ? '#B45309' : '#1D4ED8'),
-                            backgroundColor: prod.category === 'ginseng' ? '#ECFDF5' : (prod.category === 'supplements' ? '#FFFBEB' : '#EFF6FF'),
+                            color: prod.category === 'ginseng' ? '#34D399' : (prod.category === 'supplements' ? '#FBBF24' : '#60A5FA'),
+                            backgroundColor: prod.category === 'ginseng' ? (isDark ? '#064E3B' : '#ECFDF5') : (prod.category === 'supplements' ? (isDark ? '#78350F' : '#FFFBEB') : (isDark ? '#1E3A8A' : '#EFF6FF')),
+                            border: isDark ? '1px solid #334155' : 'none',
                             padding: '2px 6px',
                             borderRadius: '4px'
                           }}>
@@ -1138,7 +1147,7 @@ export default function AdminProductSourcing() {
                       <div
                         style={{
                           paddingTop: '10px',
-                          borderTop: '1px solid #F1F5F9',
+                          borderTop: isDark ? '1px solid #334155' : '1px solid #F1F5F9',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
@@ -1192,9 +1201,9 @@ export default function AdminProductSourcing() {
                           title="Xoá"
                           onClick={() => handleRejectSingle(prod.goodsNo || prod.id)}
                           style={{
-                            backgroundColor: '#FEE2E2',
-                            color: '#DC2626',
-                            border: 'none',
+                            backgroundColor: isDark ? '#450A0A' : '#FEE2E2',
+                            color: '#EF4444',
+                            border: isDark ? '1px solid #7F1D1D' : 'none',
                             borderRadius: '6px',
                             padding: '6px 8px',
                             cursor: 'pointer'
@@ -1223,6 +1232,7 @@ export default function AdminProductSourcing() {
             color: '#FFF',
             borderRadius: '16px',
             padding: '24px',
+            border: isDark ? '1px solid #334155' : 'none',
             boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.2)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
@@ -1319,7 +1329,7 @@ export default function AdminProductSourcing() {
           {/* Scraped Product Result Preview Card */}
           {scrapedPreview && (
             <div style={{
-              backgroundColor: '#FFF',
+              backgroundColor: isDark ? '#1E293B' : '#FFF',
               borderRadius: '16px',
               border: '2px solid #10B981',
               padding: '20px',
@@ -1331,18 +1341,18 @@ export default function AdminProductSourcing() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <CheckCircle2 size={20} color="#10B981" />
-                  <span style={{ fontWeight: 900, fontSize: '1rem', color: '#0F172A' }}>
+                  <span style={{ fontWeight: 900, fontSize: '1rem', color: isDark ? '#F8FAFC' : '#0F172A' }}>
                     KẾT QUẢ BÓC TÁCH THÀNH CÔNG
                   </span>
                 </div>
-                <button onClick={() => setScrapedPreview(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <button onClick={() => setScrapedPreview(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: isDark ? '#94A3B8' : '#64748B' }}>
                   <X size={18} />
                 </button>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 240px) 1fr', gap: '20px' }}>
                 {/* Image */}
-                <div style={{ borderRadius: '10px', overflow: 'hidden', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                <div style={{ borderRadius: '10px', overflow: 'hidden', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                   <img
                     src={scrapedPreview.productImage}
                     alt=""
@@ -1352,10 +1362,10 @@ export default function AdminProductSourcing() {
 
                 {/* Details */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700 }}>
+                  <div style={{ fontSize: '0.78rem', color: isDark ? '#CBD5E1' : '#64748B', fontWeight: 700 }}>
                     Thương hiệu: {scrapedPreview.brand} • Nguồn: {scrapedPreview.source || 'Hàn Quốc'}
                   </div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0F172A' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: isDark ? '#F8FAFC' : '#0F172A' }}>
                     {scrapedPreview.name}
                   </h3>
                   {scrapedPreview.koreanTitle && (
@@ -1366,19 +1376,19 @@ export default function AdminProductSourcing() {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px' }}>
                     <div>
-                      <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Giá Won: </span>
-                      <strong style={{ fontSize: '1rem', color: '#0F172A' }}>{scrapedPreview.foreignPrice?.toLocaleString('vi-VN')} ₩</strong>
+                      <span style={{ fontSize: '0.72rem', color: isDark ? '#CBD5E1' : '#64748B' }}>Giá Won: </span>
+                      <strong style={{ fontSize: '1rem', color: isDark ? '#F8FAFC' : '#0F172A' }}>{scrapedPreview.foreignPrice?.toLocaleString('vi-VN')} ₩</strong>
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Giá về VN ước tính: </span>
-                      <strong style={{ fontSize: '1.1rem', color: '#2563EB' }}>
+                      <span style={{ fontSize: '0.72rem', color: isDark ? '#CBD5E1' : '#64748B' }}>Giá về VN ước tính: </span>
+                      <strong style={{ fontSize: '1.1rem', color: '#38BDF8' }}>
                         {(Math.round(scrapedPreview.foreignPrice * krwRate * (1 + serviceFee / 100))).toLocaleString('vi-VN')} đ
                       </strong>
                     </div>
                   </div>
 
                   {scrapedPreview.activeIngredients && scrapedPreview.activeIngredients.length > 0 && (
-                    <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#059669', backgroundColor: '#ECFDF5', padding: '8px 12px', borderRadius: '8px' }}>
+                    <div style={{ marginTop: '6px', fontSize: '0.78rem', color: isDark ? '#34D399' : '#059669', backgroundColor: isDark ? '#064E3B' : '#ECFDF5', border: isDark ? '1px solid #059669' : 'none', padding: '8px 12px', borderRadius: '8px' }}>
                       <strong>Hoạt chất chính:</strong> {scrapedPreview.activeIngredients.join(' | ')}
                     </div>
                   )}
@@ -1442,6 +1452,7 @@ export default function AdminProductSourcing() {
         onDelete={handleRejectSingle}
         rates={rates}
         isPending={true}
+        isDark={isDark}
       />
     </div>
   );

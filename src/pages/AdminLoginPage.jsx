@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
       <div style={{
         width: '100%',
         maxWidth: '440px',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--bg-white, #FFFFFF)',
         borderRadius: '20px',
         border: '1px solid var(--border-color)',
         padding: '40px 32px',

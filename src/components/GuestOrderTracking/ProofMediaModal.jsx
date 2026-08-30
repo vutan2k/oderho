@@ -42,7 +42,7 @@ export default function ProofMediaModal({ media, onClose }) {
       return <PackageCheck size={20} style={{ color: '#DB2777' }} />;
     }
     if (isVideo) {
-      return <Video size={20} style={{ color: '#7C3AED' }} />;
+      return <Video size={20} style={{ color: 'var(--purple-primary, #00FF00)' }} />;
     }
     return <FileText size={20} style={{ color: '#374151' }} />;
   };
@@ -226,7 +226,7 @@ export default function ProofMediaModal({ media, onClose }) {
                 alignItems: 'center',
                 gap: '6px',
                 fontSize: '0.82rem',
-                color: 'var(--purple-primary, #7A4B9E)',
+                color: 'var(--purple-primary, #00FF00)',
                 textDecoration: 'none',
                 fontWeight: 600
               }}
@@ -240,10 +240,10 @@ export default function ProofMediaModal({ media, onClose }) {
             style={{
               padding: '8px 20px',
               borderRadius: '8px',
-              backgroundColor: 'var(--purple-primary, #7A4B9E)',
-              color: '#FFFFFF',
+              backgroundColor: 'var(--purple-primary, #00FF00)',
+              color: '#000000',
               border: 'none',
-              fontWeight: 700,
+              fontWeight: 800,
               fontSize: '0.85rem',
               cursor: 'pointer',
               transition: 'opacity 0.2s ease'

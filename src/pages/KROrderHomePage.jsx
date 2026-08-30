@@ -1,7 +1,7 @@
 import React, { useState, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Search, Menu, X, ShoppingCart, User, LogOut, Package, AlertCircle
+  Search, Menu, X, ShoppingCart, User, LogOut, Package, AlertCircle, Sun, Moon
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import ProductDetailModal from '../components/ProductDetailModal';
@@ -13,7 +13,7 @@ import { GuestOrderTrackingBar, GuestOrderStatusCard } from '../components/Guest
 import { findGuestOrders } from '../services/guestTrackingService';
 
 export default function KROrderHomePage() {
-  const { oliveYoungCatalog, rates, currentUser, logoutUser, cart, addToCart, orders } = useContext(AppContext);
+  const { oliveYoungCatalog, rates, currentUser, logoutUser, cart, addToCart, orders, userTheme, toggleUserTheme } = useContext(AppContext);
   const [detailProduct, setDetailProduct] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -133,7 +133,7 @@ export default function KROrderHomePage() {
 
       {/* 1. Thanh thông báo hàng đầu */}
       <div className="top-announcement-bar">
-        MUA HÀNG HÀN QUỐC CHÍNH HÃNG 100% | <span>GIAO HÀNG TẬN NƠI TẠI VIỆT NAM (3-5 NGÀY)</span>
+        MUA HÀNG HÀN QUỐC CHÍNH HÃNG 100% | <span>GIAO HÀNG TẬN NƠI TẠI VIỆT NAM (3-7 NGÀY)</span>
       </div>
 
       {/* 2. Header & Navigation */}
@@ -157,11 +157,31 @@ export default function KROrderHomePage() {
                 <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'cosmetics')} className={activeCategory === 'cosmetics' ? 'active' : ''}>MỸ PHẨM</a></li>
                 <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'ginseng')} className={activeCategory === 'ginseng' ? 'active' : ''}>SÂM NẤM</a></li>
                 <li><a href="#products" onClick={(e) => handleNavCategoryClick(e, 'supplements')} className={activeCategory === 'supplements' ? 'active' : ''}>THỰC PHẨM CHỨC NĂNG</a></li>
-                <li><Link to="/policy" style={{ color: 'var(--purple-primary)', fontWeight: 700 }}>QUY ĐỊNH & CHÍNH SÁCH</Link></li>
+                <li><Link to="/policy">QUY ĐỊNH & CHÍNH SÁCH</Link></li>
               </ul>
             </nav>
 
             <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+              {/* Nút chuyển đổi Dark/Light mode */}
+              <button
+                onClick={toggleUserTheme}
+                className="icon-btn"
+                aria-label={userTheme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+                title={userTheme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-dark)',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {userTheme === 'dark' ? <Sun size={24} color="#FBBF24" /> : <Moon size={24} />}
+              </button>
+
               {/* Tra cứu đơn hàng (Desktop only) */}
               <a href="#order-tracker" className="icon-btn desktop-only-icon" aria-label="Tra cứu đơn hàng" title="Tra cứu tiến độ đơn hàng" style={{ color: 'var(--text-dark)' }}>
                 <Search size={26} />
@@ -173,11 +193,13 @@ export default function KROrderHomePage() {
                 {cart && cart.length > 0 && (
                   <span style={{
                     position: 'absolute', top: '-8px', right: '-12px',
-                    backgroundColor: 'var(--purple-primary)', color: '#FFF', fontSize: '0.75rem',
+                    backgroundColor: 'var(--purple-primary)',
+                    color: userTheme === 'dark' ? '#111827' : '#FFFFFF',
+                    fontSize: '0.75rem',
                     fontWeight: 800, width: '22px', height: '22px',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     borderRadius: '50%',
-                    border: '2px solid #FFFFFF',
+                    border: '2px solid var(--nav-bg, #FFFFFF)',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
                   }}>
                     {cart.length > 99 ? '99+' : cart.length}
@@ -277,6 +299,27 @@ export default function KROrderHomePage() {
                   <span>Đăng nhập / Đăng ký</span>
                 </Link>
               )}
+
+              {/* Nút chuyển đổi Dark/Light Mode trên Mobile */}
+              <button
+                onClick={() => toggleUserTheme()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-dark)',
+                  fontSize: '0.92rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '6px 0',
+                  textAlign: 'left'
+                }}
+              >
+                {userTheme === 'dark' ? <Sun size={18} color="#FBBF24" /> : <Moon size={18} />}
+                <span>{userTheme === 'dark' ? 'Giao diện: Chế độ Tối (Bật)' : 'Giao diện: Chế độ Sáng (Bật)'}</span>
+              </button>
             </div>
 
             {/* 2. Nhóm Danh mục sản phẩm */}
@@ -326,6 +369,7 @@ export default function KROrderHomePage() {
             {/* Friendly Not-Found Banner */}
             {hasSearched && matchedOrders.length === 0 && (
               <div
+                className="tracking-not-found-box"
                 style={{
                   maxWidth: '720px',
                   margin: '0 auto 28px auto',

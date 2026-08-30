@@ -4,7 +4,7 @@ import { ShieldCheck, Globe, QrCode, Award } from 'lucide-react';
 export default function WhyChooseUs() {
   const features = [
     { icon: <ShieldCheck size={24} />, title: 'Cam Kết Chính Hãng', desc: 'Mua trực tiếp từ Olive Young, hiệu thuốc & Store Hàn.' },
-    { icon: <Globe size={24} />, title: 'Vận Chuyển Hàng Không', desc: 'Bay Air từ Seoul về VN chỉ từ 3-5 ngày làm việc.' },
+    { icon: <Globe size={24} />, title: 'Vận Chuyển Hàng Không', desc: 'Bay Air từ Seoul về VN chỉ từ 3-7 ngày làm việc.' },
     { icon: <QrCode size={24} />, title: 'Thanh Toán Dễ Dàng', desc: 'Chuyển khoản VietQR Việt Nam hoặc Ngân hàng Hàn Quốc.' },
     { icon: <Award size={24} />, title: 'Hỗ Trợ 24/7', desc: 'Tư vấn nhiệt tình cho cộng đồng người Việt.' }
   ];

@@ -202,7 +202,7 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
     display: 'block',
     fontSize: '0.78rem',
     fontWeight: 700,
-    color: '#374151',
+    color: 'var(--text-muted, #374151)',
     marginBottom: '6px',
     textTransform: 'uppercase',
     letterSpacing: '0.5px'
@@ -212,21 +212,22 @@ export default function CascadingAddressSelector({ initialAddress = '', onChange
     width: '100%',
     padding: '9px 12px',
     borderRadius: '8px',
-    border: '1px solid #D1D5DB',
+    border: '1px solid var(--border-color, #D1D5DB)',
     fontSize: '0.88rem',
-    backgroundColor: '#FFF',
+    backgroundColor: 'var(--bg-white, #FFF)',
+    color: 'var(--text-dark)',
     outline: 'none',
     transition: 'border-color 0.2s',
     boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
   };
 
   return (
-    <div style={{ backgroundColor: '#FFF', border: '1px solid #E5E7EB', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
+    <div style={{ backgroundColor: 'var(--bg-white, #FFF)', border: '1px solid var(--border-color, #E5E7EB)', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
       
       {/* Sleek Minimal Header - CHỈ ĐỂ "ĐỊA CHỈ" */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
         <MapPin size={16} color="var(--purple-primary)" />
-        <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-dark, #111827)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           ĐỊA CHỈ {required && <span style={{ color: '#EF4444' }}>*</span>}
         </span>
       </div>

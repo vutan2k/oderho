@@ -61,7 +61,11 @@ const KANBAN_COLUMNS = [
   }
 ];
 
-export default function AdminOrderManager() {
+export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
+  const isDark = isDarkProp !== undefined
+    ? isDarkProp
+    : (typeof window !== 'undefined' && localStorage.getItem('tavy_admin_theme') === 'dark');
+
   const {
     orders,
     rates,
@@ -161,78 +165,75 @@ export default function AdminOrderManager() {
     }
 
     try {
-      const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
-      let totalWon = 0;
-      const formattedItems = validItems.map((it, idx) => {
-        const price = parseFloat(String(it.foreignPrice).replace(/,/g, '')) || 0;
-        const qty = parseInt(it.qty) || 1;
-        totalWon += price * qty;
-        return {
-          goodsNo: `MANUAL-${Date.now()}-${idx + 1}`,
-          name: it.name.trim(),
-          foreignPrice: price,
-          price: Math.round(price * krwRate * (1 + serviceFee / 100)),
-          qty,
-          productImage: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'
-        };
-      });
-
-      const totalVnd = Math.round(totalWon * krwRate * (1 + serviceFee / 100));
-
-      const payload = {
-        id: orderId,
+      const orderPayload = {
         customerName: manualForm.customerName.trim(),
         customerPhone: manualForm.customerPhone.trim(),
-        customerAddress: manualForm.customerAddress.trim() || 'Chưa cập nhật',
+        customerAddress: manualForm.customerAddress.trim() || 'Hà Nội, Việt Nam',
         customerNote: manualForm.customerNote.trim(),
         adminNote: manualForm.adminNote.trim(),
-        country: 'KRW',
-        foreignPrice: totalWon,
-        totalAmountKrw: totalWon,
-        totalVnd,
         status: manualForm.status,
-        paymentStatus: 'deposit_paid',
-        items: formattedItems,
-        createdAt: new Date().toISOString()
+        items: validItems.map(it => {
+          const price = parseFloat(it.foreignPrice) || 0;
+          return {
+            name: it.name,
+            foreignPrice: price,
+            qty: parseInt(it.qty, 10) || 1,
+            price: Math.round(price * krwRate * (1 + serviceFee / 100)),
+            productImage: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=300&q=80'
+          };
+        })
       };
+      const totalWon = validItems.reduce((s, it) => s + (parseFloat(it.foreignPrice) || 0) * (parseInt(it.qty, 10) || 1), 0);
+      const totalVnd = Math.round(totalWon * krwRate * (1 + serviceFee / 100));
+      orderPayload.totalAmount = totalVnd;
 
-      if (createManualOrder) {
-        await createManualOrder(payload);
-      }
+      const created = await createManualOrder(orderPayload);
       setIsCreateModalOpen(false);
-      if (showToast) showToast(`Đã tạo thành công đơn hàng #${orderId}!`, 'success');
+      if (showToast) showToast(`Đã tạo đơn hàng #${created?.id || ''} thành công!`, 'success');
+      setManualForm({
+        customerName: '',
+        customerPhone: '',
+        customerAddress: '',
+        customerNote: '',
+        adminNote: 'Đơn hàng mua hộ trực tiếp theo yêu cầu.',
+        status: 'deposit_paid',
+        items: [{ name: '', foreignPrice: '', qty: 1 }]
+      });
     } catch {
-      if (showToast) showToast('Lỗi khi tạo đơn hàng!', 'error');
+      if (showToast) showToast('Lỗi khi tạo đơn hàng thủ công!', 'error');
     }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* 🚀 Top Control Bar */}
+      {/* 🔍 Thanh Tìm Kiếm & Chuyển Chế Độ Xem (Kanban vs Table) */}
       <div style={{
-        backgroundColor: '#FFF',
-        borderRadius: '12px',
-        padding: '14px 18px',
-        border: '1px solid var(--border-color)',
         display: 'flex',
-        flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '12px'
+        flexWrap: 'wrap',
+        gap: '12px',
+        backgroundColor: isDark ? '#1E293B' : '#FFF',
+        padding: '12px 16px',
+        borderRadius: '12px',
+        border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
       }}>
         {/* Search Box */}
-        <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: '400px' }}>
-          <Search size={16} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+        <div style={{ position: 'relative', width: '320px', maxWidth: '100%' }}>
+          <Search size={16} color={isDark ? '#94A3B8' : '#64748B'} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="Tìm theo tên khách, SĐT hoặc mã đơn..."
+            placeholder="Tìm theo Mã đơn, Tên khách, SĐT..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: '100%',
               padding: '8px 12px 8px 36px',
               borderRadius: '8px',
-              border: '1px solid #CBD5E1',
+              border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+              backgroundColor: isDark ? '#0F172A' : '#FFF',
+              color: isDark ? '#F8FAFC' : '#0F172A',
               fontSize: '0.85rem',
               outline: 'none'
             }}
@@ -241,7 +242,7 @@ export default function AdminOrderManager() {
 
         {/* View Switcher & Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ display: 'flex', backgroundColor: '#F1F5F9', padding: '3px', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', backgroundColor: isDark ? '#0F172A' : '#F1F5F9', padding: '3px', borderRadius: '8px', border: isDark ? '1px solid #334155' : 'none' }}>
             <button
               onClick={() => setViewMode('kanban')}
               style={{
@@ -251,8 +252,8 @@ export default function AdminOrderManager() {
                 padding: '6px 12px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: viewMode === 'kanban' ? '#FFF' : 'transparent',
-                color: viewMode === 'kanban' ? '#0F172A' : '#64748B',
+                backgroundColor: viewMode === 'kanban' ? (isDark ? '#334155' : '#FFF') : 'transparent',
+                color: viewMode === 'kanban' ? (isDark ? '#F8FAFC' : '#0F172A') : (isDark ? '#94A3B8' : '#64748B'),
                 fontWeight: viewMode === 'kanban' ? 700 : 500,
                 fontSize: '0.8rem',
                 cursor: 'pointer',
@@ -271,8 +272,8 @@ export default function AdminOrderManager() {
                 padding: '6px 12px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: viewMode === 'table' ? '#FFF' : 'transparent',
-                color: viewMode === 'table' ? '#0F172A' : '#64748B',
+                backgroundColor: viewMode === 'table' ? (isDark ? '#334155' : '#FFF') : 'transparent',
+                color: viewMode === 'table' ? (isDark ? '#F8FAFC' : '#0F172A') : (isDark ? '#94A3B8' : '#64748B'),
                 fontWeight: viewMode === 'table' ? 700 : 500,
                 fontSize: '0.8rem',
                 cursor: 'pointer',
@@ -321,9 +322,9 @@ export default function AdminOrderManager() {
               <div
                 key={col.id}
                 style={{
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
                   borderRadius: '12px',
-                  border: `1px solid ${col.borderColor}`,
+                  border: isDark ? '1px solid #334155' : `1px solid ${col.borderColor}`,
                   padding: '12px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -345,7 +346,7 @@ export default function AdminOrderManager() {
                       borderRadius: '50%',
                       backgroundColor: col.color
                     }} />
-                    <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0F172A' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.88rem', color: isDark ? '#F8FAFC' : '#0F172A' }}>
                       {col.title}
                     </span>
                   </div>
@@ -367,7 +368,7 @@ export default function AdminOrderManager() {
                     <div style={{
                       padding: '24px 12px',
                       textAlign: 'center',
-                      color: '#94A3B8',
+                      color: isDark ? '#64748B' : '#94A3B8',
                       fontSize: '0.78rem',
                       fontStyle: 'italic'
                     }}>
@@ -376,7 +377,6 @@ export default function AdminOrderManager() {
                   ) : (
                     colOrders.map(order => {
                       const totalVnd = getOrderTotalVnd(order, krwRate, serviceFee);
-                      const statusCfg = getStatusConfig(order.status);
                       const itemsCount = order.items?.length || 1;
                       const firstItem = order.items?.[0];
 
@@ -385,10 +385,10 @@ export default function AdminOrderManager() {
                           key={order.id}
                           onClick={() => setActiveDrawerOrder(order)}
                           style={{
-                            backgroundColor: '#FFF',
+                            backgroundColor: isDark ? '#0F172A' : '#FFF',
                             borderRadius: '10px',
                             padding: '12px',
-                            border: '1px solid #E2E8F0',
+                            border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
                             boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                             cursor: 'pointer',
                             transition: 'transform 0.15s ease, box-shadow 0.15s ease',
@@ -398,7 +398,7 @@ export default function AdminOrderManager() {
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.transform = 'translateY(-2px)';
-                            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1)';
+                            e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 6px -1px rgba(0,0,0,0.1)';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.transform = 'translateY(0)';
@@ -407,20 +407,20 @@ export default function AdminOrderManager() {
                         >
                           {/* Card Header: Order ID & Date */}
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#2563EB' }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#38BDF8' }}>
                               #{order.id}
                             </span>
-                            <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>
+                            <span style={{ fontSize: '0.7rem', color: isDark ? '#94A3B8' : '#64748B' }}>
                               {order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay'}
                             </span>
                           </div>
 
                           {/* Customer Name & Phone */}
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: '0.84rem', color: '#1E293B' }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.84rem', color: isDark ? '#F8FAFC' : '#1E293B' }}>
                               {order.customerName || 'Khách Vãng Lai'}
                             </div>
-                            <div style={{ fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ fontSize: '0.74rem', color: isDark ? '#94A3B8' : '#64748B', display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <Phone size={11} />
                               <span>{order.customerPhone || 'Chưa có SĐT'}</span>
                             </div>
@@ -432,9 +432,10 @@ export default function AdminOrderManager() {
                               display: 'flex',
                               alignItems: 'center',
                               gap: '8px',
-                              backgroundColor: '#F8FAFC',
+                              backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
                               padding: '6px',
-                              borderRadius: '6px'
+                              borderRadius: '6px',
+                              border: isDark ? '1px solid #334155' : 'none'
                             }}>
                               <img
                                 src={firstItem.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=100&q=80'}
@@ -442,10 +443,10 @@ export default function AdminOrderManager() {
                                 style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }}
                               />
                               <div style={{ flex: 1, overflow: 'hidden' }}>
-                                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: isDark ? '#E2E8F0' : '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {firstItem.name}
                                 </div>
-                                <div style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
+                                <div style={{ fontSize: '0.68rem', color: isDark ? '#94A3B8' : '#64748B' }}>
                                   {itemsCount > 1 ? `+ ${itemsCount - 1} sản phẩm khác` : `Số lượng: ${firstItem.quantity || firstItem.qty || 1}`}
                                 </div>
                               </div>
@@ -458,11 +459,11 @@ export default function AdminOrderManager() {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             paddingTop: '6px',
-                            borderTop: '1px dashed #E2E8F0'
+                            borderTop: isDark ? '1px dashed #334155' : '1px dashed #E2E8F0'
                           }}>
                             <div>
-                              <div style={{ fontSize: '0.68rem', color: '#94A3B8' }}>Tổng tiền ước tính:</div>
-                              <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0F172A' }}>
+                              <div style={{ fontSize: '0.68rem', color: isDark ? '#94A3B8' : '#64748B' }}>Tổng tiền:</div>
+                              <div style={{ fontWeight: 800, fontSize: '0.85rem', color: isDark ? '#38BDF8' : '#0F172A' }}>
                                 {totalVnd.toLocaleString('vi-VN')} đ
                               </div>
                             </div>
@@ -473,13 +474,13 @@ export default function AdminOrderManager() {
                                 setActiveDrawerOrder(order);
                               }}
                               style={{
-                                backgroundColor: '#F1F5F9',
-                                border: 'none',
+                                backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                                border: isDark ? '1px solid #334155' : 'none',
                                 borderRadius: '6px',
                                 padding: '4px 8px',
                                 fontSize: '0.72rem',
                                 fontWeight: 700,
-                                color: '#334155',
+                                color: isDark ? '#E2E8F0' : '#334155',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -504,14 +505,14 @@ export default function AdminOrderManager() {
       {/* 📊 Giao diện Danh Sách Bảng (Table View Mode) */}
       {viewMode === 'table' && (
         <div style={{
-          backgroundColor: '#FFF',
+          backgroundColor: isDark ? '#1E293B' : '#FFF',
           borderRadius: '12px',
-          border: '1px solid var(--border-color)',
+          border: isDark ? '1px solid #334155' : '1px solid var(--border-color)',
           overflow: 'hidden'
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead>
-              <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', textAlign: 'left', color: '#64748B' }}>
+              <tr style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC', borderBottom: isDark ? '1px solid #334155' : '1px solid #E2E8F0', textAlign: 'left', color: isDark ? '#94A3B8' : '#64748B' }}>
                 <th style={{ padding: '12px 16px' }}>Mã Đơn</th>
                 <th style={{ padding: '12px 16px' }}>Khách Hàng</th>
                 <th style={{ padding: '12px 16px' }}>Sản Phẩm</th>
@@ -523,7 +524,7 @@ export default function AdminOrderManager() {
             <tbody>
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: '#94A3B8' }}>
+                  <td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: isDark ? '#64748B' : '#94A3B8' }}>
                     Không tìm thấy đơn hàng nào phù hợp.
                   </td>
                 </tr>
@@ -535,25 +536,28 @@ export default function AdminOrderManager() {
                     <tr
                       key={order.id}
                       onClick={() => setActiveDrawerOrder(order)}
-                      style={{ borderBottom: '1px solid #F1F5F9', cursor: 'pointer' }}
+                      style={{ borderBottom: isDark ? '1px solid #334155' : '1px solid #F1F5F9', cursor: 'pointer' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDark ? '#162032' : '#F8FAFC'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      <td style={{ padding: '12px 16px', fontWeight: 700, color: '#2563EB' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 700, color: '#38BDF8' }}>
                         #{order.id}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
-                        <div style={{ fontWeight: 600, color: '#1E293B' }}>{order.customerName || 'Khách'}</div>
-                        <div style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{order.customerPhone}</div>
+                        <div style={{ fontWeight: 600, color: isDark ? '#F8FAFC' : '#1E293B' }}>{order.customerName || 'Khách'}</div>
+                        <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B' }}>{order.customerPhone}</div>
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#334155' }}>
+                      <td style={{ padding: '12px 16px', color: isDark ? '#CBD5E1' : '#334155' }}>
                         {order.items?.[0]?.name || 'Sản phẩm mua hộ'} ({order.items?.length || 1} món)
                       </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 800, color: '#0F172A' }}>
+                      <td style={{ padding: '12px 16px', fontWeight: 800, color: isDark ? '#38BDF8' : '#0F172A' }}>
                         {totalVnd.toLocaleString('vi-VN')} đ
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{
-                          backgroundColor: statusCfg?.bgColor || '#F1F5F9',
+                          backgroundColor: isDark ? '#0F172A' : (statusCfg?.bgColor || '#F1F5F9'),
                           color: statusCfg?.color || '#334155',
+                          border: isDark ? '1px solid #334155' : 'none',
                           padding: '3px 8px',
                           borderRadius: '6px',
                           fontSize: '0.72rem',
@@ -599,8 +603,9 @@ export default function AdminOrderManager() {
           right: 0,
           width: 'min(500px, 100vw)',
           height: '100vh',
-          backgroundColor: '#FFF',
-          boxShadow: '-10px 0 30px rgba(0,0,0,0.15)',
+          backgroundColor: isDark ? '#1E293B' : '#FFF',
+          boxShadow: '-10px 0 30px rgba(0,0,0,0.3)',
+          borderLeft: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
           zIndex: 99999,
           display: 'flex',
           flexDirection: 'column',
@@ -609,11 +614,12 @@ export default function AdminOrderManager() {
           {/* Drawer Header */}
           <div style={{
             padding: '16px 20px',
-            backgroundColor: '#0F172A',
+            backgroundColor: isDark ? '#0F172A' : '#0F172A',
             color: '#FFF',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            borderBottom: isDark ? '1px solid #334155' : 'none'
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -641,8 +647,8 @@ export default function AdminOrderManager() {
           {/* Drawer Body Content */}
           <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {/* 1. Trạng Thái Hiện Tại & Đổi Nhanh */}
-            <div style={{ backgroundColor: '#F8FAFC', padding: '14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', marginBottom: '8px' }}>
+            <div style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC', padding: '14px', borderRadius: '10px', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#94A3B8' : '#64748B', marginBottom: '8px' }}>
                 TIẾN ĐỘ XỬ LÝ ĐƠN HÀNG (9 BƯỚC)
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
@@ -655,9 +661,9 @@ export default function AdminOrderManager() {
                       style={{
                         padding: '6px 8px',
                         borderRadius: '6px',
-                        border: isCurrent ? '2px solid #2563EB' : '1px solid #CBD5E1',
-                        backgroundColor: isCurrent ? '#EFF6FF' : '#FFF',
-                        color: isCurrent ? '#1D4ED8' : '#334155',
+                        border: isCurrent ? '2px solid #38BDF8' : (isDark ? '1px solid #334155' : '1px solid #CBD5E1'),
+                        backgroundColor: isCurrent ? (isDark ? '#1E3A8A' : '#EFF6FF') : (isDark ? '#1E293B' : '#FFF'),
+                        color: isCurrent ? '#FFF' : (isDark ? '#E2E8F0' : '#334155'),
                         fontWeight: isCurrent ? 800 : 500,
                         fontSize: '0.7rem',
                         cursor: 'pointer',
@@ -672,21 +678,21 @@ export default function AdminOrderManager() {
             </div>
 
             {/* 2. Thông Tin Khách Hàng */}
-            <div style={{ backgroundColor: '#FFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+            <div style={{ backgroundColor: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', marginBottom: '8px' }}>
                 👤 THÔNG TIN NGƯỜI NHẬN
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.82rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.82rem', color: isDark ? '#E2E8F0' : '#1E293B' }}>
                 <div><strong>Họ tên:</strong> {activeDrawerOrder.customerName || 'Khách vãng lai'}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <strong>Điện thoại:</strong>
-                  <a href={`tel:${activeDrawerOrder.customerPhone}`} style={{ color: '#2563EB', textDecoration: 'none' }}>
+                  <a href={`tel:${activeDrawerOrder.customerPhone}`} style={{ color: '#38BDF8', textDecoration: 'none' }}>
                     {activeDrawerOrder.customerPhone}
                   </a>
                 </div>
                 <div><strong>Địa chỉ:</strong> {activeDrawerOrder.customerAddress || 'Chưa cập nhật'}</div>
                 {activeDrawerOrder.customerNote && (
-                  <div style={{ color: '#D97706', fontStyle: 'italic' }}>
+                  <div style={{ color: '#FBBF24', fontStyle: 'italic' }}>
                     <strong>Ghi chú của khách:</strong> "{activeDrawerOrder.customerNote}"
                   </div>
                 )}
@@ -694,21 +700,21 @@ export default function AdminOrderManager() {
             </div>
 
             {/* 3. Danh Sách Sản Phẩm Mua Hộ */}
-            <div style={{ backgroundColor: '#FFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+            <div style={{ backgroundColor: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', marginBottom: '8px' }}>
                 📦 SẢN PHẨM MUA HỘ ({activeDrawerOrder.items?.length || 1} MÓN)
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {(activeDrawerOrder.items || []).map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
+                  <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', borderBottom: isDark ? '1px solid #334155' : '1px solid #F1F5F9', paddingBottom: '8px' }}>
                     <img
                       src={item.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=120&q=80'}
                       alt=""
                       style={{ width: '45px', height: '45px', borderRadius: '6px', objectFit: 'cover' }}
                     />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1E293B' }}>{item.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.8rem', color: isDark ? '#F8FAFC' : '#1E293B' }}>{item.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B' }}>
                         Giá: {item.foreignPrice?.toLocaleString('vi-VN') || 0} ₩ x {item.quantity || item.qty || 1}
                       </div>
                     </div>
@@ -718,7 +724,7 @@ export default function AdminOrderManager() {
             </div>
 
             {/* 4. Tổng Kết Tài Chính */}
-            <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px', color: isDark ? '#E2E8F0' : '#1E293B' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.8rem' }}>
                 <span>Tỷ giá áp dụng:</span>
                 <strong>1 KRW = {krwRate} VNĐ</strong>
@@ -727,7 +733,7 @@ export default function AdminOrderManager() {
                 <span>Phí dịch vụ mua hộ:</span>
                 <strong>{serviceFee}%</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px dashed #CBD5E1', fontSize: '1rem', fontWeight: 900, color: '#2563EB' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: isDark ? '1px dashed #334155' : '1px dashed #CBD5E1', fontSize: '1rem', fontWeight: 900, color: '#38BDF8' }}>
                 <span>Tổng Tiền Về VN:</span>
                 <span>{getOrderTotalVnd(activeDrawerOrder, krwRate, serviceFee).toLocaleString('vi-VN')} đ</span>
               </div>
@@ -738,9 +744,9 @@ export default function AdminOrderManager() {
               <button
                 onClick={() => handleDeleteOrder(activeDrawerOrder.id)}
                 style={{
-                  backgroundColor: '#FEE2E2',
-                  color: '#DC2626',
-                  border: '1px solid #FECACA',
+                  backgroundColor: isDark ? '#450A0A' : '#FEE2E2',
+                  color: '#EF4444',
+                  border: isDark ? '1px solid #7F1D1D' : '1px solid #FECACA',
                   padding: '8px 14px',
                   borderRadius: '8px',
                   fontSize: '0.78rem',
@@ -767,7 +773,8 @@ export default function AdminOrderManager() {
           left: 0,
           width: '100vw',
           height: '100vh',
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(4px)',
           zIndex: 999999,
           display: 'flex',
           alignItems: 'center',
@@ -775,49 +782,69 @@ export default function AdminOrderManager() {
           padding: '20px'
         }}>
           <div style={{
-            backgroundColor: '#FFF',
+            backgroundColor: isDark ? '#1E293B' : '#FFF',
+            color: isDark ? '#F8FAFC' : '#0F172A',
+            border: isDark ? '1px solid #334155' : 'none',
             borderRadius: '16px',
             maxWidth: '550px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
             padding: '24px',
-            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900 }}>+ Tạo Đơn Hàng Mua Hộ Mới</h3>
-              <button onClick={() => setIsCreateModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+              <button onClick={() => setIsCreateModalOpen(false)} style={{ background: 'none', border: 'none', color: isDark ? '#94A3B8' : '#0F172A', cursor: 'pointer' }}>
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSaveManualOrder} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Tên Khách Hàng *</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Tên Khách Hàng *</label>
                 <input
                   type="text"
                   required
                   placeholder="Nguyễn Văn A"
                   value={manualForm.customerName}
                   onChange={(e) => setManualForm({ ...manualForm, customerName: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', marginTop: '4px' }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#FFF',
+                    color: isDark ? '#F8FAFC' : '#0F172A',
+                    marginTop: '4px',
+                    outline: 'none'
+                  }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Số Điện Thoại *</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Số Điện Thoại *</label>
                 <input
                   type="text"
                   required
                   placeholder="0912345678"
                   value={manualForm.customerPhone}
                   onChange={(e) => setManualForm({ ...manualForm, customerPhone: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', marginTop: '4px' }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#FFF',
+                    color: isDark ? '#F8FAFC' : '#0F172A',
+                    marginTop: '4px',
+                    outline: 'none'
+                  }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Tên Sản Phẩm Cần Mua *</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Tên Sản Phẩm Cần Mua *</label>
                 <input
                   type="text"
                   required
@@ -828,13 +855,22 @@ export default function AdminOrderManager() {
                     items[0].name = e.target.value;
                     setManualForm({ ...manualForm, items });
                   }}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', marginTop: '4px' }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#FFF',
+                    color: isDark ? '#F8FAFC' : '#0F172A',
+                    marginTop: '4px',
+                    outline: 'none'
+                  }}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Giá Won (₩)</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Giá Won (₩)</label>
                   <input
                     type="number"
                     placeholder="50000"
@@ -844,11 +880,20 @@ export default function AdminOrderManager() {
                       items[0].foreignPrice = e.target.value;
                       setManualForm({ ...manualForm, items });
                     }}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', marginTop: '4px' }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#0F172A' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      marginTop: '4px',
+                      outline: 'none'
+                    }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Số Lượng</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Số Lượng</label>
                   <input
                     type="number"
                     min="1"
@@ -858,7 +903,16 @@ export default function AdminOrderManager() {
                       items[0].qty = e.target.value;
                       setManualForm({ ...manualForm, items });
                     }}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', marginTop: '4px' }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#0F172A' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      marginTop: '4px',
+                      outline: 'none'
+                    }}
                   />
                 </div>
               </div>
@@ -867,7 +921,14 @@ export default function AdminOrderManager() {
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', backgroundColor: '#FFF', cursor: 'pointer' }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#FFF',
+                    color: isDark ? '#E2E8F0' : '#334155',
+                    cursor: 'pointer'
+                  }}
                 >
                   Huỷ
                 </button>

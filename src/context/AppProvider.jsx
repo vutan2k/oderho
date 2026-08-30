@@ -112,6 +112,51 @@ const initialMockOrders = [
 ];
 
 export const AppProvider = ({ children }) => {
+  // ----- Theme Management (Dark Mode) -----
+  const [userTheme, setUserThemeState] = useState(() => {
+    return localStorage.getItem('tavy_user_theme') || 'light';
+  });
+  const [adminTheme, setAdminThemeState] = useState(() => {
+    return localStorage.getItem('tavy_admin_theme') || 'light';
+  });
+
+  const setUserTheme = useCallback((theme) => {
+    const val = theme === 'dark' ? 'dark' : 'light';
+    setUserThemeState(val);
+    localStorage.setItem('tavy_user_theme', val);
+  }, []);
+
+  const toggleUserTheme = useCallback(() => {
+    setUserThemeState((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('tavy_user_theme', next);
+      return next;
+    });
+  }, []);
+
+  const setAdminTheme = useCallback((theme) => {
+    const val = theme === 'dark' ? 'dark' : 'light';
+    setAdminThemeState(val);
+    localStorage.setItem('tavy_admin_theme', val);
+  }, []);
+
+  const toggleAdminTheme = useCallback(() => {
+    setAdminThemeState((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('tavy_admin_theme', next);
+      return next;
+    });
+  }, []);
+
+  // Update HTML data-attributes for dynamic styling
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', userTheme);
+  }, [userTheme]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-admin-theme', adminTheme);
+  }, [adminTheme]);
+
   // ----- Authentication & Profile State -----
   const [authUser, setAuthUser] = useState(null); // Firebase User object
   const [profile, setProfile] = useState(null); // Custom profile stored in Firestore
@@ -1046,6 +1091,13 @@ export const AppProvider = ({ children }) => {
     isAdminAuthenticated,
     loginAdmin,
     logoutAdmin,
+    // Theme Management (Dark Mode)
+    userTheme,
+    setUserTheme,
+    toggleUserTheme,
+    adminTheme,
+    setAdminTheme,
+    toggleAdminTheme,
     // Existing app state
     orders,
     setOrders,

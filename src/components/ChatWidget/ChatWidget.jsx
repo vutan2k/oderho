@@ -15,8 +15,9 @@ export default function ChatWidget() {
   const facebookPageId = '100062954372060';
   const facebookMessengerUrl = `https://m.me/${facebookPageId}`;
 
-  // Không hiển thị ChatWidget trong toàn bộ các trang Admin
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  // Chỉ hiển thị 2 nút Chat tư vấn ở Trang chủ, ẩn hoàn toàn ở tất cả các tab và trang khác
+  const homeRoutes = ['/', '/home', '/products', '/catalog', '/kr-order'];
+  const isHomePage = homeRoutes.includes(location.pathname);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -27,7 +28,7 @@ export default function ChatWidget() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  if (isAdminRoute) {
+  if (!isHomePage) {
     return null;
   }
 

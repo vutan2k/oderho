@@ -459,7 +459,7 @@ export default function GuestOrderStatusCard({
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: statusCfg.color || '#7A4B9E',
+                  backgroundColor: statusCfg.color || '#18181B',
                   color: '#FFFFFF',
                   display: 'flex',
                   alignItems: 'center',
@@ -539,17 +539,17 @@ export default function GuestOrderStatusCard({
                 gap: '7px',
                 padding: '8px 16px',
                 borderRadius: '10px',
-                backgroundColor: '#F3E8FF',
-                color: '#7C3AED',
-                border: '1px solid #8B5CF6',
+                backgroundColor: '#FAF5FF',
+                color: '#6B21A8',
+                border: '1px solid #C084FC',
                 fontWeight: 700,
                 fontSize: '0.82rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 2px 4px rgba(124, 58, 237, 0.12)'
+                boxShadow: '0 2px 4px rgba(107, 33, 168, 0.08)'
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#E9D5FF')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F3E8FF')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F3E8FF')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FAF5FF')}
             >
               <Video size={16} /> Xem Video POV Store
             </button>

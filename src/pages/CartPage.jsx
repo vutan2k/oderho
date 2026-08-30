@@ -89,7 +89,7 @@ export default function CartPage() {
         particleCount: 150,
         spread: 80,
         origin: { y: 0.6 },
-        colors: ['#7A4B9E', '#FFD1DC', '#F4EAD3'],
+        colors: ['#00FF00', '#10B981', '#F4EAD3'],
       });
 
       // Navigate tới trang thanh toán cọc 100%
@@ -103,9 +103,9 @@ export default function CartPage() {
 
   if (success) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F9F6FA' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark)' }}>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', backgroundColor: '#FFF', padding: '50px', borderRadius: '24px', boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ textAlign: 'center', backgroundColor: 'var(--bg-white, #FFF)', border: '1px solid var(--border-color)', padding: '50px', borderRadius: '24px', boxShadow: 'var(--shadow-lg)' }}>
             <CheckCircle size={64} color="#10B981" style={{ margin: '0 auto 20px auto' }} />
             <h2 style={{ fontSize: '1.8rem', color: 'var(--text-dark)', marginBottom: '16px' }}>Đặt hàng thành công!</h2>
             <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>
@@ -122,7 +122,7 @@ export default function CartPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F9F6FA' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark)' }}>
       
       <Helmet>
         <title>Giỏ Hàng - TAVY Korea</title>
@@ -131,8 +131,8 @@ export default function CartPage() {
 
       <main className="container" style={{ flex: 1, padding: '40px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.4rem', color: 'var(--purple-dark)', margin: 0 }}>Giỏ Hàng Của Bạn</h1>
-          <div style={{ backgroundColor: '#F3EFF6', border: '1px solid #E9D5FF', borderRadius: '20px', padding: '8px 18px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--purple-primary)', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 8px rgba(122, 75, 158, 0.08)' }}>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.4rem', color: 'var(--text-dark)', margin: 0 }}>Giỏ Hàng Của Bạn</h1>
+          <div style={{ backgroundColor: 'var(--bg-subtle-purple, #F3EFF6)', border: '1px solid var(--border-color, #E9D5FF)', borderRadius: '20px', padding: '8px 18px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-dark)', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)' }}>
             <Globe size={16} /> Tỷ giá áp dụng: <strong>1 KRW = {krwRate} VNĐ</strong>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function CartPage() {
         )}
 
         {cart.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', backgroundColor: '#FFF', borderRadius: '16px' }}>
+          <div style={{ textAlign: 'center', padding: '60px 0', backgroundColor: 'var(--bg-white, #FFF)', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginBottom: '20px' }}>Giỏ hàng đang trống.</p>
             <Link to="/" className="btn-primary">Khám phá sản phẩm</Link>
           </div>
@@ -163,7 +163,7 @@ export default function CartPage() {
           <div className="cart-layout">
             
             {/* Cột trái: Danh sách item */}
-            <div style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ backgroundColor: 'var(--bg-white, #FFF)', border: '1px solid var(--border-color)', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
               {cart.map((item, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: '20px', padding: '20px 0', borderBottom: idx < cart.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                   <img src={item.productImage} alt={item.name} loading="lazy" style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, aspectRatio: '1/1' }} />
@@ -178,13 +178,13 @@ export default function CartPage() {
                       </button>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
-                        <button type="button" onClick={() => updateCartQty(item.goodsNo, item.qty - 1)} style={{ padding: '6px 10px', background: '#f9f9f9', border: 'none', cursor: 'pointer' }}><Minus size={14}/></button>
-                        <span style={{ padding: '6px 16px', fontSize: '0.9rem', fontWeight: 600, minWidth: '40px', textAlign: 'center' }}>{item.qty}</span>
-                        <button type="button" onClick={() => updateCartQty(item.goodsNo, item.qty + 1)} style={{ padding: '6px 10px', background: '#f9f9f9', border: 'none', cursor: 'pointer' }}><Plus size={14}/></button>
+                      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color, #ddd)', borderRadius: '6px', overflow: 'hidden' }}>
+                        <button type="button" onClick={() => updateCartQty(item.goodsNo, item.qty - 1)} style={{ padding: '6px 10px', background: 'var(--bg-subtle-purple, #f9f9f9)', color: 'var(--text-dark)', border: 'none', cursor: 'pointer' }}><Minus size={14}/></button>
+                        <span style={{ padding: '6px 16px', fontSize: '0.9rem', fontWeight: 600, minWidth: '40px', textAlign: 'center', color: 'var(--text-dark)' }}>{item.qty}</span>
+                        <button type="button" onClick={() => updateCartQty(item.goodsNo, item.qty + 1)} style={{ padding: '6px 10px', background: 'var(--bg-subtle-purple, #f9f9f9)', color: 'var(--text-dark)', border: 'none', cursor: 'pointer' }}><Plus size={14}/></button>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--purple-primary)', fontSize: '1.05rem' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--text-dark)', fontSize: '1.05rem' }}>
                           {formatKrw(item.foreignPrice * item.qty)}
                         </div>
                         <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2563EB', marginTop: '2px' }}>
@@ -199,19 +199,19 @@ export default function CartPage() {
               {/* Banner Thông Báo Giải Thích Giá Nằm Dưới Danh Sách Sản Phẩm */}
               <div style={{
                 marginTop: '20px',
-                backgroundColor: '#FAF5FF',
-                border: '1px solid #E9D5FF',
+                backgroundColor: 'var(--bg-subtle-purple, #FAF5FF)',
+                border: '1px solid var(--border-color, #E9D5FF)',
                 borderRadius: '14px',
                 padding: '16px 20px',
                 fontSize: '0.88rem',
-                color: '#581C87',
+                color: 'var(--text-dark, #581C87)',
                 lineHeight: '1.55',
-                boxShadow: '0 2px 8px rgba(122, 75, 158, 0.05)'
+                boxShadow: 'var(--shadow-sm)'
               }}>
-                <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '0.92rem' }}>
+                <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '0.92rem', color: 'var(--text-dark)' }}>
                   Thông tin thanh toán & Giá về tay:
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', color: 'var(--text-muted)' }}>
                   <div>• <strong>Giá tại Hàn (Won ₩):</strong> Giá gốc niêm yết tại Store Olive Young / Hàn Quốc.</div>
                   <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá và phí dịch vụ trọn gói (toàn bộ tiền vận chuyển 2 đầu đã nằm tất cả trong phí dịch vụ, quý khách chỉ thanh toán 1 lần duy nhất).</div>
                 </div>
@@ -219,33 +219,33 @@ export default function CartPage() {
             </div>
 
             {/* Cột phải: Form Đặt Hàng */}
-            <div style={{ backgroundColor: '#FFF', padding: '30px 24px', borderRadius: '16px', boxShadow: 'var(--shadow-md)', position: 'sticky', top: '24px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '20px', borderBottom: '2px solid #f0f0f0', paddingBottom: '12px' }}>Thông tin người nhận</h3>
+            <div style={{ backgroundColor: 'var(--bg-white, #FFF)', border: '1px solid var(--border-color)', padding: '30px 24px', borderRadius: '16px', boxShadow: 'var(--shadow-md)', position: 'sticky', top: '24px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '20px', borderBottom: '2px solid var(--border-color, #f0f0f0)', paddingBottom: '12px', color: 'var(--text-dark)' }}>Thông tin người nhận</h3>
               
               {/* Card Thông Báo Đơn Tối Thiểu 1.000.000 VNĐ */}
               {!isMinOrderMet ? (
                 <div style={{
-                  backgroundColor: '#FFFBEB',
-                  border: '1.5px solid #FCD34D',
+                  backgroundColor: 'var(--bg-subtle-purple, #FFFBEB)',
+                  border: '1.5px solid var(--gold-primary, #FCD34D)',
                   borderRadius: '14px',
                   padding: '16px',
                   marginBottom: '20px',
-                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.08)'
+                  boxShadow: 'var(--shadow-sm)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#B45309', fontWeight: 800, fontSize: '0.9rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--gold-primary, #B45309)', fontWeight: 800, fontSize: '0.9rem' }}>
                       <span>⚠️ Đơn hàng tối thiểu: <strong>1.000.000 VNĐ</strong></span>
                     </div>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#D97706' }}>{progressPercent}%</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--gold-primary, #D97706)' }}>{progressPercent}%</span>
                   </div>
                   {/* Thanh tiến trình */}
-                  <div style={{ width: '100%', height: '7px', backgroundColor: '#FDE68A', borderRadius: '4px', overflow: 'hidden', marginBottom: '10px' }}>
-                    <div style={{ width: `${progressPercent}%`, height: '100%', backgroundColor: '#F59E0B', transition: 'width 0.3s ease' }} />
+                  <div style={{ width: '100%', height: '7px', backgroundColor: 'var(--bg-ivory, #FDE68A)', borderRadius: '4px', overflow: 'hidden', marginBottom: '10px' }}>
+                    <div style={{ width: `${progressPercent}%`, height: '100%', backgroundColor: 'var(--gold-primary, #F59E0B)', transition: 'width 0.3s ease' }} />
                   </div>
-                  <p style={{ fontSize: '0.84rem', color: '#92400E', margin: '0 0 6px 0', lineHeight: 1.45 }}>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-dark, #92400E)', margin: '0 0 6px 0', lineHeight: 1.45 }}>
                     Bạn cần chọn thêm <strong>{formatVnd(shortfallVnd)}</strong> để đạt mức tối thiểu 1.000.000đ.
                   </p>
-                  <p style={{ fontSize: '0.76rem', color: '#B45309', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+                  <p style={{ fontSize: '0.76rem', color: 'var(--text-muted, #B45309)', margin: '0 0 10px 0', lineHeight: 1.4 }}>
                     💡 <em>Ghi chú: TAVY Korea áp dụng đơn tối thiểu 1.000.000đ để tối ưu chi phí mua hộ từ Hàn Quốc và bảo đảm quy chuẩn đóng gói đường bay an toàn.</em>
                   </p>
                   <Link
@@ -256,9 +256,9 @@ export default function CartPage() {
                       justifyContent: 'center',
                       padding: '7px 14px',
                       borderRadius: '8px',
-                      backgroundColor: '#FEF3C7',
-                      color: '#B45309',
-                      border: '1px solid #FCD34D',
+                      backgroundColor: 'var(--purple-light, #FEF3C7)',
+                      color: 'var(--purple-dark, #B45309)',
+                      border: '1px solid var(--border-color, #FCD34D)',
                       fontSize: '0.82rem',
                       fontWeight: 700,
                       textDecoration: 'none'
@@ -269,15 +269,15 @@ export default function CartPage() {
                 </div>
               ) : (
                 <div style={{
-                  backgroundColor: '#F0FDF4',
-                  border: '1.5px solid #86EFAC',
+                  backgroundColor: 'var(--bg-subtle-purple, #F0FDF4)',
+                  border: '1.5px solid var(--border-color, #86EFAC)',
                   borderRadius: '12px',
                   padding: '10px 14px',
                   marginBottom: '18px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  color: '#166534',
+                  color: '#22C55E',
                   fontSize: '0.84rem',
                   fontWeight: 600
                 }}>
@@ -317,14 +317,14 @@ export default function CartPage() {
                   <textarea className="input" placeholder="Ví dụ: Giao hàng trong giờ hành chính..." value={note} onChange={e => setNote(e.target.value)} />
                 </div>
 
-                <div style={{ backgroundColor: '#F3EFF6', padding: '16px 18px', borderRadius: '14px', marginTop: '24px', marginBottom: '24px', border: '1px solid #E9D5FF' }}>
+                <div style={{ backgroundColor: 'var(--bg-subtle-purple, #F3EFF6)', padding: '16px 18px', borderRadius: '14px', marginTop: '24px', marginBottom: '24px', border: '1px solid var(--border-color, #E9D5FF)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>1. Giá gốc tại Hàn (Won):</span>
-                    <strong style={{ fontSize: '1.05rem', color: '#374151' }}>{formatKrw(subTotalKrw)}</strong>
+                    <strong style={{ fontSize: '1.05rem', color: 'var(--text-dark, #374151)' }}>{formatKrw(subTotalKrw)}</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: '10px', borderTop: '1px dashed #D8B4FE', flexWrap: 'wrap', gap: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: '10px', borderTop: '1px dashed var(--border-color, #D8B4FE)', flexWrap: 'wrap', gap: '4px' }}>
                     <span style={{ color: 'var(--text-dark)', fontWeight: 700, fontSize: '0.92rem' }}>2. Tổng tiền về tay:</span>
-                    <strong style={{ fontSize: '1.25rem', color: 'var(--purple-primary)' }}>{formatVnd(subTotalVnd)}</strong>
+                    <strong style={{ fontSize: '1.25rem', color: 'var(--text-dark)' }}>{formatVnd(subTotalVnd)}</strong>
                   </div>
                 </div>
 
@@ -342,9 +342,9 @@ export default function CartPage() {
                     width: '100%',
                     padding: '16px',
                     fontSize: '1.05rem',
-                    fontWeight: 700,
+                    fontWeight: 800,
                     borderRadius: '14px',
-                    boxShadow: isMinOrderMet ? '0 4px 16px rgba(124, 58, 237, 0.25)' : '0 4px 12px rgba(217, 119, 6, 0.2)',
+                    boxShadow: isMinOrderMet ? '0 4px 16px rgba(0, 0, 0, 0.15)' : '0 4px 12px rgba(217, 119, 6, 0.2)',
                     background: isMinOrderMet ? undefined : 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
                     opacity: isSubmitting ? 0.6 : 1,
                     cursor: isSubmitting ? 'not-allowed' : 'pointer',

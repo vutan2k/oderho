@@ -10,7 +10,11 @@ import {
   Download, Copy, ArrowUpDown, ChevronDown, ChevronUp, CheckCheck
 } from 'lucide-react';
 
-export default function AdminProductCatalog() {
+export default function AdminProductCatalog({ isDark: isDarkProp } = {}) {
+  const isDark = isDarkProp !== undefined
+    ? isDarkProp
+    : (typeof window !== 'undefined' && localStorage.getItem('tavy_admin_theme') === 'dark');
+
   const {
     products,
     addProduct,
@@ -295,10 +299,10 @@ export default function AdminProductCatalog() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Top Banner & Control */}
       <div style={{
-        backgroundColor: '#FFF',
+        backgroundColor: isDark ? '#1E293B' : '#FFF',
         borderRadius: '16px',
         padding: '18px 24px',
-        border: '1px solid #E2E8F0',
+        border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -308,22 +312,22 @@ export default function AdminProductCatalog() {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: '#0F172A' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: isDark ? '#F8FAFC' : '#0F172A' }}>
               Kho Sản Phẩm Đang Bán ({products.length})
             </h2>
             <span style={{
-              backgroundColor: '#ECFDF5',
-              color: '#059669',
+              backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+              color: isDark ? '#34D399' : '#059669',
               fontSize: '0.72rem',
               fontWeight: 800,
               padding: '3px 8px',
               borderRadius: '6px',
-              border: '1px solid #A7F3D0'
+              border: isDark ? '1px solid #059669' : '1px solid #A7F3D0'
             }}>
               LIVE TRÊN WEBSITE
             </span>
           </div>
-          <p style={{ margin: '4px 0 0 0', color: '#64748B', fontSize: '0.82rem' }}>
+          <p style={{ margin: '4px 0 0 0', color: isDark ? '#94A3B8' : '#64748B', fontSize: '0.82rem' }}>
             Bảng danh sách chuẩn Excel: Nhấp vào dòng để <strong>Chỉnh Sửa Nhanh</strong>, sửa trực tiếp giá và trạng thái kho.
           </p>
         </div>
@@ -332,10 +336,10 @@ export default function AdminProductCatalog() {
           {/* View Switcher: Table vs Grid */}
           <div style={{
             display: 'flex',
-            backgroundColor: '#F1F5F9',
+            backgroundColor: isDark ? '#0F172A' : '#F1F5F9',
             padding: '3px',
             borderRadius: '8px',
-            border: '1px solid #CBD5E1'
+            border: isDark ? '1px solid #334155' : '1px solid #CBD5E1'
           }}>
             <button
               onClick={() => setViewMode('table')}
@@ -346,8 +350,8 @@ export default function AdminProductCatalog() {
                 padding: '6px 12px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: viewMode === 'table' ? '#FFF' : 'transparent',
-                color: viewMode === 'table' ? '#0F172A' : '#64748B',
+                backgroundColor: viewMode === 'table' ? (isDark ? '#334155' : '#FFF') : 'transparent',
+                color: viewMode === 'table' ? (isDark ? '#F8FAFC' : '#0F172A') : (isDark ? '#94A3B8' : '#64748B'),
                 fontWeight: viewMode === 'table' ? 800 : 600,
                 fontSize: '0.78rem',
                 cursor: 'pointer',
@@ -367,8 +371,8 @@ export default function AdminProductCatalog() {
                 padding: '6px 12px',
                 borderRadius: '6px',
                 border: 'none',
-                backgroundColor: viewMode === 'grid' ? '#FFF' : 'transparent',
-                color: viewMode === 'grid' ? '#0F172A' : '#64748B',
+                backgroundColor: viewMode === 'grid' ? (isDark ? '#334155' : '#FFF') : 'transparent',
+                color: viewMode === 'grid' ? (isDark ? '#F8FAFC' : '#0F172A') : (isDark ? '#94A3B8' : '#64748B'),
                 fontWeight: viewMode === 'grid' ? 800 : 600,
                 fontSize: '0.78rem',
                 cursor: 'pointer',
@@ -384,9 +388,9 @@ export default function AdminProductCatalog() {
           <button
             onClick={handleExportCSV}
             style={{
-              backgroundColor: '#F8FAFC',
-              color: '#0F172A',
-              border: '1px solid #CBD5E1',
+              backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+              color: isDark ? '#F8FAFC' : '#0F172A',
+              border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
               borderRadius: '8px',
               padding: '8px 14px',
               fontSize: '0.8rem',
@@ -397,7 +401,7 @@ export default function AdminProductCatalog() {
               gap: '6px'
             }}
           >
-            <Download size={14} color="#059669" />
+            <Download size={14} color="#10B981" />
             <span>Xuất Excel/CSV</span>
           </button>
 
@@ -427,10 +431,10 @@ export default function AdminProductCatalog() {
 
       {/* Filter & Search Bar */}
       <div style={{
-        backgroundColor: '#FFF',
+        backgroundColor: isDark ? '#1E293B' : '#FFF',
         borderRadius: '12px',
         padding: '12px 18px',
-        border: '1px solid #E2E8F0',
+        border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
@@ -439,7 +443,7 @@ export default function AdminProductCatalog() {
       }}>
         {/* Search */}
         <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: '380px' }}>
-          <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+          <Search size={15} color={isDark ? '#94A3B8' : '#64748B'} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
             placeholder="Tìm theo tên sản phẩm, mã SKU, thương hiệu..."
@@ -449,7 +453,9 @@ export default function AdminProductCatalog() {
               width: '100%',
               padding: '8px 12px 8px 36px',
               borderRadius: '8px',
-              border: '1px solid #CBD5E1',
+              border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+              backgroundColor: isDark ? '#0F172A' : '#FFF',
+              color: isDark ? '#F8FAFC' : '#0F172A',
               fontSize: '0.82rem',
               outline: 'none'
             }}
@@ -470,9 +476,9 @@ export default function AdminProductCatalog() {
               style={{
                 padding: '6px 12px',
                 borderRadius: '6px',
-                border: selectedCategory === cat.id ? '1px solid #2563EB' : '1px solid #E2E8F0',
-                backgroundColor: selectedCategory === cat.id ? '#EFF6FF' : '#FFF',
-                color: selectedCategory === cat.id ? '#1D4ED8' : '#475569',
+                border: selectedCategory === cat.id ? '1px solid #38BDF8' : (isDark ? '1px solid #334155' : '1px solid #E2E8F0'),
+                backgroundColor: selectedCategory === cat.id ? (isDark ? '#1E3A8A' : '#EFF6FF') : (isDark ? '#0F172A' : '#FFF'),
+                color: selectedCategory === cat.id ? (isDark ? '#F8FAFC' : '#1D4ED8') : (isDark ? '#94A3B8' : '#475569'),
                 fontWeight: selectedCategory === cat.id ? 700 : 500,
                 fontSize: '0.78rem',
                 cursor: 'pointer'
@@ -491,11 +497,12 @@ export default function AdminProductCatalog() {
             style={{
               padding: '6px 10px',
               borderRadius: '6px',
-              border: '1px solid #CBD5E1',
+              border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
               fontSize: '0.78rem',
               fontWeight: 700,
-              color: '#334155',
-              backgroundColor: '#FFF'
+              color: isDark ? '#F8FAFC' : '#334155',
+              backgroundColor: isDark ? '#0F172A' : '#FFF',
+              outline: 'none'
             }}
           >
             <option value="all">Tất cả tình trạng kho</option>
@@ -579,9 +586,9 @@ export default function AdminProductCatalog() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {viewMode === 'table' && (
         <div style={{
-          backgroundColor: '#FFF',
+          backgroundColor: isDark ? '#1E293B' : '#FFF',
           borderRadius: '14px',
-          border: '1px solid #CBD5E1',
+          border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
           overflow: 'hidden',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
         }}>
@@ -596,13 +603,13 @@ export default function AdminProductCatalog() {
               <thead style={{
                 position: 'sticky',
                 top: 0,
-                backgroundColor: '#F1F5F9',
-                borderBottom: '2px solid #CBD5E1',
+                backgroundColor: isDark ? '#0F172A' : '#F1F5F9',
+                borderBottom: isDark ? '2px solid #334155' : '2px solid #CBD5E1',
                 zIndex: 10
               }}>
-                <tr style={{ color: '#334155', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                <tr style={{ color: isDark ? '#94A3B8' : '#334155', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                   {/* Select All Checkbox */}
-                  <th style={{ width: '40px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
+                  <th style={{ width: '40px', padding: '10px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                     <input
                       type="checkbox"
                       checked={selectedIds.length === filteredProducts.length && filteredProducts.length > 0}
@@ -610,12 +617,12 @@ export default function AdminProductCatalog() {
                       style={{ width: '15px', height: '15px', accentColor: '#2563EB', cursor: 'pointer' }}
                     />
                   </th>
-                  <th style={{ width: '45px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>#</th>
-                  <th style={{ width: '60px', padding: '10px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>Ảnh</th>
+                  <th style={{ width: '45px', padding: '10px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>#</th>
+                  <th style={{ width: '60px', padding: '10px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>Ảnh</th>
                   
                   <th
                     onClick={() => handleSort('goodsNo')}
-                    style={{ width: '130px', padding: '10px 12px', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                    style={{ width: '130px', padding: '10px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span>Mã SKU</span>
@@ -625,7 +632,7 @@ export default function AdminProductCatalog() {
 
                   <th
                     onClick={() => handleSort('name')}
-                    style={{ minWidth: '260px', padding: '10px 12px', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                    style={{ minWidth: '260px', padding: '10px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span>Tên Sản Phẩm (Việt / Hàn)</span>
@@ -633,12 +640,12 @@ export default function AdminProductCatalog() {
                     </div>
                   </th>
 
-                  <th style={{ width: '120px', padding: '10px 12px', borderRight: '1px solid #E2E8F0' }}>Thương Hiệu</th>
-                  <th style={{ width: '110px', padding: '10px 12px', borderRight: '1px solid #E2E8F0' }}>Ngành Hàng</th>
+                  <th style={{ width: '120px', padding: '10px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>Thương Hiệu</th>
+                  <th style={{ width: '110px', padding: '10px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>Ngành Hàng</th>
 
                   <th
                     onClick={() => handleSort('foreignPrice')}
-                    style={{ width: '130px', padding: '10px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
+                    style={{ width: '130px', padding: '10px 12px', textAlign: 'right', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0', cursor: 'pointer', userSelect: 'none' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                       <span>Giá Bán</span>
@@ -654,9 +661,9 @@ export default function AdminProductCatalog() {
               <tbody>
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                    <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: isDark ? '#64748B' : '#94A3B8' }}>
                       <ShoppingBag size={36} style={{ margin: '0 auto 8px auto', opacity: 0.4 }} />
-                      <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#475569' }}>Không tìm thấy sản phẩm nào phù hợp</div>
+                      <div style={{ fontWeight: 800, fontSize: '0.95rem', color: isDark ? '#CBD5E1' : '#475569' }}>Không tìm thấy sản phẩm nào phù hợp</div>
                     </td>
                   </tr>
                 ) : (
@@ -672,21 +679,21 @@ export default function AdminProductCatalog() {
                         key={prod.goodsNo || prod.id}
                         onClick={() => handleOpenEdit(prod)}
                         style={{
-                          backgroundColor: isSelected ? '#EFF6FF' : (idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF'),
-                          borderBottom: '1px solid #E2E8F0',
+                          backgroundColor: isSelected ? (isDark ? '#1E3A8A' : '#EFF6FF') : (idx % 2 === 1 ? (isDark ? '#162032' : '#F8FAFC') : (isDark ? '#1E293B' : '#FFFFFF')),
+                          borderBottom: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
                           cursor: 'pointer',
                           transition: 'background 0.1s',
                           opacity: isHidden ? 0.65 : 1
                         }}
                         onMouseEnter={(e) => {
-                          if (!isSelected) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                          if (!isSelected) e.currentTarget.style.backgroundColor = isDark ? '#243044' : '#F1F5F9';
                         }}
                         onMouseLeave={(e) => {
-                          if (!isSelected) e.currentTarget.style.backgroundColor = idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF';
+                          if (!isSelected) e.currentTarget.style.backgroundColor = isSelected ? (isDark ? '#1E3A8A' : '#EFF6FF') : (idx % 2 === 1 ? (isDark ? '#162032' : '#F8FAFC') : (isDark ? '#1E293B' : '#FFFFFF'));
                         }}
                       >
                         {/* Checkbox */}
-                        <td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
+                        <td style={{ padding: '8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -696,18 +703,18 @@ export default function AdminProductCatalog() {
                         </td>
 
                         {/* STT */}
-                        <td style={{ padding: '8px', textAlign: 'center', color: '#94A3B8', fontWeight: 600, borderRight: '1px solid #E2E8F0' }}>
+                        <td style={{ padding: '8px', textAlign: 'center', color: isDark ? '#64748B' : '#94A3B8', fontWeight: 600, borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                           {idx + 1}
                         </td>
 
                         {/* Thumbnail Image */}
-                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: '1px solid #E2E8F0' }}>
+                        <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                           <div style={{
                             width: '42px',
                             height: '42px',
                             borderRadius: '6px',
-                            backgroundColor: '#FFF',
-                            border: '1px solid #E2E8F0',
+                            backgroundColor: isDark ? '#0F172A' : '#FFF',
+                            border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
                             overflow: 'hidden',
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -725,15 +732,15 @@ export default function AdminProductCatalog() {
                         </td>
 
                         {/* SKU */}
-                        <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                        <td style={{ padding: '8px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#334155', fontSize: '0.78rem' }}>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700, color: isDark ? '#93C5FD' : '#334155', fontSize: '0.78rem' }}>
                               {prod.goodsNo}
                             </span>
                             <button
                               title="Sao chép mã SKU"
                               onClick={(e) => handleCopySku(e, prod.goodsNo)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#94A3B8' }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: isDark ? '#64748B' : '#94A3B8' }}
                             >
                               <Copy size={12} />
                             </button>
@@ -741,38 +748,40 @@ export default function AdminProductCatalog() {
                         </td>
 
                         {/* Product Title */}
-                        <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
-                          <div style={{ fontWeight: 700, color: '#0F172A', lineHeight: 1.35 }}>
+                        <td style={{ padding: '8px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
+                          <div style={{ fontWeight: 700, color: isDark ? '#F8FAFC' : '#0F172A', lineHeight: 1.35 }}>
                             {prod.name}
                           </div>
                           {prod.nameKr && (
-                            <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '2px' }}>
+                            <div style={{ fontSize: '0.7rem', color: isDark ? '#94A3B8' : '#94A3B8', marginTop: '2px' }}>
                               {prod.nameKr}
                             </div>
                           )}
                         </td>
 
                         {/* Brand */}
-                        <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0', color: '#475569', fontWeight: 600 }}>
+                        <td style={{ padding: '8px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0', color: isDark ? '#CBD5E1' : '#475569', fontWeight: 600 }}>
                           <span style={{
-                            backgroundColor: '#F1F5F9',
+                            backgroundColor: isDark ? '#0F172A' : '#F1F5F9',
+                            border: isDark ? '1px solid #334155' : 'none',
                             padding: '2px 6px',
                             borderRadius: '4px',
                             fontSize: '0.72rem',
                             fontWeight: 700,
-                            color: '#334155'
+                            color: isDark ? '#E2E8F0' : '#334155'
                           }}>
                             {prod.brand || 'Korea'}
                           </span>
                         </td>
 
                         {/* Category */}
-                        <td style={{ padding: '8px 12px', borderRight: '1px solid #E2E8F0' }}>
+                        <td style={{ padding: '8px 12px', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                           <span style={{
                             fontSize: '0.72rem',
                             fontWeight: 700,
-                            color: prod.category === 'ginseng' ? '#047857' : (prod.category === 'supplements' ? '#B45309' : '#1D4ED8'),
-                            backgroundColor: prod.category === 'ginseng' ? '#ECFDF5' : (prod.category === 'supplements' ? '#FFFBEB' : '#EFF6FF'),
+                            color: prod.category === 'ginseng' ? '#34D399' : (prod.category === 'supplements' ? '#FBBF24' : '#60A5FA'),
+                            backgroundColor: prod.category === 'ginseng' ? (isDark ? '#064E3B' : '#ECFDF5') : (prod.category === 'supplements' ? (isDark ? '#78350F' : '#FFFBEB') : (isDark ? '#1E3A8A' : '#EFF6FF')),
+                            border: isDark ? '1px solid #334155' : 'none',
                             padding: '2px 8px',
                             borderRadius: '4px'
                           }}>
@@ -781,11 +790,11 @@ export default function AdminProductCatalog() {
                         </td>
 
                         {/* Merged Price (VNĐ & Won) */}
-                        <td style={{ padding: '8px 12px', textAlign: 'right', borderRight: '1px solid #E2E8F0' }}>
-                          <div style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '0.88rem' }}>
+                        <td style={{ padding: '8px 12px', textAlign: 'right', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
+                          <div style={{ fontWeight: 800, color: isDark ? '#38BDF8' : '#1D4ED8', fontSize: '0.88rem' }}>
                             {vnd.toLocaleString('vi-VN')} đ
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: '#64748B', fontFamily: 'monospace', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B', fontFamily: 'monospace', marginTop: '2px' }}>
                             {won.toLocaleString('vi-VN')} ₩
                           </div>
                         </td>
@@ -818,9 +827,9 @@ export default function AdminProductCatalog() {
                               title="Chuyển về Hàng Chờ Duyệt"
                               onClick={(e) => handleMoveToPending(e, prod)}
                               style={{
-                                backgroundColor: '#FFFBEB',
-                                color: '#D97706',
-                                border: '1px solid #FDE68A',
+                                backgroundColor: isDark ? '#78350F' : '#FFFBEB',
+                                color: isDark ? '#FDE68A' : '#D97706',
+                                border: isDark ? '1px solid #B45309' : '1px solid #FDE68A',
                                 borderRadius: '6px',
                                 padding: '4px 6px',
                                 fontSize: '0.68rem',
@@ -835,9 +844,9 @@ export default function AdminProductCatalog() {
                               title="Xoá sản phẩm"
                               onClick={() => handleDeleteProduct(prod.goodsNo || prod.id)}
                               style={{
-                                backgroundColor: '#FEE2E2',
-                                color: '#DC2626',
-                                border: 'none',
+                                backgroundColor: isDark ? '#450A0A' : '#FEE2E2',
+                                color: '#EF4444',
+                                border: isDark ? '1px solid #7F1D1D' : 'none',
                                 borderRadius: '6px',
                                 padding: '4px 6px',
                                 cursor: 'pointer'
@@ -858,13 +867,13 @@ export default function AdminProductCatalog() {
           {/* Table Footer Summary */}
           <div style={{
             padding: '10px 18px',
-            backgroundColor: '#F8FAFC',
-            borderTop: '1px solid #CBD5E1',
+            backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+            borderTop: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             fontSize: '0.78rem',
-            color: '#64748B',
+            color: isDark ? '#94A3B8' : '#64748B',
             fontWeight: 600
           }}>
             <div>
@@ -891,13 +900,13 @@ export default function AdminProductCatalog() {
               gridColumn: '1 / -1',
               padding: '50px 20px',
               textAlign: 'center',
-              backgroundColor: '#FFF',
+              backgroundColor: isDark ? '#1E293B' : '#FFF',
               borderRadius: '16px',
-              border: '1px dashed #CBD5E1',
-              color: '#94A3B8'
+              border: isDark ? '1px dashed #334155' : '1px dashed #CBD5E1',
+              color: isDark ? '#64748B' : '#94A3B8'
             }}>
               <ShoppingBag size={40} style={{ margin: '0 auto 12px auto', opacity: 0.4 }} />
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: '#475569' }}>
+              <div style={{ fontWeight: 800, fontSize: '1rem', color: isDark ? '#CBD5E1' : '#475569' }}>
                 Không tìm thấy sản phẩm nào phù hợp
               </div>
             </div>
@@ -914,9 +923,9 @@ export default function AdminProductCatalog() {
                   key={prod.goodsNo || prod.id}
                   onClick={() => handleOpenEdit(prod)}
                   style={{
-                    backgroundColor: '#FFF',
+                    backgroundColor: isDark ? '#1E293B' : '#FFF',
                     borderRadius: '14px',
-                    border: isSelected ? '2px solid #2563EB' : (isOutOfStock ? '1px solid #FECACA' : (isHidden ? '1px dashed #CBD5E1' : '1px solid #E2E8F0')),
+                    border: isSelected ? '2px solid #38BDF8' : (isOutOfStock ? (isDark ? '1px solid #7F1D1D' : '1px solid #FECACA') : (isHidden ? (isDark ? '1px dashed #475569' : '1px dashed #CBD5E1') : (isDark ? '1px solid #334155' : '1px solid #E2E8F0'))),
                     padding: '14px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -934,8 +943,8 @@ export default function AdminProductCatalog() {
                     height: '190px',
                     borderRadius: '10px',
                     overflow: 'hidden',
-                    backgroundColor: '#F8FAFC',
-                    border: '1px solid #F1F5F9'
+                    backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+                    border: isDark ? '1px solid #334155' : '1px solid #F1F5F9'
                   }}>
                     <img
                       src={prod.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'}
@@ -978,7 +987,7 @@ export default function AdminProductCatalog() {
                     <div style={{
                       fontWeight: 800,
                       fontSize: '0.88rem',
-                      color: '#0F172A',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
                       lineHeight: 1.4,
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
@@ -996,10 +1005,10 @@ export default function AdminProductCatalog() {
 
                     <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                       <div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+                        <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>
                           {won.toLocaleString('vi-VN')} ₩
                         </div>
-                        <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#2563EB' }}>
+                        <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#38BDF8' }}>
                           {vnd.toLocaleString('vi-VN')} đ
                         </div>
                       </div>
@@ -1013,7 +1022,7 @@ export default function AdminProductCatalog() {
                   <div
                     style={{
                       paddingTop: '10px',
-                      borderTop: '1px solid #F1F5F9',
+                      borderTop: isDark ? '1px solid #334155' : '1px solid #F1F5F9',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -1025,9 +1034,9 @@ export default function AdminProductCatalog() {
                       <button
                         onClick={(e) => handleToggleStock(e, prod)}
                         style={{
-                          backgroundColor: isOutOfStock ? '#FEE2E2' : '#F1F5F9',
-                          color: isOutOfStock ? '#DC2626' : '#475569',
-                          border: 'none',
+                          backgroundColor: isOutOfStock ? (isDark ? '#450A0A' : '#FEE2E2') : (isDark ? '#0F172A' : '#F1F5F9'),
+                          color: isOutOfStock ? '#EF4444' : (isDark ? '#CBD5E1' : '#475569'),
+                          border: isDark ? '1px solid #334155' : 'none',
                           borderRadius: '6px',
                           padding: '4px 8px',
                           fontSize: '0.68rem',
@@ -1041,9 +1050,9 @@ export default function AdminProductCatalog() {
                       <button
                         onClick={(e) => handleToggleVisibility(e, prod)}
                         style={{
-                          backgroundColor: isHidden ? '#F1F5F9' : '#EFF6FF',
-                          color: isHidden ? '#64748B' : '#2563EB',
-                          border: 'none',
+                          backgroundColor: isHidden ? (isDark ? '#0F172A' : '#F1F5F9') : (isDark ? '#1E3A8A' : '#EFF6FF'),
+                          color: isHidden ? '#64748B' : (isDark ? '#93C5FD' : '#2563EB'),
+                          border: isDark ? '1px solid #334155' : 'none',
                           borderRadius: '6px',
                           padding: '4px 8px',
                           fontSize: '0.68rem',
@@ -1080,9 +1089,9 @@ export default function AdminProductCatalog() {
                         title="Xoá"
                         onClick={() => handleDeleteProduct(prod.goodsNo || prod.id)}
                         style={{
-                          backgroundColor: '#FEE2E2',
-                          color: '#DC2626',
-                          border: 'none',
+                          backgroundColor: isDark ? '#450A0A' : '#FEE2E2',
+                          color: '#EF4444',
+                          border: isDark ? '1px solid #7F1D1D' : 'none',
                           borderRadius: '6px',
                           padding: '4px 6px',
                           cursor: 'pointer'
@@ -1108,6 +1117,7 @@ export default function AdminProductCatalog() {
         onDelete={handleDeleteProduct}
         rates={rates}
         isPending={false}
+        isDark={isDark}
       />
     </div>
   );

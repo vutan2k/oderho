@@ -47,7 +47,7 @@ function ToastItem({ toast, onClose }) {
   const bgColor = toast.type === 'success' ? '#10B981'
     : toast.type === 'error' ? '#EF4444'
     : toast.type === 'warning' ? '#F59E0B'
-    : '#7A4B9E';
+    : '#00CC00';
 
   return (
     <div

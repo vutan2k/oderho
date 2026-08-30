@@ -73,7 +73,8 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
         className="modal-content" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--bg-white, #FFFFFF)',
+          color: 'var(--text-dark)',
           borderRadius: '24px',
           maxWidth: '1060px',
           width: '100%',
@@ -95,7 +96,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
             width: '38px',
             height: '38px',
             borderRadius: '50%',
-            backgroundColor: '#F3F4F6',
+            backgroundColor: 'var(--bg-subtle-purple, #F3F4F6)',
             border: 'none',
             display: 'flex',
             alignItems: 'center',
@@ -106,7 +107,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}
         >
-          <X size={20} color="#374151" />
+          <X size={20} color="var(--text-dark, #374151)" />
         </button>
 
         {/* Bố cục Grid Cân Bằng (1fr 1.05fr trên PC, 1fr trên Mobile) */}
@@ -140,13 +141,15 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                 position: 'absolute',
                 top: '14px',
                 left: '14px',
-                backgroundColor: 'var(--purple-primary)',
-                color: '#FFF',
+                backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
                 fontSize: '0.78rem',
                 fontWeight: 700,
                 padding: '5px 12px',
                 borderRadius: '20px',
-                textTransform: 'uppercase'
+                textTransform: 'uppercase',
+                backdropFilter: 'blur(4px)'
               }}>
                 {product.brand}
               </span>
@@ -164,7 +167,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                       height: '68px',
                       borderRadius: '12px',
                       overflow: 'hidden',
-                      border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
+                      border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid var(--border-color, #E5E7EB)',
                       padding: 0,
                       cursor: 'pointer',
                       flexShrink: 0,
@@ -184,24 +187,24 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
             <div>
               {/* Thương hiệu */}
               <div style={{ marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--purple-primary)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                   {product.brand}
                 </span>
               </div>
 
               {/* Tên sản phẩm */}
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', lineHeight: '1.35', marginBottom: '10px', wordBreak: 'break-word' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-dark, #111827)', lineHeight: '1.35', marginBottom: '10px', wordBreak: 'break-word' }}>
                 {product.name}
               </h2>
 
               {/* Mô tả ngắn */}
-              <p style={{ margin: '0 0 14px 0', fontSize: '0.85rem', color: '#4B5563', lineHeight: '1.5' }}>
+              <p style={{ margin: '0 0 14px 0', fontSize: '0.85rem', color: 'var(--text-muted, #4B5563)', lineHeight: '1.5' }}>
                 {product.description || 'Sản phẩm chính hãng nội địa Hàn Quốc nhập khẩu trực tiếp.'}
               </p>
 
               {/* KHU VỰC HÌNH ẢNH THỰC TẾ (THIẾT KẾ TỐI GIẢN CAO CẤP) */}
-              <div style={{ background: '#F9FAFB', padding: '14px', borderRadius: '14px', border: '1px solid #E5E7EB' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#374151', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '14px', borderRadius: '14px', border: '1px solid var(--border-color, #E5E7EB)' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-dark, #374151)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Hình ảnh thực tế ({reviewPhotos.length})
                 </div>
 
@@ -215,9 +218,9 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                         aspectRatio: '1 / 1',
                         borderRadius: '10px',
                         overflow: 'hidden',
-                        border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid #E5E7EB',
+                        border: selectedImg === img ? '2px solid var(--purple-primary)' : '1px solid var(--border-color, #E5E7EB)',
                         cursor: 'pointer',
-                        backgroundColor: '#FFF',
+                        backgroundColor: 'var(--bg-white, #FFF)',
                         boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
                       }}
                     >
@@ -230,13 +233,13 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
 
             {/* Nút Thêm Vào Giỏ Hàng & Khối Giá Rõ Ràng */}
             {!hideAddToCart && onOrderNow && (
-              <div style={{ paddingTop: '16px', borderTop: '1px solid #F3F4F6', marginTop: '12px' }}>
-                <div style={{ background: '#F8F6FA', padding: '12px 16px', borderRadius: '12px', marginBottom: '14px', border: '1px solid #E5E7EB' }}>
+              <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color, #F3F4F6)', marginTop: '12px' }}>
+                <div style={{ background: 'var(--bg-subtle-purple, #F8F6FA)', padding: '12px 16px', borderRadius: '12px', marginBottom: '14px', border: '1px solid var(--border-color, #E5E7EB)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                     <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                       1. Giá tại Hàn (Won gốc):
                     </span>
-                    <strong style={{ fontSize: '0.95rem', color: '#374151', fontWeight: 700 }}>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-dark, #374151)', fontWeight: 700 }}>
                       {formatKrw(product.foreignPrice)}
                     </strong>
                   </div>
@@ -244,7 +247,7 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                     <span style={{ fontSize: '0.88rem', color: 'var(--text-dark)', fontWeight: 700 }}>
                       2. Giá về tay (VNĐ):
                     </span>
-                    <strong style={{ fontSize: '1.25rem', color: 'var(--purple-primary)', fontWeight: 800 }}>
+                    <strong style={{ fontSize: '1.25rem', color: 'var(--text-dark)', fontWeight: 800 }}>
                       {formatVnd(calculatedVnd)}
                     </strong>
                   </div>
@@ -263,7 +266,6 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
                     gap: '10px',
                     padding: '13px 24px',
                     borderRadius: '50px',
-                    boxShadow: '0 8px 20px rgba(122, 75, 158, 0.35)',
                     cursor: 'pointer',
                     border: 'none'
                   }}

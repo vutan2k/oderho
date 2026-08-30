@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { 
-  User, Lock, Save, Mail, Package, LogOut, ShoppingBag, Copy, Check, ExternalLink 
+  User, Lock, Save, Mail, Package, LogOut, ShoppingBag, Copy, Check, ExternalLink, Settings, Sun, Moon 
 } from 'lucide-react';
 import CascadingAddressSelector from '../components/CascadingAddressSelector';
 import ProductDetailModal from '../components/ProductDetailModal';
@@ -11,11 +11,11 @@ import { ORDER_STEPS, getOrderStepIndex } from '../data/orderStatuses';
 import { getOrderTotalVnd, formatVnd, formatKrw } from '../utils/priceCalculator';
 
 export default function UserProfilePage() {
-  const { currentUser, updateUserProfile, changePassword, logoutUser, orders, rates, oliveYoungCatalog, addToCart } = useContext(AppContext);
+  const { currentUser, updateUserProfile, changePassword, logoutUser, orders, rates, oliveYoungCatalog, addToCart, userTheme, setUserTheme, toggleUserTheme } = useContext(AppContext);
   const showToast = useToast();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'password' | 'orders'
+  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'password' | 'orders' | 'settings'
   const [activeOrderTab, setActiveOrderTab] = useState('all');
   const [copiedCode, setCopiedCode] = useState('');
   const [detailProduct, setDetailProduct] = useState(null);
@@ -186,7 +186,7 @@ export default function UserProfilePage() {
   ];
 
   return (
-    <div style={{ backgroundColor: '#FDFBF7', minHeight: '90vh', width: '100%' }}>
+    <div style={{ backgroundColor: 'var(--bg-ivory, #FDFBF7)', minHeight: '90vh', width: '100%', color: 'var(--text-dark)' }}>
       <style>{`
         .profile-layout {
           display: grid;
@@ -204,20 +204,20 @@ export default function UserProfilePage() {
           }
         }
         .sidebar-card {
-          background-color: #FFF;
+          background-color: var(--bg-white, #FFF);
           border-radius: 16px;
-          border: 1px solid #E5E7EB;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.015);
+          border: 1px solid var(--border-color, #E5E7EB);
+          box-shadow: var(--shadow-sm, 0 4px 20px rgba(0,0,0,0.015));
           padding: 24px;
           display: flex;
           flex-direction: column;
           height: fit-content;
         }
         .content-card {
-          background-color: #FFF;
+          background-color: var(--bg-white, #FFF);
           border-radius: 16px;
-          border: 1px solid #E5E7EB;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.015);
+          border: 1px solid var(--border-color, #E5E7EB);
+          box-shadow: var(--shadow-sm, 0 4px 20px rgba(0,0,0,0.015));
           padding: 30px;
         }
         @media (max-width: 768px) {
@@ -232,7 +232,7 @@ export default function UserProfilePage() {
           padding: 14px 16px;
           border: none;
           background: none;
-          color: #4B5563;
+          color: var(--text-dark, #4B5563);
           font-size: 0.95rem;
           font-weight: 500;
           cursor: pointer;
@@ -243,11 +243,11 @@ export default function UserProfilePage() {
           position: relative;
         }
         .menu-item:hover {
-          background-color: #F9FAFB;
+          background-color: var(--bg-subtle-purple, #F9FAFB);
           color: var(--purple-primary);
         }
         .menu-item.active {
-          background-color: #F5F3FF;
+          background-color: var(--purple-light, #F5F3FF);
           color: var(--purple-primary);
           font-weight: 600;
         }
@@ -383,14 +383,14 @@ export default function UserProfilePage() {
         {/* Left Sidebar */}
         <div className="sidebar-card">
           {/* Avatar Profile */}
-          <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '1px solid #E5E7EB', paddingBottom: '20px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '1px solid var(--border-color, #E5E7EB)', paddingBottom: '20px' }}>
             <div className="avatar-circle">
               {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
             </div>
-            <h3 style={{ margin: '8px 0 4px 0', fontSize: '1.15rem', color: '#111827', fontWeight: 700 }}>
+            <h3 style={{ margin: '8px 0 4px 0', fontSize: '1.15rem', color: 'var(--text-dark, #111827)', fontWeight: 700 }}>
               {currentUser.name || 'Khách Hàng TAVY'}
             </h3>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', margin: '0 0 12px 0', color: '#6B7280', fontSize: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', margin: '0 0 12px 0', color: 'var(--text-muted, #6B7280)', fontSize: '0.85rem' }}>
               <Mail size={14} />
               <span style={{ wordBreak: 'break-all' }}>{currentUser.email}</span>
             </div>
@@ -425,7 +425,15 @@ export default function UserProfilePage() {
               <span>Đơn hàng của tôi</span>
             </button>
 
-            <div style={{ height: '1px', backgroundColor: '#E5E7EB', margin: '16px 0' }} />
+            <button 
+              className={`menu-item ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              <Settings size={18} />
+              <span>Cài đặt & Giao diện</span>
+            </button>
+
+            <div style={{ height: '1px', backgroundColor: 'var(--border-color, #E5E7EB)', margin: '16px 0' }} />
 
             <button 
               className="logout-item"
@@ -592,18 +600,18 @@ export default function UserProfilePage() {
                       <div
                         key={order.id}
                         style={{
-                          backgroundColor: '#FFF',
+                          backgroundColor: 'var(--bg-white, #FFF)',
                           borderRadius: '16px',
-                          border: '1px solid #E5E7EB',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                          border: '1px solid var(--border-color, #E5E7EB)',
+                          boxShadow: 'var(--shadow-sm)',
                           overflow: 'hidden'
                         }}
                       >
                         {/* Order Top Bar */}
                         <div style={{
                           padding: '16px 24px',
-                          backgroundColor: '#F9FAFB',
-                          borderBottom: '1px solid #E5E7EB',
+                          backgroundColor: 'var(--bg-subtle-purple, #F9FAFB)',
+                          borderBottom: '1px solid var(--border-color, #E5E7EB)',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
@@ -611,21 +619,21 @@ export default function UserProfilePage() {
                           gap: '12px'
                         }}>
                           <div>
-                            <span style={{ fontSize: '0.75rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>MÃ ĐƠN HÀNG</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>MÃ ĐƠN HÀNG</span>
                             <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--purple-primary)', margin: '2px 0 0 0' }}>{order.id}</h4>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                             <div style={{ textAlign: 'right' }}>
-                              <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>Ngày đặt:</span>
-                              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)' }}>Ngày đặt:</span>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-dark, #374151)' }}>
                                 {new Date(order.createdAt).toLocaleDateString('vi-VN')}
                               </div>
                             </div>
 
-                            <div style={{ textAlign: 'right', paddingLeft: '15px', borderLeft: '1px solid #E5E7EB' }}>
-                              <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>Tổng thanh toán:</span>
-                              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#111827' }}>
+                            <div style={{ textAlign: 'right', paddingLeft: '15px', borderLeft: '1px solid var(--border-color, #E5E7EB)' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)' }}>Tổng thanh toán:</span>
+                              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-dark, #111827)' }}>
                                 {formatVnd(displayTotal)}
                               </div>
                             </div>
@@ -633,7 +641,7 @@ export default function UserProfilePage() {
                         </div>
 
                         {/* Progress Bar 9 Bước */}
-                        <div style={{ padding: '30px 24px', backgroundColor: '#FDFBFF', borderBottom: '1px solid #E5E7EB', overflowX: 'auto' }}>
+                        <div style={{ padding: '30px 24px', backgroundColor: 'var(--bg-subtle-purple, #FDFBFF)', borderBottom: '1px solid var(--border-color, #E5E7EB)', overflowX: 'auto' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', minWidth: '700px' }}>
                             
                             {/* Line nối */}
@@ -643,7 +651,7 @@ export default function UserProfilePage() {
                               left: '5%',
                               right: '5%',
                               height: '3px',
-                              backgroundColor: '#E5E7EB',
+                              backgroundColor: 'var(--border-color, #E5E7EB)',
                               zIndex: 1
                             }}>
                               <div style={{
@@ -665,9 +673,9 @@ export default function UserProfilePage() {
                                     width: '32px',
                                     height: '32px',
                                     borderRadius: '50%',
-                                    backgroundColor: isCompleted ? 'var(--purple-primary)' : '#FFF',
-                                    color: isCompleted ? '#FFF' : '#9CA3AF',
-                                    border: isCompleted ? '2px solid var(--purple-primary)' : '2px solid #E5E7EB',
+                                    backgroundColor: isCompleted ? 'var(--purple-primary)' : 'var(--bg-white, #FFF)',
+                                    color: isCompleted ? '#FFF' : 'var(--text-muted, #9CA3AF)',
+                                    border: isCompleted ? '2px solid var(--purple-primary)' : '2px solid var(--border-color, #E5E7EB)',
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -819,6 +827,164 @@ export default function UserProfilePage() {
                 </div>
               )}
 
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB 4: CÀI ĐẶT & GIAO DIỆN HIỂN THỊ (SETTINGS & THEME)         */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {activeTab === 'settings' && (
+            <div>
+              <h3 style={{ margin: '0 0 10px 0', fontSize: '1.25rem', fontWeight: 700, color: 'var(--purple-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Settings size={22} />
+                CÀI ĐẶT & GIAO DIỆN HIỂN THỊ
+              </h3>
+              <p style={{ margin: '0 0 24px 0', fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                Tùy chỉnh giao diện theo sở thích để có trải nghiệm mua sắm thoải mái và thuận mắt nhất. Cài đặt được lưu riêng cho trình duyệt này.
+              </p>
+
+              {/* Theme Selection Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '28px' }}>
+                {/* 1. Light Mode Card */}
+                <div 
+                  onClick={() => setUserTheme('light')}
+                  style={{
+                    border: userTheme === 'light' ? '2px solid var(--purple-primary)' : '1px solid var(--border-color)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    cursor: 'pointer',
+                    backgroundColor: userTheme === 'light' ? 'rgba(122, 75, 158, 0.06)' : 'var(--bg-white)',
+                    boxShadow: userTheme === 'light' ? '0 4px 14px rgba(122, 75, 158, 0.12)' : 'none',
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
+                  }}
+                >
+                  {userTheme === 'light' && (
+                    <span style={{
+                      position: 'absolute', top: '14px', right: '14px',
+                      backgroundColor: 'var(--purple-primary)', color: '#FFF',
+                      fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px',
+                      borderRadius: '20px'
+                    }}>
+                      ✓ Đang dùng
+                    </span>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{
+                      width: '42px', height: '42px', borderRadius: '12px',
+                      backgroundColor: '#FEF3C7', color: '#D97706',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      <Sun size={24} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-dark)' }}>
+                        Chế độ Sáng (Light)
+                      </h4>
+                      <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Mặc định tinh tế</span>
+                    </div>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                    Tông màu ngà ấm áp (Ivory & Gold), phù hợp sử dụng vào ban ngày và nơi có đầy đủ ánh sáng tự nhiên.
+                  </p>
+                </div>
+
+                {/* 2. Dark Mode Card */}
+                <div 
+                  onClick={() => setUserTheme('dark')}
+                  style={{
+                    border: userTheme === 'dark' ? '2px solid var(--purple-primary)' : '1px solid var(--border-color)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    cursor: 'pointer',
+                    backgroundColor: userTheme === 'dark' ? 'rgba(157, 104, 202, 0.12)' : 'var(--bg-white)',
+                    boxShadow: userTheme === 'dark' ? '0 4px 14px rgba(157, 104, 202, 0.18)' : 'none',
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
+                  }}
+                >
+                  {userTheme === 'dark' && (
+                    <span style={{
+                      position: 'absolute', top: '14px', right: '14px',
+                      backgroundColor: 'var(--purple-primary)', color: '#FFF',
+                      fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px',
+                      borderRadius: '20px'
+                    }}>
+                      ✓ Đang dùng
+                    </span>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{
+                      width: '42px', height: '42px', borderRadius: '12px',
+                      backgroundColor: '#312E81', color: '#A5B4FC',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      <Moon size={24} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-dark)' }}>
+                        Chế độ Tối (Dark)
+                      </h4>
+                      <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Neutral Dark Slate</span>
+                    </div>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                    Tông màu đen chì dịu mắt, độ tương phản cao, giúp giảm chói lóa và chống mỏi mắt khi mua sắm ban đêm.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Toggle Switch Banner */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                borderRadius: '12px',
+                backgroundColor: 'var(--bg-subtle-purple)',
+                border: '1px solid var(--border-color)'
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-dark)' }}>
+                    Bật Chế Độ Tối (Dark Mode)
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {userTheme === 'dark' ? 'Đang bật - Giúp bảo vệ mắt khi mua sắm ban đêm' : 'Đang tắt - Đang hiển thị giao diện ban ngày'}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={toggleUserTheme}
+                  style={{
+                    width: '54px',
+                    height: '30px',
+                    borderRadius: '15px',
+                    backgroundColor: userTheme === 'dark' ? 'var(--purple-primary)' : '#CBD5E1',
+                    border: 'none',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.25s ease',
+                    padding: '3px'
+                  }}
+                  aria-label="Công tắc bật tắt chế độ tối"
+                >
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    backgroundColor: '#FFF',
+                    transform: userTheme === 'dark' ? 'translateX(24px)' : 'translateX(0)',
+                    transition: 'transform 0.25s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  }}>
+                    {userTheme === 'dark' ? <Moon size={13} color="var(--purple-primary)" /> : <Sun size={13} color="#F59E0B" />}
+                  </div>
+                </button>
+              </div>
             </div>
           )}
 

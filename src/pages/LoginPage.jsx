@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div style={{
         width: '100%',
         maxWidth: '440px',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--bg-white, #FFFFFF)',
         borderRadius: '20px',
         border: '1px solid var(--border-color)',
         boxShadow: 'var(--shadow-md)',
@@ -163,6 +163,8 @@ export default function LoginPage() {
                   padding: '12px 14px',
                   borderRadius: '10px',
                   border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-white, #FFF)',
+                  color: 'var(--text-dark)',
                   fontSize: '0.9rem',
                   outline: 'none'
                 }}
@@ -185,6 +187,8 @@ export default function LoginPage() {
                 padding: '12px 14px',
                 borderRadius: '10px',
                 border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-white, #FFF)',
+                color: 'var(--text-dark)',
                 fontSize: '0.9rem',
                 outline: 'none'
               }}
@@ -206,6 +210,8 @@ export default function LoginPage() {
                 padding: '12px 14px',
                 borderRadius: '10px',
                 border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-white, #FFF)',
+                color: 'var(--text-dark)',
                 fontSize: '0.9rem',
                 outline: 'none'
               }}
@@ -247,7 +253,7 @@ export default function LoginPage() {
               padding: '12px',
               borderRadius: '10px',
               border: '1px solid var(--border-color)',
-              backgroundColor: '#FFF',
+              backgroundColor: 'var(--bg-white, #FFF)',
               color: 'var(--text-dark)',
               fontSize: '0.85rem',
               fontWeight: 600,

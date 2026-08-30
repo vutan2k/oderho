@@ -133,12 +133,12 @@ export default function PaymentPage() {
 
   if (errorNotFound || !order) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9F6FA' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark)' }}>
         <Helmet><title>Không tìm thấy đơn hàng - TAVY Korea</title></Helmet>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ textAlign: 'center', background: '#fff', padding: '40px', borderRadius: '24px', maxWidth: '450px', width: '100%', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ fontSize: '1.4rem', color: '#1a1a2e', marginBottom: '12px' }}>Không tìm thấy đơn hàng</h3>
-            <p style={{ color: '#6b7280', marginBottom: '24px', fontSize: '0.95rem' }}>Mã đơn hàng <strong>{orderId}</strong> không tồn tại hoặc đã bị hủy.</p>
+          <div style={{ textAlign: 'center', background: 'var(--bg-white, #fff)', border: '1px solid var(--border-color)', padding: '40px', borderRadius: '24px', maxWidth: '450px', width: '100%', boxShadow: 'var(--shadow-md)' }}>
+            <h3 style={{ fontSize: '1.4rem', color: 'var(--text-dark, #1a1a2e)', marginBottom: '12px' }}>Không tìm thấy đơn hàng</h3>
+            <p style={{ color: 'var(--text-muted, #6b7280)', marginBottom: '24px', fontSize: '0.95rem' }}>Mã đơn hàng <strong>{orderId}</strong> không tồn tại hoặc đã bị hủy.</p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button onClick={() => navigate('/')} className="btn-outline">Về trang chủ</button>
               <button onClick={() => navigate('/orders')} className="btn-primary">Danh sách đơn</button>
@@ -153,13 +153,13 @@ export default function PaymentPage() {
   // Đã thanh toán
   if (order.paymentStatus === 'paid') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9F6FA' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark)' }}>
         <Helmet><title>Thanh toán thành công - TAVY Korea</title></Helmet>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', background: '#fff', padding: '50px', borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
+          <div style={{ textAlign: 'center', background: 'var(--bg-white, #fff)', border: '1px solid var(--border-color)', padding: '50px', borderRadius: '24px', boxShadow: 'var(--shadow-md)' }}>
             <CheckCircle size={64} color="#10B981" style={{ margin: '0 auto 20px' }} />
-            <h2 style={{ fontSize: '1.8rem', color: '#1a1a2e', marginBottom: '12px' }}>Thanh toán thành công!</h2>
-            <p style={{ color: '#6b7280', marginBottom: '24px' }}>Đơn hàng <strong>{orderId}</strong> đã được xác nhận thanh toán.</p>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-dark, #1a1a2e)', marginBottom: '12px' }}>Thanh toán thành công!</h2>
+            <p style={{ color: 'var(--text-muted, #6b7280)', marginBottom: '24px' }}>Đơn hàng <strong>{orderId}</strong> đã được xác nhận thanh toán.</p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button onClick={() => navigate('/')} className="btn-outline">Về trang chủ</button>
               <button onClick={() => navigate('/orders')} className="btn-primary">Xem đơn hàng</button>
@@ -188,9 +188,9 @@ export default function PaymentPage() {
   const isUrgent = timeLeft > 0 && timeLeft < 3 * 60 * 1000 && order.status !== 'cancelled';
 
   const s = {
-    page: { minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9F6FA' },
+    page: { minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark)' },
     main: { flex: 1, padding: '40px 24px', maxWidth: '980px', margin: '0 auto', width: '100%' },
-    card: { background: '#fff', borderRadius: '20px', padding: '28px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
+    card: { background: 'var(--bg-white, #fff)', border: '1px solid var(--border-color, rgba(0,0,0,0.06))', borderRadius: '20px', padding: '28px', boxShadow: 'var(--shadow-md)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
     header: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' },
     timer: {
       display: 'inline-flex', alignItems: 'center', gap: '8px',
@@ -198,14 +198,14 @@ export default function PaymentPage() {
       background: isExpired ? '#FEE2E2' : isUrgent ? '#FEF3C7' : '#ECFDF5',
       color: isExpired ? '#DC2626' : isUrgent ? '#D97706' : '#059669',
     },
-    bankRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f3f4f6' },
-    bankLabel: { color: '#6b7280', fontSize: '0.9rem' },
-    bankValue: { fontWeight: 700, color: '#1a1a2e', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' },
+    bankRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border-color, #f3f4f6)' },
+    bankLabel: { color: 'var(--text-muted, #6b7280)', fontSize: '0.9rem' },
+    bankValue: { fontWeight: 700, color: 'var(--text-dark, #1a1a2e)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' },
     copyBtn: {
-      background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px 8px',
-      cursor: 'pointer', color: '#6b7280', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px',
+      background: 'none', border: '1px solid var(--border-color, #e5e7eb)', borderRadius: '6px', padding: '4px 8px',
+      cursor: 'pointer', color: 'var(--text-muted, #6b7280)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px',
     },
-    qrWrap: { textAlign: 'center', padding: '16px', background: '#FAFAFA', borderRadius: '16px', margin: '16px 0', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
+    qrWrap: { textAlign: 'center', padding: '16px', background: 'var(--bg-subtle-purple, #FAFAFA)', border: '1px solid var(--border-color, rgba(0,0,0,0.06))', borderRadius: '16px', margin: '16px 0', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
   };
 
   return (
@@ -216,7 +216,7 @@ export default function PaymentPage() {
         {/* Header */}
         <div style={s.header}>
           <CreditCard size={28} color="var(--purple-primary)" />
-          <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-serif)', color: '#1a1a2e', margin: 0 }}>Thanh toán đơn hàng</h1>
+          <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark, #1a1a2e)', margin: 0 }}>Thanh toán đơn hàng</h1>
         </div>
 
         {/* Timer & Renew Button */}
@@ -225,27 +225,27 @@ export default function PaymentPage() {
             <Clock size={20} />
             {isExpired ? 'Đơn hàng đã bị hủy do quá hạn 15 phút!' : formatTime(timeLeft)}
           </div>
-          <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '8px' }}>
+          <p style={{ color: 'var(--text-muted, #6b7280)', fontSize: '0.85rem', marginTop: '8px' }}>
             {isExpired ? 'Đơn hàng đã tự động hủy. Vui lòng tạo đơn hàng mới nếu bạn vẫn muốn mua sản phẩm.' : 'Vui lòng chuyển khoản trong thời gian trên'}
           </p>
         </div>
 
         {/* Thông báo giải thích rõ ràng về giá & thanh toán 1 lần */}
         <div style={{
-          backgroundColor: '#FAF5FF',
-          border: '1px solid #E9D5FF',
+          backgroundColor: 'var(--bg-subtle-purple, #FAF5FF)',
+          border: '1px solid var(--border-color, #E9D5FF)',
           borderRadius: '14px',
           padding: '14px 18px',
           marginBottom: '24px',
           fontSize: '0.86rem',
-          color: '#581C87',
+          color: 'var(--text-dark, #581C87)',
           lineHeight: '1.55',
-          boxShadow: '0 2px 8px rgba(122, 75, 158, 0.05)'
+          boxShadow: 'var(--shadow-sm)'
         }}>
-          <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '0.9rem' }}>
+          <div style={{ fontWeight: 800, marginBottom: '6px', fontSize: '0.9rem', color: 'var(--purple-dark, #581C87)' }}>
             Thông tin thanh toán & Giá về tay:
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', color: 'var(--text-muted)' }}>
             <div>• <strong>Giá tại Hàn (Won ₩):</strong> Là giá gốc niêm yết khi mua trực tiếp tại Store Olive Young / Hàn Quốc.</div>
             <div>• <strong>Giá VNĐ về tay:</strong> Đã bao gồm tiền hàng gốc, tỷ giá và phí dịch vụ mua hộ trọn gói (toàn bộ tiền vận chuyển 2 đầu đã nằm tất cả trong phí dịch vụ, quý khách chỉ thanh toán 1 lần duy nhất).</div>
           </div>
@@ -257,7 +257,7 @@ export default function PaymentPage() {
           {/* 1. BẢNG CHUYỂN KHOẢN VND */}
           <div style={s.card}>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1a1a2e' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-dark, #1a1a2e)' }}>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   width: '24px', height: '24px', borderRadius: '50%',
@@ -268,7 +268,7 @@ export default function PaymentPage() {
 
               <div style={s.qrWrap}>
                 <img src={qrVnUrl} alt="VietQR Chuyển khoản VND" width={200} height={200} style={{ borderRadius: '12px', objectFit: 'contain' }} />
-                <p style={{ color: '#6b7280', fontSize: '0.82rem', marginTop: '8px', fontWeight: 600 }}>Quét mã QR để chuyển khoản VND tự động</p>
+                <p style={{ color: 'var(--text-muted, #6b7280)', fontSize: '0.82rem', marginTop: '8px', fontWeight: 600 }}>Quét mã QR để chuyển khoản VND tự động</p>
               </div>
             </div>
 
@@ -277,7 +277,7 @@ export default function PaymentPage() {
                 <span style={s.bankLabel}>Số tiền cần chuyển</span>
                 <span style={{ ...s.bankValue, color: '#2563EB', fontSize: '1.05rem', fontWeight: 800 }}>
                   {transferVnd.toLocaleString()} đ
-                  <button style={{ ...s.copyBtn, background: '#EFF6FF', color: '#2563EB', borderColor: '#BFDBFE', fontWeight: 700 }} onClick={() => copyToClipboard(transferVnd.toString(), 'amount_vn')}>
+                  <button style={{ ...s.copyBtn, background: 'var(--bg-subtle-purple, #EFF6FF)', color: '#2563EB', borderColor: 'var(--border-color, #BFDBFE)', fontWeight: 700 }} onClick={() => copyToClipboard(transferVnd.toString(), 'amount_vn')}>
                     <Copy size={12} /> {copied === 'amount_vn' ? 'Đã copy!' : 'Copy tiền'}
                   </button>
                 </span>
@@ -305,7 +305,7 @@ export default function PaymentPage() {
           {/* 2. BẢNG CHUYỂN KHOẢN KRW */}
           <div style={s.card}>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1a1a2e' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-dark, #1a1a2e)' }}>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   width: '24px', height: '24px', borderRadius: '50%',

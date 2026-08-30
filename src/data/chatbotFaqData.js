@@ -9,8 +9,8 @@ export const CHATBOT_QUICK_ACTIONS = [
     label: 'Tra cứu đơn hàng',
     shortLabel: 'Tra cứu đơn',
     icon: 'PackageSearch',
-    color: '#7A4B9E',
-    bgColor: '#FAF5FF',
+    color: '#00CC00',
+    bgColor: '#F0FDF4',
     actionType: 'view',
     view: 'lookup_order'
   },
@@ -49,8 +49,8 @@ export const CHATBOT_QUICK_ACTIONS = [
     label: 'Thanh toán VietQR & KRW',
     shortLabel: 'STK Chuyển khoản',
     icon: 'CreditCard',
-    color: '#9333EA',
-    bgColor: '#FAF5FF',
+    color: '#00AA00',
+    bgColor: '#F0FDF4',
     actionType: 'reply',
     replyKey: 'payment_info'
   },
@@ -80,7 +80,7 @@ export const CHATBOT_REPLIES = {
 3. TAVY duyệt đơn & lên lịch mua tại Hàn.
 4. Mua hàng tại Store Hàn (Có Video POV + Hóa đơn).
 5. Đóng kiện tại kho Seoul (Bọc 3 lớp + Cân ký + Video).
-6. Bay Air Incheon ✈️ VN trong 3-5 ngày làm việc (Có mã AWB).
+6. Bay Air Incheon ✈️ VN trong 3-7 ngày làm việc (Có mã AWB).
 7. Thông quan hải quan và chuyển về kho nội địa.
 8. Giao hàng tận tay khách hàng & hoàn tất.`,
     suggestedActions: ['lookup_order', 'faq_refund', 'open_facebook']
@@ -90,7 +90,7 @@ export const CHATBOT_REPLIES = {
     title: '💵 Cách tính giá về tay & Tỷ giá Won:',
     text: `• Công thức: Giá về tay = (Giá Won x Tỷ giá KRW) + Phí dịch vụ (nếu có) + Cước vận chuyển.
 • Tỷ giá tham khảo: 19.0 - 20.0 VNĐ / Won (cập nhật realtime theo biến động thị trường).
-• Cước bay Air Hàn - Việt: Siêu tốc 3-5 ngày làm việc.`,
+• Cước bay Air Hàn - Việt: Siêu tốc 3-7 ngày làm việc.`,
     suggestedActions: ['consult_product', 'faq_payment', 'open_facebook']
   },
 

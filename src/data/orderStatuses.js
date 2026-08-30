@@ -70,7 +70,7 @@ export const ORDER_STATUSES = {
     bgColor: '#CFFAFE',
     borderColor: '#06B6D4',
     stepIndex: 5,
-    desc: 'Hàng bay chuyên tuyến Incheon ✈️ Hà Nội / TP.HCM trong 3-5 ngày.'
+    desc: 'Hàng bay chuyên tuyến Incheon ✈️ Hà Nội / TP.HCM trong 3-7 ngày.'
   },
   customs_cleared: {
     id: 'customs_cleared',

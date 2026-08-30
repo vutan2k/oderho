@@ -13,33 +13,36 @@ export default function AdminProductModal({
   onDelete,
   onApprove, // Dành cho hàng chờ duyệt
   rates,
-  isPending = false
+  isPending = false,
+  isDark: isDarkProp
 }) {
-  if (!isOpen || !product) return null;
+  const isDark = isDarkProp !== undefined
+    ? isDarkProp
+    : (typeof window !== 'undefined' && localStorage.getItem('tavy_admin_theme') === 'dark');
 
   const krwRate = rates?.KRW?.rate || 19.5;
   const serviceFee = rates?.serviceFeePercent || 5;
 
-  const [formData, setFormData] = useState({
-    goodsNo: product.goodsNo || product.id || `P-${Date.now()}`,
-    name: product.name || '',
-    nameKr: product.nameKr || product.koreanTitle || '',
-    brand: product.brand || '',
-    category: product.category || 'ginseng',
-    foreignPrice: product.foreignPrice || product.price || 30000,
-    productImage: product.productImage || '',
-    images: Array.isArray(product.images) ? product.images : (product.productImage ? [product.productImage] : []),
-    rating: product.rating || 4.9,
-    reviewsCount: product.reviewsCount || 120,
-    origin: product.origin || 'Hàn Quốc',
-    description: product.description || '',
-    usage: product.usage || '',
-    activeIngredients: Array.isArray(product.activeIngredients) ? product.activeIngredients.join(', ') : (product.activeIngredients || ''),
-    isOutOfStock: Boolean(product.isOutOfStock),
-    isHidden: Boolean(product.isHidden),
-    isVerifiedHealthFood: product.isVerifiedHealthFood ?? true,
-    isGmpCertified: product.isGmpCertified ?? true
-  });
+  const [formData, setFormData] = useState(() => ({
+    goodsNo: product?.goodsNo || product?.id || `P-${Date.now()}`,
+    name: product?.name || '',
+    nameKr: product?.nameKr || product?.koreanTitle || '',
+    brand: product?.brand || '',
+    category: product?.category || 'ginseng',
+    foreignPrice: product?.foreignPrice || product?.price || 30000,
+    productImage: product?.productImage || '',
+    images: Array.isArray(product?.images) ? product.images : (product?.productImage ? [product.productImage] : []),
+    rating: product?.rating || 4.9,
+    reviewsCount: product?.reviewsCount || 120,
+    origin: product?.origin || 'Hàn Quốc',
+    description: product?.description || '',
+    usage: product?.usage || '',
+    activeIngredients: Array.isArray(product?.activeIngredients) ? product.activeIngredients.join(', ') : (product?.activeIngredients || ''),
+    isOutOfStock: Boolean(product?.isOutOfStock),
+    isHidden: Boolean(product?.isHidden),
+    isVerifiedHealthFood: product?.isVerifiedHealthFood ?? true,
+    isGmpCertified: product?.isGmpCertified ?? true
+  }));
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -74,6 +77,8 @@ export default function AdminProductModal({
     const vnd = Math.round(won * krwRate * (1 + serviceFee / 100));
     return vnd;
   }, [formData.foreignPrice, krwRate, serviceFee]);
+
+  if (!isOpen || !product) return null;
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -160,16 +165,16 @@ export default function AdminProductModal({
     >
       <div
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
           borderRadius: '16px',
           width: '100%',
           maxWidth: '780px',
           maxHeight: '92vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
-          border: '1px solid #E2E8F0'
+          border: isDark ? '1px solid #334155' : '1px solid #E2E8F0'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -177,7 +182,7 @@ export default function AdminProductModal({
         <div
           style={{
             padding: '18px 24px',
-            borderBottom: '1px solid #E2E8F0',
+            borderBottom: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
             backgroundColor: '#0F172A',
             color: '#FFFFFF',
             display: 'flex',
@@ -237,8 +242,8 @@ export default function AdminProductModal({
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', flex: 1, padding: '24px', gap: '20px' }}>
           {/* Quick Price & Status Banner */}
           <div style={{
-            backgroundColor: '#F8FAFC',
-            border: '1px solid #E2E8F0',
+            backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+            border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
             borderRadius: '12px',
             padding: '16px',
             display: 'grid',
@@ -247,7 +252,7 @@ export default function AdminProductModal({
             alignItems: 'center'
           }}>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
                 Giá Gốc Won (KRW)
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -260,48 +265,50 @@ export default function AdminProductModal({
                   style={{
                     padding: '8px 12px',
                     borderRadius: '8px',
-                    border: '1px solid #CBD5E1',
+                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#1E293B' : '#FFF',
+                    color: isDark ? '#F8FAFC' : '#0F172A',
                     fontSize: '1rem',
                     fontWeight: 800,
                     width: '130px',
-                    color: '#0F172A'
+                    outline: 'none'
                   }}
                 />
-                <span style={{ fontWeight: 800, color: '#64748B' }}>₩</span>
+                <span style={{ fontWeight: 800, color: isDark ? '#94A3B8' : '#64748B' }}>₩</span>
               </div>
             </div>
 
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
                 Giá Bán VNĐ Ước Tính
               </label>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2563EB' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#38BDF8' }}>
                 {calculatedVnd.toLocaleString('vi-VN')} đ
               </div>
-              <div style={{ fontSize: '0.7rem', color: '#64748B', marginTop: '2px' }}>
+              <div style={{ fontSize: '0.7rem', color: isDark ? '#94A3B8' : '#64748B', marginTop: '2px' }}>
                 Tỷ giá: 1 KRW = {krwRate}đ (Phí {serviceFee}%)
               </div>
             </div>
 
             {/* Quick Status Toggles */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700, color: formData.isOutOfStock ? '#DC2626' : '#059669' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700, color: formData.isOutOfStock ? '#EF4444' : '#10B981' }}>
                 <input
                   type="checkbox"
                   checked={formData.isOutOfStock}
                   onChange={(e) => handleChange('isOutOfStock', e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: '#DC2626' }}
+                  style={{ width: '16px', height: '16px', accentColor: '#EF4444' }}
                 />
                 <span>{formData.isOutOfStock ? 'Đang tạm hết hàng (Out of Stock)' : 'Còn hàng trong kho'}</span>
               </label>
 
               {!isPending && (
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700, color: formData.isHidden ? '#94A3B8' : '#2563EB' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700, color: formData.isHidden ? (isDark ? '#94A3B8' : '#64748B') : '#38BDF8' }}>
                   <input
                     type="checkbox"
                     checked={formData.isHidden}
                     onChange={(e) => handleChange('isHidden', e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#2563EB' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#38BDF8' }}
                   />
                   <span>{formData.isHidden ? 'Tạm ẩn khỏi Website' : 'Đang hiển thị trên Website'}</span>
                 </label>
@@ -313,15 +320,15 @@ export default function AdminProductModal({
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 240px) 1fr', gap: '20px' }}>
             {/* Image Preview & URL */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A' }}>
                 Ảnh Sản Phẩm (HD)
               </label>
               <div style={{
                 width: '100%',
                 height: '210px',
                 borderRadius: '10px',
-                border: '1px solid #E2E8F0',
-                backgroundColor: '#F8FAFC',
+                border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+                backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
                 overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
@@ -354,8 +361,11 @@ export default function AdminProductModal({
                     width: '100%',
                     padding: '8px 10px',
                     borderRadius: '8px',
-                    border: '1px solid #CBD5E1',
-                    fontSize: '0.78rem'
+                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#FFF',
+                    color: isDark ? '#F8FAFC' : '#0F172A',
+                    fontSize: '0.78rem',
+                    outline: 'none'
                   }}
                 />
               </div>
@@ -365,7 +375,7 @@ export default function AdminProductModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {/* Product Name VN */}
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', display: 'block', marginBottom: '4px' }}>
                   Tên Sản Phẩm (Tiếng Việt) *
                 </label>
                 <input
@@ -378,9 +388,12 @@ export default function AdminProductModal({
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: '8px',
-                    border: '1px solid #CBD5E1',
+                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#FFF',
+                    color: isDark ? '#F8FAFC' : '#0F172A',
                     fontSize: '0.9rem',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    outline: 'none'
                   }}
                 />
               </div>
@@ -388,7 +401,7 @@ export default function AdminProductModal({
               {/* Korean Name & Brand */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', display: 'block', marginBottom: '4px' }}>
                     Tên Gốc (Tiếng Hàn)
                   </label>
                   <input
@@ -400,14 +413,17 @@ export default function AdminProductModal({
                       width: '100%',
                       padding: '8px 10px',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.82rem'
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#0F172A' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '0.82rem',
+                      outline: 'none'
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', display: 'block', marginBottom: '4px' }}>
                     Thương Hiệu (Brand)
                   </label>
                   <input
@@ -419,8 +435,11 @@ export default function AdminProductModal({
                       width: '100%',
                       padding: '8px 10px',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.82rem'
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#0F172A' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '0.82rem',
+                      outline: 'none'
                     }}
                   />
                 </div>
@@ -429,7 +448,7 @@ export default function AdminProductModal({
               {/* Category & Origin */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', display: 'block', marginBottom: '4px' }}>
                     Phân Loại Ngành Hàng
                   </label>
                   <select
@@ -439,10 +458,12 @@ export default function AdminProductModal({
                       width: '100%',
                       padding: '8px 10px',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#0F172A' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
                       fontSize: '0.85rem',
                       fontWeight: 700,
-                      backgroundColor: '#FFF'
+                      outline: 'none'
                     }}
                   >
                     <option value="ginseng">Sâm Nấm Hàn Quốc</option>
@@ -454,7 +475,7 @@ export default function AdminProductModal({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', display: 'block', marginBottom: '4px' }}>
                     Xuất Xứ
                   </label>
                   <input
@@ -466,8 +487,11 @@ export default function AdminProductModal({
                       width: '100%',
                       padding: '8px 10px',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.85rem'
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#0F172A' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '0.85rem',
+                      outline: 'none'
                     }}
                   />
                 </div>
@@ -476,7 +500,7 @@ export default function AdminProductModal({
               {/* Rating & Reviews */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', display: 'block', marginBottom: '4px' }}>
                     Đánh Giá Sao
                   </label>
                   <input
@@ -490,14 +514,17 @@ export default function AdminProductModal({
                       width: '100%',
                       padding: '8px 10px',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.85rem'
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#0F172A' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '0.85rem',
+                      outline: 'none'
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', display: 'block', marginBottom: '4px' }}>
                     Số Lượt Đánh Giá
                   </label>
                   <input
@@ -509,8 +536,11 @@ export default function AdminProductModal({
                       width: '100%',
                       padding: '8px 10px',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.85rem'
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#0F172A' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '0.85rem',
+                      outline: 'none'
                     }}
                   />
                 </div>
@@ -521,7 +551,7 @@ export default function AdminProductModal({
           {/* Active Ingredients & Usage */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', display: 'block', marginBottom: '4px' }}>
                 Hoạt Chất Chính / Thành Phần Nổi Bật (Phân cách bằng dấu phẩy)
               </label>
               <input
@@ -533,14 +563,17 @@ export default function AdminProductModal({
                   width: '100%',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #CBD5E1',
-                  fontSize: '0.82rem'
+                  border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                  backgroundColor: isDark ? '#0F172A' : '#FFF',
+                  color: isDark ? '#F8FAFC' : '#0F172A',
+                  fontSize: '0.82rem',
+                  outline: 'none'
                 }}
               />
             </div>
 
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#CBD5E1' : '#475569', display: 'block', marginBottom: '4px' }}>
                 Mô Tả Sản Phẩm & Hướng Dẫn Sử Dụng
               </label>
               <textarea
@@ -552,9 +585,12 @@ export default function AdminProductModal({
                   width: '100%',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #CBD5E1',
+                  border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                  backgroundColor: isDark ? '#0F172A' : '#FFF',
+                  color: isDark ? '#F8FAFC' : '#0F172A',
                   fontSize: '0.82rem',
-                  resize: 'vertical'
+                  resize: 'vertical',
+                  outline: 'none'
                 }}
               />
             </div>
@@ -565,8 +601,8 @@ export default function AdminProductModal({
         <div
           style={{
             padding: '16px 24px',
-            borderTop: '1px solid #E2E8F0',
-            backgroundColor: '#F8FAFC',
+            borderTop: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+            backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -579,9 +615,9 @@ export default function AdminProductModal({
               type="button"
               onClick={() => onDelete(formData.goodsNo)}
               style={{
-                backgroundColor: '#FEE2E2',
-                color: '#DC2626',
-                border: 'none',
+                backgroundColor: isDark ? '#450A0A' : '#FEE2E2',
+                color: '#EF4444',
+                border: isDark ? '1px solid #7F1D1D' : 'none',
                 borderRadius: '8px',
                 padding: '8px 14px',
                 fontSize: '0.82rem',
@@ -602,9 +638,9 @@ export default function AdminProductModal({
               type="button"
               onClick={onClose}
               style={{
-                backgroundColor: '#FFF',
-                color: '#64748B',
-                border: '1px solid #CBD5E1',
+                backgroundColor: isDark ? '#1E293B' : '#FFF',
+                color: isDark ? '#CBD5E1' : '#64748B',
+                border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
                 borderRadius: '8px',
                 padding: '8px 16px',
                 fontSize: '0.85rem',
