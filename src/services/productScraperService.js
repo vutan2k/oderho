@@ -4,7 +4,7 @@
  * KNOWN_KOREAN_GOODS_DB cache for verified products with Korean & Vietnamese names.
  */
 
-const KNOWN_KOREAN_GOODS_DB = {
+export const KNOWN_KOREAN_GOODS_DB = {
   'A000000117541': {
     name: 'Sữa dưỡng thể toàn diện ULOS All-In-One 200ml (Dành cho Nam)',
     nameKr: '[베스트 올인원]우르오스 올인원 200ml 2종 택 1',
@@ -239,6 +239,7 @@ import {
   parseOliveYoungPrices,
   classifyCosmeticsCategory
 } from './oliveYoungScraperCore.js';
+import { VERIFIED_OLIVEYOUNG_PRICES } from './oliveYoungPriceSyncService.js';
 
 /** Clean Korean promotional brackets [단독/기획] [1+1] etc */
 export const cleanKoreanTitle = (raw) => {
@@ -304,24 +305,67 @@ export const lookupKnownGoods = async (url) => {
   if (!url || !url.trim()) return { success: false };
   const goodsNoMatch = url.trim().match(/goodsNo=([A-Z0-9]+)/i);
   const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : null;
-  if (!goodsNo || !KNOWN_KOREAN_GOODS_DB[goodsNo]) return { success: false };
-  const known = KNOWN_KOREAN_GOODS_DB[goodsNo];
-  return {
-    success: true,
-    product: {
-      goodsNo,
-      name: known.name,
-      nameKr: known.nameKr || known.name,
-      brand: known.brand,
-      brandKr: known.brandKr || known.brand,
-      category: known.category,
-      foreignPrice: known.foreignPrice,
-      productImage: known.productImage,
-      description: known.description,
-      origin: known.origin,
-      rating: known.rating,
-      productUrl: url.trim(),
-      reviewsCount: Number(known.reviewsCount) || 0
-    }
-  };
+  if (!goodsNo) return { success: false };
+
+  // 1. Kiểm tra KNOWN_KOREAN_GOODS_DB
+  if (KNOWN_KOREAN_GOODS_DB[goodsNo]) {
+    const known = KNOWN_KOREAN_GOODS_DB[goodsNo];
+    const image = cleanHighResImageUrl(known.productImage);
+    return {
+      success: true,
+      product: {
+        goodsNo,
+        name: known.name,
+        nameKr: known.nameKr || known.name,
+        brand: known.brand,
+        brandKr: known.brandKr || known.brand,
+        category: known.category || 'cosmetics',
+        foreignPrice: Number(known.foreignPrice) || 25000,
+        originalPrice: Number(known.originalPrice) || Number(known.foreignPrice) || 25000,
+        discountPercent: Number(known.discountPercent) || 0,
+        productImage: image,
+        images: [image],
+        photoReviews: [],
+        ingredients: [],
+        description: known.description || `Sản phẩm chính hãng Olive Young Hàn Quốc (Mã: ${goodsNo})`,
+        origin: known.origin || 'Store Olive Young Seoul, Hàn Quốc',
+        rating: Number(known.rating) || 4.9,
+        productUrl: url.trim(),
+        reviewsCount: Number(known.reviewsCount) || 100,
+        source: 'oliveyoung'
+      }
+    };
+  }
+
+  // 2. Kiểm tra VERIFIED_OLIVEYOUNG_PRICES
+  if (VERIFIED_OLIVEYOUNG_PRICES && VERIFIED_OLIVEYOUNG_PRICES[goodsNo]) {
+    const verified = VERIFIED_OLIVEYOUNG_PRICES[goodsNo];
+    const defaultImg = `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/0022/${goodsNo}01ko.jpg`;
+    return {
+      success: true,
+      product: {
+        goodsNo,
+        name: verified.name,
+        nameKr: verified.nameKr || verified.name,
+        brand: verified.brand || 'Olive Young',
+        brandKr: verified.brand || '올리브영',
+        category: verified.category || 'cosmetics',
+        foreignPrice: Number(verified.foreignPrice) || 20000,
+        originalPrice: Number(verified.originalPrice) || Number(verified.foreignPrice) || 20000,
+        discountPercent: Number(verified.discountPercent) || 0,
+        productImage: defaultImg,
+        images: [defaultImg],
+        photoReviews: [],
+        ingredients: [],
+        description: `Sản phẩm chính hãng Olive Young Hàn Quốc (Mã: ${goodsNo})`,
+        origin: 'Store Olive Young Seoul, Hàn Quốc',
+        rating: 4.9,
+        productUrl: url.trim(),
+        reviewsCount: 150,
+        source: 'oliveyoung'
+      }
+    };
+  }
+
+  return { success: false };
 };

@@ -160,24 +160,35 @@ export const parseOliveYoungPrices = (domOrText, defaultPrice = 25000) => {
   let discountPercent = 0;
 
   if (typeof domOrText === 'string') {
-    // 1. Phân tích giá từ text hoặc markdown
-    // Pattern Sale Price: 23,700원 hoặc ~~29,700원~~ 20% 23,700원
-    const saleMatch = domOrText.match(/(?:할인가|판매가|현재가|Sale Price)?\s*[:\s]*([0-9]{1,3}(?:,[0-9]{3})+)\s*원/i)
-      || domOrText.match(/([0-9]{1,3}(?:,[0-9]{3})+)\s*원(?:\s*\(10[mg]l당)?/i);
+    // 1. Phân tích giá từ text hoặc markdown (Jina AI / HTML text)
+    // Pattern Original Price: ~~20,000 원~~ hoặc ~~29,700원~~
+    const origMatch = domOrText.match(/~~([0-9]{1,3}(?:,[0-9]{3})+)\s*원~~/i)
+      || domOrText.match(/(?:정가|소비자가|정상가|Original Price)\s*[:\s]*~*([0-9]{1,3}(?:,[0-9]{3})+)\s*원~*/i);
 
-    const origMatch = domOrText.match(/(?:정가|소비자가|정상가|Original Price)?\s*[:\s]*~*([0-9]{1,3}(?:,[0-9]{3})+)\s*원~*/i)
-      || domOrText.match(/~~([0-9]{1,3}(?:,[0-9]{3})+)원~~/i);
+    // Pattern Discount Percent: _50%_ hoặc 50%
+    const pctMatch = domOrText.match(/_([0-9]{1,2})%_/i)
+      || domOrText.match(/(?:할인율|세일)?\s*([0-9]{1,2})\s*%/i);
 
-    const pctMatch = domOrText.match(/([0-9]{1,2})\s*%/);
-
-    if (saleMatch) {
-      foreignPrice = parseInt(saleMatch[1].replace(/,/g, ''), 10);
-    }
     if (origMatch) {
       originalPrice = parseInt(origMatch[1].replace(/,/g, ''), 10);
     }
     if (pctMatch) {
       discountPercent = parseInt(pctMatch[1], 10);
+    }
+
+    // Nếu có giá gốc và % giảm giá, tính giá sale chính xác
+    if (origMatch && discountPercent > 0) {
+      foreignPrice = Math.round((originalPrice * (100 - discountPercent)) / 100);
+    } else {
+      // Pattern Sale Price trực tiếp: [0-9,]+ 원 (loại bỏ phí ship 2500, 3000, 5000)
+      const allPriceMatches = Array.from(domOrText.matchAll(/([0-9]{1,3}(?:,[0-9]{3})+)\s*원/gi))
+        .map(m => parseInt(m[1].replace(/,/g, ''), 10))
+        .filter(val => val > 0 && val !== 2500 && val !== 3000 && val !== 5000);
+
+      if (allPriceMatches.length > 0) {
+        foreignPrice = allPriceMatches[0];
+        if (originalPrice === defaultPrice) originalPrice = foreignPrice;
+      }
     }
   } else if (domOrText && typeof domOrText.querySelector === 'function') {
     // 2. Phân tích trực tiếp từ DOM Document / Element
