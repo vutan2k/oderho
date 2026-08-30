@@ -996,8 +996,29 @@ export const AppProvider = ({ children }) => {
 
   const loginWithGoogleAuth = async () => {
     const result = await loginWithGoogle();
-    if (result.success) {
-      // Listener will sync profile if needed
+    if (result.success && result.user) {
+      try {
+        const profileRef = doc(db, 'users', result.user.uid);
+        const snap = await getDoc(profileRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          setProfile(data);
+          localStorage.setItem('user_auth', JSON.stringify(data));
+        } else {
+          const newProfile = {
+            name: result.user.name || result.user.displayName || 'Khách hàng Google',
+            email: result.user.email,
+            phone: '',
+            address: '',
+            addressBook: []
+          };
+          await setDoc(profileRef, newProfile).catch(() => {});
+          setProfile(newProfile);
+          localStorage.setItem('user_auth', JSON.stringify(newProfile));
+        }
+      } catch (err) {
+        console.warn("Google profile sync error:", err);
+      }
     }
     return result;
   };
