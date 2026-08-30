@@ -66,9 +66,14 @@ export async function createPayOSPaymentLink({ orderId, amount }) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 6000);
 
-    // Ưu tiên gọi endpoint /api/createPayOSPaymentLink (Vercel Serverless Function)
+    // Ưu tiên gọi endpoint PayOS Serverless Function trên Vercel
     try {
-      const resVercel = await fetch('/api/createPayOSPaymentLink', {
+      const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+      const vercelEndpoint = isVercelHost
+        ? '/api/createPayOSPaymentLink'
+        : 'https://oderho.vercel.app/api/createPayOSPaymentLink';
+
+      const resVercel = await fetch(vercelEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, amount }),
