@@ -24,7 +24,7 @@ export function ToastProvider({ children }) {
         position: 'fixed',
         top: '20px',
         right: '20px',
-        zIndex: 10000,
+        zIndex: 9999999,
         display: 'flex',
         flexDirection: 'column',
         gap: '10px'
