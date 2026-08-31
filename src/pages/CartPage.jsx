@@ -30,9 +30,11 @@ export default function CartPage() {
 
   useEffect(() => {
     if (currentUser) {
-      setName(currentUser.name || '');
-      setPhone(currentUser.phone || '');
-      setAddress(currentUser.address || '');
+      if (currentUser.name && currentUser.name !== 'Khách hàng Google') {
+        setName(currentUser.name);
+      }
+      if (currentUser.phone) setPhone(currentUser.phone);
+      if (currentUser.address) setAddress(currentUser.address);
     }
   }, [currentUser]);
 
@@ -111,6 +113,10 @@ export default function CartPage() {
       };
 
       const res = await createOrder(orderData);
+
+      // Làm sạch giỏ hàng sau khi đã chuyển thành đơn hàng thành công
+      clearCart();
+      try { localStorage.removeItem('tavy_cart'); } catch {}
 
       confetti({
         particleCount: 150,

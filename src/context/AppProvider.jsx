@@ -204,14 +204,15 @@ export const AppProvider = ({ children }) => {
             const profileRef = doc(db, 'users', user.uid);
             const snap = await getDoc(profileRef);
             const nowIso = new Date().toISOString();
+            const fallbackName = user.displayName || user.email?.split('@')[0] || 'Khách hàng TAVY';
             if (snap.exists()) {
               const existingData = snap.data();
               const updatedData = {
                 ...existingData,
                 email: user.email || existingData.email,
-                name: existingData.name || user.displayName || 'Khách hàng Google',
+                name: existingData.name && existingData.name !== 'Khách hàng Google' ? existingData.name : fallbackName,
                 photoURL: user.photoURL || existingData.photoURL || '',
-                provider: 'google',
+                provider: user.providerData?.[0]?.providerId || 'google',
                 lastLoginAt: nowIso,
                 loginCount: (Number(existingData.loginCount) || 0) + 1
               };
@@ -219,7 +220,7 @@ export const AppProvider = ({ children }) => {
                 lastLoginAt: nowIso,
                 loginCount: updatedData.loginCount,
                 photoURL: updatedData.photoURL,
-                provider: 'google',
+                provider: updatedData.provider,
                 email: updatedData.email
               }, { merge: true }).catch(() => {});
               setProfile(updatedData);
@@ -227,13 +228,13 @@ export const AppProvider = ({ children }) => {
             } else {
               const newProfile = {
                 uid: user.uid,
-                name: user.displayName || user.email?.split('@')[0] || 'Khách hàng Google',
+                name: fallbackName,
                 email: user.email || '',
                 photoURL: user.photoURL || '',
                 phone: '',
                 address: '',
                 addressBook: [],
-                provider: 'google',
+                provider: user.providerData?.[0]?.providerId || 'google',
                 createdAt: nowIso,
                 lastLoginAt: nowIso,
                 loginCount: 1
@@ -284,10 +285,12 @@ export const AppProvider = ({ children }) => {
     syncTestUserInDB();
   }, []);
 
-  // Tự động khôi phục đăng nhập Firebase Auth Admin khi làm mới trang (F5)
+  // Tự động khôi phục đăng nhập Firebase Auth Admin khi làm mới trang (F5) CHỈ khi đang ở trang Admin và chưa có tài khoản nào đăng nhập
   useEffect(() => {
     const autoLoginAdmin = async () => {
-      if (isAdminAuthenticated && (!authUser || authUser.email !== 'admin@tavykorea.vn')) {
+      const isAdminPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+      // Tuyệt đối không tự động đăng nhập admin nếu không ở trang admin hoặc người dùng đang đăng nhập tài khoản cá nhân
+      if (isAdminPath && isAdminAuthenticated && !authUser) {
         try {
           const adminPass = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ADMIN_PASSWORD) || 'admin123';
           await signInWithEmailAndPassword(auth, 'admin@tavykorea.vn', adminPass);
@@ -523,6 +526,27 @@ export const AppProvider = ({ children }) => {
       userEmail: authUser?.email || 'guest@tavy.vn',
       createdAt: new Date().toISOString(),
     };
+
+    // Tự động đồng bộ Tên, Số điện thoại và Địa chỉ vào Hồ sơ tài khoản người dùng
+    if (authUser?.uid) {
+      try {
+        const userDocRef = doc(db, 'users', authUser.uid);
+        const profileUpdate = {
+          name: orderData.customerName || authUser.displayName || 'Khách hàng TAVY',
+          phone: orderData.customerPhone || '',
+          address: orderData.customerAddress || '',
+          updatedAt: new Date().toISOString()
+        };
+        await setDoc(userDocRef, profileUpdate, { merge: true });
+        setProfile(prev => {
+          const next = { ...prev, ...profileUpdate };
+          try { localStorage.setItem('user_auth', JSON.stringify(next)); } catch {}
+          return next;
+        });
+      } catch (profileErr) {
+        console.warn('Lỗi tự động đồng bộ hồ sơ khách hàng khi tạo đơn:', profileErr);
+      }
+    }
 
     // Nếu người dùng đã có 1 đơn hàng chờ cọc (Active Pending Order), cập nhật đơn hàng đó chứ không tạo đơn mới
     if (activePendingOrder) {
@@ -1016,6 +1040,8 @@ export const AppProvider = ({ children }) => {
     }
 
     try {
+      localStorage.removeItem('admin_auth');
+      setIsAdminAuthenticated(false);
       const { user } = await signInWithEmailAndPassword(auth, identifier, password);
       return { success: true, user };
     } catch (error) {
@@ -1025,18 +1051,21 @@ export const AppProvider = ({ children }) => {
   };
 
   const loginWithGoogleAuth = async () => {
+    localStorage.removeItem('admin_auth');
+    setIsAdminAuthenticated(false);
     const result = await loginWithGoogle();
     if (result.success && result.user) {
       try {
         const profileRef = doc(db, 'users', result.user.uid);
         const snap = await getDoc(profileRef);
         const nowIso = new Date().toISOString();
+        const fallbackName = result.user.displayName || result.user.name || result.user.email?.split('@')[0] || 'Khách hàng TAVY';
         if (snap.exists()) {
           const existingData = snap.data();
           const updatedData = {
             ...existingData,
             email: result.user.email || existingData.email,
-            name: existingData.name || result.user.name || result.user.displayName || 'Khách hàng Google',
+            name: existingData.name && existingData.name !== 'Khách hàng Google' ? existingData.name : fallbackName,
             photoURL: result.user.photoURL || existingData.photoURL || '',
             provider: 'google',
             lastLoginAt: nowIso,
@@ -1054,7 +1083,7 @@ export const AppProvider = ({ children }) => {
         } else {
           const newProfile = {
             uid: result.user.uid,
-            name: result.user.name || result.user.displayName || 'Khách hàng Google',
+            name: fallbackName,
             email: result.user.email || '',
             photoURL: result.user.photoURL || '',
             phone: '',
@@ -1099,6 +1128,7 @@ export const AppProvider = ({ children }) => {
       const snap = await getDoc(profileRef);
       const data = snap.data();
       setProfile(data);
+      try { localStorage.setItem('user_auth', JSON.stringify(data)); } catch {}
       return { success: true, profile: data };
     } catch (error) {
       console.error('Update profile error:', error);
