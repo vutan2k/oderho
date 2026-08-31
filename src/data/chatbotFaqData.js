@@ -69,7 +69,7 @@ export const CHATBOT_QUICK_ACTIONS = [
 export const CHATBOT_REPLIES = {
   welcome: {
     title: 'Xin chào! TAVY Korea có thể hỗ trợ gì cho bạn?',
-    text: 'Tất cả đơn hàng tại TAVY đều được mua trực tiếp tại Store Olive Young / Hiệu thuốc Hàn Quốc và có Video POV mua hàng + Video đóng kiện cân ký minh bạch 100%.',
+    text: 'Tất cả đơn hàng tại TAVY đều được mua trực tiếp tại Store Olive Young / Hiệu thuốc Hàn Quốc minh bạch 100%.',
     suggestedActions: ['lookup_order', 'consult_product', 'faq_workflow', 'faq_refund', 'faq_payment', 'open_facebook']
   },
 
@@ -77,9 +77,9 @@ export const CHATBOT_REPLIES = {
     title: '🛡️ Quy trình 8 bước mua hàng minh bạch tại TAVY Korea:',
     text: `1. Khách chọn hàng hoặc gửi link Olive Young / Musinsa.
 2. Khách cọc 100% tiền hàng qua VietQR hoặc Woori Bank.
-3. TAVY duyệt đơn & lên lịch mua tại Hàn.
-4. Mua hàng tại Store Hàn (Có Video POV + Hóa đơn).
-5. Đóng kiện tại kho Seoul (Bọc 3 lớp + Cân ký + Video).
+3. Admin duyệt đơn & lên lịch mua tại Hàn.
+4. Mua hàng trực tiếp tại Store Hàn.
+5. Đóng kiện tại kho Seoul (Bọc 3 lớp chống sốc).
 6. Bay Air Incheon ✈️ VN trong 3-7 ngày làm việc (Có mã AWB).
 7. Thông quan hải quan và chuyển về kho nội địa.
 8. Giao hàng tận tay khách hàng & hoàn tất.`,

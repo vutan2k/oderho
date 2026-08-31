@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
   }, [isAdminAuthenticated, navigate]);
 
   // Quick Currency Converter state
-  const [calcWon, setCalcWon] = useState('50000');
+  const [calcWon, setCalcWon] = useState('1000');
 
   const krwRate = rates?.KRW?.rate || 19.5;
   const serviceFee = rates?.serviceFeePercent || 5;
@@ -558,7 +558,7 @@ export default function AdminDashboardPage() {
                           {order.status === 'pending' ? 'CẦN BÁO GIÁ' : 'CẦN MUA HÀN'}
                         </span>
                         <div>
-                          <span style={{ fontWeight: 700, fontSize: '0.85rem', color: isDark ? '#F8FAFC' : '#0F172A' }}>#{order.id}</span>
+                          <span style={{ fontWeight: 700, fontSize: '0.85rem', color: isDark ? '#F8FAFC' : '#0F172A' }}>#{order.id.replace(/^ORD-?/i, '')}</span>
                           <span style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: '0.8rem', marginLeft: '8px' }}>{order.customerName || 'Khách'} ({order.customerPhone})</span>
                         </div>
                       </div>
@@ -592,7 +592,7 @@ export default function AdminDashboardPage() {
                   <span>Máy Tính Đổi Giá Nhanh (Won ➔ VNĐ)</span>
                 </div>
                 <p style={{ margin: '4px 0 12px 0', fontSize: '0.78rem', color: isDark ? '#94A3B8' : '#64748B' }}>
-                  Tính theo tỷ giá hiện hành: <strong>1 KRW = {krwRate} VNĐ</strong> (Phí mua hộ {serviceFee}%)
+                  Giá về tay = Giá sản phẩm Won * Tỷ giá ({krwRate}) + Phí dịch vụ ({serviceFee}%)
                 </p>
 
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

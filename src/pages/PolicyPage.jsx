@@ -33,7 +33,7 @@ export default function PolicyPage() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-ivory, #FAF9F6)', color: 'var(--text-dark)' }}>
       <Helmet>
         <title>Quy trình & Chính sách mua hàng - TAVY KOREA</title>
-        <meta name="description" content="Quy trình 8 bước mua hàng hộ Hàn Quốc minh bạch có video POV và video đóng hàng, chính sách đổi trả, hoàn tiền và thanh toán tại TAVY Korea." />
+        <meta name="description" content="Quy trình 8 bước mua hàng hộ Hàn Quốc minh bạch, chính sách đổi trả, hoàn tiền và thanh toán tại TAVY Korea." />
       </Helmet>
 
       {/* Header Banner Thanh Lịch */}
@@ -59,9 +59,7 @@ export default function PolicyPage() {
           <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-serif)', fontWeight: 700, marginBottom: '10px', color: 'var(--text-dark, #FFFFFF)' }}>
             Quy Trình & Chính Sách Dịch Vụ
           </h1>
-          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted, #C7D2FE)', lineHeight: 1.6, maxWidth: '600px', margin: '0 auto' }}>
-            Quy trình mua hàng hộ minh bạch với video POV mua hàng tại Store Hàn Quốc, video đóng gói từng kiện và chính sách bồi hoàn rõ ràng.
-          </p>
+
         </div>
       </div>
 
@@ -156,20 +154,9 @@ export default function PolicyPage() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '6px' }}>
                         <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-dark, #111827)', margin: 0 }}>
-                          <span style={{ color: step.highlight ? 'var(--workflow-highlight-accent, #7E22CE)' : 'var(--text-dark, #111827)', marginRight: '6px' }}>#{step.step}</span>
+                          <span style={{ color: step.highlight ? 'var(--workflow-highlight-accent, #7E22CE)' : 'var(--text-dark, #111827)', marginRight: '6px' }}>{step.step}</span>
                           {step.title}
                         </h3>
-                        <span style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          backgroundColor: step.highlight ? 'var(--workflow-highlight-badge-bg, #7E22CE)' : 'var(--bg-ivory, #E5E7EB)',
-                          color: step.highlight ? 'var(--workflow-highlight-badge-color, #FFFFFF)' : 'var(--text-muted, #4B5563)',
-                          border: step.highlight ? '1px solid var(--workflow-highlight-border, transparent)' : 'none'
-                        }}>
-                          {step.badge}
-                        </span>
                       </div>
                       <p style={{ fontSize: '0.88rem', color: 'var(--text-muted, #4B5563)', lineHeight: 1.5, margin: 0 }}>
                         {step.desc}
@@ -190,24 +177,24 @@ export default function PolicyPage() {
             </h2>
 
             <div style={{ display: 'grid', gap: '16px', color: 'var(--text-dark, #374151)', lineHeight: '1.6', fontSize: '0.9rem' }}>
-              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '18px', borderRadius: '10px', borderLeft: '3px solid #8B5CF6' }}>
+              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '18px', borderRadius: '10px', border: '1px solid var(--border-color, #E5E7EB)' }}>
                 <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-dark, #111827)', marginBottom: '4px' }}>1. Nguồn hàng mua hộ</h3>
                 <p style={{ margin: 0, color: 'var(--text-muted)' }}>
-                  TAVY Korea nhận order trực tiếp từ các hệ thống phân phối chính hãng uy tín tại Hàn Quốc: <strong>Olive Young (Mỹ phẩm, Skincare), KGC CheongKwanJang & Nonghyup (Hồng sâm, TPCN y tế), Naver Brand Store, các hiệu thuốc nội địa và trung tâm thương mại lớn tại Seoul</strong> (Cam kết 100% chính hãng, đầy đủ bill mua hàng điện tử hoặc hóa đơn store).
+                  TAVY Korea nhận order trực tiếp từ các hệ thống phân phối chính hãng uy tín tại Hàn Quốc: <strong>Olive Young (Mỹ phẩm, Skincare), KGC CheongKwanJang & Nonghyup (Hồng sâm, TPCN), Naver Brand Store, các hiệu thuốc nội địa và trung tâm thương mại lớn tại Seoul</strong> (Cam kết 100% chính hãng, đầy đủ bill mua hàng điện tử hoặc hóa đơn store).
                 </p>
               </div>
 
-              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '18px', borderRadius: '10px', borderLeft: '3px solid #3B82F6' }}>
+              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '18px', borderRadius: '10px', border: '1px solid var(--border-color, #E5E7EB)' }}>
                 <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-dark, #111827)', marginBottom: '4px' }}>2. Quy định về giá bán & Tỷ giá Won (KRW)</h3>
                 <ul style={{ paddingLeft: '18px', margin: 0, color: 'var(--text-muted)' }}>
                   <li><strong>Giá gốc tại Hàn (Won ₩):</strong> Tính theo giá niêm yết tại store hoặc website Hàn Quốc (ưu tiên áp dụng giá sale tại thời điểm đặt cọc).</li>
-                  <li><strong>Tỷ giá Won (KRW):</strong> Niêm yết công khai và cập nhật minh bạch theo hệ thống thời gian thực (tỷ giá hiện hành khoảng 19.5đ/Won).</li>
-                  <li><strong>Công thức tính giá trọn gói về tay:</strong> <code>Giá về tay (VNĐ) = Giá gốc Won x Tỷ giá KRW x (1 + Phí dịch vụ mua hộ 5%)</code>.</li>
+                  <li><strong>Tỷ giá Won (KRW):</strong> Niêm yết công khai và cập nhật minh bạch theo hệ thống thời gian thực.</li>
+                  <li><strong>Công thức tính giá trọn gói về tay:</strong> <code>Giá về tay (VNĐ) = Giá gốc Won x Tỷ giá KRW + Phí dịch vụ</code>.</li>
                   <li><strong>Thanh toán 1 lần duy nhất:</strong> Giá về tay hiển thị trên web đã bao gồm 100% tiền hàng, công mua hộ, đóng gói 3 lớp và phí vận chuyển quốc tế. Quý khách <strong>không phải thanh toán thêm bất kỳ phụ phí ẩn hay tiền cân nặng nào khác</strong>.</li>
                 </ul>
               </div>
 
-              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '18px', borderRadius: '10px', borderLeft: '3px solid #10B981' }}>
+              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '18px', borderRadius: '10px', border: '1px solid var(--border-color, #E5E7EB)' }}>
                 <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-dark, #111827)', marginBottom: '4px' }}>3. Thời gian giao hàng (Hàn Quốc ✈️ Việt Nam)</h3>
                 <p style={{ margin: 0, color: 'var(--text-muted)' }}>
                   - <strong>100% Vận chuyển đường bay chuyên tuyến (Incheon ✈️ Hà Nội / TP.HCM):</strong> Thời gian từ <strong>3 - 7 ngày làm việc</strong> kể từ khi xuất kho Seoul.<br />
@@ -215,7 +202,7 @@ export default function PolicyPage() {
                 </p>
               </div>
 
-              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '18px', borderRadius: '10px', borderLeft: '3px solid #F59E0B' }}>
+              <div style={{ background: 'var(--bg-subtle-purple, #F9FAFB)', padding: '18px', borderRadius: '10px', border: '1px solid var(--border-color, #E5E7EB)' }}>
                 <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-dark, #111827)', marginBottom: '4px' }}>4. Quy định đơn hàng tối thiểu</h3>
                 <p style={{ margin: 0, color: 'var(--text-muted)' }}>
                   - <strong>Đơn hàng tối thiểu: 1.000.000 VNĐ</strong> để tối ưu chi phí gom chuyến bay quốc tế từ Hàn Quốc và bảo đảm tiêu chuẩn đóng thùng chống sốc 3 lớp an toàn.
@@ -224,7 +211,7 @@ export default function PolicyPage() {
 
               <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
                 <p style={{ margin: 0, color: 'var(--text-dark)', fontSize: '0.88rem' }}>
-                  <strong style={{ color: '#F59E0B' }}>Lưu ý:</strong> Sau khi đơn hàng đã được TAVY tiến hành mua tại cửa hàng Hàn Quốc (đã có Video POV), quý khách vui lòng không thay đổi hoặc hủy đơn do chính sách không hoàn hủy của các hệ thống bán lẻ tại Hàn Quốc.
+                  <strong style={{ color: '#F59E0B' }}>Lưu ý:</strong> Sau khi đơn hàng đã được TAVY tiến hành mua tại cửa hàng Hàn Quốc (hoàn tất mua hàng), quý khách vui lòng không thay đổi hoặc hủy đơn do chính sách không hoàn hủy của các hệ thống bán lẻ tại Hàn Quốc.
                 </p>
               </div>
             </div>
@@ -304,8 +291,8 @@ export default function PolicyPage() {
                 Quy trình cọc & Thanh toán trọn gói 1 lần:
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.88rem', color: 'var(--text-muted, #4B5563)', lineHeight: '1.55' }}>
-                <div>• <strong>Thanh toán cọc 100% giá về tay:</strong> Quý khách đặt cọc 100% giá trị đơn hàng để TAVY tiến hành mua trực tiếp tại Store Hàn Quốc và quay video POV.</div>
-                <div>• <strong>Trọn gói 1 lần - Không phát sinh chi phí:</strong> Giá thanh toán đã bao gồm toàn bộ tiền hàng, công mua hộ, đóng gói 3 lớp và cước bay về tận tay quý khách tại Việt Nam. Khi nhận hàng, quý khách <strong>không cần phải thanh toán thêm bất kỳ khoản phí cân nặng hay phụ phí nào khác</strong>.</div>
+                <div>• <strong>Thanh toán cọc 100%:</strong> Quý khách đặt cọc 100% giá trị đơn hàng để TAVY tiến hành mua trực tiếp tại Store Hàn Quốc.</div>
+                <div>• <strong>Trọn gói 1 lần - Không phát sinh chi phí:</strong> Giá thanh toán đã bao gồm toàn bộ tiền hàng, công mua hộ, đóng gói và cước bay về tận tay quý khách tại Việt Nam. Khi nhận hàng, quý khách <strong>không cần phải thanh toán thêm bất kỳ khoản phụ phí nào khác</strong>.</div>
               </div>
             </div>
           </div>

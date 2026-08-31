@@ -41,7 +41,7 @@ export default function KROrderHomePage() {
     if (Array.isArray(orders) && orders.length > 0) {
       const firstOrder = orders[0];
       if (firstOrder?.id) {
-        list.push({ label: `Thử mã: ${firstOrder.id}`, value: firstOrder.id });
+        list.push({ label: `Thử mã: ${firstOrder.id.replace(/^ORD-?/i, '')}`, value: firstOrder.id.replace(/^ORD-?/i, '') });
       }
       const phone = firstOrder?.customerPhone || firstOrder?.phone;
       if (phone) {

@@ -122,7 +122,7 @@ export default function GuestOrderStatusCard({
                 letterSpacing: '0.5px'
               }}
             >
-              {order.customerPhone ? `SĐT: ${order.customerPhone}` : `#${order.id}`}
+              {order.customerPhone ? `SĐT: ${order.customerPhone}` : `#${order.id.replace(/^ORD-?/i, '')}`}
             </span>
 
             {/* Status Badge */}
@@ -255,7 +255,7 @@ export default function GuestOrderStatusCard({
                   }}
                 >
                   <span>
-                    {idx === 0 ? 'Đơn mới nhất' : `Đơn #${idx + 1}`} ({mOrder.id})
+                    {idx === 0 ? 'Đơn mới nhất' : `Đơn #${idx + 1}`} ({mOrder.id.replace(/^ORD-?/i, '')})
                   </span>
                   <span
                     style={{
@@ -529,7 +529,7 @@ export default function GuestOrderStatusCard({
                   type: 'video',
                   badgeType: 'pov_video',
                   url: proofData.povVideoUrl,
-                  title: `Video POV Mua Hàng Tại Store — Đơn ${order.customerPhone || order.id}`,
+                  title: `Video POV Mua Hàng Tại Store — Đơn ${order.customerPhone || order.id.replace(/^ORD-?/i, '')}`,
                   subtitle: 'Nhân viên TAVY trực tiếp ghé kệ Olive Young / Store Hàn Quốc'
                 })
               }
@@ -563,7 +563,7 @@ export default function GuestOrderStatusCard({
                   type: 'image',
                   badgeType: 'receipt_bill',
                   url: proofData.receiptImageUrl,
-                  title: `Hóa Đơn Bill Store — Đơn ${order.customerPhone || order.id}`,
+                  title: `Hóa Đơn Bill Store — Đơn ${order.customerPhone || order.id.replace(/^ORD-?/i, '')}`,
                   subtitle: 'Hóa đơn gốc xuất từ quầy thanh toán Olive Young / Cửa hàng Hàn Quốc'
                 })
               }
@@ -597,7 +597,7 @@ export default function GuestOrderStatusCard({
                   type: 'video',
                   badgeType: 'packing_video',
                   url: proofData.packingVideoUrl,
-                  title: `Video Đóng Kiện & Cân Nặng — Đơn ${order.customerPhone || order.id}`,
+                  title: `Video Đóng Kiện & Cân Nặng — Đơn ${order.customerPhone || order.id.replace(/^ORD-?/i, '')}`,
                   subtitle: 'Bọc chống sốc 3 lớp, kiểm tra seal và niêm phong tại kho Seoul'
                 })
               }

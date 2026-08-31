@@ -84,7 +84,7 @@ export default function OrdersPage() {
     { id: 'pending', label: 'Chờ cọc' },
     { id: 'deposit_paid', label: 'Đã cọc 100%' },
     { id: 'confirmed', label: 'Đã xác nhận' },
-    { id: 'purchased', label: 'Mua hàng (POV)' },
+    { id: 'purchased', label: 'Mua hàng' },
     { id: 'packed_kr', label: 'Đóng kiện' },
     { id: 'in_transit_air', label: 'Đang bay' },
     { id: 'customs_cleared', label: 'Kho VN' },
@@ -547,20 +547,27 @@ export default function OrdersPage() {
 
       {/* Media Viewer Modal (Video POV / Bill Store / Packing Video) */}
       {activeMediaModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.75)',
-          backdropFilter: 'blur(5px)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setActiveMediaModal(null);
+            }
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
           <div style={{
             backgroundColor: 'var(--bg-white, #FFFFFF)',
             border: '1px solid var(--border-color)',

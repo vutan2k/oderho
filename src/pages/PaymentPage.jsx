@@ -300,7 +300,7 @@ export default function PaymentPage() {
             <AlertCircle size={54} color="#EF4444" style={{ margin: '0 auto 16px' }} />
             <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '10px' }}>Không tìm thấy đơn hàng</h2>
             <p style={{ color: 'var(--text-muted, #6B7280)', fontSize: '0.88rem', marginBottom: '24px', lineHeight: 1.5 }}>
-              Mã đơn hàng <strong>{orderId}</strong> không tồn tại hoặc đã được chuyển sang cơ sở dữ liệu lưu trữ.
+              Mã đơn hàng <strong>{orderId.replace(/^ORD-?/i, '')}</strong> không tồn tại hoặc đã được chuyển sang cơ sở dữ liệu lưu trữ.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button onClick={() => navigate('/')} className="btn-outline" style={{ padding: '10px 18px', borderRadius: '10px', fontWeight: 600 }}>Về trang chủ</button>
@@ -317,7 +317,7 @@ export default function PaymentPage() {
   if (isPaid) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark, #1A1A2E)' }}>
-        <Helmet><title>Thanh toán thành công đơn {cleanCustomerPhone || orderId} - TAVY Korea</title></Helmet>
+        <Helmet><title>Thanh toán thành công đơn {cleanCustomerPhone || orderId.replace(/^ORD-?/i, '')} - TAVY Korea</title></Helmet>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 16px' }}>
           <div style={{ textAlign: 'center', backgroundColor: '#FFFFFF', border: '1px solid #D1FAE5', padding: '48px 28px', borderRadius: '28px', maxWidth: '520px', width: '100%', boxShadow: '0 8px 30px rgba(16, 185, 129, 0.12)' }}>
             <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
@@ -327,7 +327,7 @@ export default function PaymentPage() {
               Thanh Toán Thành Công!
             </h1>
             <p style={{ color: 'var(--text-muted, #4B5563)', fontSize: '0.92rem', marginBottom: '24px', lineHeight: 1.5 }}>
-              Đơn hàng theo SĐT <strong>{cleanCustomerPhone || orderId}</strong> đã được hệ thống tự động ghi nhận cọc 100%. Đội ngũ TAVY tại Hàn Quốc sẽ tiến hành mua hàng cho bạn ngay!
+              Đơn hàng theo SĐT <strong>{cleanCustomerPhone || orderId.replace(/^ORD-?/i, '')}</strong> đã được hệ thống tự động ghi nhận cọc 100%. Đội ngũ TAVY tại Hàn Quốc sẽ tiến hành mua hàng cho bạn ngay!
             </p>
 
             <div style={{ backgroundColor: '#F9FAFB', borderRadius: '16px', padding: '16px', marginBottom: '28px', textAlign: 'left', fontSize: '0.85rem' }}>
@@ -337,7 +337,7 @@ export default function PaymentPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px dashed #E5E7EB' }}>
                 <span style={{ color: '#6B7280' }}>SĐT nhận hàng:</span>
-                <span style={{ fontWeight: 700 }}>{cleanCustomerPhone || orderId}</span>
+                <span style={{ fontWeight: 700 }}>{cleanCustomerPhone || orderId.replace(/^ORD-?/i, '')}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
                 <span style={{ color: '#6B7280' }}>Thời gian ghi nhận:</span>
@@ -372,7 +372,7 @@ export default function PaymentPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-ivory, #F9F6FA)', color: 'var(--text-dark, #1A1A2E)' }}>
       <Helmet>
-        <title>Thanh toán đơn hàng {cleanCustomerPhone || orderId} - TAVY Korea</title>
+        <title>Thanh toán đơn hàng {cleanCustomerPhone || orderId.replace(/^ORD-?/i, '')} - TAVY Korea</title>
         <meta name="description" content="Quét mã VietQR để thanh toán đơn hàng mua hộ Hàn Quốc nhanh chóng và tự động 24/7." />
       </Helmet>
 
@@ -386,7 +386,7 @@ export default function PaymentPage() {
           >
             <ArrowLeft size={16} /> Quay lại danh sách đơn
           </Link>
-          <span style={{ fontSize: '0.82rem', color: '#9CA3AF' }}>SĐT đặt hàng: <strong style={{ color: 'var(--text-dark)' }}>{cleanCustomerPhone || orderId}</strong></span>
+          <span style={{ fontSize: '0.82rem', color: '#9CA3AF' }}>SĐT đặt hàng: <strong style={{ color: 'var(--text-dark)' }}>{cleanCustomerPhone || orderId.replace(/^ORD-?/i, '')}</strong></span>
         </div>
 
         {/* Thanh đếm ngược & Thông báo gia hạn */}
@@ -612,7 +612,7 @@ export default function PaymentPage() {
               }}>
                 <img
                   src={activeQrUrl}
-                  alt={`VietQR Thanh Toán ${orderId}`}
+                  alt={`VietQR Thanh Toán ${orderId.replace(/^ORD-?/i, '')}`}
                   width={240}
                   height={240}
                   style={{ display: 'block', borderRadius: '10px', objectFit: 'contain' }}

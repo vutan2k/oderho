@@ -2,7 +2,7 @@ import React, { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { ORDER_STATUSES, getStatusConfig } from '../data/orderStatuses';
-import { getOrderTotalVnd } from '../utils/priceCalculator';
+import { getOrderTotalVnd, getVndFromWon, formatVnd } from '../utils/priceCalculator';
 import {
   Search, Edit3, Trash2,
   CheckCircle, AlertCircle,
@@ -12,52 +12,88 @@ import {
   X, ChevronRight, Clock, Box
 } from 'lucide-react';
 
-// 5 CỘT PHÂN LUỒNG KANBAN CHUẨN E-COMMERCE
+// 9 CỘT PHÂN LUỒNG KANBAN CHUẨN TAVY
 const KANBAN_COLUMNS = [
   {
-    id: 'quote_needed',
-    title: '1. Cần Báo Giá',
-    color: '#EF4444',
-    bgColor: '#FEF2F2',
-    borderColor: '#FECACA',
-    badgeColor: '#DC2626',
-    statuses: ['pending']
-  },
-  {
-    id: 'awaiting_deposit',
-    title: '2. Chờ Cọc / Thanh Toán',
-    color: '#F59E0B',
+    id: 'pending',
+    title: '1. Chờ cọc',
+    color: '#D97706',
     bgColor: '#FFFBEB',
     borderColor: '#FDE68A',
     badgeColor: '#D97706',
-    statuses: ['quoted']
+    statuses: ['pending', 'quoted']
   },
   {
-    id: 'need_purchase',
-    title: '3. Cần Đặt Mua Tại Hàn',
-    color: '#3B82F6',
-    bgColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-    badgeColor: '#2563EB',
-    statuses: ['deposit_paid', 'paid', 'purchasing_korea']
+    id: 'deposit_paid',
+    title: '2. Đã cọc 100%',
+    color: '#4F46E5',
+    bgColor: '#EEF2FF',
+    borderColor: '#C7D2FE',
+    badgeColor: '#4F46E5',
+    statuses: ['deposit_paid', 'paid']
   },
   {
-    id: 'shipping_flow',
-    title: '4. Đang Vận Chuyển Về VN',
-    color: '#8B5CF6',
-    bgColor: '#F5F3FF',
+    id: 'confirmed',
+    title: '3. Đã xác nhận',
+    color: '#0284C7',
+    bgColor: '#E0F2FE',
+    borderColor: '#BAE6FD',
+    badgeColor: '#0284C7',
+    statuses: ['confirmed']
+  },
+  {
+    id: 'purchased',
+    title: '4. Đang mua',
+    color: '#7C3AED',
+    bgColor: '#F3E8FF',
     borderColor: '#DDD6FE',
     badgeColor: '#7C3AED',
-    statuses: ['korea_warehouse', 'shipping_vietnam', 'vietnam_warehouse']
+    statuses: ['purchased', 'purchasing_korea']
   },
   {
-    id: 'completed_flow',
-    title: '5. Hoàn Tất / Đã Giao',
-    color: '#10B981',
+    id: 'packed_kr',
+    title: '5. Kho Seoul',
+    color: '#DB2777',
+    bgColor: '#FCE7F3',
+    borderColor: '#FBCFE8',
+    badgeColor: '#DB2777',
+    statuses: ['packed_kr', 'in_kr_warehouse', 'korea_warehouse']
+  },
+  {
+    id: 'in_transit_air',
+    title: '6. Đang bay',
+    color: '#0891B2',
+    bgColor: '#CFFAFE',
+    borderColor: '#A5F3FC',
+    badgeColor: '#0891B2',
+    statuses: ['in_transit_air', 'transit', 'shipping_vietnam']
+  },
+  {
+    id: 'customs_cleared',
+    title: '7. Kho VN',
+    color: '#0D9488',
+    bgColor: '#CCFBF1',
+    borderColor: '#99F6E4',
+    badgeColor: '#0D9488',
+    statuses: ['customs_cleared', 'in_vn_warehouse', 'vietnam_warehouse']
+  },
+  {
+    id: 'completed',
+    title: '8. Đã giao',
+    color: '#059669',
     bgColor: '#ECFDF5',
     borderColor: '#A7F3D0',
     badgeColor: '#059669',
-    statuses: ['completed']
+    statuses: ['completed', 'delivering']
+  },
+  {
+    id: 'cancelled',
+    title: '9. Đã hủy',
+    color: '#DC2626',
+    bgColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    badgeColor: '#DC2626',
+    statuses: ['cancelled']
   }
 ];
 
@@ -73,7 +109,8 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
     updateOrderQuote,
     updateOrderTracking,
     deleteOrder,
-    createManualOrder
+    createManualOrder,
+    updateOrderStatusInDB
   } = useContext(AppContext);
   const showToast = useToast();
 
@@ -82,6 +119,16 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
   const [activeDrawerOrder, setActiveDrawerOrder] = useState(null);
   const [copiedOrderId, setCopiedOrderId] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+
+  // Thêm sản phẩm mới vào đơn
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [newItemForm, setNewItemForm] = useState({
+    name: '',
+    foreignPrice: '',
+    qty: 1,
+    productImage: ''
+  });
 
   // Form tạo đơn thủ công
   const [manualForm, setManualForm] = useState({
@@ -90,9 +137,27 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
     customerAddress: '',
     customerNote: '',
     adminNote: 'Đơn hàng mua hộ trực tiếp theo yêu cầu.',
-    status: 'deposit_paid',
+    status: 'pending',
     items: [{ name: '', foreignPrice: '', qty: 1 }]
   });
+
+  const isCreateFormDirty = useMemo(() => {
+    const isBasicChanged = 
+      manualForm.customerName !== '' ||
+      manualForm.customerPhone !== '' ||
+      manualForm.customerAddress !== '' ||
+      manualForm.customerNote !== '';
+    
+    if (isBasicChanged) return true;
+    if (manualForm.items.length > 1) return true;
+    
+    const firstItem = manualForm.items[0];
+    if (firstItem.name !== '' || firstItem.foreignPrice !== '' || Number(firstItem.qty) !== 1 || (firstItem.image || '') !== '') {
+      return true;
+    }
+    
+    return false;
+  }, [manualForm]);
 
   const krwRate = rates?.KRW?.rate || 19.5;
   const serviceFee = rates?.serviceFeePercent || 5;
@@ -140,50 +205,175 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
     }
   };
 
-  const handleDeleteOrder = async (orderId) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xoá vĩnh viễn đơn hàng #${orderId}?`)) {
+  const handleDeleteOrder = (orderId) => {
+    setOrderToDelete(orderId);
+  };
+
+  const confirmDelete = async () => {
+    if (orderToDelete) {
       try {
-        await deleteOrder(orderId);
+        await deleteOrder(orderToDelete);
         setActiveDrawerOrder(null);
-        if (showToast) showToast(`Đã xoá đơn hàng #${orderId}`, 'info');
+        setIsAddingItem(false);
+        setOrderToDelete(null);
+        if (showToast) showToast(`Đã xoá đơn hàng #${orderToDelete.replace(/^ORD-?/i, '')}`, 'info');
       } catch {
         if (showToast) showToast('Lỗi khi xoá đơn hàng!', 'error');
       }
     }
   };
 
-  const handleSaveManualOrder = async (e) => {
-    e.preventDefault();
-    if (!manualForm.customerName.trim() || !manualForm.customerPhone.trim()) {
-      if (showToast) showToast('Vui lòng nhập đầy đủ tên và SĐT khách!', 'error');
+  const handleSaveNewItemToOrder = async () => {
+    if (!newItemForm.name.trim()) {
+      if (showToast) showToast('Vui lòng nhập tên sản phẩm!', 'error');
       return;
     }
-    const validItems = manualForm.items.filter(i => i.name.trim());
-    if (validItems.length === 0) {
-      if (showToast) showToast('Vui lòng nhập ít nhất 1 sản phẩm!', 'error');
+    if (!newItemForm.foreignPrice || Number(newItemForm.foreignPrice) <= 0) {
+      if (showToast) showToast('Vui lòng nhập giá Won hợp lệ!', 'error');
       return;
+    }
+    
+    try {
+      const currentItems = activeDrawerOrder.items || [];
+      const updatedItems = [...currentItems, {
+        name: newItemForm.name,
+        foreignPrice: Number(newItemForm.foreignPrice),
+        qty: Number(newItemForm.qty) || 1,
+        quantity: Number(newItemForm.qty) || 1,
+        productImage: newItemForm.productImage || ''
+      }];
+      
+      const totalWon = updatedItems.reduce((s, it) => s + (Number(it.foreignPrice) || 0) * (Number(it.qty || it.quantity) || 1), 0);
+      const totalVnd = Math.round(totalWon * krwRate * (1 + serviceFee / 100));
+      
+      const updates = { 
+        items: updatedItems,
+        totalAmount: totalVnd
+      };
+      
+      const res = await updateOrderStatusInDB(activeDrawerOrder.id, updates);
+      if (res.success) {
+        setActiveDrawerOrder(prev => ({ ...prev, items: updatedItems, totalAmount: totalVnd }));
+        setIsAddingItem(false);
+        setNewItemForm({ name: '', foreignPrice: '', qty: 1, productImage: '' });
+        if (showToast) showToast('Đã thêm sản phẩm thành công!', 'success');
+      } else {
+        if (showToast) showToast('Lỗi khi thêm sản phẩm vào Database!', 'error');
+      }
+    } catch (err) {
+      if (showToast) showToast('Lỗi khi thêm sản phẩm!', 'error');
+    }
+  };
+
+  const handleDeleteItemFromOrder = async (itemIndex) => {
+    if (!activeDrawerOrder || !activeDrawerOrder.items) return;
+    
+    if (activeDrawerOrder.items.length <= 1) {
+      if (showToast) showToast('Đơn hàng phải có ít nhất 1 sản phẩm. Hãy huỷ đơn hoặc thêm sản phẩm khác trước!', 'error');
+      return;
+    }
+
+    const confirmDel = window.confirm('Bạn có chắc chắn muốn xoá sản phẩm này khỏi đơn hàng?');
+    if (!confirmDel) return;
+
+    try {
+      const currentItems = [...activeDrawerOrder.items];
+      currentItems.splice(itemIndex, 1);
+      
+      const totalWon = currentItems.reduce((s, it) => s + (Number(it.foreignPrice) || 0) * (Number(it.qty || it.quantity) || 1), 0);
+      const totalVnd = Math.round(totalWon * krwRate * (1 + serviceFee / 100));
+      
+      const updates = { 
+        items: currentItems,
+        totalAmount: totalVnd
+      };
+      
+      const res = await updateOrderStatusInDB(activeDrawerOrder.id, updates);
+      if (res.success) {
+        setActiveDrawerOrder(prev => ({ ...prev, items: currentItems, totalAmount: totalVnd }));
+        if (showToast) showToast('Đã xoá sản phẩm!', 'success');
+      } else {
+        if (showToast) showToast('Lỗi khi xoá sản phẩm khỏi Database!', 'error');
+      }
+    } catch (err) {
+      if (showToast) showToast('Lỗi khi xoá sản phẩm!', 'error');
+    }
+  };
+
+  const handleSaveManualOrder = async (e) => {
+    e.preventDefault();
+    
+    // 1. Validate Customer Name
+    const customerName = manualForm.customerName.trim();
+    if (!customerName) {
+      if (showToast) showToast('Vui lòng nhập Tên Khách Hàng!', 'error');
+      return;
+    }
+
+    // 2. Validate Vietnamese Phone Number
+    const customerPhone = manualForm.customerPhone.trim();
+    const phoneRegex = /^0(3|5|7|8|9)[0-9]{8}$/;
+    if (!customerPhone) {
+      if (showToast) showToast('Vui lòng nhập Số Điện Thoại!', 'error');
+      return;
+    }
+    if (!phoneRegex.test(customerPhone)) {
+      if (showToast) showToast('Số điện thoại không đúng định dạng! Phải đủ 10 số và bắt đầu bằng 03, 05, 07, 08, hoặc 09.', 'error');
+      return;
+    }
+
+    // 3. Validate Delivery Address
+    const customerAddress = manualForm.customerAddress.trim();
+    if (!customerAddress) {
+      if (showToast) showToast('Vui lòng nhập Địa Chỉ Giao Hàng!', 'error');
+      return;
+    }
+
+    // 4. Validate Product Items
+    if (manualForm.items.length === 0) {
+      if (showToast) showToast('Vui lòng thêm ít nhất 1 sản phẩm!', 'error');
+      return;
+    }
+
+    for (let i = 0; i < manualForm.items.length; i++) {
+      const item = manualForm.items[i];
+      if (!item.name.trim()) {
+        if (showToast) showToast(`Sản phẩm #${i + 1} chưa nhập tên!`, 'error');
+        return;
+      }
+      const price = parseFloat(item.foreignPrice);
+      if (isNaN(price) || price <= 0) {
+        if (showToast) showToast(`Sản phẩm #${i + 1} phải có Giá Won (₩) lớn hơn 0!`, 'error');
+        return;
+      }
+      const qty = parseInt(item.qty, 10);
+      if (isNaN(qty) || qty <= 0) {
+        if (showToast) showToast(`Sản phẩm #${i + 1} phải có Số lượng (SL) lớn hơn 0!`, 'error');
+        return;
+      }
     }
 
     try {
       const orderPayload = {
-        customerName: manualForm.customerName.trim(),
-        customerPhone: manualForm.customerPhone.trim(),
-        customerAddress: manualForm.customerAddress.trim() || 'Hà Nội, Việt Nam',
+        customerName,
+        customerPhone,
+        customerAddress,
         customerNote: manualForm.customerNote.trim(),
         adminNote: manualForm.adminNote.trim(),
         status: manualForm.status,
-        items: validItems.map(it => {
-          const price = parseFloat(it.foreignPrice) || 0;
+        items: manualForm.items.map(it => {
+          const price = parseFloat(it.foreignPrice);
           return {
-            name: it.name,
+            name: it.name.trim(),
             foreignPrice: price,
-            qty: parseInt(it.qty, 10) || 1,
+            qty: parseInt(it.qty, 10),
             price: Math.round(price * krwRate * (1 + serviceFee / 100)),
-            productImage: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=300&q=80'
+            productImage: it.image || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=300&q=80'
           };
         })
       };
-      const totalWon = validItems.reduce((s, it) => s + (parseFloat(it.foreignPrice) || 0) * (parseInt(it.qty, 10) || 1), 0);
+      
+      const totalWon = manualForm.items.reduce((s, it) => s + parseFloat(it.foreignPrice) * parseInt(it.qty, 10), 0);
       const totalVnd = Math.round(totalWon * krwRate * (1 + serviceFee / 100));
       orderPayload.totalAmount = totalVnd;
 
@@ -196,8 +386,8 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
         customerAddress: '',
         customerNote: '',
         adminNote: 'Đơn hàng mua hộ trực tiếp theo yêu cầu.',
-        status: 'deposit_paid',
-        items: [{ name: '', foreignPrice: '', qty: 1 }]
+        status: 'pending',
+        items: [{ name: '', foreignPrice: '', qty: 1, image: '' }]
       });
     } catch {
       if (showToast) showToast('Lỗi khi tạo đơn hàng thủ công!', 'error');
@@ -408,7 +598,7 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
                           {/* Card Header: Order ID & Date */}
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#38BDF8' }}>
-                              #{order.id}
+                              #{order.id.replace(/^ORD-?/i, '')}
                             </span>
                             <span style={{ fontSize: '0.7rem', color: isDark ? '#94A3B8' : '#64748B' }}>
                               {order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay'}
@@ -541,7 +731,7 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       <td style={{ padding: '12px 16px', fontWeight: 700, color: '#38BDF8' }}>
-                        #{order.id}
+                        #{order.id.replace(/^ORD-?/i, '')}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ fontWeight: 600, color: isDark ? '#F8FAFC' : '#1E293B' }}>{order.customerName || 'Khách'}</div>
@@ -597,215 +787,299 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
 
       {/* 🚪 Slide-over Drawer Chi Tiết Đơn Hàng (Bên Phải) */}
       {activeDrawerOrder && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          width: 'min(500px, 100vw)',
-          height: '100vh',
-          backgroundColor: isDark ? '#1E293B' : '#FFF',
-          boxShadow: '-10px 0 30px rgba(0,0,0,0.3)',
-          borderLeft: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
-          zIndex: 99999,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}>
-          {/* Drawer Header */}
-          <div style={{
-            padding: '16px 20px',
-            backgroundColor: isDark ? '#0F172A' : '#0F172A',
-            color: '#FFF',
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setActiveDrawerOrder(null);
+              setIsAddingItem(false);
+            }
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 99999,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: isDark ? '1px solid #334155' : 'none'
-          }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 900 }}>Đơn Hàng #{activeDrawerOrder.id}</span>
-                <button
-                  onClick={() => handleCopyText(activeDrawerOrder.id, 'drawer_id')}
-                  style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
-                >
-                  {copiedOrderId === 'drawer_id' ? <Check size={14} color="#10B981" /> : <FileText size={14} />}
-                </button>
+            justifyContent: 'flex-end'
+          }}
+        >
+          <div style={{
+            width: 'min(500px, 100vw)',
+            height: '100vh',
+            backgroundColor: isDark ? '#1E293B' : '#FFF',
+            boxShadow: '-10px 0 30px rgba(0,0,0,0.3)',
+            borderLeft: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }} onClick={(e) => e.stopPropagation()}>
+            {/* Drawer Header */}
+            <div style={{ padding: '18px 20px', borderBottom: isDark ? '1px solid #334155' : '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: isDark ? '#F8FAFC' : '#0F172A' }}>
+                  Chi Tiết Đơn Hàng
+                </h3>
+                <span style={{ fontSize: '0.74rem', color: '#94A3B8', fontWeight: 600 }}>
+                  SĐT: {activeDrawerOrder.customerPhone}
+                </span>
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '2px' }}>
-                Tạo lúc: {activeDrawerOrder.createdAt ? new Date(activeDrawerOrder.createdAt).toLocaleString('vi-VN') : 'Vừa xong'}
-              </div>
+              <button
+                onClick={() => { setActiveDrawerOrder(null); setIsAddingItem(false); }}
+                style={{ background: 'none', border: 'none', color: isDark ? '#94A3B8' : '#0F172A', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
             </div>
 
-            <button
-              onClick={() => setActiveDrawerOrder(null)}
-              style={{ background: 'none', border: 'none', color: '#FFF', cursor: 'pointer', padding: '4px' }}
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Drawer Body Content */}
-          <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            {/* 1. Trạng Thái Hiện Tại & Đổi Nhanh */}
-            <div style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC', padding: '14px', borderRadius: '10px', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#94A3B8' : '#64748B', marginBottom: '8px' }}>
-                TIẾN ĐỘ XỬ LÝ ĐƠN HÀNG (9 BƯỚC)
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                {Object.values(ORDER_STATUSES).filter(st => ['pending', 'deposit_paid', 'confirmed', 'purchased', 'packed_kr', 'in_transit_air', 'customs_cleared', 'completed', 'cancelled'].includes(st.id)).map((st) => {
-                  const isCurrent = activeDrawerOrder.status === st.id;
-                  return (
-                    <button
-                      key={st.id}
-                      onClick={() => handleQuickStatusChange(activeDrawerOrder.id, st.id)}
-                      style={{
-                        padding: '6px 8px',
-                        borderRadius: '6px',
-                        border: isCurrent ? '2px solid #38BDF8' : (isDark ? '1px solid #334155' : '1px solid #CBD5E1'),
-                        backgroundColor: isCurrent ? (isDark ? '#1E3A8A' : '#EFF6FF') : (isDark ? '#1E293B' : '#FFF'),
-                        color: isCurrent ? '#FFF' : (isDark ? '#E2E8F0' : '#334155'),
-                        fontWeight: isCurrent ? 800 : 500,
-                        fontSize: '0.7rem',
-                        cursor: 'pointer',
-                        textAlign: 'center'
-                      }}
-                    >
-                      {st.shortLabel || st.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 2. Thông Tin Khách Hàng */}
-            <div style={{ backgroundColor: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', marginBottom: '8px' }}>
-                👤 THÔNG TIN NGƯỜI NHẬN
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.82rem', color: isDark ? '#E2E8F0' : '#1E293B' }}>
-                <div><strong>Họ tên:</strong> {activeDrawerOrder.customerName || 'Khách vãng lai'}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <strong>Điện thoại:</strong>
-                  <a href={`tel:${activeDrawerOrder.customerPhone}`} style={{ color: '#38BDF8', textDecoration: 'none' }}>
-                    {activeDrawerOrder.customerPhone}
-                  </a>
+            {/* Drawer Body Content */}
+            <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {/* 1. Trạng Thái Hiện Tại & Đổi Nhanh */}
+              <div style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC', padding: '14px', borderRadius: '10px', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#94A3B8' : '#64748B', marginBottom: '8px' }}>
+                  TIẾN ĐỘ XỬ LÝ ĐƠN HÀNG (9 BƯỚC)
                 </div>
-                <div><strong>Địa chỉ:</strong> {activeDrawerOrder.customerAddress || 'Chưa cập nhật'}</div>
-                {activeDrawerOrder.customerNote && (
-                  <div style={{ color: '#FBBF24', fontStyle: 'italic' }}>
-                    <strong>Ghi chú của khách:</strong> "{activeDrawerOrder.customerNote}"
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 2.5 Biên Lai Chuyển Tiền / Bill Quét Mã (Nếu Khách Đã Tải Lên) */}
-            {activeDrawerOrder.depositProofImage && (
-              <div style={{ backgroundColor: isDark ? '#1E293B' : '#ECFDF5', border: isDark ? '1px solid #10B981' : '1px solid #A7F3D0', borderRadius: '10px', padding: '14px' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#34D399' : '#065F46', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>📸 BIÊN LAI CHUYỂN TIỀN KHÁCH ĐÃ GỬI</span>
-                  {activeDrawerOrder.depositProofUploadedAt && (
-                    <span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#6B7280' }}>
-                      {new Date(activeDrawerOrder.depositProofUploadedAt).toLocaleString('vi-VN')}
-                    </span>
-                  )}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                  {Object.values(ORDER_STATUSES).filter(st => ['pending', 'deposit_paid', 'confirmed', 'purchased', 'packed_kr', 'in_transit_air', 'customs_cleared', 'completed', 'cancelled'].includes(st.id)).map((st) => {
+                    const isCurrent = activeDrawerOrder.status === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        onClick={() => handleQuickStatusChange(activeDrawerOrder.id, st.id)}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          border: isCurrent ? '2px solid #38BDF8' : (isDark ? '1px solid #334155' : '1px solid #CBD5E1'),
+                          backgroundColor: isCurrent ? (isDark ? '#1E3A8A' : '#EFF6FF') : (isDark ? '#1E293B' : '#FFF'),
+                          color: isCurrent ? '#FFF' : (isDark ? '#E2E8F0' : '#334155'),
+                          fontWeight: isCurrent ? 800 : 500,
+                          fontSize: '0.7rem',
+                          cursor: 'pointer',
+                          textAlign: 'center'
+                        }}
+                      >
+                        {st.shortLabel || st.label}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-                  <a href={activeDrawerOrder.depositProofImage} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={activeDrawerOrder.depositProofImage}
-                      alt="Biên lai cọc"
-                      style={{ maxHeight: '180px', maxWidth: '100%', borderRadius: '8px', border: '1px solid #D1D5DB', objectFit: 'contain', cursor: 'zoom-in' }}
-                    />
-                  </a>
-                </div>
-                {activeDrawerOrder.status !== 'deposit_paid' && activeDrawerOrder.paymentStatus !== 'paid' && (
+                <div style={{ marginTop: '12px', borderTop: isDark ? '1px solid #334155' : '1px solid #E2E8F0', paddingTop: '12px', display: 'flex', justifyContent: 'center' }}>
                   <button
-                    onClick={() => handleQuickStatusChange(activeDrawerOrder.id, 'deposit_paid')}
+                    onClick={() => handleDeleteOrder(activeDrawerOrder.id)}
                     style={{
-                      width: '100%',
-                      backgroundColor: '#10B981',
-                      color: '#FFF',
-                      border: 'none',
-                      padding: '8px 12px',
+                      backgroundColor: '#FEF2F2',
+                      color: '#DC2626',
+                      border: '1px solid #FECACA',
+                      padding: '8px 16px',
                       borderRadius: '8px',
                       fontSize: '0.8rem',
-                      fontWeight: 700,
-                      cursor: 'pointer'
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      width: '100%',
+                      justifyContent: 'center'
                     }}
                   >
-                    ✓ Duyệt Xác Nhận Đã Nhận Cọc 100%
+                    <Trash2 size={16} />
+                    <span>Xoá Đơn Hàng</span>
                   </button>
-                )}
+                </div>
               </div>
-            )}
 
-            {/* 3. Danh Sách Sản Phẩm Mua Hộ */}
-            <div style={{ backgroundColor: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', marginBottom: '8px' }}>
-                📦 SẢN PHẨM MUA HỘ ({activeDrawerOrder.items?.length || 1} MÓN)
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {(activeDrawerOrder.items || []).map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', borderBottom: isDark ? '1px solid #334155' : '1px solid #F1F5F9', paddingBottom: '8px' }}>
-                    <img
-                      src={item.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=120&q=80'}
-                      alt=""
-                      style={{ width: '45px', height: '45px', borderRadius: '6px', objectFit: 'cover' }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.8rem', color: isDark ? '#F8FAFC' : '#1E293B' }}>{item.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B' }}>
-                        Giá: {item.foreignPrice?.toLocaleString('vi-VN') || 0} ₩ x {item.quantity || item.qty || 1}
-                      </div>
-                    </div>
+              {/* 2. Thông Tin Khách Hàng */}
+              <div style={{ backgroundColor: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', marginBottom: '8px' }}>
+                  👤 THÔNG TIN NGƯỜI NHẬN
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.82rem', color: isDark ? '#E2E8F0' : '#1E293B' }}>
+                  <div><strong>Họ tên:</strong> {activeDrawerOrder.customerName || 'Khách vãng lai'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <strong>Điện thoại:</strong>
+                    <a href={`tel:${activeDrawerOrder.customerPhone}`} style={{ color: '#38BDF8', textDecoration: 'none' }}>
+                      {activeDrawerOrder.customerPhone}
+                    </a>
                   </div>
-                ))}
+                  <div><strong>Địa chỉ:</strong> {activeDrawerOrder.customerAddress || 'Chưa cập nhật'}</div>
+                  {activeDrawerOrder.customerNote && (
+                    <div style={{ color: '#FBBF24', fontStyle: 'italic' }}>
+                      <strong>Ghi chú của khách:</strong> "{activeDrawerOrder.customerNote}"
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* 4. Tổng Kết Tài Chính */}
-            <div style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px', color: isDark ? '#E2E8F0' : '#1E293B' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.8rem' }}>
-                <span>Tỷ giá áp dụng:</span>
-                <strong>1 KRW = {krwRate} VNĐ</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.8rem' }}>
-                <span>Phí dịch vụ mua hộ:</span>
-                <strong>{serviceFee}%</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: isDark ? '1px dashed #334155' : '1px dashed #CBD5E1', fontSize: '1rem', fontWeight: 900, color: '#38BDF8' }}>
-                <span>Tổng Tiền Về VN:</span>
-                <span>{(activeDrawerOrder.exactPaymentAmount || getOrderTotalVnd(activeDrawerOrder, krwRate, serviceFee)).toLocaleString('vi-VN')} đ</span>
-              </div>
-              {activeDrawerOrder.exactPaymentAmount && (
-                <div style={{ fontSize: '0.74rem', color: '#10B981', marginTop: '4px', textAlign: 'right', fontWeight: 600 }}>
-                  ⚡ Số tiền độc nhất đối soát: {activeDrawerOrder.exactPaymentAmount.toLocaleString('vi-VN')} đ
+              {/* 2.5 Biên Lai Chuyển Tiền / Bill Quét Mã (Nếu Khách Đã Tải Lên) */}
+              {activeDrawerOrder.depositProofImage && (
+                <div style={{ backgroundColor: isDark ? '#1E293B' : '#ECFDF5', border: isDark ? '1px solid #10B981' : '1px solid #A7F3D0', borderRadius: '10px', padding: '14px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#10B981' : '#047857', marginBottom: '8px' }}>
+                    🧾 MINH CHỨNG THANH TOÁN (ẢNH GIAO DỊCH)
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <a href={activeDrawerOrder.depositProofImage} target="_blank" rel="noreferrer" title="Click để phóng to ảnh giao dịch">
+                      <img
+                        src={activeDrawerOrder.depositProofImage}
+                        alt="Biên lai cọc"
+                        style={{ maxHeight: '180px', maxWidth: '100%', borderRadius: '8px', border: '1px solid #D1D5DB', objectFit: 'contain', cursor: 'zoom-in' }}
+                      />
+                    </a>
+                  </div>
+                  {activeDrawerOrder.status !== 'deposit_paid' && activeDrawerOrder.paymentStatus !== 'paid' && (
+                    <button
+                      onClick={() => handleQuickStatusChange(activeDrawerOrder.id, 'deposit_paid')}
+                      style={{
+                        width: '100%',
+                        backgroundColor: '#10B981',
+                        color: '#FFF',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✓ Duyệt Xác Nhận Đã Nhận Cọc 100%
+                    </button>
+                  )}
                 </div>
               )}
-            </div>
 
-            {/* Delete Order Action */}
-            <div style={{ marginTop: 'auto', paddingTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => handleDeleteOrder(activeDrawerOrder.id)}
-                style={{
-                  backgroundColor: isDark ? '#450A0A' : '#FEE2E2',
-                  color: '#EF4444',
-                  border: isDark ? '1px solid #7F1D1D' : '1px solid #FECACA',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <Trash2 size={14} />
-                <span>Xoá Đơn Hàng</span>
-              </button>
+              {/* 3. Danh Sách Sản Phẩm Mua Hộ */}
+              <div style={{ backgroundColor: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', marginBottom: '8px' }}>
+                  📦 SẢN PHẨM MUA HỘ ({activeDrawerOrder.items?.length || 1} MÓN)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(activeDrawerOrder.items || []).map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', borderBottom: isDark ? '1px solid #334155' : '1px solid #F1F5F9', paddingBottom: '8px' }}>
+                      <img
+                        src={item.productImage || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=120&q=80'}
+                        alt=""
+                        style={{ width: '45px', height: '45px', borderRadius: '6px', objectFit: 'cover' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.8rem', color: isDark ? '#F8FAFC' : '#1E293B' }}>{item.name}</div>
+                        <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B' }}>
+                          Giá: {item.foreignPrice?.toLocaleString('vi-VN') || 0} ₩ x {item.quantity || item.qty || 1}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteItemFromOrder(idx)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: '4px' }}
+                        title="Xoá sản phẩm"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Hiển thị Tổng Tiền */}
+                  {activeDrawerOrder.totalAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '12px', borderTop: isDark ? '1px dashed #334155' : '1px dashed #E2E8F0' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#94A3B8' : '#64748B' }}>Tổng cộng:</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#38BDF8' }}>
+                        {activeDrawerOrder.totalAmount.toLocaleString('vi-VN')} đ
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* ➕ Nút Thêm / Form Thêm Sản Phẩm Mới */}
+                {!isAddingItem ? (
+                  <button
+                    onClick={() => setIsAddingItem(true)}
+                    style={{
+                      width: '100%',
+                      marginTop: '12px',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: isDark ? '1px dashed #475569' : '1px dashed #CBD5E1',
+                      backgroundColor: 'transparent',
+                      color: isDark ? '#94A3B8' : '#64748B',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Plus size={14} /> Thêm Sản Phẩm
+                  </button>
+                ) : (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+                    border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <div style={{ position: 'relative', width: '50px', height: '50px', borderRadius: '8px', overflow: 'hidden', backgroundColor: isDark ? '#0F172A' : '#F1F5F9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {newItemForm.productImage ? (
+                          <img src={newItemForm.productImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ fontSize: '0.6rem', color: '#94A3B8', textAlign: 'center' }}>Up ảnh</div>
+                        )}
+                        <input
+                          type="file" accept="image/*"
+                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (evt) => setNewItemForm({ ...newItemForm, productImage: evt.target.result });
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </div>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <input
+                          type="text" placeholder="Tên sản phẩm *"
+                          value={newItemForm.name}
+                          onChange={(e) => setNewItemForm({ ...newItemForm, name: e.target.value })}
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: isDark ? '1px solid #475569' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', fontSize: '0.75rem', outline: 'none' }}
+                        />
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <input
+                            type="text" placeholder="Giá (₩) *"
+                            value={newItemForm.foreignPrice}
+                            onChange={(e) => setNewItemForm({ ...newItemForm, foreignPrice: e.target.value.replace(/[^0-9]/g, '') })}
+                            style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: isDark ? '1px solid #475569' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', fontSize: '0.75rem', outline: 'none' }}
+                          />
+                          <input
+                            type="text" placeholder="SL"
+                            value={newItemForm.qty}
+                            onChange={(e) => setNewItemForm({ ...newItemForm, qty: e.target.value.replace(/[^0-9]/g, '') })}
+                            style={{ width: '50px', padding: '6px 10px', borderRadius: '6px', border: isDark ? '1px solid #475569' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', fontSize: '0.75rem', outline: 'none', textAlign: 'center' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                      <button
+                        onClick={() => setIsAddingItem(false)}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', color: isDark ? '#94A3B8' : '#64748B', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        onClick={handleSaveNewItemToOrder}
+                        style={{ padding: '6px 16px', borderRadius: '6px', border: 'none', backgroundColor: '#38BDF8', color: '#FFF', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Lưu Sản Phẩm
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
         </div>
@@ -813,26 +1087,35 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
 
       {/* 📝 Modal Tạo Đơn Hàng Mới Thủ Công */}
       {isCreateModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 999999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              if (!isCreateFormDirty) {
+                setIsCreateModalOpen(false);
+              }
+            }
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
           <div style={{
             backgroundColor: isDark ? '#1E293B' : '#FFF',
             color: isDark ? '#F8FAFC' : '#0F172A',
             border: isDark ? '1px solid #334155' : 'none',
             borderRadius: '16px',
-            maxWidth: '550px',
+            maxWidth: '850px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
@@ -847,120 +1130,187 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
             </div>
 
             <form onSubmit={handleSaveManualOrder} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Tên Khách Hàng *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nguyễn Văn A"
-                  value={manualForm.customerName}
-                  onChange={(e) => setManualForm({ ...manualForm, customerName: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
-                    backgroundColor: isDark ? '#0F172A' : '#FFF',
-                    color: isDark ? '#F8FAFC' : '#0F172A',
-                    marginTop: '4px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Số Điện Thoại *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="0912345678"
-                  value={manualForm.customerPhone}
-                  onChange={(e) => setManualForm({ ...manualForm, customerPhone: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
-                    backgroundColor: isDark ? '#0F172A' : '#FFF',
-                    color: isDark ? '#F8FAFC' : '#0F172A',
-                    marginTop: '4px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Tên Sản Phẩm Cần Mua *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Cao Hồng Sâm KGC Everytime 30 gói"
-                  value={manualForm.items[0].name}
-                  onChange={(e) => {
-                    const items = [...manualForm.items];
-                    items[0].name = e.target.value;
-                    setManualForm({ ...manualForm, items });
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
-                    backgroundColor: isDark ? '#0F172A' : '#FFF',
-                    color: isDark ? '#F8FAFC' : '#0F172A',
-                    marginTop: '4px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Giá Won (₩)</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>
+                    Tên Khách Hàng <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
                   <input
-                    type="number"
-                    placeholder="50000"
-                    value={manualForm.items[0].foreignPrice}
-                    onChange={(e) => {
-                      const items = [...manualForm.items];
-                      items[0].foreignPrice = e.target.value;
-                      setManualForm({ ...manualForm, items });
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
-                      backgroundColor: isDark ? '#0F172A' : '#FFF',
-                      color: isDark ? '#F8FAFC' : '#0F172A',
-                      marginTop: '4px',
-                      outline: 'none'
-                    }}
+                    type="text" required placeholder="Nguyễn Văn A"
+                    value={manualForm.customerName}
+                    onChange={(e) => setManualForm({ ...manualForm, customerName: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', marginTop: '4px', outline: 'none' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Số Lượng</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>
+                    Số Điện Thoại <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
                   <input
-                    type="number"
-                    min="1"
-                    value={manualForm.items[0].qty}
-                    onChange={(e) => {
-                      const items = [...manualForm.items];
-                      items[0].qty = e.target.value;
-                      setManualForm({ ...manualForm, items });
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
-                      backgroundColor: isDark ? '#0F172A' : '#FFF',
-                      color: isDark ? '#F8FAFC' : '#0F172A',
-                      marginTop: '4px',
-                      outline: 'none'
-                    }}
+                    type="text" required placeholder="0912345678"
+                    value={manualForm.customerPhone}
+                    onChange={(e) => setManualForm({ ...manualForm, customerPhone: e.target.value.replace(/[^0-9]/g, '') })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', marginTop: '4px', outline: 'none' }}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>
+                  Địa Chỉ Giao Hàng <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <input
+                  type="text" required placeholder="Nhập địa chỉ giao hàng đầy đủ..."
+                  value={manualForm.customerAddress}
+                  onChange={(e) => setManualForm({ ...manualForm, customerAddress: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', marginTop: '4px', outline: 'none' }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#CBD5E1' : '#475569' }}>Ghi Chú Của Khách (Tùy chọn)</label>
+                <input
+                  type="text" placeholder="Ví dụ: Giao giờ hành chính..."
+                  value={manualForm.customerNote}
+                  onChange={(e) => setManualForm({ ...manualForm, customerNote: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', marginTop: '4px', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginTop: '8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong style={{ color: isDark ? '#F8FAFC' : '#0F172A' }}>Danh Sách Sản Phẩm Mua Hộ</strong>
+                <button
+                  type="button"
+                  onClick={() => setManualForm({ ...manualForm, items: [...manualForm.items, { name: '', foreignPrice: '', qty: 1, image: '' }] })}
+                  style={{ padding: '4px 8px', borderRadius: '6px', border: '1px dashed #38BDF8', backgroundColor: 'transparent', color: '#38BDF8', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  + Thêm sản phẩm
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
+                {manualForm.items.map((item, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+                    backgroundColor: isDark ? '#1E293B' : '#F8FAFC'
+                  }}>
+                    {/* 1. Ảnh vuông nhỏ */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '45px', height: '45px', flexShrink: 0,
+                        borderRadius: '6px', border: '1px dashed #CBD5E1',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', overflow: 'hidden', backgroundColor: isDark ? '#0F172A' : '#FFF'
+                      }}
+                    >
+                      {item.image ? (
+                        <img 
+                          src={item.image} 
+                          alt="preview" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                      ) : (
+                        <span style={{ fontSize: '9px', color: '#94A3B8', textAlign: 'center' }}>+ Ảnh</span>
+                      )}
+                      {/* Hidden file input for upload */}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        title="Nhấn để tải ảnh lên"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              const newItems = [...manualForm.items];
+                              newItems[index].image = reader.result;
+                              setManualForm({ ...manualForm, items: newItems });
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                      />
+                    </div>
+
+                    {/* 2. Tên Sản Phẩm */}
+                    <input
+                      type="text" required placeholder="Tên sản phẩm *"
+                      value={item.name}
+                      onChange={(e) => {
+                        const newItems = [...manualForm.items];
+                        newItems[index].name = e.target.value;
+                        setManualForm({ ...manualForm, items: newItems });
+                      }}
+                      style={{ flex: 3, minWidth: '100px', padding: '8px', borderRadius: '6px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', outline: 'none', fontSize: '0.8rem' }}
+                    />
+
+                    {/* 3. Giá Won */}
+                    <div style={{ flex: 1.5, position: 'relative' }}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="Giá(₩)"
+                        value={item.foreignPrice}
+                        onChange={(e) => {
+                          const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                          const newItems = [...manualForm.items];
+                          newItems[index].foreignPrice = sanitized;
+                          setManualForm({ ...manualForm, items: newItems });
+                        }}
+                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', outline: 'none', fontSize: '0.8rem' }}
+                      />
+                    </div>
+
+                    {/* 4. Số lượng */}
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="SL"
+                      value={item.qty}
+                      onChange={(e) => {
+                        const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                        const newItems = [...manualForm.items];
+                        newItems[index].qty = sanitized;
+                        setManualForm({ ...manualForm, items: newItems });
+                      }}
+                      style={{ flex: 0.8, width: '50px', padding: '8px', borderRadius: '6px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1', backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#F8FAFC' : '#0F172A', outline: 'none', fontSize: '0.8rem', textAlign: 'center' }}
+                    />
+
+                    {/* 5. Tổng bill */}
+                    <div style={{ flex: 1.2, fontSize: '0.8rem', fontWeight: 700, color: '#38BDF8', textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span>{((Number(item.foreignPrice) || 0) * (Number(item.qty) || 1)).toLocaleString()} ₩</span>
+                      <span style={{ fontSize: '0.7rem', color: '#10B981' }}>{formatVnd(getVndFromWon(Number(item.foreignPrice) || 0, { KRW: { rate: krwRate }, serviceFeePercent: serviceFee }) * (Number(item.qty) || 1))}</span>
+                    </div>
+
+                    {/* 6. Nút Xóa */}
+                    <button
+                      type="button"
+                      title="Xóa"
+                      onClick={() => {
+                        const newItems = [...manualForm.items];
+                        newItems.splice(index, 1);
+                        setManualForm({ ...manualForm, items: newItems });
+                      }}
+                      disabled={manualForm.items.length === 1}
+                      style={{
+                        background: 'none', border: 'none',
+                        color: manualForm.items.length === 1 ? (isDark ? '#334155' : '#CBD5E1') : '#EF4444',
+                        cursor: manualForm.items.length === 1 ? 'not-allowed' : 'pointer', padding: '4px'
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
@@ -968,12 +1318,8 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
                   style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
-                    backgroundColor: isDark ? '#0F172A' : '#FFF',
-                    color: isDark ? '#E2E8F0' : '#334155',
-                    cursor: 'pointer'
+                    padding: '8px 16px', borderRadius: '8px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                    backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#E2E8F0' : '#334155', cursor: 'pointer'
                   }}
                 >
                   Huỷ
@@ -986,6 +1332,61 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal xác nhận xoá */}
+      {orderToDelete && (
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setOrderToDelete(null);
+            }
+          }}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}
+        >
+          <div style={{
+            backgroundColor: isDark ? '#1E293B' : '#FFF',
+            padding: '24px', borderRadius: '12px', width: '90%', maxWidth: '400px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            textAlign: 'center'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ color: '#EF4444', marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+              <AlertCircle size={48} />
+            </div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: isDark ? '#F8FAFC' : '#0F172A', marginBottom: '8px' }}>
+              Xác nhận xoá đơn hàng
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: isDark ? '#94A3B8' : '#64748B', marginBottom: '24px' }}>
+              Bạn có chắc chắn muốn xoá vĩnh viễn đơn hàng <strong>#{orderToDelete.replace(/^ORD-?/i, '')}</strong>?<br/>
+              Hành động này không thể hoàn tác!
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setOrderToDelete(null)}
+                style={{
+                  padding: '10px 20px', borderRadius: '8px', border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                  backgroundColor: isDark ? '#0F172A' : '#FFF', color: isDark ? '#E2E8F0' : '#334155',
+                  fontWeight: 600, cursor: 'pointer', flex: 1
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{
+                  padding: '10px 20px', borderRadius: '8px', border: 'none',
+                  backgroundColor: '#EF4444', color: '#FFF', fontWeight: 700, cursor: 'pointer', flex: 1
+                }}
+              >
+                Xóa Vĩnh Viễn
+              </button>
+            </div>
           </div>
         </div>
       )}

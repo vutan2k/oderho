@@ -119,7 +119,7 @@ export default function OrderTrackerLookup({ onBack, isMobile }) {
                   SĐT Đơn hàng
                 </span>
                 <div style={{ fontSize: isMobile ? '0.9rem' : '0.95rem', fontWeight: 800, color: 'var(--purple-primary)' }}>
-                  {searchedOrder.customerPhone || searchedOrder.id}
+                  {searchedOrder.customerPhone || searchedOrder.id.replace(/^ORD-?/i, '')}
                 </div>
               </div>
               {(() => {

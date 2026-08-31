@@ -17,59 +17,49 @@ export const ORDER_WORKFLOW_STEPS = [
     step: 1,
     title: 'Chọn Hàng & Gửi Link',
     desc: 'Quý khách chọn sản phẩm trên web TAVY hoặc gửi link từ Olive Young, KGC, Nonghyup, hiệu thuốc Hàn Quốc.',
-    icon: Search,
-    badge: 'Bước 1'
+    icon: Search
   },
   {
     step: 2,
     title: 'Cọc Đơn Hàng 100%',
     desc: 'Thanh toán cọc 100% trọn gói giá về tay nhanh chóng qua VietQR tự động (MBBank) hoặc Woori Bank (KRW).',
-    icon: CreditCard,
-    badge: 'Bước 2'
+    icon: CreditCard
   },
   {
     step: 3,
-    title: 'TAVY Xác Nhận Đơn',
+    title: 'Xác Nhận Đơn',
     desc: 'Hệ thống tự động ghi nhận thanh toán, admin kiểm tra thông tin phân loại sản phẩm và lên lịch gom hàng tại Hàn.',
-    icon: CheckCircle2,
-    badge: 'Bước 3'
+    icon: CheckCircle2
   },
   {
     step: 4,
-    title: 'TAVY Mua Hàng (Video POV)',
-    desc: 'Nhân viên TAVY trực tiếp đến Store Olive Young / mua Online tại Hàn Quốc. Quay video POV thực tế gửi khách xem.',
-    icon: Video,
-    badge: 'Có Video POV',
-    highlight: true
+    title: 'Mua Hàng',
+    desc: 'Nhân viên TAVY trực tiếp đến Store Olive Young / mua Online tại Hàn Quốc. Quay video thực tế gửi khách xem.',
+    icon: Video
   },
   {
     step: 5,
-    title: 'TAVY Đóng Hàng (Video Đóng Kiện)',
-    desc: 'Kiểm tra seal, hạn sử dụng, bọc chống sốc 3 lớp cẩn thận và quay video đóng thùng hàng gửi khách xác nhận.',
-    icon: PackageCheck,
-    badge: 'Có Video Đóng Gói',
-    highlight: true
+    title: 'Đóng Hàng',
+    desc: 'Kiểm tra seal, hạn sử dụng, bọc chống sốc 3 lớp cẩn thận gửi khách xác nhận.',
+    icon: PackageCheck
   },
   {
     step: 6,
     title: 'Gửi Hàng Bay Về Việt Nam',
     desc: 'Hàng được vận chuyển bằng đường bay chuyên tuyến Incheon ✈️ Hà Nội / TP.HCM trong 3-7 ngày làm việc.',
-    icon: Plane,
-    badge: 'Bước 6'
+    icon: Plane
   },
   {
     step: 7,
     title: 'Thông Quan Hải Quan',
     desc: 'Khai báo thủ tục hải quan chính ngạch, đảm bảo hàng hóa đầy đủ chứng từ nguồn gốc xuất xứ và an toàn.',
-    icon: ShieldCheck,
-    badge: 'Bước 7'
+    icon: ShieldCheck
   },
   {
     step: 8,
     title: 'Giao Hàng & Hoàn Tất',
     desc: 'Giao hàng tận nơi qua đơn vị vận chuyển nội địa. Quý khách đồng kiểm kiện hàng nguyên vẹn và hoàn tất đơn hàng.',
-    icon: Package,
-    badge: 'Bước 8'
+    icon: Package
   }
 ];
 
@@ -97,7 +87,7 @@ export default function HowItWorksSection() {
           </h2>
 
           <p style={{ fontSize: '0.95rem', color: '#555555', lineHeight: 1.6, margin: 0 }}>
-            Tất cả đơn hàng đều có <strong>Video POV mua tại Store Hàn Quốc</strong> và <strong>Video đóng gói kiện hàng</strong> giúp quý khách theo dõi minh bạch 100%.
+            Hệ thống cập nhật trạng thái đơn hàng theo thời gian thực (Realtime) để quý khách tiện theo dõi.
           </p>
         </div>
 
@@ -137,22 +127,12 @@ export default function HowItWorksSection() {
                     <Icon size={20} />
                   </div>
 
-                  <span style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    backgroundColor: step.highlight ? 'var(--workflow-highlight-badge-bg, #7E22CE)' : 'var(--bg-subtle-purple, #F3F4F6)',
-                    color: step.highlight ? 'var(--workflow-highlight-badge-color, #FFFFFF)' : 'var(--text-muted, #6B7280)',
-                    border: step.highlight ? '1px solid var(--workflow-highlight-border, transparent)' : 'none'
-                  }}>
-                    {step.badge}
-                  </span>
+                  {/* Badge Removed */}
                 </div>
 
                 {/* Step Title */}
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-dark, #1F2937)', marginBottom: '6px', lineHeight: 1.4 }}>
-                  <span style={{ color: step.highlight ? 'var(--workflow-highlight-accent, #7E22CE)' : 'var(--text-dark)', marginRight: '6px' }}>#{step.step}</span>
+                  <span style={{ color: step.highlight ? 'var(--workflow-highlight-accent, #7E22CE)' : 'var(--text-dark)', marginRight: '6px' }}>{step.step}</span>
                   {step.title}
                 </h3>
 

@@ -29,7 +29,7 @@ export const ORDER_STATUSES = {
   confirmed: {
     id: 'confirmed',
     stepNumber: 3,
-    label: 'Bước 3: TAVY Xác nhận đơn',
+    label: 'Bước 3: Xác nhận đơn',
     shortLabel: 'Đã xác nhận',
     color: '#0284C7',
     bgColor: '#E0F2FE',
@@ -40,26 +40,26 @@ export const ORDER_STATUSES = {
   purchased: {
     id: 'purchased',
     stepNumber: 4,
-    label: 'Bước 4: Mua hàng (Video POV)',
-    shortLabel: 'Đang mua (POV)',
+    label: 'Bước 4: Mua hàng',
+    shortLabel: 'Đang mua',
     color: '#7C3AED',
     bgColor: '#F3E8FF',
     borderColor: '#8B5CF6',
     stepIndex: 3,
     hasPovVideo: true,
-    desc: 'Nhân viên TAVY trực tiếp mua hàng tại Store Hàn và quay video POV thực tế.'
+    desc: 'Nhân viên trực tiếp mua hàng tại Store Hàn Quốc.'
   },
   packed_kr: {
     id: 'packed_kr',
     stepNumber: 5,
-    label: 'Bước 5: Đóng hàng (Video Đóng Kiện)',
+    label: 'Bước 5: Đóng hàng',
     shortLabel: 'Kho Seoul',
     color: '#DB2777',
     bgColor: '#FCE7F3',
     borderColor: '#EC4899',
     stepIndex: 4,
     hasPackingVideo: true,
-    desc: 'Kiểm tra seal, bọc chống sốc 3 lớp, cân ký và quay video đóng thùng.'
+    desc: 'Kiểm tra seal, hạn sử dụng, bọc chống sốc cẩn thận, đóng thùng.'
   },
   in_transit_air: {
     id: 'in_transit_air',
@@ -181,9 +181,9 @@ export const getStatusConfig = (statusKey) => {
 export const ORDER_STEPS = [
   { key: 'pending', step: 1, title: 'Chọn Hàng & Gửi Link', shortLabel: 'Chờ cọc', stepIndex: 0 },
   { key: 'deposit_paid', step: 2, title: 'Cọc Đơn Hàng 100%', shortLabel: 'Đã cọc', stepIndex: 1 },
-  { key: 'confirmed', step: 3, title: 'TAVY Xác Nhận Đơn', shortLabel: 'Đã duyệt', stepIndex: 2 },
-  { key: 'purchased', step: 4, title: 'TAVY Mua Hàng (Video POV)', shortLabel: 'Mua hàng', stepIndex: 3, hasPovVideo: true },
-  { key: 'packed_kr', step: 5, title: 'TAVY Đóng Hàng (Video Kiện)', shortLabel: 'Đóng kiện', stepIndex: 4, hasPackingVideo: true },
+  { key: 'confirmed', step: 3, title: 'Xác Nhận Đơn', shortLabel: 'Đã duyệt', stepIndex: 2 },
+  { key: 'purchased', step: 4, title: 'Mua Hàng', shortLabel: 'Mua hàng', stepIndex: 3, hasPovVideo: true },
+  { key: 'packed_kr', step: 5, title: 'Đóng Hàng', shortLabel: 'Đóng kiện', stepIndex: 4, hasPackingVideo: true },
   { key: 'in_transit_air', step: 6, title: 'Vận Chuyển Bay Hàn - Việt', shortLabel: 'Đang bay', stepIndex: 5 },
   { key: 'customs_cleared', step: 7, title: 'Thông Quan & Kho VN', shortLabel: 'Kho VN', stepIndex: 6 },
   { key: 'completed', step: 8, title: 'Giao Hàng & Hoàn Tất', shortLabel: 'Đã giao', stepIndex: 7 }

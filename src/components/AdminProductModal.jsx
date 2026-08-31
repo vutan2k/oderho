@@ -71,6 +71,37 @@ export default function AdminProductModal({
     }
   }, [product]);
 
+  const isDirty = useMemo(() => {
+    if (!product) return false;
+    const initialGoodsNo = product.goodsNo || product.id || '';
+    const initialName = product.name || '';
+    const initialNameKr = product.nameKr || product.koreanTitle || '';
+    const initialBrand = product.brand || '';
+    const initialCategory = product.category || 'ginseng';
+    const initialForeignPrice = product.foreignPrice ?? product.price ?? 0;
+    const initialProductImage = product.productImage || '';
+    const initialOrigin = product.origin || 'Hàn Quốc';
+    const initialDescription = product.description || '';
+    const initialUsage = product.usage || '';
+    const initialOutOfStock = Boolean(product.isOutOfStock);
+    const initialHidden = Boolean(product.isHidden);
+
+    return (
+      formData.goodsNo !== initialGoodsNo ||
+      formData.name !== initialName ||
+      formData.nameKr !== initialNameKr ||
+      formData.brand !== initialBrand ||
+      formData.category !== initialCategory ||
+      parseFloat(formData.foreignPrice) !== parseFloat(initialForeignPrice) ||
+      formData.productImage !== initialProductImage ||
+      formData.origin !== initialOrigin ||
+      formData.description !== initialDescription ||
+      formData.usage !== initialUsage ||
+      formData.isOutOfStock !== initialOutOfStock ||
+      formData.isHidden !== initialHidden
+    );
+  }, [formData, product]);
+
   // Tính giá VNĐ ước tính tự động theo tỷ giá & phí mua hộ
   const calculatedVnd = useMemo(() => {
     const won = parseFloat(formData.foreignPrice) || 0;
@@ -161,7 +192,13 @@ export default function AdminProductModal({
         padding: '16px',
         animation: 'fadeIn 0.2s ease-out'
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          if (!isDirty) {
+            onClose();
+          }
+        }
+      }}
     >
       <div
         style={{
