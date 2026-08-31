@@ -1,17 +1,14 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { ShieldAlert, ArrowLeft, ShieldCheck, CheckCircle2, Loader2, KeyRound } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const { loginUser, loginWithGoogleAuth } = useContext(AppContext);
+  const { loginWithGoogleAuth } = useContext(AppContext);
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [showInternalLogin, setShowInternalLogin] = useState(false);
 
   const handleGoogleAuth = async () => {
     setError('');
@@ -30,22 +27,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleManualLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      const res = await loginUser(email, password);
-      if (res.success) {
-        navigate('/');
-      } else {
-        setError(res.message || 'Mật khẩu hoặc email/ID không chính xác.');
-      }
-    } catch (err) {
-      setError('Đã có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.');
-    }
-  };
-
   return (
     <div style={{
       minHeight: 'calc(100vh - 120px)',
@@ -57,27 +38,28 @@ export default function LoginPage() {
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '440px',
+        maxWidth: '420px',
         backgroundColor: 'var(--bg-white, #FFFFFF)',
         borderRadius: '24px',
         border: '1px solid var(--border-color, #E5E7EB)',
         boxShadow: 'var(--shadow-md, 0 8px 30px rgba(0,0,0,0.06))',
-        padding: '38px 28px',
+        padding: '40px 32px',
+        textAlign: 'center'
       }}>
         {/* Title Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ marginBottom: '28px' }}>
           <img
             src="/tavy-logo.png"
             alt="TAVY Logo"
-            style={{ height: '58px', width: 'auto', display: 'inline-block', objectFit: 'contain', marginBottom: '4px' }}
+            style={{ height: '58px', width: 'auto', display: 'inline-block', objectFit: 'contain', marginBottom: '6px' }}
           />
           <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--purple-primary, #7A4B9E)', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
             KOREA
           </div>
-          <h2 style={{ fontSize: '1.65rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark, #1F2937)', fontWeight: 600, marginTop: '6px' }}>
+          <h2 style={{ fontSize: '1.65rem', fontFamily: 'var(--font-serif)', color: 'var(--text-dark, #1F2937)', fontWeight: 600, marginTop: '8px' }}>
             Đăng Nhập Với Google Gmail
           </h2>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #6B7280)', marginTop: '4px' }}>
+          <p style={{ fontSize: '0.84rem', color: 'var(--text-muted, #6B7280)', marginTop: '4px' }}>
             TAVY KOREA • MUA HÀNG HÀN QUỐC CHÍNH HÃNG
           </p>
         </div>
@@ -90,51 +72,16 @@ export default function LoginPage() {
             borderRadius: '12px',
             padding: '12px 14px',
             fontSize: '0.85rem',
-            marginBottom: '20px',
+            marginBottom: '22px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
+            textAlign: 'left'
           }}>
             <ShieldAlert size={16} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
-
-        {/* Khối Giới Thiệu Bảo Mật Chuẩn Google Gmail */}
-        <div style={{
-          backgroundColor: '#F8FAFC',
-          border: '1px solid #E2E8F0',
-          borderRadius: '14px',
-          padding: '18px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          marginBottom: '22px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1E293B', fontWeight: 700, fontSize: '0.92rem' }}>
-            <ShieldCheck size={20} style={{ color: 'var(--purple-primary, #7A4B9E)' }} />
-            <span>Bảo mật danh tính 100% qua Google Gmail</span>
-          </div>
-          
-          <p style={{ fontSize: '0.82rem', color: '#64748B', margin: 0, lineHeight: 1.5 }}>
-            TAVY hỗ trợ đăng nhập 1 chạm an toàn bằng tài khoản Google Gmail. Hệ thống tự động kích hoạt tài khoản và lưu trữ lịch sử đơn hàng vào cơ sở dữ liệu.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '2px', fontSize: '0.8rem', color: '#334155' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CheckCircle2 size={16} style={{ color: '#10B981', flexShrink: 0 }} />
-              <span>Xác thực Gmail chính chủ 100%, chống tài khoản ảo</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CheckCircle2 size={16} style={{ color: '#10B981', flexShrink: 0 }} />
-              <span>Không cần tạo hay ghi nhớ mật khẩu, bảo mật 2 lớp an toàn</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CheckCircle2 size={16} style={{ color: '#10B981', flexShrink: 0 }} />
-              <span>Tự động lưu phiên đăng nhập & đồng bộ lịch sử mua hàng</span>
-            </div>
-          </div>
-        </div>
 
         {/* Nút Đăng Nhập Chính Bằng Google Gmail */}
         <button
@@ -144,11 +91,11 @@ export default function LoginPage() {
           style={{
             width: '100%',
             padding: '14px',
-            borderRadius: '12px',
+            borderRadius: '14px',
             border: '2px solid #E2E8F0',
             backgroundColor: '#FFFFFF',
             color: '#1E293B',
-            fontSize: '0.94rem',
+            fontSize: '0.95rem',
             fontWeight: 700,
             cursor: isGoogleLoading ? 'not-allowed' : 'pointer',
             display: 'flex',
@@ -190,101 +137,12 @@ export default function LoginPage() {
           )}
         </button>
 
-        <div style={{ textAlign: 'center', fontSize: '0.78rem', color: '#9CA3AF', marginTop: '16px' }}>
+        <div style={{ textAlign: 'center', fontSize: '0.78rem', color: '#9CA3AF', marginTop: '18px', lineHeight: 1.5 }}>
           Bằng việc tiếp tục, Quý khách đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của TAVY KOREA.
         </div>
 
-        {/* Mục đăng nhập nội bộ phụ thu gọn (dành cho Admin / Tester) */}
-        <div style={{ marginTop: '22px', borderTop: '1px dashed #E5E7EB', paddingTop: '16px', textAlign: 'center' }}>
-          <button
-            type="button"
-            onClick={() => setShowInternalLogin(!showInternalLogin)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#9CA3AF',
-              fontSize: '0.75rem',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontWeight: 600
-            }}
-          >
-            <KeyRound size={13} />
-            <span>{showInternalLogin ? 'Ẩn đăng nhập nội bộ' : 'Đăng nhập nội bộ (Dành cho Quản trị / Tester)'}</span>
-          </button>
-
-          {showInternalLogin && (
-            <form onSubmit={handleManualLogin} style={{ marginTop: '14px', textAlign: 'left' }}>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#6B7280', marginBottom: '4px' }}>
-                  Tài khoản / Email nội bộ
-                </label>
-                <input
-                  type="text"
-                  placeholder="tan123..."
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid #D1D5DB',
-                    backgroundColor: '#FFFFFF',
-                    color: '#1F2937',
-                    fontSize: '0.85rem',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#6B7280', marginBottom: '4px' }}>
-                  Mật khẩu
-                </label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid #D1D5DB',
-                    backgroundColor: '#FFFFFF',
-                    color: '#1F2937',
-                    fontSize: '0.85rem',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                style={{
-                  width: '100%',
-                  padding: '10px 0',
-                  fontSize: '0.8rem',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  backgroundColor: '#334155',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                ĐĂNG NHẬP TÀI KHOẢN NỘI BỘ
-              </button>
-            </form>
-          )}
-        </div>
-
         {/* Nút Quay Về Trang Chủ */}
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <div style={{ marginTop: '26px', textAlign: 'center' }}>
           <button
             onClick={() => navigate('/')}
             style={{
