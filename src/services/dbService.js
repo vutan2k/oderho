@@ -69,31 +69,26 @@ export const subscribeToOrders = (onUpdate, onError, userEmail) => {
  * 2. Create New Order
  */
 export const createOrderInDB = async (orderData) => {
-  try {
-    const rawPhone = orderData.customerPhone ? String(orderData.customerPhone).replace(/\D/g, '') : '';
-    const orderId = orderData.id || rawPhone || `${Date.now()}`;
-    const docRef = doc(db, ORDERS_COLLECTION, orderId);
-    const nowIso = new Date().toISOString();
-    
-    const payload = {
-      ...orderData,
-      id: orderId,
-      status: orderData.status || 'pending',
-      paymentStatus: 'unpaid',
-      paymentMethod: orderData.paymentMethod || null,
-      bankAccount: orderData.bankAccount || null,
-      bankName: orderData.bankName || null,
-      paymentDue: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      createdAt: nowIso,
-      updatedAt: nowIso
-    };
+  const rawPhone = orderData.customerPhone ? String(orderData.customerPhone).replace(/\D/g, '') : '';
+  const orderId = orderData.id || rawPhone || `${Date.now()}`;
+  const docRef = doc(db, ORDERS_COLLECTION, orderId);
+  const nowIso = new Date().toISOString();
+  
+  const payload = {
+    ...orderData,
+    id: orderId,
+    status: orderData.status || 'pending',
+    paymentStatus: 'unpaid',
+    paymentMethod: orderData.paymentMethod || null,
+    bankAccount: orderData.bankAccount || null,
+    bankName: orderData.bankName || null,
+    paymentDue: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    createdAt: nowIso,
+    updatedAt: nowIso
+  };
 
-    await setDoc(docRef, payload);
-    return { success: true, id: orderId, order: payload };
-  } catch (err) {
-    console.warn("Firestore createOrder error, using local fallback:", err);
-    return { success: false, error: err };
-  }
+  await setDoc(docRef, payload);
+  return { success: true, id: orderId, order: payload };
 };
 
 /**

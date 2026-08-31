@@ -562,12 +562,10 @@ export const AppProvider = ({ children }) => {
       country: orderData.country || 'KRW',
     };
 
-    try {
-      await createOrderInDB(payload);
-    } catch (err) {
-      console.warn("createOrderInDB fallback:", err);
-    }
+    // Write to Firestore — let errors propagate to caller
+    await createOrderInDB(payload);
 
+    // Only update local state AFTER Firestore write succeeds
     const newOrder = { id: orderId, ...payload };
     setOrders(prev => [newOrder, ...prev.filter(o => o.id !== orderId)]);
     try {

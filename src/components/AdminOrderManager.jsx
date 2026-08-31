@@ -389,8 +389,10 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
         status: 'pending',
         items: [{ name: '', foreignPrice: '', qty: 1, image: '' }]
       });
-    } catch {
-      if (showToast) showToast('Lỗi khi tạo đơn hàng thủ công!', 'error');
+    } catch (err) {
+      console.error('Lỗi tạo đơn hàng:', err);
+      const errMsg = err?.message || err?.code || 'Không xác định';
+      if (showToast) showToast(`Lỗi tạo đơn hàng: ${errMsg}`, 'error', 6000);
     }
   };
 
