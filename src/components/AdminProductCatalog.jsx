@@ -710,8 +710,9 @@ export default function AdminProductCatalog({ isDark: isDarkProp } = {}) {
                         {/* Thumbnail Image */}
                         <td style={{ padding: '6px 8px', textAlign: 'center', borderRight: isDark ? '1px solid #334155' : '1px solid #E2E8F0' }}>
                           <div style={{
-                            width: '42px',
-                            height: '42px',
+                            position: 'relative',
+                            width: '44px',
+                            height: '44px',
                             borderRadius: '6px',
                             backgroundColor: isDark ? '#0F172A' : '#FFF',
                             border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
@@ -728,6 +729,25 @@ export default function AdminProductCatalog({ isDark: isDarkProp } = {}) {
                                 e.target.src = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80';
                               }}
                             />
+                            {((prod.images && prod.images.length > 1) || (prod.photoReviews && prod.photoReviews.length > 0)) && (
+                              <span
+                                title={`Sản phẩm có ${(prod.images?.length || 0) + (prod.photoReviews?.length || 0)} ảnh`}
+                                style={{
+                                  position: 'absolute',
+                                  bottom: '1px',
+                                  right: '1px',
+                                  backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                                  color: '#38BDF8',
+                                  fontSize: '0.58rem',
+                                  fontWeight: 800,
+                                  padding: '1px 3px',
+                                  borderRadius: '3px',
+                                  lineHeight: 1
+                                }}
+                              >
+                                📷{(prod.images?.length || 0) + (prod.photoReviews?.length || 0)}
+                              </span>
+                            )}
                           </div>
                         </td>
 
@@ -980,6 +1000,25 @@ export default function AdminProductCatalog({ isDark: isDarkProp } = {}) {
                     }}>
                       {prod.brand || 'Hàn Quốc'}
                     </span>
+
+                    {((prod.images && prod.images.length > 1) || (prod.photoReviews && prod.photoReviews.length > 0)) && (
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        left: '8px',
+                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                        color: '#38BDF8',
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px'
+                      }}>
+                        📷 {(prod.images?.length || 0) + (prod.photoReviews?.length || 0)} ảnh
+                      </span>
+                    )}
 
                     <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
                       {isOutOfStock && (
