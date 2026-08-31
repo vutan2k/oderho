@@ -203,12 +203,44 @@ export const AppProvider = ({ children }) => {
           try {
             const profileRef = doc(db, 'users', user.uid);
             const snap = await getDoc(profileRef);
+            const nowIso = new Date().toISOString();
             if (snap.exists()) {
-              setProfile(snap.data());
+              const existingData = snap.data();
+              const updatedData = {
+                ...existingData,
+                email: user.email || existingData.email,
+                name: existingData.name || user.displayName || 'Khách hàng Google',
+                photoURL: user.photoURL || existingData.photoURL || '',
+                provider: 'google',
+                lastLoginAt: nowIso,
+                loginCount: (Number(existingData.loginCount) || 0) + 1
+              };
+              await setDoc(profileRef, {
+                lastLoginAt: nowIso,
+                loginCount: updatedData.loginCount,
+                photoURL: updatedData.photoURL,
+                provider: 'google',
+                email: updatedData.email
+              }, { merge: true }).catch(() => {});
+              setProfile(updatedData);
+              localStorage.setItem('user_auth', JSON.stringify(updatedData));
             } else {
-              const newProfile = { name: user.displayName || '', email: user.email, phone: '', address: '', addressBook: [] };
+              const newProfile = {
+                uid: user.uid,
+                name: user.displayName || user.email?.split('@')[0] || 'Khách hàng Google',
+                email: user.email || '',
+                photoURL: user.photoURL || '',
+                phone: '',
+                address: '',
+                addressBook: [],
+                provider: 'google',
+                createdAt: nowIso,
+                lastLoginAt: nowIso,
+                loginCount: 1
+              };
               await setDoc(profileRef, newProfile).catch(() => {});
               setProfile(newProfile);
+              localStorage.setItem('user_auth', JSON.stringify(newProfile));
             }
           } catch (err) {
             console.warn("Profile fetch permission warning:", err);
@@ -1000,17 +1032,40 @@ export const AppProvider = ({ children }) => {
       try {
         const profileRef = doc(db, 'users', result.user.uid);
         const snap = await getDoc(profileRef);
+        const nowIso = new Date().toISOString();
         if (snap.exists()) {
-          const data = snap.data();
-          setProfile(data);
-          localStorage.setItem('user_auth', JSON.stringify(data));
+          const existingData = snap.data();
+          const updatedData = {
+            ...existingData,
+            email: result.user.email || existingData.email,
+            name: existingData.name || result.user.name || result.user.displayName || 'Khách hàng Google',
+            photoURL: result.user.photoURL || existingData.photoURL || '',
+            provider: 'google',
+            lastLoginAt: nowIso,
+            loginCount: (Number(existingData.loginCount) || 0) + 1
+          };
+          await setDoc(profileRef, {
+            lastLoginAt: nowIso,
+            loginCount: updatedData.loginCount,
+            photoURL: updatedData.photoURL,
+            provider: 'google',
+            email: updatedData.email
+          }, { merge: true }).catch(() => {});
+          setProfile(updatedData);
+          localStorage.setItem('user_auth', JSON.stringify(updatedData));
         } else {
           const newProfile = {
+            uid: result.user.uid,
             name: result.user.name || result.user.displayName || 'Khách hàng Google',
-            email: result.user.email,
+            email: result.user.email || '',
+            photoURL: result.user.photoURL || '',
             phone: '',
             address: '',
-            addressBook: []
+            addressBook: [],
+            provider: 'google',
+            createdAt: nowIso,
+            lastLoginAt: nowIso,
+            loginCount: 1
           };
           await setDoc(profileRef, newProfile).catch(() => {});
           setProfile(newProfile);
