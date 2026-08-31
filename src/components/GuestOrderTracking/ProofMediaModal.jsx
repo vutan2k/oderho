@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { X, Video, FileText, PackageCheck, ExternalLink } from 'lucide-react';
+import { getEmbedVideoUrl, isEmbeddableVideo } from '../../utils/videoUrlHelper.js';
 
 /**
  * ProofMediaModal
@@ -30,12 +31,8 @@ export default function ProofMediaModal({ media, onClose }) {
 
   const isVideo = media.type === 'video';
   const isImage = media.type === 'image';
-  const isEmbed = isVideo && (
-    media.url?.includes('youtube.com') ||
-    media.url?.includes('youtu.be') ||
-    media.url?.includes('drive.google.com/file') ||
-    media.url?.includes('vimeo.com')
-  );
+  const isEmbed = isVideo && isEmbeddableVideo(media.url);
+  const embedUrl = isVideo ? getEmbedVideoUrl(media.url) : '';
 
   const getMediaIcon = () => {
     if (media.badgeType === 'packing_video' || media.title?.includes('Đóng Kiện')) {
@@ -157,7 +154,7 @@ export default function ProofMediaModal({ media, onClose }) {
         >
           {isVideo && isEmbed ? (
             <iframe
-              src={media.url}
+              src={embedUrl}
               title={media.title || 'Video Player'}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

@@ -1,15 +1,16 @@
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useToast } from '../components/Toast';
 import { ORDER_STATUSES, getStatusConfig } from '../data/orderStatuses';
 import { getOrderTotalVnd, getVndFromWon, formatVnd } from '../utils/priceCalculator';
+import { getEmbedVideoUrl, isEmbeddableVideo } from '../utils/videoUrlHelper';
 import {
   Search, Edit3, Trash2,
   CheckCircle, AlertCircle,
   Phone, MapPin, Video, FileText, Plane,
   Sparkles, Check,
   CreditCard, LayoutGrid, List, Plus,
-  X, ChevronRight, Clock, Box
+  X, ChevronRight, Clock, Box, ExternalLink, PackageCheck, Eye
 } from 'lucide-react';
 
 // 9 CỘT PHÂN LUỒNG KANBAN CHUẨN TAVY
@@ -129,6 +130,43 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
     qty: 1,
     productImage: ''
   });
+
+  // Quản lý link Bằng chứng Video POV & Bill Store
+  const [proofForm, setProofForm] = useState({
+    povVideoUrl: '',
+    packingVideoUrl: '',
+    receiptImageUrl: ''
+  });
+  const [isSavingProof, setIsSavingProof] = useState(false);
+
+  useEffect(() => {
+    if (activeDrawerOrder) {
+      setProofForm({
+        povVideoUrl: activeDrawerOrder.povVideoUrl || '',
+        packingVideoUrl: activeDrawerOrder.packingVideoUrl || '',
+        receiptImageUrl: activeDrawerOrder.receiptImageUrl || ''
+      });
+    }
+  }, [activeDrawerOrder?.id]);
+
+  const handleSaveProofMedia = async () => {
+    if (!activeDrawerOrder) return;
+    setIsSavingProof(true);
+    try {
+      const payload = {
+        povVideoUrl: proofForm.povVideoUrl.trim(),
+        packingVideoUrl: proofForm.packingVideoUrl.trim(),
+        receiptImageUrl: proofForm.receiptImageUrl.trim()
+      };
+      await updateOrderTracking(activeDrawerOrder.id, payload);
+      setActiveDrawerOrder(prev => ({ ...prev, ...payload }));
+      if (showToast) showToast('Đã lưu bằng chứng video POV & hóa đơn thành công!', 'success');
+    } catch (err) {
+      if (showToast) showToast('Lỗi khi lưu bằng chứng: ' + (err?.message || 'Không xác định'), 'error');
+    } finally {
+      setIsSavingProof(false);
+    }
+  };
 
   // Form tạo đơn thủ công
   const [manualForm, setManualForm] = useState({
@@ -946,6 +984,148 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
                   )}
                 </div>
               )}
+
+              {/* 2.8 Bằng Chứng Mua Hàng & Video POV (Google Drive) */}
+              <div style={{
+                backgroundColor: isDark ? '#0F172A' : '#FAF5FF',
+                border: isDark ? '1px solid #7C3AED' : '1px solid #C084FC',
+                borderRadius: '10px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#C084FC' : '#6B21A8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Video size={16} />
+                    <span>📹 VIDEO POV & BẰNG CHỨNG MUA HÀNG</span>
+                  </div>
+                  <span style={{ fontSize: '0.68rem', backgroundColor: '#10B981', color: '#FFF', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                    GOOGLE DRIVE
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#6B7280', lineHeight: 1.4 }}>
+                  Dán link Google Drive video mua hàng tại quầy Store. Hệ thống tự động chuyển sang link nhúng phát trực tiếp cho khách xem.
+                </div>
+
+                {/* Input: Video POV Mua hàng */}
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: isDark ? '#E2E8F0' : '#374151', display: 'block', marginBottom: '4px' }}>
+                    Link Video POV Mua Hàng (Google Drive / YouTube)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://drive.google.com/file/d/.../view"
+                    value={proofForm.povVideoUrl}
+                    onChange={(e) => setProofForm(prev => ({ ...prev, povVideoUrl: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      borderRadius: '6px',
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#1E293B' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '0.75rem',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                {/* Preview Video POV nếu có */}
+                {proofForm.povVideoUrl.trim() && (
+                  <div style={{ borderRadius: '8px', overflow: 'hidden', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', backgroundColor: '#000' }}>
+                    <div style={{ padding: '6px 10px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.68rem', color: '#38BDF8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Xem thử video POV:</span>
+                      <a href={proofForm.povVideoUrl.trim()} target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <ExternalLink size={10} /> Mở Drive
+                      </a>
+                    </div>
+                    <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
+                      <iframe
+                        src={getEmbedVideoUrl(proofForm.povVideoUrl.trim())}
+                        title="Xem thử video POV"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Input: Video Đóng Kiện */}
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: isDark ? '#E2E8F0' : '#374151', display: 'block', marginBottom: '4px' }}>
+                    Link Video Đóng Kiện & Cân Nặng (Google Drive / YouTube)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://drive.google.com/file/d/.../view"
+                    value={proofForm.packingVideoUrl}
+                    onChange={(e) => setProofForm(prev => ({ ...prev, packingVideoUrl: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      borderRadius: '6px',
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#1E293B' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '0.75rem',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                {/* Input: Link Bill / Hóa đơn quầy */}
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: isDark ? '#E2E8F0' : '#374151', display: 'block', marginBottom: '4px' }}>
+                    Link Hóa Đơn / Bill Mua Hàng Store (Ảnh Online)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://..."
+                    value={proofForm.receiptImageUrl}
+                    onChange={(e) => setProofForm(prev => ({ ...prev, receiptImageUrl: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '7px 10px',
+                      borderRadius: '6px',
+                      border: isDark ? '1px solid #334155' : '1px solid #CBD5E1',
+                      backgroundColor: isDark ? '#1E293B' : '#FFF',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '0.75rem',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div style={{ fontSize: '0.68rem', color: '#F59E0B', backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: '6px 8px', borderRadius: '6px' }}>
+                  ⚠️ <em>Lưu ý: Đảm bảo file trên Google Drive đã bật chế độ "Bất kỳ ai có đường liên kết đều có thể xem" để khách hàng mở được video.</em>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={isSavingProof}
+                  onClick={handleSaveProofMedia}
+                  style={{
+                    backgroundColor: '#7C3AED',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 14px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: isSavingProof ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Check size={14} />
+                  <span>{isSavingProof ? 'Đang lưu...' : 'Lưu Bằng Chứng Video & Bill'}</span>
+                </button>
+              </div>
 
               {/* 3. Danh Sách Sản Phẩm Mua Hộ */}
               <div style={{ backgroundColor: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>

@@ -78,7 +78,7 @@ export const CHATBOT_REPLIES = {
     text: `1. Khách chọn hàng hoặc gửi link Olive Young / Musinsa.
 2. Khách cọc 100% tiền hàng qua VietQR hoặc Woori Bank.
 3. Admin duyệt đơn & lên lịch mua tại Hàn.
-4. Mua hàng trực tiếp tại Store Hàn.
+4. Mua hàng trực tiếp tại Store Hàn (Có Video POV quầy).
 5. Đóng kiện tại kho Seoul (Bọc 3 lớp chống sốc).
 6. Bay Air Incheon ✈️ VN trong 3-7 ngày làm việc (Có mã AWB).
 7. Thông quan hải quan và chuyển về kho nội địa.

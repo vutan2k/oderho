@@ -10,6 +10,7 @@ import {
 import ProductDetailModal from '../components/ProductDetailModal';
 import { ORDER_STEPS, getOrderStepIndex, getStatusConfig } from '../data/orderStatuses';
 import { getOrderTotalVnd, formatVnd, formatKrw, getVndFromWon } from '../utils/priceCalculator';
+import { getEmbedVideoUrl, isEmbeddableVideo } from '../utils/videoUrlHelper';
 
 export default function OrdersPage() {
   const { currentUser, orders, rates, oliveYoungCatalog } = useContext(AppContext);
@@ -599,14 +600,29 @@ export default function OrdersPage() {
 
             <div style={{ padding: '20px', textAlign: 'center', backgroundColor: '#000000' }}>
               {activeMediaModal.type === 'video' ? (
-                <video
-                  src={activeMediaModal.url}
-                  controls
-                  autoPlay
-                  style={{ maxWidth: '100%', maxHeight: '420px', borderRadius: '8px' }}
-                >
-                  Trình duyệt không hỗ trợ xem video.
-                </video>
+                isEmbeddableVideo(activeMediaModal.url) ? (
+                  <iframe
+                    src={getEmbedVideoUrl(activeMediaModal.url)}
+                    title={activeMediaModal.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{
+                      width: '100%',
+                      height: '380px',
+                      border: 'none',
+                      borderRadius: '8px'
+                    }}
+                  />
+                ) : (
+                  <video
+                    src={activeMediaModal.url}
+                    controls
+                    autoPlay
+                    style={{ maxWidth: '100%', maxHeight: '420px', borderRadius: '8px' }}
+                  >
+                    Trình duyệt không hỗ trợ xem video.
+                  </video>
+                )
               ) : (
                 <img
                   src={activeMediaModal.url}

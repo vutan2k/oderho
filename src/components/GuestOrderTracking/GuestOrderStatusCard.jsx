@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import {
   Check, X, Copy, CreditCard, Video, FileText,
   PackageCheck, Plane, Truck, Scale, ShieldCheck,
-  Calendar, User, Package, AlertCircle, Info
+  Calendar, User, Package, AlertCircle, Info, Maximize2, ExternalLink
 } from 'lucide-react';
 import { ORDER_STEPS, getStatusConfig } from '../../data/orderStatuses';
 import { calculateStepProgress, getProofBadges } from '../../services/guestTrackingService';
 import { getOrderTotalVnd, formatVnd } from '../../utils/priceCalculator';
+import { getEmbedVideoUrl } from '../../utils/videoUrlHelper';
 import ProofMediaModal from './ProofMediaModal';
 
 /**
@@ -25,6 +26,7 @@ export default function GuestOrderStatusCard({
 }) {
   const [copiedCode, setCopiedCode] = useState('');
   const [activeMedia, setActiveMedia] = useState(null);
+  const [activeInlineVideo, setActiveInlineVideo] = useState('pov');
 
   if (!order) return null;
 
@@ -519,6 +521,177 @@ export default function GuestOrderStatusCard({
             Cam kết hàng Store thật 100%
           </span>
         </div>
+
+        {/* In-Card Embedded Video Player (Google Drive POV / Packing Video) */}
+        {(proofData.povVideoUrl || proofData.packingVideoUrl) && (
+          <div style={{
+            marginBottom: '16px',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            border: '1px solid #C084FC',
+            backgroundColor: '#0F172A',
+            boxShadow: '0 4px 14px rgba(107, 33, 168, 0.12)'
+          }}>
+            {/* Player Header with title, verified badge & actions */}
+            <div style={{
+              padding: '10px 14px',
+              backgroundColor: '#1E1B4B',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#F8FAFC',
+                  fontSize: '0.82rem',
+                  fontWeight: 800
+                }}>
+                  <Video size={15} color="#C084FC" />
+                  <span>
+                    {activeInlineVideo === 'packing' && proofData.packingVideoUrl
+                      ? 'Video Đóng Kiện & Cân Nặng'
+                      : 'Video POV Mua Hàng Trực Tiếp Tại Store Seoul'}
+                  </span>
+                </span>
+                <span style={{
+                  backgroundColor: '#10B981',
+                  color: '#FFF',
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  padding: '2px 7px',
+                  borderRadius: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px'
+                }}>
+                  <ShieldCheck size={11} />
+                  <span>ĐÃ XÁC THỰC 100%</span>
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* Switcher if both videos are available */}
+                {proofData.povVideoUrl && proofData.packingVideoUrl && (
+                  <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px', borderRadius: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveInlineVideo('pov')}
+                      style={{
+                        background: activeInlineVideo !== 'packing' ? '#7C3AED' : 'transparent',
+                        color: '#FFF',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '3px 8px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      POV Store
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveInlineVideo('packing')}
+                      style={{
+                        background: activeInlineVideo === 'packing' ? '#DB2777' : 'transparent',
+                        color: '#FFF',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '3px 8px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Đóng Kiện
+                    </button>
+                  </div>
+                )}
+
+                {/* Fullscreen lightbox button */}
+                <button
+                  type="button"
+                  title="Phóng to toàn màn hình"
+                  onClick={() => {
+                    const isPacking = activeInlineVideo === 'packing' && proofData.packingVideoUrl;
+                    setActiveMedia({
+                      type: 'video',
+                      badgeType: isPacking ? 'packing_video' : 'pov_video',
+                      url: isPacking ? proofData.packingVideoUrl : proofData.povVideoUrl,
+                      title: isPacking
+                        ? `Video Đóng Kiện & Cân Nặng — Đơn ${order.customerPhone || order.id.replace(/^ORD-?/i, '')}`
+                        : `Video POV Mua Hàng Tại Store — Đơn ${order.customerPhone || order.id.replace(/^ORD-?/i, '')}`,
+                      subtitle: 'Nhân viên TAVY trực tiếp ghé kệ Olive Young / Store Hàn Quốc'
+                    });
+                  }}
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.12)',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Maximize2 size={12} />
+                  <span>Phóng to</span>
+                </button>
+
+                {/* External link to Google Drive */}
+                <a
+                  href={activeInlineVideo === 'packing' && proofData.packingVideoUrl ? proofData.packingVideoUrl : proofData.povVideoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Mở video trên Google Drive"
+                  style={{
+                    color: '#93C5FD',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    fontSize: '0.72rem',
+                    textDecoration: 'none',
+                    padding: '4px 6px'
+                  }}
+                >
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+
+            {/* Embedded Iframe Player */}
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              paddingTop: '56.25%',
+              backgroundColor: '#000'
+            }}>
+              <iframe
+                src={getEmbedVideoUrl(activeInlineVideo === 'packing' && proofData.packingVideoUrl ? proofData.packingVideoUrl : proofData.povVideoUrl)}
+                title="Video Bằng Chứng Mua Hàng Trực Tiếp"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  border: 'none'
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
           {/* POV Video Button */}
