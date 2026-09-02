@@ -286,12 +286,13 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
       
       const updates = { 
         items: updatedItems,
-        totalAmount: totalVnd
+        totalAmount: totalVnd,
+        totalVnd: totalVnd
       };
       
       const res = await updateOrderStatusInDB(activeDrawerOrder.id, updates);
       if (res.success) {
-        setActiveDrawerOrder(prev => ({ ...prev, items: updatedItems, totalAmount: totalVnd }));
+        setActiveDrawerOrder(prev => ({ ...prev, items: updatedItems, totalAmount: totalVnd, totalVnd: totalVnd }));
         setIsAddingItem(false);
         setNewItemForm({ name: '', foreignPrice: '', qty: 1, productImage: '' });
         if (showToast) showToast('Đã thêm sản phẩm thành công!', 'success');
@@ -323,12 +324,13 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
       
       const updates = { 
         items: currentItems,
-        totalAmount: totalVnd
+        totalAmount: totalVnd,
+        totalVnd: totalVnd
       };
       
       const res = await updateOrderStatusInDB(activeDrawerOrder.id, updates);
       if (res.success) {
-        setActiveDrawerOrder(prev => ({ ...prev, items: currentItems, totalAmount: totalVnd }));
+        setActiveDrawerOrder(prev => ({ ...prev, items: currentItems, totalAmount: totalVnd, totalVnd: totalVnd }));
         if (showToast) showToast('Đã xoá sản phẩm!', 'success');
       } else {
         if (showToast) showToast('Lỗi khi xoá sản phẩm khỏi Database!', 'error');
@@ -414,6 +416,7 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
       const totalWon = manualForm.items.reduce((s, it) => s + parseFloat(it.foreignPrice) * parseInt(it.qty, 10), 0);
       const totalVnd = Math.round(totalWon * krwRate * (1 + serviceFee / 100));
       orderPayload.totalAmount = totalVnd;
+      orderPayload.totalVnd = totalVnd;
 
       const created = await createManualOrder(orderPayload);
       setIsCreateModalOpen(false);

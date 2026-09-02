@@ -176,10 +176,11 @@ export default function PaymentPage() {
   const krwRate = rates?.KRW?.rate || 19.5;
   const transferKrw = useMemo(() => {
     if (!order) return 0;
+    if (typeof order.subTotalKrw === 'number' && order.subTotalKrw > 0) return Math.round(order.subTotalKrw);
     if (Array.isArray(order.items) && order.items.length > 0) {
-      return order.items.reduce((sum, i) => sum + (i.foreignPrice || 0) * (i.qty || 1), 0);
+      return order.items.reduce((sum, i) => sum + (Number(i.foreignPrice ?? i.priceKrw ?? i.priceWon ?? i.price) || 0) * (Number(i.qty || i.quantity) || 1), 0);
     }
-    return order.foreignPrice || (order.quote?.totalVnd ? Math.round(order.quote.totalVnd / krwRate) : 0);
+    return Math.round(Number(order.foreignPrice) || 0) || (order.quote?.totalVnd ? Math.round(order.quote.totalVnd / krwRate) : 0);
   }, [order, krwRate]);
 
   // Nội dung chuyển khoản làm sạch: TAVY [Số điện thoại]

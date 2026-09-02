@@ -91,25 +91,8 @@ const sanitizeProducts = (arr) => {
     });
 };
 
-// Mock data for demo purposes (orders, users, products)
-const initialMockOrders = [
-  {
-    id: 'ORD-827192',
-    customerName: 'Nguyễn Thị Lan',
-    customerPhone: '0912345678',
-    customerAddress: '123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh',
-    country: 'USD',
-    productUrl: 'https://www.sephora.com/product/dior-lip-glow-oil-P453814',
-    productName: 'Son dưỡng Dior Addict Lip Glow Oil',
-    brand: 'Dior',
-    options: 'Màu 001 Pink - 6ml',
-    qty: 2,
-    foreignPrice: 40.00,
-    status: 'pending',
-    createdAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString(),
-    quote: null,
-  },
-];
+// Initial empty orders array (Rule 0 Compliance: 100% genuine live database data)
+const initialMockOrders = [];
 
 export const AppProvider = ({ children }) => {
   // ----- Theme Management (Dark Mode) -----

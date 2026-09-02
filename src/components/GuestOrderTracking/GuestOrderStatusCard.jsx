@@ -33,11 +33,6 @@ export default function GuestOrderStatusCard({
   const krwRate = rates?.KRW?.rate || 19.5;
   const serviceFeeMultiplier = 1 + (rates?.serviceFeePercent ?? 5) / 100;
 
-  const formatVnd = (amount) => {
-    if (amount == null || isNaN(amount)) return '0 VNĐ';
-    return `${new Intl.NumberFormat('vi-VN').format(Math.round(amount))} VNĐ`;
-  };
-
   const handleCopyCode = (code, e) => {
     if (e) e.stopPropagation();
     if (!code) return;
