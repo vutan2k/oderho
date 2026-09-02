@@ -503,170 +503,59 @@ export default function GuestOrderStatusCard({
           borderBottom: '1px solid #ECE7F0'
         }}
       >
-        <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h4
-            style={{
-              fontSize: '0.92rem',
-              fontWeight: 700,
-              color: 'var(--text-dark, #1F2937)',
-              margin: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            🛡️ Bằng Chứng Minh Bạch & Mã Vận Đơn
-          </h4>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #6B7280)' }}>
-            Cam kết hàng Store thật 100%
-          </span>
-        </div>
-
-        {/* In-Card Embedded Video Player (Google Drive POV / Packing Video) */}
+        {/* In-Card Embedded Video Player (Google Drive POV / Packing Video) - Siêu Tối Giản & Trực Quan */}
         {(proofData.povVideoUrl || proofData.packingVideoUrl) && (
           <div style={{
-            marginBottom: '16px',
+            marginBottom: '14px',
             borderRadius: '12px',
             overflow: 'hidden',
-            border: '1px solid #C084FC',
-            backgroundColor: '#0F172A',
-            boxShadow: '0 4px 14px rgba(107, 33, 168, 0.12)'
+            border: '1px solid #E2E8F0',
+            backgroundColor: '#000',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
           }}>
-            {/* Player Header with title, verified badge & actions */}
-            <div style={{
-              padding: '10px 14px',
-              backgroundColor: '#1E1B4B',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '8px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: '#F8FAFC',
-                  fontSize: '0.82rem',
-                  fontWeight: 800
-                }}>
-                  <Video size={15} color="#C084FC" />
-                  <span>
-                    {activeInlineVideo === 'packing' && proofData.packingVideoUrl
-                      ? 'Video Đóng Kiện & Cân Nặng'
-                      : 'Video POV Mua Hàng Trực Tiếp Tại Store Seoul'}
-                  </span>
-                </span>
-                <span style={{
-                  backgroundColor: '#10B981',
-                  color: '#FFF',
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
-                  padding: '2px 7px',
-                  borderRadius: '4px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px'
-                }}>
-                  <ShieldCheck size={11} />
-                  <span>ĐÃ XÁC THỰC 100%</span>
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {/* Switcher if both videos are available */}
-                {proofData.povVideoUrl && proofData.packingVideoUrl && (
-                  <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px', borderRadius: '6px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setActiveInlineVideo('pov')}
-                      style={{
-                        background: activeInlineVideo !== 'packing' ? '#7C3AED' : 'transparent',
-                        color: '#FFF',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '3px 8px',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      POV Store
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveInlineVideo('packing')}
-                      style={{
-                        background: activeInlineVideo === 'packing' ? '#DB2777' : 'transparent',
-                        color: '#FFF',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '3px 8px',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Đóng Kiện
-                    </button>
-                  </div>
-                )}
-
-                {/* Fullscreen lightbox button */}
+            {/* Tab chuyển đổi nhỏ gọn nếu đơn có cả 2 video */}
+            {proofData.povVideoUrl && proofData.packingVideoUrl && (
+              <div style={{
+                display: 'flex',
+                gap: '6px',
+                padding: '6px 10px',
+                backgroundColor: '#0F172A',
+                justifyContent: 'center'
+              }}>
                 <button
                   type="button"
-                  title="Phóng to toàn màn hình"
-                  onClick={() => {
-                    const isPacking = activeInlineVideo === 'packing' && proofData.packingVideoUrl;
-                    setActiveMedia({
-                      type: 'video',
-                      badgeType: isPacking ? 'packing_video' : 'pov_video',
-                      url: isPacking ? proofData.packingVideoUrl : proofData.povVideoUrl,
-                      title: isPacking
-                        ? `Video Đóng Kiện & Cân Nặng — Đơn ${order.customerPhone || order.id.replace(/^ORD-?/i, '')}`
-                        : `Video POV Mua Hàng Tại Store — Đơn ${order.customerPhone || order.id.replace(/^ORD-?/i, '')}`,
-                      subtitle: 'Nhân viên TAVY trực tiếp ghé kệ Olive Young / Store Hàn Quốc'
-                    });
-                  }}
+                  onClick={() => setActiveInlineVideo('pov')}
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.12)',
+                    background: activeInlineVideo !== 'packing' ? '#7C3AED' : 'rgba(255,255,255,0.1)',
                     color: '#FFF',
                     border: 'none',
                     borderRadius: '6px',
-                    padding: '4px 8px',
-                    fontSize: '0.72rem',
+                    padding: '4px 12px',
+                    fontSize: '0.75rem',
                     fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
+                    cursor: 'pointer'
                   }}
                 >
-                  <Maximize2 size={12} />
-                  <span>Phóng to</span>
+                  Video Mua Hàng Seoul
                 </button>
-
-                {/* External link to Google Drive */}
-                <a
-                  href={activeInlineVideo === 'packing' && proofData.packingVideoUrl ? proofData.packingVideoUrl : proofData.povVideoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Mở video trên Google Drive"
+                <button
+                  type="button"
+                  onClick={() => setActiveInlineVideo('packing')}
                   style={{
-                    color: '#93C5FD',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '3px',
-                    fontSize: '0.72rem',
-                    textDecoration: 'none',
-                    padding: '4px 6px'
+                    background: activeInlineVideo === 'packing' ? '#DB2777' : 'rgba(255,255,255,0.1)',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '4px 12px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
                   }}
                 >
-                  <ExternalLink size={12} />
-                </a>
+                  Video Đóng Kiện
+                </button>
               </div>
-            </div>
+            )}
 
             {/* Embedded Iframe Player */}
             <div style={{
@@ -694,39 +583,6 @@ export default function GuestOrderStatusCard({
         )}
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-          {/* POV Video Button */}
-          {proofData.povVideoUrl ? (
-            <button
-              onClick={() =>
-                setActiveMedia({
-                  type: 'video',
-                  badgeType: 'pov_video',
-                  url: proofData.povVideoUrl,
-                  title: `Video POV Mua Hàng Tại Store — Đơn ${order.customerPhone || order.id.replace(/^ORD-?/i, '')}`,
-                  subtitle: 'Nhân viên TAVY trực tiếp ghé kệ Olive Young / Store Hàn Quốc'
-                })
-              }
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '7px',
-                padding: '8px 16px',
-                borderRadius: '10px',
-                backgroundColor: '#FAF5FF',
-                color: '#6B21A8',
-                border: '1px solid #C084FC',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 4px rgba(107, 33, 168, 0.08)'
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F3E8FF')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FAF5FF')}
-            >
-              <Video size={16} /> Xem Video POV Store
-            </button>
-          ) : null}
 
           {/* Receipt Bill Image Button */}
           {proofData.receiptImageUrl ? (
