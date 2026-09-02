@@ -63,4 +63,25 @@
 - **5.3. Hỗ Trợ Đa Tên Miền (Multi-Origin Support)**:
   - Mọi URL chuyển hướng callback (`returnUrl`, `cancelUrl`) và metadata phải tự động phát hiện tên miền hiện tại của khách hàng (`req.headers.origin` / `req.headers.referer`), đảm bảo hoạt động hoàn hảo trên cả `tavyorder.web.app`, `oderho.vercel.app` và môi trường local/preview.
 
+---
+
+## 6. HỆ THỐNG KỸ NĂNG & PHÒNG BAN CHUYÊN TRÁCH (SPECIALIZED SKILLS & AGENT ROLES)
+Dự án vận hành theo mô hình phân phối 4 kỹ năng chuyên biệt (kế thừa từ `CLAUDE.md` & `.agent/skills/`):
+- **6.1. Task Planner (BA / Solution Architect)**:
+  - Khảo sát mã nguồn, phân tích tác động trước khi code.
+  - Lập kế hoạch từng bước, xác định danh sách file cần tạo/sửa và phương án test.
+- **6.2. UI/UX Designer (Luxury & Minimalist)**:
+  - Tuân thủ bảng màu chuẩn TAVY: Ivory (`#FAF8F5`), Gold (`#C5A059`), Purple (`#7A4B9E` / `#18181B`) và Live Green (`#10B981`).
+  - Mobile-First 100%, triệt để loại bỏ icon/text thừa thãi lặp lại.
+  - Tích hợp hiệu ứng trực quan sinh động như vòng nhấp nháy xanh `.active-step-pulse-ring`.
+- **6.3. Security & Code Reviewer**:
+  - Rà soát chữ ký HMAC webhook PayOS, Firestore rules.
+  - Đảm bảo Single Source of Truth cho giá tiền (RULE 4.1).
+  - Bảo vệ phiên đăng nhập người dùng, ngăn chặn session hijack và auto-sync profile.
+- **6.4. Lead QC Automation Engineer (Gatekeeper)**:
+  - Tiêu chuẩn nghiệm thu bắt buộc: `npm run build` PASS 100% (Zero-Build-Error).
+  - Bộ kiểm thử tự động 4 Tiers: Bắt buộc đạt **285/285 Test Cases PASS 100%** (`npm test`).
+  - Mọi tính năng mới bắt buộc phải có test case đi kèm (Zero Untested Code).
+
+
 

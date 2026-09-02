@@ -19,6 +19,7 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+**/.DS_Store
 .playwright-mcp/
 *.suo
 *.ntvs*
@@ -27,3 +28,5 @@ dist-ssr
 *.sw?
 .agents/
 .firebase/
+temp.*
+*.tmp
