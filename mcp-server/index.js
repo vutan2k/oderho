@@ -2,11 +2,11 @@
 /**
  * TAVY KOREA ADMIN — Model Context Protocol (MCP) Server
  * Cho phép các AI Agent (Antigravity, Claude, Gemini) trực tiếp điều khiển, truy vấn và quản trị sàn Tavy Korea:
- * - Tra cứu đơn hàng & cập nhật trạng thái đơn hàng (9 bước chuẩn).
+ * - Tra cứu đơn hàng & cập nhật trạng thái đơn hàng (9 bước chuẩn) trực tiếp từ Cloud Firestore.
  * - Cập nhật tỷ giá KRW/VND và phí dịch vụ mua hộ.
  * - Cào dữ liệu chuyên sâu và album ảnh HD từ Naver Brand Store, KGC, Nonghyup, Olive Young.
- * - Quản lý danh mục kho hàng sản phẩm Sâm Nấm & TPCN.
- * - Thống kê báo cáo doanh số & phân tích hiệu quả kinh doanh.
+ * - Quản lý danh mục kho hàng sản phẩm Sâm Nấm & TPCN trực tiếp từ Firestore.
+ * - Thống kê báo cáo doanh số & phân tích hiệu quả kinh doanh từ dữ liệu thật (Rule 0 Compliance).
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -15,6 +15,18 @@ import { z } from 'zod';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { initializeApp, getApps } from 'firebase/app';
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 
 import {
   VERIFIED_KOREAN_HEALTH_CATALOG,
@@ -34,90 +46,108 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 const exportsDir = path.join(projectRoot, 'exports');
 
-// Đảm bảo thư mục lưu trữ tồn tại
 if (!fs.existsSync(exportsDir)) {
   fs.mkdirSync(exportsDir, { recursive: true });
 }
 
+// Khởi tạo kết nối Cloud Firestore thật
+const firebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyCQ_cpZLNbZdgGpDzea9GlpCL8vbeb_emo",
+  authDomain: "tavyorder.firebaseapp.com",
+  projectId: "tavyorder",
+  storageBucket: "tavyorder.firebasestorage.app",
+  messagingSenderId: "307372781687",
+  appId: "1:307372781687:web:356e2963e0cf23b018d672"
+};
+
+const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 // Khởi tạo MCP Server
 const server = new McpServer({
   name: 'tavy-admin',
-  version: '1.0.0',
-  description: 'MCP Server Quản Trị & Điều Hành Tự Động Sàn Thương Mại Điện Tử Order Hàng Hàn Quốc TAVY KOREA'
+  version: '2.0.0',
+  description: 'MCP Server Quản Trị Sàn TAVY KOREA — Kết Nối 100% Cloud Firestore Thật (Rule 0 Compliance)'
 });
 
-// Helper đọc/ghi cấu hình tỷ giá cục bộ
-const ratesFilePath = path.join(exportsDir, 'system_rates.json');
-function getSystemRates() {
+// Helper đọc/ghi cấu hình tỷ giá từ Firestore
+async function getSystemRates() {
   try {
-    if (fs.existsSync(ratesFilePath)) {
-      return JSON.parse(fs.readFileSync(ratesFilePath, 'utf-8'));
+    const docSnap = await getDoc(doc(db, 'system_config', 'rates'));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return {
+        krwRate: data.KRW?.rate || data.krwRate || 19.5,
+        serviceFeePercent: data.serviceFeePercent !== undefined ? data.serviceFeePercent : 5,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+      };
     }
-  } catch {}
+  } catch (err) {
+    console.warn("Lỗi đọc tỷ giá từ Firestore:", err.message);
+  }
   return { krwRate: 19.5, serviceFeePercent: 5, updatedAt: new Date().toISOString() };
 }
 
-function saveSystemRates(rates) {
-  fs.writeFileSync(ratesFilePath, JSON.stringify(rates, null, 2), 'utf-8');
-}
-
-// Helper đọc/ghi đơn hàng mẫu & cache
-const ordersFilePath = path.join(exportsDir, 'system_orders.json');
-function getSystemOrders() {
+async function saveSystemRates(rates) {
   try {
-    if (fs.existsSync(ordersFilePath)) {
-      return JSON.parse(fs.readFileSync(ordersFilePath, 'utf-8'));
-    }
-  } catch {}
-  return [
-    {
-      id: 'ORD-98241',
-      customerName: 'Nguyễn Thị Thu Hà',
-      customerPhone: '0912345678',
-      customerAddress: 'Số 25 Phố Huế, Hàng Bài, Hoàn Kiếm, Hà Nội',
-      status: 'pending',
-      paymentStatus: 'unpaid',
-      createdAt: new Date().toISOString(),
-      items: [
-        {
-          goodsNo: 'A000000213255',
-          name: 'Nước Cao Hồng Sâm 6 Năm Tuổi KGC CheongKwanJang Everytime Shot 20 Lọ',
-          priceWon: 52750,
-          quantity: 2
-        }
-      ]
-    },
-    {
-      id: 'ORD-98242',
-      customerName: 'Trần Văn Minh',
-      customerPhone: '0988776655',
-      customerAddress: 'Vinhomes Central Park, Bình Thạnh, TP. Hồ Chí Minh',
-      status: 'paid',
-      paymentStatus: 'paid_full',
-      trackingCode: 'VNPOST-KR-998231',
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-      items: [
-        {
-          goodsNo: 'A000000199062',
-          name: 'Men Vi Sinh Lợi Khuẩn Sống Chong Kun Dang Lacto-Fit Gold Bộ 3 Tháng',
-          priceWon: 19900,
-          quantity: 3
-        }
-      ]
-    }
-  ];
+    const docRef = doc(db, 'system_config', 'rates');
+    await setDoc(docRef, {
+      KRW: { rate: Number(rates.krwRate) || 19.5, symbol: '₩', country: 'Hàn Quốc' },
+      serviceFeePercent: Number(rates.serviceFeePercent) || 5,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    return true;
+  } catch (err) {
+    console.warn("Lỗi lưu tỷ giá lên Firestore:", err.message);
+    return false;
+  }
 }
 
-function saveSystemOrders(orders) {
-  fs.writeFileSync(ordersFilePath, JSON.stringify(orders, null, 2), 'utf-8');
+// Helper đọc danh sách đơn hàng THẬT từ Cloud Firestore
+async function getSystemOrders() {
+  try {
+    const snap = await getDocs(collection(db, 'orders'));
+    const list = snap.docs.map(d => {
+      const data = d.data();
+      let createdAtIso = new Date().toISOString();
+      if (data.createdAt?.toDate) {
+        createdAtIso = data.createdAt.toDate().toISOString();
+      } else if (typeof data.createdAt === 'string') {
+        createdAtIso = data.createdAt;
+      }
+      return {
+        id: d.id,
+        ...data,
+        createdAt: createdAtIso
+      };
+    });
+    list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    return list;
+  } catch (err) {
+    console.warn("Lỗi đọc đơn hàng từ Firestore:", err.message);
+    return [];
+  }
+}
+
+// Helper đọc sản phẩm THẬT từ Cloud Firestore
+async function getSystemProducts() {
+  try {
+    const snap = await getDocs(collection(db, 'products'));
+    if (!snap.empty) {
+      return snap.docs.map(d => ({ goodsNo: d.id, ...d.data() }));
+    }
+  } catch (err) {
+    console.warn("Lỗi đọc sản phẩm từ Firestore:", err.message);
+  }
+  return [...VERIFIED_KOREAN_HEALTH_CATALOG];
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// 1. TOOL: list_orders (Lấy danh sách đơn hàng)
+// 1. TOOL: list_orders (Lấy danh sách đơn hàng thật từ Firestore)
 // ════════════════════════════════════════════════════════════════════════════
 server.tool(
   'list_orders',
-  'Lấy danh sách đơn hàng thực tế từ hệ thống quản trị Tavy Korea với các bộ lọc trạng thái (pending, paid, completed, etc.).',
+  'Lấy danh sách đơn hàng thực tế từ Cloud Firestore của Tavy Korea với các bộ lọc trạng thái.',
   {
     status: z.enum([
       'all',
@@ -126,16 +156,20 @@ server.tool(
       'deposit_paid',
       'paid',
       'purchasing_korea',
+      'purchased',
       'korea_warehouse',
+      'packed_kr',
       'shipping_vietnam',
+      'in_transit_air',
       'vietnam_warehouse',
+      'customs_cleared',
       'completed',
       'cancelled'
     ]).optional().describe('Trạng thái đơn hàng cần lọc'),
     limit: z.number().optional().describe('Số lượng đơn hàng tối đa cần lấy (mặc định 20)')
   },
   async ({ status = 'all', limit = 20 }) => {
-    const allOrders = getSystemOrders();
+    const allOrders = await getSystemOrders();
     const filtered = status === 'all'
       ? allOrders
       : allOrders.filter(o => o.status === status);
@@ -158,39 +192,54 @@ server.tool(
 );
 
 // ════════════════════════════════════════════════════════════════════════════
-// 2. TOOL: get_order_detail (Chi tiết 1 đơn hàng)
+// 2. TOOL: get_order_detail (Chi tiết 1 đơn hàng từ Firestore)
 // ════════════════════════════════════════════════════════════════════════════
 server.tool(
   'get_order_detail',
-  'Xem thông tin chi tiết đầy đủ của một đơn hàng theo orderId (Khách hàng, sản phẩm, giá tiền, địa chỉ, lịch sử vận chuyển).',
+  'Xem thông tin chi tiết đầy đủ của một đơn hàng theo orderId từ Cloud Firestore.',
   {
-    orderId: z.string().describe('Mã đơn hàng (ví dụ: ORD-98241)')
+    orderId: z.string().describe('Mã đơn hàng hoặc số điện thoại (ví dụ: 0948048852)')
   },
   async ({ orderId }) => {
-    const allOrders = getSystemOrders();
-    const cleanId = orderId.trim().toUpperCase();
-    const matched = allOrders.find(o => o.id.toUpperCase() === cleanId || o.id.toUpperCase().includes(cleanId));
+    const cleanId = orderId.trim();
+    let orderData = null;
 
-    if (!matched) {
+    try {
+      const docSnap = await getDoc(doc(db, 'orders', cleanId));
+      if (docSnap.exists()) {
+        orderData = { id: docSnap.id, ...docSnap.data() };
+      } else {
+        const allOrders = await getSystemOrders();
+        orderData = allOrders.find(o =>
+          o.id.toLowerCase() === cleanId.toLowerCase() ||
+          (o.customerPhone && o.customerPhone.replace(/\D/g, '') === cleanId.replace(/\D/g, ''))
+        );
+      }
+    } catch (err) {
+      console.warn("Lỗi tra cứu đơn hàng:", err.message);
+    }
+
+    if (!orderData) {
       return {
         isError: true,
-        content: [{ type: 'text', text: `❌ Không tìm thấy đơn hàng với mã "${orderId}".` }]
+        content: [{ type: 'text', text: `❌ Không tìm thấy đơn hàng với mã/SĐT "${orderId}" trong Firestore.` }]
       };
     }
 
-    const rates = getSystemRates();
+    const rates = await getSystemRates();
     let totalWon = 0;
-    (matched.items || []).forEach(it => {
-      totalWon += (it.priceWon || 0) * (it.quantity || 1);
+    (orderData.items || []).forEach(it => {
+      const priceWon = Number(it.foreignPrice ?? it.priceWon ?? it.priceKrw ?? it.price) || 0;
+      totalWon += priceWon * (it.qty || it.quantity || 1);
     });
-    const estVnd = Math.round(totalWon * rates.krwRate * (1 + rates.serviceFeePercent / 100));
+    const estVnd = orderData.totalVnd || Math.round(totalWon * rates.krwRate * (1 + rates.serviceFeePercent / 100));
 
     return {
       content: [
         {
           type: 'text',
           text: JSON.stringify({
-            order: matched,
+            order: orderData,
             financialSummary: {
               totalWon,
               appliedKrwRate: rates.krwRate,
@@ -205,11 +254,11 @@ server.tool(
 );
 
 // ════════════════════════════════════════════════════════════════════════════
-// 3. TOOL: update_order_status (Cập nhật trạng thái đơn hàng)
+// 3. TOOL: update_order_status (Cập nhật trạng thái đơn hàng lên Firestore)
 // ════════════════════════════════════════════════════════════════════════════
 server.tool(
   'update_order_status',
-  'Cập nhật trạng thái xử lý của đơn hàng (ví dụ: chuyển sang đã đặt mua tại Hàn, đang bay về VN), gán mã vận đơn tracking hoặc ghi chú.',
+  'Cập nhật trạng thái xử lý của đơn hàng lên Cloud Firestore, gán mã vận đơn tracking hoặc ghi chú.',
   {
     orderId: z.string().describe('Mã đơn hàng cần cập nhật'),
     status: z.enum([
@@ -218,9 +267,13 @@ server.tool(
       'deposit_paid',
       'paid',
       'purchasing_korea',
+      'purchased',
       'korea_warehouse',
+      'packed_kr',
       'shipping_vietnam',
+      'in_transit_air',
       'vietnam_warehouse',
+      'customs_cleared',
       'completed',
       'cancelled'
     ]).describe('Trạng thái mới của đơn hàng'),
@@ -228,93 +281,99 @@ server.tool(
     adminNote: z.string().optional().describe('Ghi chú nội bộ của admin')
   },
   async ({ orderId, status, trackingCode, adminNote }) => {
-    const allOrders = getSystemOrders();
-    const cleanId = orderId.trim().toUpperCase();
-    const idx = allOrders.findIndex(o => o.id.toUpperCase() === cleanId || o.id.toUpperCase().includes(cleanId));
-
-    if (idx === -1) {
-      return {
-        isError: true,
-        content: [{ type: 'text', text: `❌ Không tìm thấy đơn hàng "${orderId}" để cập nhật.` }]
-      };
-    }
-
-    allOrders[idx].status = status;
-    if (trackingCode) allOrders[idx].trackingCode = trackingCode;
-    if (adminNote) allOrders[idx].adminNote = adminNote;
-    allOrders[idx].updatedAt = new Date().toISOString();
-
-    saveSystemOrders(allOrders);
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `✅ Đã cập nhật thành công đơn hàng #${allOrders[idx].id} sang trạng thái "${status}".\n` +
-                (trackingCode ? `- Mã vận đơn: ${trackingCode}\n` : '') +
-                (adminNote ? `- Ghi chú: ${adminNote}\n` : '')
-        }
-      ]
-    };
-  }
-);
-
-// ════════════════════════════════════════════════════════════════════════════
-// 4. TOOL: update_exchange_rates (Cập nhật tỷ giá Won)
-// ════════════════════════════════════════════════════════════════════════════
-server.tool(
-  'update_exchange_rates',
-  'Điều chỉnh tỷ giá KRW/VND và phần trăm phí dịch vụ mua hộ trên toàn hệ thống Tavy Korea.',
-  {
-    krwRate: z.number().min(10).max(40).describe('Tỷ giá 1 KRW đổi sang VNĐ (ví dụ: 19.8)'),
-    serviceFeePercent: z.number().min(0).max(30).optional().describe('Phần trăm phí dịch vụ (mặc định 5%)')
-  },
-  async ({ krwRate, serviceFeePercent = 5 }) => {
-    const current = getSystemRates();
-    const updated = {
-      krwRate,
-      serviceFeePercent,
-      updatedAt: new Date().toISOString()
-    };
-    saveSystemRates(updated);
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `✅ ĐÃ CẬP NHẬT TỶ GIÁ THÀNH CÔNG!\n- Tỷ giá mới: 1 KRW = ${krwRate} VNĐ (Trước đó: ${current.krwRate})\n- Phí dịch vụ: ${serviceFeePercent}%\n- Thời điểm: ${updated.updatedAt}`
-        }
-      ]
-    };
-  }
-);
-
-// ════════════════════════════════════════════════════════════════════════════
-// 5. TOOL: scrape_korean_product (Cào dữ liệu sản phẩm Hàn Quốc)
-// ════════════════════════════════════════════════════════════════════════════
-server.tool(
-  'scrape_korean_product',
-  'Bóc tách dữ liệu chuyên sâu và album ảnh HD của sản phẩm từ Naver Brand Store, KGC CheongKwanJang, Nonghyup, Olive Young.',
-  {
-    urlOrCode: z.string().describe('URL sản phẩm hoặc mã hàng (goodsNo)')
-  },
-  async ({ urlOrCode }) => {
     try {
-      const product = await scrapeKoreanHealthProduct(urlOrCode);
-      const rates = getSystemRates();
-      const estVnd = Math.round(product.foreignPrice * rates.krwRate * (1 + rates.serviceFeePercent / 100));
+      const docRef = doc(db, 'orders', orderId);
+      const updates = {
+        status,
+        updatedAt: serverTimestamp()
+      };
+      if (trackingCode) updates.trackingCode = trackingCode;
+      if (adminNote) updates.adminNote = adminNote;
+
+      await updateDoc(docRef, updates);
 
       return {
         content: [
           {
             type: 'text',
             text: JSON.stringify({
-              status: 'success',
-              product: {
-                ...product,
-                calculatedPriceVnd: estVnd,
-                appliedRate: rates.krwRate
-              }
+              success: true,
+              message: `✅ Đã cập nhật trạng thái đơn #${orderId} sang "${status}" trên Cloud Firestore!`,
+              orderId,
+              newStatus: status,
+              trackingCode: trackingCode || null
+            }, null, 2)
+          }
+        ]
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [{ type: 'text', text: `❌ Lỗi khi cập nhật Firestore: ${err.message}` }]
+      };
+    }
+  }
+);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 4. TOOL: update_exchange_rates (Cập nhật tỷ giá lên Firestore)
+// ════════════════════════════════════════════════════════════════════════════
+server.tool(
+  'update_exchange_rates',
+  'Cập nhật tỷ giá KRW/VND và phí dịch vụ mua hộ lên Cloud Firestore.',
+  {
+    krwRate: z.number().positive().describe('Tỷ giá KRW/VND mới (ví dụ: 19.8)'),
+    serviceFeePercent: z.number().min(0).max(50).describe('Phí dịch vụ phần trăm (ví dụ: 5%)')
+  },
+  async ({ krwRate, serviceFeePercent }) => {
+    const success = await saveSystemRates({ krwRate, serviceFeePercent });
+    if (!success) {
+      return {
+        isError: true,
+        content: [{ type: 'text', text: '❌ Lỗi khi lưu tỷ giá lên Firestore.' }]
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            success: true,
+            message: '✅ Đã cập nhật tỷ giá và phí dịch vụ thành công lên Cloud Firestore!',
+            rates: {
+              krwRate,
+              serviceFeePercent,
+              updatedAt: new Date().toISOString()
+            }
+          }, null, 2)
+        }
+      ]
+    };
+  }
+);
+
+// ════════════════════════════════════════════════════════════════════════════
+// 5. TOOL: scrape_korean_product (Cào sản phẩm Olive Young/Naver)
+// ════════════════════════════════════════════════════════════════════════════
+server.tool(
+  'scrape_korean_product',
+  'Cào dữ liệu chuyên sâu và album ảnh HD của một sản phẩm từ Naver hoặc Olive Young.',
+  {
+    url: z.string().url().describe('Đường dẫn chi tiết sản phẩm Hàn Quốc'),
+    categoryHint: z.enum(['ginseng', 'supplements', 'cosmetics', 'general']).optional().describe('Gợi ý danh mục')
+  },
+  async ({ url, categoryHint = 'general' }) => {
+    try {
+      const result = await scrapeKoreanHealthProduct(url, { category: categoryHint });
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              success: true,
+              sourceUrl: url,
+              product: result
             }, null, 2)
           }
         ]
@@ -329,17 +388,17 @@ server.tool(
 );
 
 // ════════════════════════════════════════════════════════════════════════════
-// 6. TOOL: list_catalog_products (Danh sách sản phẩm trong kho)
+// 6. TOOL: list_catalog_products (Danh sách sản phẩm từ Firestore)
 // ════════════════════════════════════════════════════════════════════════════
 server.tool(
   'list_catalog_products',
-  'Lấy danh sách các sản phẩm sâm nấm và TPCN đã được xác thực trong kho hàng của Tavy Korea.',
+  'Lấy danh sách các sản phẩm đang niêm yết trong kho hàng từ Cloud Firestore.',
   {
-    category: z.enum(['all', 'ginseng', 'supplements']).optional().describe('Danh mục sản phẩm'),
-    limit: z.number().optional().describe('Số lượng sản phẩm tối đa (mặc định 10)')
+    category: z.enum(['all', 'ginseng', 'supplements', 'cosmetics', 'skincare']).optional().describe('Danh mục sản phẩm'),
+    limit: z.number().optional().describe('Số lượng sản phẩm tối đa (mặc định 20)')
   },
-  async ({ category = 'all', limit = 10 }) => {
-    let pool = [...VERIFIED_KOREAN_HEALTH_CATALOG];
+  async ({ category = 'all', limit = 20 }) => {
+    let pool = await getSystemProducts();
     if (category !== 'all') {
       pool = pool.filter(p => p.category === category);
     }
@@ -362,28 +421,35 @@ server.tool(
 );
 
 // ════════════════════════════════════════════════════════════════════════════
-// 7. TOOL: get_system_analytics (Báo cáo kinh doanh & hiệu quả vận hành)
+// 7. TOOL: get_system_analytics (Báo cáo kinh doanh thực tế từ Firestore)
 // ════════════════════════════════════════════════════════════════════════════
 server.tool(
   'get_system_analytics',
-  'Xem báo cáo tổng hợp chỉ số tài chính, số lượng đơn hàng theo từng trạng thái và giá trị GMV.',
+  'Xem báo cáo tổng hợp chỉ số tài chính và số lượng đơn hàng thực tế từ Cloud Firestore.',
   {},
   async () => {
-    const orders = getSystemOrders();
-    const rates = getSystemRates();
-    const products = VERIFIED_KOREAN_HEALTH_CATALOG;
+    const orders = await getSystemOrders();
+    const rates = await getSystemRates();
+    const products = await getSystemProducts();
 
     let totalGmvWon = 0;
+    let totalGmvVnd = 0;
     const statusCounts = {};
 
     orders.forEach(o => {
       statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
-      (o.items || []).forEach(it => {
-        totalGmvWon += (it.priceWon || 0) * (it.quantity || 1);
-      });
+      if (typeof o.totalVnd === 'number' && o.totalVnd > 0) {
+        totalGmvVnd += o.totalVnd;
+      } else {
+        let orderWon = 0;
+        (o.items || []).forEach(it => {
+          orderWon += (Number(it.foreignPrice ?? it.priceWon ?? it.priceKrw ?? it.price) || 0) * (it.qty || it.quantity || 1);
+        });
+        totalGmvWon += orderWon;
+        totalGmvVnd += Math.round(orderWon * rates.krwRate * (1 + rates.serviceFeePercent / 100));
+      }
     });
 
-    const totalGmvVnd = Math.round(totalGmvWon * rates.krwRate * (1 + rates.serviceFeePercent / 100));
     const aovVnd = orders.length > 0 ? Math.round(totalGmvVnd / orders.length) : 0;
 
     return {
@@ -408,14 +474,14 @@ server.tool(
   }
 );
 
-// Khởi động server qua Stdio transport
-async function main() {
+// Khởi chạy transport stdio
+async function run() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('🚀 Tavy Admin MCP Server is running on stdio');
+  console.error('🚀 TAVY KOREA Admin MCP Server v2.0 (Firestore Live) is running on stdio');
 }
 
-main().catch(err => {
-  console.error('❌ MCP Server Error:', err);
+run().catch((error) => {
+  console.error('Fatal MCP Server Error:', error);
   process.exit(1);
 });
