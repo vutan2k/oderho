@@ -278,42 +278,7 @@ export default function GuestOrderStatusCard({
       )}
 
       {/* 3. Visual 8-Step Timeline Section */}
-      <div style={{ padding: '28px 24px 24px 24px', backgroundColor: '#FFFFFF' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <div>
-            <h3
-              style={{
-                fontSize: '1.05rem',
-                fontWeight: 700,
-                color: 'var(--text-dark, #1F2937)',
-                margin: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <ShieldCheck size={20} style={{ color: 'var(--purple-primary, #7A4B9E)' }} />
-              Tiến Trình Mua Hộ 8 Bước Minh Bạch
-            </h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #6B7280)', margin: '4px 0 0 0' }}>
-              Cập nhật trực tiếp từ kho Seoul, chuyến bay Incheon và vận chuyển nội địa Việt Nam.
-            </p>
-          </div>
-
-          <span
-            style={{
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              color: isCancelled ? '#DC2626' : 'var(--purple-primary, #7A4B9E)',
-              backgroundColor: isCancelled ? '#FEE2E2' : 'var(--purple-light, #F0E8F5)',
-              padding: '4px 12px',
-              borderRadius: '12px'
-            }}
-          >
-            {isCancelled ? 'ĐÃ HỦY' : `Tiến độ: ${stepProgress.progressPercent}`}
-          </span>
-        </div>
-
+      <div style={{ padding: '20px 24px 24px 24px', backgroundColor: '#FFFFFF' }}>
         {/* Stepper Container */}
         {isCancelled ? (
           <div
