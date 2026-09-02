@@ -386,9 +386,9 @@ export default function GuestOrderStatusCard({
                   circleColor = '#FFFFFF';
                   circleBorder = '2px solid var(--purple-primary, #7A4B9E)';
                 } else if (isActive) {
-                  circleBg = '#FFFFFF';
-                  circleColor = 'var(--purple-primary, #7A4B9E)';
-                  circleBorder = '3px solid var(--purple-primary, #7A4B9E)';
+                  circleBg = '#ECFDF5';
+                  circleColor = '#047857';
+                  circleBorder = '3px solid #10B981';
                 }
 
                 return (
@@ -404,26 +404,38 @@ export default function GuestOrderStatusCard({
                       textAlign: 'center'
                     }}
                   >
-                    {/* Step Circle */}
-                    <div
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        backgroundColor: circleBg,
-                        color: circleColor,
-                        border: circleBorder,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 800,
-                        fontSize: '0.85rem',
-                        boxShadow: isActive ? '0 0 0 4px rgba(122, 75, 158, 0.2)' : '0 2px 4px rgba(0,0,0,0.06)',
-                        transition: 'all 0.2s ease',
-                        marginBottom: '8px'
-                      }}
-                    >
-                      {isCompleted ? <Check size={18} strokeWidth={3} /> : step.step}
+                    {/* Step Circle Container with Green Pulse Ring */}
+                    <div style={{ position: 'relative', width: '36px', height: '36px', marginBottom: '8px' }}>
+                      {/* Vòng tròn nhấp nháy màu xanh lan tỏa thể hiện công việc đang làm */}
+                      {isActive && (
+                        <div className="active-step-pulse-ring" />
+                      )}
+
+                      {/* Step Circle */}
+                      <div
+                        className={isActive ? 'active-step-glow-circle' : ''}
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          backgroundColor: circleBg,
+                          color: circleColor,
+                          border: circleBorder,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                          boxShadow: isActive
+                            ? '0 0 0 3px rgba(16, 185, 129, 0.2), 0 2px 8px rgba(16, 185, 129, 0.25)'
+                            : '0 2px 4px rgba(0,0,0,0.06)',
+                          transition: 'all 0.2s ease',
+                          position: 'relative',
+                          zIndex: 2
+                        }}
+                      >
+                        {isCompleted ? <Check size={18} strokeWidth={3} /> : step.step}
+                      </div>
                     </div>
 
                     {/* Step Short Label */}
@@ -432,11 +444,26 @@ export default function GuestOrderStatusCard({
                         fontSize: '0.74rem',
                         fontWeight: isActive ? 800 : (isCompleted ? 600 : 500),
                         color: isActive
-                          ? 'var(--purple-primary, #7A4B9E)'
+                          ? '#047857'
                           : (isCompleted ? 'var(--text-dark, #1F2937)' : 'var(--text-muted, #9CA3AF)'),
-                        lineHeight: 1.2
+                        lineHeight: 1.2,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px'
                       }}
                     >
+                      {isActive && (
+                        <span
+                          style={{
+                            width: '5px',
+                            height: '5px',
+                            borderRadius: '50%',
+                            backgroundColor: '#10B981',
+                            animation: 'activeStepGlowDot 1.2s infinite ease-in-out',
+                            display: 'inline-block'
+                          }}
+                        />
+                      )}
                       {step.shortLabel || step.title}
                     </span>
                   </div>
@@ -456,23 +483,36 @@ export default function GuestOrderStatusCard({
                 gap: '12px'
               }}
             >
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: statusCfg.color || '#18181B',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '0.9rem',
-                  flexShrink: 0,
-                  marginTop: '2px'
-                }}
-              >
-                {stepProgress.stepNumber}
+              <div style={{ position: 'relative', width: '32px', height: '32px', flexShrink: 0, marginTop: '2px' }}>
+                {/* Vòng tròn xanh nhấp nháy tại icon bước hiện tại */}
+                <div
+                  className="active-step-pulse-ring"
+                  style={{
+                    top: '-3px',
+                    left: '-3px',
+                    right: '-3px',
+                    bottom: '-3px'
+                  }}
+                />
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: '#10B981',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: '0.9rem',
+                    position: 'relative',
+                    zIndex: 2,
+                    boxShadow: '0 2px 6px rgba(16, 185, 129, 0.35)'
+                  }}
+                >
+                  {stepProgress.stepNumber}
+                </div>
               </div>
               <div style={{ flex: 1 }}>
                 <h4

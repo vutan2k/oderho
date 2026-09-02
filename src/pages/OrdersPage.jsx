@@ -239,8 +239,8 @@ export default function OrdersPage() {
                 <div style={{ padding: '24px 20px', backgroundColor: 'var(--bg-subtle-purple, #FDFBFF)', borderBottom: '1px solid var(--border-color, #EAE6DF)' }}>
                   <div className="order-timeline">
                     {steps.map((st, idx) => {
-                      const isCompleted = idx <= currentStepIdx;
-                      const isCurrent = idx === currentStepIdx;
+                      const isCompleted = idx < currentStepIdx || currentStepIdx === 7;
+                      const isCurrent = idx === currentStepIdx && currentStepIdx < 7;
 
                       return (
                         <div
@@ -249,28 +249,51 @@ export default function OrdersPage() {
                           data-completed={isCompleted}
                           data-current={isCurrent}
                         >
-                          <div style={{
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            backgroundColor: isCompleted ? 'var(--purple-primary)' : 'var(--bg-white, #E5E7EB)',
-                            color: isCompleted ? '#FFF' : 'var(--text-muted, #6B7280)',
-                            border: isCompleted ? 'none' : '1px solid var(--border-color)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            transition: 'all 0.3s ease'
-                          }}>
-                            {isCompleted ? <Check size={16} /> : idx + 1}
+                          <div style={{ position: 'relative', width: '28px', height: '28px' }}>
+                            {isCurrent && (
+                              <div className="active-step-pulse-ring" style={{ top: '-3px', left: '-3px', right: '-3px', bottom: '-3px' }} />
+                            )}
+                            <div style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              backgroundColor: isCurrent ? '#ECFDF5' : (isCompleted ? 'var(--purple-primary)' : 'var(--bg-white, #E5E7EB)'),
+                              color: isCurrent ? '#047857' : (isCompleted ? '#FFF' : 'var(--text-muted, #6B7280)'),
+                              border: isCurrent ? '2px solid #10B981' : (isCompleted ? 'none' : '1px solid var(--border-color)'),
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: '0.75rem',
+                              transition: 'all 0.3s ease',
+                              position: 'relative',
+                              zIndex: 2,
+                              boxShadow: isCurrent ? '0 0 0 2px rgba(16, 185, 129, 0.25)' : 'none'
+                            }}>
+                              {isCompleted ? <Check size={16} /> : idx + 1}
+                            </div>
                           </div>
 
                           <span style={{
                             fontWeight: isCurrent ? 800 : (isCompleted ? 700 : 500),
-                            color: isCompleted ? 'var(--purple-primary)' : 'var(--text-muted, #6B7280)',
-                            lineHeight: 1.3
+                            color: isCurrent ? '#047857' : (isCompleted ? 'var(--purple-primary)' : 'var(--text-muted, #6B7280)'),
+                            lineHeight: 1.3,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px'
                           }}>
+                            {isCurrent && (
+                              <span
+                                style={{
+                                  width: '5px',
+                                  height: '5px',
+                                  borderRadius: '50%',
+                                  backgroundColor: '#10B981',
+                                  animation: 'activeStepGlowDot 1.2s infinite ease-in-out',
+                                  display: 'inline-block'
+                                }}
+                              />
+                            )}
                             {st.shortLabel || st.title}
                           </span>
                         </div>
