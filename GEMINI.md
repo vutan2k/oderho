@@ -48,6 +48,13 @@
   - Bắt buộc kiểm tra Họ tên và Địa chỉ giao hàng đầy đủ trước khi cho phép tạo đơn hàng.
 - **4.4. Chuẩn Hóa Nội Dung Chuyển Khoản**:
   - Nội dung chuyển khoản chuẩn hóa tự động theo cú pháp: `TAVY <Số_điện_thoại>` (Ví dụ: `TAVY 0912345678`).
+- **4.5. Quy Chuẩn LIFO Event Isolation Cho Modal & Lightbox Lồng Nhau (Nested Overlays)**:
+  - Mọi Lightbox xem ảnh, ảnh review phóng to hoặc cửa sổ pop-up lồng bên trong một Modal khác bắt buộc phải cô lập sự kiện click (`e.stopPropagation()`) tại vùng nền (backdrop) và nút đóng (X).
+  - Tuyệt đối không để sự kiện click nổi bọt lên backdrop của Modal cha dẫn đến đóng toàn bộ phiên xem của người dùng.
+  - Cơ chế phím `Escape` phải tuân theo thứ tự LIFO (Last-In-First-Out): bấm lần 1 chỉ đóng Lightbox phóng to; bấm lần 2 mới đóng Modal cha.
+- **4.6. Trải Nghiệm Danh Mục Mặc Định (Focused Default Category)**:
+  - Trang chủ ưu tiên hiển thị nhóm sản phẩm trọng tâm (mặc định là danh mục "Mỹ phẩm" / `cosmetics`), không hiển thị ồ ạt toàn bộ sản phẩm hỗn tạp khi mới vào trang gây rối mắt người dùng.
+  - Giữ nguyên tùy chọn "Tất cả sản phẩm" cho khách hàng có nhu cầu xem trọn gói kho hàng.
 
 ---
 

@@ -29,6 +29,25 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
     setSelectedImg(imgs[0] || '');
   }, [product]);
 
+  // Lắng nghe phím Escape để lùi 1 bước: đóng Lightbox trước, nếu Lightbox đã đóng thì mới đóng Modal chi tiết
+  useEffect(() => {
+    if (!product) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (zoomIndex !== null) {
+          e.stopPropagation();
+          setZoomIndex(null);
+        } else if (onClose) {
+          onClose();
+        }
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [product, zoomIndex, onClose]);
+
   if (!product) return null;
 
   const won = Number(product?.foreignPrice ?? product?.priceKrw ?? product?.priceWon ?? product?.price) || 0;
@@ -287,7 +306,10 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
       {/* LIGHTBOX PHÓNG TO ẢNH HD FULL SCREEN HỖ TRỢ VUỐT CẢM ỨNG 2 BÊN */}
       {zoomIndex !== null && reviewPhotos[zoomIndex] && (
         <div 
-          onClick={() => setZoomIndex(null)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setZoomIndex(null);
+          }}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           style={{
@@ -305,7 +327,10 @@ export default function ProductDetailModal({ product, krwRate, onClose, onOrderN
         >
           {/* Nút Đóng */}
           <button
-            onClick={() => setZoomIndex(null)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoomIndex(null);
+            }}
             style={{
               position: 'absolute',
               top: '20px',

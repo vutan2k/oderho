@@ -139,15 +139,15 @@ export default function AdminOrderManager({ isDark: isDarkProp } = {}) {
   });
   const [isSavingProof, setIsSavingProof] = useState(false);
 
-  useEffect(() => {
-    if (activeDrawerOrder) {
-      setProofForm({
-        povVideoUrl: activeDrawerOrder.povVideoUrl || '',
-        packingVideoUrl: activeDrawerOrder.packingVideoUrl || '',
-        receiptImageUrl: activeDrawerOrder.receiptImageUrl || ''
-      });
-    }
-  }, [activeDrawerOrder?.id]);
+  const [prevDrawerOrderId, setPrevDrawerOrderId] = useState(null);
+  if (activeDrawerOrder && activeDrawerOrder.id !== prevDrawerOrderId) {
+    setPrevDrawerOrderId(activeDrawerOrder.id);
+    setProofForm({
+      povVideoUrl: activeDrawerOrder.povVideoUrl || '',
+      packingVideoUrl: activeDrawerOrder.packingVideoUrl || '',
+      receiptImageUrl: activeDrawerOrder.receiptImageUrl || ''
+    });
+  }
 
   const handleSaveProofMedia = async () => {
     if (!activeDrawerOrder) return;

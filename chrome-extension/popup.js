@@ -73,8 +73,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (progressBox) {
         progressBox.style.display = 'block';
-        progressTitle.textContent = 'Đang cào Album Ảnh HD & Đánh Giá...';
-        progressDetail.textContent = 'Hệ thống đang bóc tách 100% dữ liệu và truyền trực tiếp về Web Admin.';
+        progressTitle.textContent = 'Đang bóc tách Album HD, Infographic & Đánh giá...';
+        progressDetail.textContent = 'Hệ thống đang bóc tách trọn vẹn thông số kỹ thuật, thành phần và truyền trực tiếp về Web Admin.';
       }
 
       chrome.tabs.sendMessage(tab.id, { action: "SCRAPE_PRODUCT" }, (_res) => {});

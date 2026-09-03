@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "TAVY AI Scraper Pro",
-  "version": "19.0",
-  "description": "TAVY AI Scraper v19.0 PRO - Bóc tách 30+ Ảnh Đánh Giá GDAS & 3 Ảnh HD Olive Young, Dịch Thuật Gemini AI Độc Quyền",
+  "version": "20.0",
+  "description": "TAVY AI Scraper v20.0 PRO - Bóc tách 50+ Ảnh Đánh Giá GDAS, Album Ảnh HD & Infographic Mô Tả, Bảng Thông Số Kỹ Thuật Olive Young, Dịch Thuật Gemini AI Độc Quyền",
   "permissions": [
     "activeTab",
     "scripting",
@@ -15,6 +15,7 @@
     "https://generativelanguage.googleapis.com/*",
     "https://firestore.googleapis.com/*",
     "https://tavyorder.web.app/*",
+    "https://oderho.vercel.app/*",
     "http://localhost/*",
     "http://localhost:*/*",
     "http://127.0.0.1:*/*"
@@ -36,6 +37,8 @@
       "matches": [
         "https://tavyorder.web.app/admin/*",
         "https://tavyorder.web.app/*",
+        "https://oderho.vercel.app/admin/*",
+        "https://oderho.vercel.app/*",
         "http://localhost/*",
         "http://localhost:*/*",
         "http://127.0.0.1:*/*"

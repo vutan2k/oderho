@@ -15,7 +15,7 @@ import { findGuestOrders } from '../services/guestTrackingService';
 export default function KROrderHomePage() {
   const { oliveYoungCatalog, rates, currentUser, logoutUser, cart, addToCart, orders, userTheme, toggleUserTheme } = useContext(AppContext);
   const [detailProduct, setDetailProduct] = useState(null);
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState('cosmetics');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Guest Order Tracking State
@@ -99,7 +99,7 @@ export default function KROrderHomePage() {
       const cat = (product.category || '').toLowerCase();
       
       if (cat === activeCategory) return true;
-      if (activeCategory === 'cosmetics') return cat.includes('mỹ phẩm') || cat.includes('skin') || cat.includes('dưỡng') || cat.includes('make') || cat.includes('trang') || cat.includes('hair') || cat.includes('body');
+      if (activeCategory === 'cosmetics') return cat === 'cosmetics' || cat.includes('mỹ phẩm') || cat.includes('skin') || cat.includes('dưỡng') || cat.includes('make') || cat.includes('trang') || cat.includes('hair') || cat.includes('body');
       if (activeCategory === 'ginseng') return cat.includes('sâm') || cat.includes('nấm');
       if (activeCategory === 'supplements') return cat.includes('thực phẩm') || cat.includes('chức năng') || cat.includes('health') || cat.includes('collagen') || cat.includes('pharm') || cat.includes('thuốc');
       

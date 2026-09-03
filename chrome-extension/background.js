@@ -38,17 +38,14 @@ const translateKoreanToVi = (krTitle) => {
 };
 
 // =========================================================================
-// THUẬT TOÁN XOAY VÒNG ROUND-ROBIN DÀNH RIÊNG CHO MÔ HÌNH GEMINI 3.X (v16.0 PRO)
-// Tránh chạm hạn ngạch (Rate Limit 429) và tối ưu 100% cho Gemini 3.x
+// THUẬT TOÁN XOAY VÒNG ROUND-ROBIN CHO GOOGLE GEMINI AI (v20.0 PRO)
+// Sử dụng các mô hình chính thức ổn định, chống rate limit 429
 // =========================================================================
 const ALL_SUPPORTED_MODELS = [
-  'gemini-3.5-flash-lite',
-  'gemini-3.5-flash',
-  'gemini-3.6-flash',
-  'gemini-3.7-flash',
-  'gemini-3-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-3.1-pro'
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro'
 ];
 
 let globalModelRotationIndex = 0;
@@ -94,14 +91,14 @@ const parseDomPrice = (priceStr) => {
   return Math.min(...validPrices);
 };
 
-// Hàm đồng bộ trực tiếp sản phẩm cào vào Cloud Firestore (pending_products) qua REST API (v11.0 PRO)
+// Hàm đồng bộ trực tiếp sản phẩm cào vào Cloud Firestore (pending_products) qua REST API (v20.0 PRO)
 const saveProductToFirestoreRest = async (product) => {
   try {
     const goodsNo = product.goodsNo || `SP-${Date.now()}`;
     const endpoint = `https://firestore.googleapis.com/v1/projects/tavyorder/databases/(default)/documents/pending_products/${goodsNo}`;
     
     const formatArray = (arr) => {
-      const clean = (arr || []).filter(u => u && typeof u === 'string' && u.startsWith('http'));
+      const clean = (arr || []).filter(u => u && typeof u === 'string' && u.trim().length > 0);
       if (clean.length === 0) {
         return { arrayValue: {} };
       }
@@ -118,15 +115,26 @@ const saveProductToFirestoreRest = async (product) => {
       nameKr: { stringValue: String(product.nameKr || '') },
       brand: { stringValue: String(product.brand || '') },
       brandKr: { stringValue: String(product.brandKr || '') },
-      category: { stringValue: String(product.category || 'skincare') },
+      category: { stringValue: String(product.category || 'cosmetics') },
+      subCategory: { stringValue: String(product.subCategory || 'skincare') },
       foreignPrice: { doubleValue: Number(product.foreignPrice || product.price || 25000) },
       price: { doubleValue: Number(product.price || 25000) },
+      originalPrice: { doubleValue: Number(product.originalPrice || product.price || 25000) },
+      discountPercent: { integerValue: String(product.discountPercent || 0) },
+      capacity: { stringValue: String(product.capacity || '') },
+      skinType: { stringValue: String(product.skinType || '') },
+      ingredients: { stringValue: String(product.ingredients || '') },
+      expirationDate: { stringValue: String(product.expirationDate || '') },
       productImage: { stringValue: String(product.productImage || '') },
       images: formatArray(product.images),
+      detailImages: formatArray(product.detailImages),
       photoReviews: formatArray(product.photoReviews),
+      rating: { doubleValue: Number(product.rating || 4.8) },
+      reviewsCount: { integerValue: String(product.reviewsCount || (product.photoReviews && product.photoReviews.length) || 0) },
       description: { stringValue: String(product.description || '') },
       usage: { stringValue: String(product.usage || '') },
       origin: { stringValue: String(product.origin || 'Store Olive Young Korea') },
+      options: formatArray(Array.isArray(product.options) ? product.options : [product.options || '1 Hộp']),
       productUrl: { stringValue: String(product.productUrl || '') },
       scrapedAt: { stringValue: product.scrapedAt || new Date().toISOString() }
     };
@@ -149,34 +157,85 @@ const saveProductToFirestoreRest = async (product) => {
 };
 
 // Hàm gửi dữ liệu sản phẩm lên Admin tab
-const sendProductToAdminTab = (goodsNo, name, nameKr, price, mainImage, albumImages, photoReviews, brand, brandKr, category, description, usage, url) => {
-  const fullProductData = {
-    goodsNo: goodsNo || `SP-${Date.now()}`,
-    name: name || 'Sản phẩm Olive Young',
-    nameKr: nameKr || name || '',
-    foreignPrice: price || 25000,
-    price: price || 25000,
-    productImage: mainImage || (albumImages && albumImages[0]) || '',
-    images: (albumImages && albumImages.length > 0) ? albumImages : (mainImage ? [mainImage] : []),
-    photoReviews: photoReviews || [],
-    brand: brand || 'Olive Young Korea',
-    brandKr: brandKr || brand || '올리브영',
-    category: category || 'skincare',
-    options: '1 Hộp',
-    origin: 'Store Olive Young Korea',
-    description: description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${nameKr}`,
-    usage: usage || 'Xem chi tiết trên bao bì.',
-    rating: 4.9,
-    reviewsCount: (photoReviews && photoReviews.length) || 180,
-    productUrl: url || '',
-    scrapedAt: new Date().toISOString()
-  };
+const sendProductToAdminTab = (goodsNoOrObj, name, nameKr, price, mainImage, albumImages, photoReviews, brand, brandKr, category, description, usage, url, extra = {}) => {
+  let fullProductData;
+  if (typeof goodsNoOrObj === 'object' && goodsNoOrObj !== null) {
+    fullProductData = {
+      goodsNo: goodsNoOrObj.goodsNo || `SP-${Date.now()}`,
+      name: goodsNoOrObj.name || 'Sản phẩm Olive Young',
+      nameKr: goodsNoOrObj.nameKr || goodsNoOrObj.name || '',
+      foreignPrice: goodsNoOrObj.foreignPrice || goodsNoOrObj.price || 25000,
+      price: goodsNoOrObj.price || goodsNoOrObj.foreignPrice || 25000,
+      originalPrice: goodsNoOrObj.originalPrice || goodsNoOrObj.price || 25000,
+      discountPercent: goodsNoOrObj.discountPercent || 0,
+      productImage: goodsNoOrObj.productImage || (goodsNoOrObj.images && goodsNoOrObj.images[0]) || '',
+      images: (goodsNoOrObj.images && goodsNoOrObj.images.length > 0) ? goodsNoOrObj.images : (goodsNoOrObj.productImage ? [goodsNoOrObj.productImage] : []),
+      detailImages: goodsNoOrObj.detailImages || [],
+      photoReviews: goodsNoOrObj.photoReviews || [],
+      brand: goodsNoOrObj.brand || 'Olive Young Korea',
+      brandKr: goodsNoOrObj.brandKr || goodsNoOrObj.brand || '올리브영',
+      category: goodsNoOrObj.category || 'cosmetics',
+      subCategory: goodsNoOrObj.subCategory || 'skincare',
+      capacity: goodsNoOrObj.capacity || '',
+      skinType: goodsNoOrObj.skinType || '',
+      ingredients: goodsNoOrObj.ingredients || '',
+      expirationDate: goodsNoOrObj.expirationDate || '',
+      options: goodsNoOrObj.options || ['1 Hộp'],
+      origin: goodsNoOrObj.origin || 'Store Olive Young Korea',
+      description: goodsNoOrObj.description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${goodsNoOrObj.nameKr || ''}`,
+      usage: goodsNoOrObj.usage || 'Xem chi tiết trên bao bì.',
+      rating: goodsNoOrObj.rating || 4.8,
+      reviewsCount: goodsNoOrObj.reviewsCount || (goodsNoOrObj.photoReviews && goodsNoOrObj.photoReviews.length) || 180,
+      productUrl: goodsNoOrObj.productUrl || '',
+      scrapedAt: goodsNoOrObj.scrapedAt || new Date().toISOString()
+    };
+  } else {
+    fullProductData = {
+      goodsNo: goodsNoOrObj || `SP-${Date.now()}`,
+      name: name || 'Sản phẩm Olive Young',
+      nameKr: nameKr || name || '',
+      foreignPrice: price || 25000,
+      price: price || 25000,
+      originalPrice: extra.originalPrice || price || 25000,
+      discountPercent: extra.discountPercent || 0,
+      productImage: mainImage || (albumImages && albumImages[0]) || '',
+      images: (albumImages && albumImages.length > 0) ? albumImages : (mainImage ? [mainImage] : []),
+      detailImages: extra.detailImages || [],
+      photoReviews: photoReviews || [],
+      brand: brand || 'Olive Young Korea',
+      brandKr: brandKr || brand || '올리브영',
+      category: category || 'cosmetics',
+      subCategory: extra.subCategory || 'skincare',
+      capacity: extra.capacity || '',
+      skinType: extra.skinType || '',
+      ingredients: extra.ingredients || '',
+      expirationDate: extra.expirationDate || '',
+      options: extra.options || ['1 Hộp'],
+      origin: extra.origin || 'Store Olive Young Korea',
+      description: description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${nameKr}`,
+      usage: usage || 'Xem chi tiết trên bao bì.',
+      rating: extra.rating || 4.8,
+      reviewsCount: extra.reviewsCount || (photoReviews && photoReviews.length) || 180,
+      productUrl: url || '',
+      scrapedAt: new Date().toISOString()
+    };
+  }
 
   // Đồng bộ trực tiếp vào Cloud Firestore pending_products collection qua REST API
   saveProductToFirestoreRest(fullProductData).catch(err => console.warn('Firestore REST sync:', err));
 
-  // 1. Kiểm tra xem có Tab Admin nào đang mở không -> Gửi tin nhắn trực tiếp qua bộ nhớ (0 giới hạn dung lượng!)
-  chrome.tabs.query({ url: ["https://tavyorder.web.app/admin/*", "https://tavyorder.web.app/*", "http://localhost/*"] }, (tabs) => {
+  // 1. Kiểm tra xem có Tab Admin nào đang mở không (Hỗ trợ song song cả Vercel và Firebase theo RULE 5)
+  const targetUrls = [
+    "https://tavyorder.web.app/admin/*",
+    "https://tavyorder.web.app/*",
+    "https://oderho.vercel.app/admin/*",
+    "https://oderho.vercel.app/*",
+    "http://localhost/*",
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*"
+  ];
+
+  chrome.tabs.query({ url: targetUrls }, (tabs) => {
     let sentSuccess = false;
 
     if (tabs && tabs.length > 0) {
@@ -203,10 +262,13 @@ const sendProductToAdminTab = (goodsNo, name, nameKr, price, mainImage, albumIma
         nk: String(fullProductData.nameKr).slice(0, 100),
         fp: fullProductData.price,
         p: fullProductData.price,
+        op: fullProductData.originalPrice || fullProductData.price,
         img: fullProductData.productImage,
-        imgs: fullProductData.images.slice(0, 3),
+        imgs: fullProductData.images.slice(0, 5),
         b: String(fullProductData.brand).slice(0, 35),
         cat: fullProductData.category,
+        sub: fullProductData.subCategory,
+        cap: fullProductData.capacity,
         d: String(fullProductData.description).slice(0, 120),
         u: String(fullProductData.usage).slice(0, 80),
         url: fullProductData.productUrl
@@ -404,7 +466,7 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
           for (const model of MODELS) {
             try {
               const controller = new AbortController();
-              const timer = setTimeout(() => controller.abort(), 4000);
+              const timer = setTimeout(() => controller.abort(), 10000);
               const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
               const r = await fetch(url, {
                 method: 'POST',
@@ -552,11 +614,11 @@ Trích xuất JSON chính xác tuyệt đối:
 
 Chỉ trả về JSON thuần hợp lệ, KHÔNG markdown.`;
 
-          const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
+          const MODELS = getRotatedModelsList();
           for (const model of MODELS) {
             try {
               const controller = new AbortController();
-              const timer = setTimeout(() => controller.abort(), 4000);
+              const timer = setTimeout(() => controller.abort(), 10000);
               const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
               const res = await fetch(url, {
                 method: 'POST',
@@ -632,23 +694,40 @@ Chỉ trả về JSON thuần hợp lệ, KHÔNG markdown.`;
         let aiData = {};
 
         if (apiKey) {
-          const prompt = `Trích xuất dữ liệu sản phẩm Olive Young từ DOM thật và chọn lọc ảnh đánh giá thực tế của khách hàng Hàn Quốc.
-Yêu cầu bắt buộc trả về JSON:
-- name: Tên sản phẩm đã dịch sang TIẾNG VIỆT 100% mượt mà, chuẩn thương mại mỹ phẩm (ví dụ: "Serum Cấp Nước Phục Hồi Torriden Dive-In 50ml", "Miếng Đệm Dưỡng Da Mediheal Teatree Trouble Pad 100 Miếng"). BỎ toàn bộ chữ khuyến mãi dạng [단독기획], (1+1), (Tặng...). TUYỆT ĐỐI KHÔNG để lại bất kỳ chữ tiếng Hàn HANGUL nào!
-- nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc từ TITLE.
-- price: Giá bán Won (KRW) thực tế (số nguyên dương, ví dụ: 21900, 28900, 19800, ưu tiên giá giảm sale).
-- brand: Tên thương hiệu chuẩn (ví dụ: Torriden, Mediheal, Medicube, Celimax, Round Lab, Beplain, Anua, Skin1004...).
-- category: skincare|makeup|health|pharmacy|haircare|bodycare.
-- description: Mô tả công dụng sản phẩm chi tiết, chuyên nghiệp bằng tiếng Việt.
-- usage: Hướng dẫn sử dụng bằng tiếng Việt.
-- filteredReviews: Mảng chứa toàn bộ URL ảnh đánh giá thực tế từ CANDIDATE_REVIEWS (tối thiểu 10 tấm nếu có, lọc bỏ ảnh banner, icon, quà tặng).
+          const prompt = `Bạn là chuyên gia trí tuệ nhân tạo (AI) bóc tách mỹ phẩm Hàn Quốc Olive Young hàng đầu.
+Dưới đây là thông tin chi tiết của sản phẩm Olive Young:
 
 URL: ${rawData.url}
 TITLE: ${rawData.title || ''}
-BRAND_TEXT: ${rawData.brandText || ''}
-PRICE_TEXT: ${rawData.priceText || ''}
+THƯƠNG HIỆU THÔ: ${rawData.brandText || ''}
+GIÁ BÁN THỰC TẾ: ${rawData.priceText || ''}
+GIÁ GỐC: ${rawData.originalPrice || ''}
+DUNG TÍCH/THÔNG SỐ: ${rawData.capacity || rawData.specs?.capacity || ''}
+LOẠI DA: ${rawData.skinType || rawData.specs?.skinType || ''}
+HƯỚNG DẪN SỬ DỤNG: ${rawData.usage || rawData.specs?.usage || ''}
+XUẤT XỨ: ${rawData.origin || rawData.specs?.origin || '대한민국'}
+THÀNH PHẦN: ${rawData.ingredients || rawData.specs?.ingredients || ''}
+TÙY CHỌN/PHÂN LOẠI: ${JSON.stringify(rawData.options || [])}
 CANDIDATE_REVIEWS: ${JSON.stringify(rawData.reviewCandidates || [])}
-VĂN BẢN TRANG WEB: ${rawData.fullText}`;
+VĂN BẢN TRANG WEB:
+${rawData.fullText}
+
+Yêu cầu BẮT BUỘC trả về JSON thuần (không markdown, không giải thích):
+- name: Tên sản phẩm dịch sang TIẾNG VIỆT 100% mượt mà, chuyên nghiệp, chuẩn sàn thương mại điện tử cao cấp (ví dụ: "Tinh Chất Phục Hồi Da Torriden Dive-In Low Molecule Hyaluronic Acid Serum 50ml", "Hộp Bông Dưỡng Da Làm Dịu Mediheal Teatree Trouble Pad 100 Miếng"). BỎ hoàn toàn các từ giật tít khuyến mãi tiếng Hàn dạng [단독기획], (1+1), [올영단독], (기획), (골라담기), [본품증정]. TUYỆT ĐỐI KHÔNG để lại bất kỳ chữ tiếng Hàn Hangul nào!
+- nameKr: Tên sản phẩm chính xác bằng tiếng Hàn gốc từ TITLE.
+- price: Giá Won (KRW) bán thực tế (số nguyên dương, ví dụ: 21900, 28900, ưu tiên giá giảm sale).
+- originalPrice: Giá Won gốc trước giảm (số nguyên dương, >= price).
+- brand: Tên thương hiệu tiếng Anh chuẩn (Torriden, Mediheal, Medicube, Celimax, Round Lab, Beplain, Anua, Skin1004, Biodance, Goodal, UNOVE, OBGE, fwee...).
+- brandKr: Tên thương hiệu tiếng Hàn.
+- category: cosmetics|skincare|makeup|haircare|bodycare|health.
+- subCategory: Phân loại chi tiết (serum|toner|cream|mask|suncream|cleanser|cushion|lipstick|shampoo|body...).
+- capacity: Dung tích/trọng lượng (ví dụ: "50ml", "100 miếng / 150ml", "80ml+80ml").
+- skinType: Loại da phù hợp bằng tiếng Việt (ví dụ: "Mọi loại da, da dầu thiếu nước, da nhạy cảm").
+- ingredients: Tóm tắt 3-5 hoạt chất chính nổi bật bằng tiếng Việt (ví dụ: "Hyaluronic Acid 5D, D-Panthenol, Malachite Extract").
+- description: Mô tả công dụng và điểm nổi bật chi tiết, chuyên nghiệp bằng tiếng Việt.
+- usage: Hướng dẫn sử dụng bằng tiếng Việt ngắn gọn, dễ hiểu.
+- options: Danh sách các phân loại nếu có (ví dụ các tone màu phấn 21N, 23N hoặc các loại mùi).
+- filteredReviews: Mảng URL ảnh đánh giá thực tế chọn lọc từ CANDIDATE_REVIEWS (lọc bỏ ảnh banner, icon, quà tặng).`;
 
           let MODELS = getRotatedModelsList();
           if (userModel && userModel !== 'auto') {
@@ -658,7 +737,7 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
           for (const model of MODELS) {
             try {
               const controller = new AbortController();
-              const timer = setTimeout(() => controller.abort(), 5000);
+              const timer = setTimeout(() => controller.abort(), 10000);
 
               const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
               const res = await fetch(url, {
@@ -694,6 +773,9 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
         }
 
         const finalPrice = parsedAiPrice > 0 ? parsedAiPrice : (domPrice || 25000);
+        const rawOrigPrice = parseInt(String(aiData.originalPrice || rawData.originalPrice).replace(/[^0-9]/g, ''), 10) || finalPrice;
+        const finalOriginalPrice = rawOrigPrice >= finalPrice ? rawOrigPrice : finalPrice;
+        const discountPct = finalOriginalPrice > finalPrice ? Math.round(((finalOriginalPrice - finalPrice) / finalOriginalPrice) * 100) : 0;
 
         let vietnameseName = aiData.name;
         if (!vietnameseName || /[가-힣]/.test(vietnameseName)) {
@@ -703,42 +785,69 @@ VĂN BẢN TRANG WEB: ${rawData.fullText}`;
         const goodsNoMatch = (rawData.url || '').match(/goodsNo=([A-Za-z0-9_]+)/i);
         const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : `A${Date.now()}`;
 
-        // Lấy 3 Ảnh đại diện sản phẩm HD
+        // Lấy Album Ảnh đại diện sản phẩm HD (tối đa 10 ảnh)
         const finalAlbum = (rawData.images && rawData.images.length > 0)
-          ? rawData.images.slice(0, 3)
+          ? rawData.images.slice(0, 10)
           : (rawData.image ? [rawData.image] : []);
+
+        // Lấy Album Ảnh chi tiết mô tả infographic & swatches (tối đa 20 ảnh)
+        const detailAlbum = (rawData.detailImages && rawData.detailImages.length > 0)
+          ? rawData.detailImages.slice(0, 20)
+          : [];
 
         const isJunkUrl = (u) => !u || typeof u !== 'string' || !u.startsWith('http') ||
           /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_|blank|loading|sprite/i.test(u);
 
-        // Lọc ảnh review: Ưu tiên ảnh thật người dùng, không lấy ảnh rách/quảng cáo, lấy tối đa 35 tấm
+        // Lọc ảnh review: Ưu tiên ảnh thật người dùng, không lấy ảnh rác/quảng cáo, lấy tối đa 50 tấm
         let candidateList = (rawData.reviewCandidates || []).filter(u => !isJunkUrl(u));
         let aiList = (aiData.filteredReviews && Array.isArray(aiData.filteredReviews))
           ? aiData.filteredReviews.filter(u => !isJunkUrl(u))
           : [];
 
         let finalReviews = Array.from(new Set([...aiList, ...candidateList])).filter(u => !isJunkUrl(u));
-        finalReviews = finalReviews.slice(0, 35);
+        finalReviews = finalReviews.slice(0, 50);
 
         const mainImg = finalAlbum[0] || rawData.image || '';
 
-        sendProductToAdminTab(
+        const fullPayload = {
           goodsNo,
-          vietnameseName,
-          aiData.nameKr || titleRaw,
-          finalPrice,
-          mainImg,
-          finalAlbum,
-          finalReviews,
-          brandFallback,
-          aiData.brandKr || brandFallback,
-          aiData.category || 'skincare',
-          aiData.description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${titleRaw}`,
-          aiData.usage || 'Xem chi tiết trên bao bì sản phẩm.',
-          rawData.url
-        );
+          name: vietnameseName,
+          nameKr: aiData.nameKr || titleRaw,
+          price: finalPrice,
+          foreignPrice: finalPrice,
+          originalPrice: finalOriginalPrice,
+          discountPercent: discountPct,
+          productImage: mainImg,
+          images: finalAlbum,
+          detailImages: detailAlbum,
+          photoReviews: finalReviews,
+          brand: brandFallback,
+          brandKr: aiData.brandKr || brandFallback,
+          category: aiData.category || 'cosmetics',
+          subCategory: aiData.subCategory || 'skincare',
+          capacity: aiData.capacity || rawData.capacity || '',
+          skinType: aiData.skinType || rawData.skinType || '',
+          ingredients: aiData.ingredients || rawData.ingredients || '',
+          expirationDate: rawData.expirationDate || '',
+          description: aiData.description || `Sản phẩm chính hãng nội địa Hàn Quốc. Tên gốc: ${titleRaw}`,
+          usage: aiData.usage || rawData.usage || 'Xem chi tiết trên bao bì sản phẩm.',
+          origin: rawData.origin || 'Store Olive Young Korea',
+          options: (aiData.options && Array.isArray(aiData.options) && aiData.options.length > 0) ? aiData.options : (rawData.options || ['1 Hộp']),
+          rating: Number(rawData.rating) || 4.8,
+          reviewsCount: Number(rawData.reviewsCount) || finalReviews.length || 180,
+          productUrl: rawData.url,
+          scrapedAt: new Date().toISOString()
+        };
 
-        sendResponse({ success: true, name: vietnameseName, reviewCount: finalReviews.length });
+        sendProductToAdminTab(fullPayload);
+
+        sendResponse({
+          success: true,
+          name: vietnameseName,
+          imagesCount: finalAlbum.length,
+          detailCount: detailAlbum.length,
+          reviewCount: finalReviews.length
+        });
 
       } catch (err) {
         console.error("Lỗi AI Service Worker:", err);

@@ -51,13 +51,13 @@ export default function UserProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Sync state with currentUser changes (e.g., initial load or updates)
-  useEffect(() => {
-    if (currentUser) {
-      setName(currentUser.name || '');
-      setPhone(currentUser.phone || '');
-      setAddress(currentUser.address || '');
-    }
-  }, [currentUser]);
+  const [prevUserUid, setPrevUserUid] = useState(null);
+  if (currentUser && (currentUser.uid || currentUser.id) !== prevUserUid) {
+    setPrevUserUid(currentUser.uid || currentUser.id);
+    setName(currentUser.name || '');
+    setPhone(currentUser.phone || '');
+    setAddress(currentUser.address || '');
+  }
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();

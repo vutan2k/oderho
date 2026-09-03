@@ -21,7 +21,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
   };
 
   /**
-   * BƯỚC 1: Lấy CHÍNH XÁC 3 Ảnh Sản Phẩm HD từ Đầu Trang (Rõ nét, chuẩn studio)
+   * BƯỚC 1: Lấy Album Ảnh Sản Phẩm Studio HD từ Đầu Trang (Rõ nét, lên tới 8-10 ảnh góc chụp khác nhau)
    */
   const pickProductImages = () => {
     const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/i);
@@ -36,7 +36,8 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
       '.prd_img img',
       '.goods_thumb img',
       '.swiper-slide img',
-      '.view_slide img'
+      '.view_slide img',
+      '.thumb_list li img'
     ];
 
     const mainNodes = Array.from(document.querySelectorAll(productSelectors.join(',')) || []);
@@ -58,7 +59,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
     const uniqueUrls = Array.from(new Set(productUrls)).filter(url => url.startsWith('http'));
 
-    if (uniqueUrls.length < 3) {
+    if (uniqueUrls.length < 5) {
       const allImgs = Array.from(document.images || []);
       allImgs.forEach((img) => {
         const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
@@ -69,12 +70,111 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
       });
     }
 
-    const final3 = Array.from(new Set(uniqueUrls)).slice(0, 3);
-    return final3.length > 0 ? final3 : [getHighResUrl(ogImage || '')];
+    const finalImages = Array.from(new Set(uniqueUrls)).slice(0, 10);
+    return finalImages.length > 0 ? finalImages : [getHighResUrl(ogImage || '')];
   };
 
   /**
-   * BƯỚC 2: CÀO SÂU ĐA TRANG & ĐA SẮP XẾP GDAS API từ Server Olive Young (>10 đến 40 Ảnh Đánh Giá Thật)
+   * BƯỚC 1.2: Lấy Album Ảnh Chi Tiết Mô Tả / Infographic / Swatches Bảng Màu từ Thân Trang
+   */
+  const pickDetailImages = () => {
+    const detailSelectors = [
+      '#artcDesc img',
+      '#artcDesc_scroll img',
+      '.detail_editor img',
+      '.cont_editor img',
+      '.prd_detail_box img',
+      '[class*="GoodsDetailDescription"] img',
+      '.detail_area img',
+      '.d_editor img'
+    ];
+
+    const detailNodes = Array.from(document.querySelectorAll(detailSelectors.join(',')) || []);
+    const detailUrls = [];
+
+    detailNodes.forEach(img => {
+      const src = img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
+      if (!src || !src.startsWith('http') || isJunkImage(src)) return;
+      if (src.includes('gdasEditor') || src.includes('review')) return;
+      const cleanUrl = getHighResUrl(src);
+      if (cleanUrl) detailUrls.push(cleanUrl);
+    });
+
+    return Array.from(new Set(detailUrls)).slice(0, 20);
+  };
+
+  /**
+   * BƯỚC 1.3: Bóc Tách Bảng Thông Số Kỹ Thuật Chi Tiết (Dung tích, loại da, hạn dùng, thành phần, rating)
+   */
+  const parseProductSpecifications = () => {
+    const specs = {
+      capacity: '',
+      skinType: '',
+      expirationDate: '',
+      usage: '',
+      origin: '대한민국 (Hàn Quốc)',
+      ingredients: '',
+      rating: 4.8,
+      reviewsCount: 0,
+      options: []
+    };
+
+    try {
+      // 1. Quét các hàng bảng thông tin sản phẩm
+      const rows = Array.from(document.querySelectorAll('#buyInfo tr, .prd_info_table tr, .detail_info_list li, .goods_buy_info tr, .goods_buy_info dl') || []);
+      rows.forEach(row => {
+        const th = (row.querySelector('th, dt, .tit')?.textContent || '').trim();
+        const td = (row.querySelector('td, dd, .txt')?.textContent || '').trim();
+        if (!th || !td) return;
+
+        if (/용량|중량|규격/i.test(th)) {
+          specs.capacity = td;
+        } else if (/피부타입|주요사양/i.test(th)) {
+          specs.skinType = td;
+        } else if (/사용기한|개봉 후/i.test(th)) {
+          specs.expirationDate = td;
+        } else if (/사용방법/i.test(th)) {
+          specs.usage = td;
+        } else if (/제조국/i.test(th)) {
+          specs.origin = td;
+        } else if (/화장품법|전성분|성분/i.test(th)) {
+          specs.ingredients = td;
+        }
+      });
+
+      // 2. Điểm đánh giá sao và tổng lượt review
+      const ratingEl = document.querySelector('.point, .score, em.total_point, [class*="grade"] strong, span.grade');
+      if (ratingEl) {
+        const parsedRating = parseFloat((ratingEl.textContent || '').replace(/[^0-9.]/g, ''));
+        if (parsedRating > 0 && parsedRating <= 5) specs.rating = parsedRating;
+      }
+
+      const reviewCountEl = document.querySelector('.num, em.total_num, [class*="review_count"], .review_total, #gdasInfo em');
+      if (reviewCountEl) {
+        const parsedCount = parseInt((reviewCountEl.textContent || '').replace(/[^0-9]/g, ''), 10);
+        if (parsedCount > 0) specs.reviewsCount = parsedCount;
+      }
+
+      // 3. Phân loại tùy chọn / combo màu sắc
+      const optionEls = Array.from(document.querySelectorAll('.sel_option select option, select[name*="opt"] option, .prd_option_box li') || []);
+      const optionsFound = [];
+      optionEls.forEach(opt => {
+        const txt = (opt.textContent || '').trim();
+        if (txt && !/선택|옵션을 선택/i.test(txt) && !optionsFound.includes(txt)) {
+          optionsFound.push(txt);
+        }
+      });
+      specs.options = optionsFound.slice(0, 15);
+
+    } catch (e) {
+      console.warn("Parse specs note:", e);
+    }
+
+    return specs;
+  };
+
+  /**
+   * BƯỚC 2: CÀO SÂU ĐA TRANG & ĐA SẮP XẾP GDAS API từ Server Olive Young (Tới 50+ Ảnh Đánh Giá Thật)
    */
   const fetchDeepMultiPageReviewPhotos = async (goodsNo) => {
     if (!goodsNo) return [];
@@ -83,7 +183,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
     try {
       for (const sortMode of sorts) {
-        for (let pageIdx = 1; pageIdx <= 5; pageIdx++) {
+        for (let pageIdx = 1; pageIdx <= 8; pageIdx++) {
           const ajaxUrl = `https://www.oliveyoung.co.kr/store/goods/getGdasListAjax.do?goodsNo=${goodsNo}&gdasSort=${sortMode}&pageIdx=${pageIdx}`;
           const res = await fetch(ajaxUrl, {
             headers: {
@@ -119,9 +219,9 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
               }
             });
           }
-          if (photoUrls.length >= 40) break;
+          if (photoUrls.length >= 60) break;
         }
-        if (photoUrls.length >= 40) break;
+        if (photoUrls.length >= 60) break;
       }
     } catch (err) {
       console.warn("Deep GDAS fetch note:", err);
@@ -141,17 +241,15 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         return src && src.startsWith('http') && !isJunkImage(src);
       });
 
-      console.log(`[TAVY Scraper v18.0] Tìm thấy ${validThumbs.length} thumbnail ảnh đánh giá.`);
+      console.log(`[TAVY Scraper v20.0] Tìm thấy ${validThumbs.length} thumbnail ảnh đánh giá.`);
 
       if (validThumbs.length > 0) {
-        // Tìm element có thể click (thẻ <a>, <li>, <button> hoặc div bọc ngoài)
         const firstThumb = validThumbs[0];
         const clickableEl = firstThumb.closest('a, button, li, [onclick]') || firstThumb;
 
         clickableEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         await new Promise(r => setTimeout(r, 400));
 
-        // Trigger Click sự kiện mở Lightbox
         try { clickableEl.click(); } catch {}
         try {
           clickableEl.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
@@ -159,8 +257,8 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
         await new Promise(r => setTimeout(r, 800));
 
-        // Lặp tối đa 30 lần bấm nút Next trong Popup xem ảnh to
-        for (let i = 0; i < 30; i++) {
+        // Lặp tối đa 50 lần bấm nút Next trong Popup xem ảnh to để thu thập trọn bộ ảnh review
+        for (let i = 0; i < 50; i++) {
           const popImgs = Array.from(document.querySelectorAll('#layer_gdas_photo img, .gdas_photo_pop img, .pop_layer img, [class*=gdas] img, [class*=photo] img, [class*=pop] img') || []);
           popImgs.forEach(img => {
             const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
@@ -175,7 +273,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
             try {
               nextBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
             } catch {}
-            await new Promise(r => setTimeout(r, 350));
+            await new Promise(r => setTimeout(r, 300));
           } else {
             break;
           }
@@ -199,17 +297,26 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
     const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/i);
     const goodsNo = goodsNoMatch ? goodsNoMatch[1] : '';
 
-    // 1. Lấy 3 Ảnh đại diện sản phẩm đầu trang
-    showMiniToast('Step 1/5: Lấy 3 Ảnh đại diện sản phẩm HD...', 'info');
+    // 1. Lấy Album Ảnh đại diện sản phẩm HD
+    showMiniToast('Step 1/6: Bóc tách Album Ảnh Studio HD...', 'info');
     const productImages = pickProductImages();
-    await new Promise(r => setTimeout(r, 400));
+    await new Promise(r => setTimeout(r, 300));
 
-    // 2. Cào sâu Đa trang GDAS API từ Server Olive Young
-    showMiniToast('Step 2/5: Bóc tách GDAS Review API từ Server...', 'info');
+    // 2. Lấy Album Ảnh Chi Tiết Mô Tả Infographic & Swatches
+    showMiniToast('Step 2/6: Bóc tách Ảnh Infographic Mô Tả...', 'info');
+    const detailImages = pickDetailImages();
+    await new Promise(r => setTimeout(r, 300));
+
+    // 3. Bóc tách Bảng Thông Số Kỹ Thuật (Dung tích, thành phần, rating)
+    showMiniToast('Step 3/6: Bóc tách Bảng Thông Số Kỹ Thuật...', 'info');
+    const specifications = parseProductSpecifications();
+
+    // 4. Cào sâu Đa trang GDAS API từ Server Olive Young
+    showMiniToast('Step 4/6: Bóc tách GDAS Review API từ Server...', 'info');
     const deepReviewPhotos = await fetchDeepMultiPageReviewPhotos(goodsNo);
 
-    // 3. Kéo xuống & Click Tab 리뷰 trên màn hình
-    showMiniToast('Step 3/5: Kéo xuống & Mở Tab Đánh Giá...', 'info');
+    // 5. Kéo xuống & Click Tab 리뷰 trên màn hình
+    showMiniToast('Step 5/6: Mở Tab Đánh Giá & Lightbox...', 'info');
     window.scrollTo({ top: 1100, behavior: 'smooth' });
     await new Promise(r => setTimeout(r, 500));
 
@@ -238,21 +345,22 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
     await new Promise(r => setTimeout(r, 800));
 
-    // 4. Click mở Lightbox xem ảnh to & tự động bấm Next liên tục
-    showMiniToast('Step 4/5: Mở Lightbox & Bấm Next chụp ảnh thật...', 'info');
+    // 6. Click mở Lightbox xem ảnh to & tự động bấm Next liên tục
     window.scrollTo({ top: 2200, behavior: 'smooth' });
     await new Promise(r => setTimeout(r, 600));
 
     const lightboxPhotos = await interactiveLightboxClickScrape();
 
-    // 5. Tổng hợp toàn bộ danh sách Ảnh Đánh Giá Thực Tế (Loại bỏ ảnh rác)
-    showMiniToast('Step 5/5: Lọc sạch ảnh rác & Gom bộ sưu tập ảnh thật...', 'info');
+    // 7. Tổng hợp danh sách Ảnh Đánh Giá Thực Tế (Loại bỏ hoàn toàn ảnh rác quà tặng)
+    showMiniToast('Step 6/6: Lọc sạch ảnh rác & Gom bộ sưu tập ảnh thật...', 'info');
     const combinedCandidates = Array.from(new Set([...lightboxPhotos, ...deepReviewPhotos]))
       .filter(u => !isJunkImage(u) && u.startsWith('http'));
 
     return {
-      productImages: productImages.slice(0, 3),
-      reviewCandidates: combinedCandidates.slice(0, 40)
+      productImages: productImages,
+      detailImages: detailImages,
+      reviewCandidates: combinedCandidates.slice(0, 55),
+      specifications: specifications
     };
   };
 
@@ -301,7 +409,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
   const startScrapeProcess = async () => {
     try {
-      const { productImages, reviewCandidates } = await executeStepByStepScrape();
+      const { productImages, detailImages, reviewCandidates, specifications } = await executeStepByStepScrape();
 
       let fullText = document.body.innerText || '';
       if (fullText.length > 20000) fullText = fullText.substring(0, 20000);
@@ -316,13 +424,24 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         fullText,
         image: productImages[0] || '',
         images: productImages,
+        detailImages: detailImages || [],
         reviewCandidates: reviewCandidates,
         url: window.location.href,
         title: document.title,
         brandText: getText('.prd_brand, .brand, .brand_name, [class*=brand]'),
         priceText: String(salePrice),
         foreignPrice: salePrice,
-        originalPrice: origPrice >= salePrice ? origPrice : salePrice
+        originalPrice: origPrice >= salePrice ? origPrice : salePrice,
+        specs: specifications || {},
+        capacity: specifications?.capacity || '',
+        skinType: specifications?.skinType || '',
+        expirationDate: specifications?.expirationDate || '',
+        usage: specifications?.usage || '',
+        origin: specifications?.origin || '대한민국 (Hàn Quốc)',
+        ingredients: specifications?.ingredients || '',
+        rating: specifications?.rating || 4.8,
+        reviewsCount: specifications?.reviewsCount || reviewCandidates.length,
+        options: specifications?.options || []
       };
 
       let hasResponded = false;
@@ -346,7 +465,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
           } else if (response && response.success === false) {
             showMiniToast('Chưa cài API Key!', 'error');
           } else {
-            showMiniToast(`Thành công! Đã cào ${reviewCandidates.length} ảnh đánh giá thật về Admin!`, 'success');
+            showMiniToast(`Thành công! Đã cào ${productImages.length} ảnh HD, ${detailImages.length} ảnh mô tả & ${reviewCandidates.length} ảnh đánh giá về Admin!`, 'success');
           }
           resolve(response);
         });
