@@ -632,6 +632,10 @@ export const AppProvider = ({ children }) => {
       goodsNo: sanitized.goodsNo || product.goodsNo || `SP-${Date.now()}`
     };
     setPendingProducts(prev => {
+      const isExisting = prev.some(p => p.goodsNo === cleanProduct.goodsNo);
+      if (isExisting) {
+        console.log(`🔄 [AppProvider] Phát hiện sản phẩm trùng ${cleanProduct.goodsNo}: Tự động cập nhật dữ liệu mới nhất in-place.`);
+      }
       const filtered = prev.filter(p => p.goodsNo !== cleanProduct.goodsNo);
       return [cleanProduct, ...filtered];
     });

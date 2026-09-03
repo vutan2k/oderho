@@ -33,11 +33,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   const url = tab?.url || '';
   const isOliveYoung = /oliveyoung\.co\.kr|oliveyoung\.com/i.test(url);
 
-  // Update Status Indicator
+  // Update Status Indicator & Check Duplicate Product
+  const duplicateAlertBox = document.getElementById('duplicateAlertBox');
+  const duplicateItemDetail = document.getElementById('duplicateItemDetail');
+  const goodsNoMatch = url.match(/goodsNo=([A-Za-z0-9_]+)/i);
+  const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : '';
+
   if (hasKey && isOliveYoung) {
     statusBadge.className = 'status-badge status-online';
     statusDot.className = 'dot dot-green';
     statusText.textContent = 'Sẵn sàng cào sản phẩm';
+
+    // Tự động kiểm tra xem sản phẩm đã có trong hệ thống chưa
+    if (goodsNo) {
+      chrome.runtime.sendMessage({
+        action: "CHECK_PRODUCT_EXISTS",
+        goodsNo: goodsNo,
+        url: url
+      }, (res) => {
+        if (chrome.runtime.lastError) return;
+        if (res && res.exists) {
+          if (duplicateAlertBox) duplicateAlertBox.style.display = 'block';
+          if (duplicateItemDetail && res.item?.name) {
+            duplicateItemDetail.textContent = `Tên gốc: "${res.item.name}". Bấm nút bên dưới để cập nhật/ghi đè bản ghi.`;
+          }
+          if (scrapeBtn) {
+            scrapeBtn.innerHTML = `<span>🔄</span><span>Cập Nhật Sản Phẩm (Ghi Đè)</span>`;
+            scrapeBtn.style.background = 'linear-gradient(135deg, #C5A059 0%, #8C6D2D 100%)';
+          }
+        }
+      });
+    }
   } else if (!hasKey) {
     statusBadge.className = 'status-badge status-offline';
     statusDot.className = 'dot dot-red';

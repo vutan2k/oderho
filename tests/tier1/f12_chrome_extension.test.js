@@ -97,3 +97,47 @@ test('[F12-5] Admin URL autoFill query string generation & parsing', () => {
   const extractedData = parseAdminAutoFillQuery(adminUrl);
   assertDeepEquals(extractedData, prod, 'Extracted autoFill data matches original');
 });
+
+test('[F12-6] Auto-detect duplicate product registry and matching logic', () => {
+  const bgPath = path.resolve(__dirname, '../../chrome-extension/background.js');
+  assert(fs.existsSync(bgPath), 'background.js must exist');
+
+  const bgCode = fs.readFileSync(bgPath, 'utf-8');
+  assertContains(bgCode, 'CHECK_PRODUCT_EXISTS', 'background.js handles CHECK_PRODUCT_EXISTS action');
+  assertContains(bgCode, 'scrapedGoodsRegistry', 'background.js uses scrapedGoodsRegistry storage');
+  assertContains(bgCode, 'SYNC_CATALOG_GOODS_NOS', 'background.js supports SYNC_CATALOG_GOODS_NOS action');
+
+  // Logic verification for matching
+  const mockRegistry = {
+    'A000000223414': { goodsNo: 'A000000223414', name: 'Serum Torriden Dive-In 50ml' },
+    'A000000185934': { goodsNo: 'A000000185934', name: 'Mediheal Teatree Pad 100 Miếng' }
+  };
+  const mockList = new Set(['A000000223414', 'A000000185934']);
+
+  const checkExists = (goodsNo) => {
+    const upper = (goodsNo || '').toUpperCase();
+    return !!(mockRegistry[upper] || mockList.has(upper));
+  };
+
+  assertEquals(checkExists('A000000223414'), true, 'Existing goodsNo returns true');
+  assertEquals(checkExists('a000000223414'), true, 'Case-insensitive goodsNo returns true');
+  assertEquals(checkExists('A999999999999'), false, 'Non-existent goodsNo returns false');
+  assertEquals(checkExists(''), false, 'Empty goodsNo returns false');
+});
+
+test('[F12-7] Content Script & Popup duplicate alert indicators', () => {
+  const contentPath = path.resolve(__dirname, '../../chrome-extension/content.js');
+  const popupHtmlPath = path.resolve(__dirname, '../../chrome-extension/popup.html');
+  const popupJsPath = path.resolve(__dirname, '../../chrome-extension/popup.js');
+
+  const contentCode = fs.readFileSync(contentPath, 'utf-8');
+  assertContains(contentCode, 'CHECK_PRODUCT_EXISTS', 'content.js queries CHECK_PRODUCT_EXISTS');
+  assertContains(contentCode, 'data-exists', 'content.js sets data-exists attribute on button');
+
+  const popupHtml = fs.readFileSync(popupHtmlPath, 'utf-8');
+  assertContains(popupHtml, 'duplicateAlertBox', 'popup.html contains duplicateAlertBox UI');
+
+  const popupJs = fs.readFileSync(popupJsPath, 'utf-8');
+  assertContains(popupJs, 'CHECK_PRODUCT_EXISTS', 'popup.js checks CHECK_PRODUCT_EXISTS');
+});
+

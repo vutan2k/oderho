@@ -485,63 +485,105 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
     }
   });
 
-  // Tự động chèn Nút Cào Nổi 1-Click (Floating 1-Click Quick Scraper Button)
+  // Tự động chèn Nút Cào Nổi 1-Click và Nhận Diện Sản Phẩm Trùng Lặp
+  const checkAndApplyDuplicateState = (btn, goodsNo) => {
+    if (!btn || !goodsNo || btn.getAttribute('data-checking') === 'true') return;
+    btn.setAttribute('data-checking', 'true');
+
+    try {
+      chrome.runtime.sendMessage({
+        action: "CHECK_PRODUCT_EXISTS",
+        goodsNo: goodsNo,
+        url: window.location.href
+      }, (res) => {
+        btn.removeAttribute('data-checking');
+        if (chrome.runtime.lastError) return;
+        if (res && res.exists) {
+          btn.setAttribute('data-exists', 'true');
+          btn.style.background = 'linear-gradient(135deg, #C5A059 0%, #8C6D2D 100%)';
+          btn.style.boxShadow = '0 8px 24px rgba(197, 160, 89, 0.55)';
+          btn.innerHTML = `
+            <span style="font-size: 16px;">🔄</span>
+            <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.2;">
+              <span style="font-size: 12px; font-weight: 800;">Cập Nhật TAVY (Đã Có)</span>
+              <span style="font-size: 9px; opacity: 0.9; font-weight: 600;">Sản phẩm đã có trong kho</span>
+            </div>
+          `;
+        } else {
+          btn.removeAttribute('data-exists');
+          btn.style.background = 'linear-gradient(135deg, #7A4B9E 0%, #4A2368 100%)';
+          btn.style.boxShadow = '0 8px 24px rgba(122, 75, 158, 0.45)';
+          btn.innerHTML = `<span style="font-size: 16px;">⚡</span><span>Cào Vào TAVY (1-Click)</span>`;
+        }
+      });
+    } catch {}
+  };
+
   const injectFloatingScrapeButton = () => {
-    if (document.getElementById('tavy-floating-scrape-btn')) return;
     const isProductPage = /goodsNo=/i.test(window.location.href) || /getGoodsDetail/i.test(window.location.href);
     if (!isProductPage) return;
 
-    const btn = document.createElement('div');
-    btn.id = 'tavy-floating-scrape-btn';
-    btn.style.cssText = `
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      z-index: 9999998;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #7A4B9E 0%, #4A2368 100%);
-      color: #FFFFFF;
-      padding: 12px 20px;
-      border-radius: 30px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 13px;
-      font-weight: 800;
-      box-shadow: 0 8px 24px rgba(122, 75, 158, 0.45);
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1.5px solid rgba(255, 255, 255, 0.3);
-    `;
-    btn.innerHTML = `<span style="font-size: 16px;">⚡</span><span>Cào Vào TAVY (1-Click)</span>`;
+    const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/i);
+    const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : '';
 
-    btn.addEventListener('mouseenter', () => {
-      btn.style.transform = 'translateY(-3px) scale(1.04)';
-      btn.style.boxShadow = '0 12px 28px rgba(122, 75, 158, 0.6)';
-    });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.transform = 'translateY(0) scale(1)';
-      btn.style.boxShadow = '0 8px 24px rgba(122, 75, 158, 0.45)';
-    });
+    let btn = document.getElementById('tavy-floating-scrape-btn');
+    if (!btn) {
+      btn = document.createElement('div');
+      btn.id = 'tavy-floating-scrape-btn';
+      btn.style.cssText = `
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        z-index: 9999998;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #7A4B9E 0%, #4A2368 100%);
+        color: #FFFFFF;
+        padding: 12px 20px;
+        border-radius: 30px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        box-shadow: 0 8px 24px rgba(122, 75, 158, 0.45);
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1.5px solid rgba(255, 255, 255, 0.3);
+      `;
+      btn.innerHTML = `<span style="font-size: 16px;">⚡</span><span>Cào Vào TAVY (1-Click)</span>`;
 
-    btn.addEventListener('click', async () => {
-      btn.style.opacity = '0.7';
-      btn.style.pointerEvents = 'none';
-      btn.innerHTML = `<span style="font-size: 16px;">⏳</span><span>Đang cào sản phẩm...</span>`;
+      btn.addEventListener('mouseenter', () => {
+        btn.style.transform = 'translateY(-3px) scale(1.04)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'translateY(0) scale(1)';
+      });
 
-      try {
-        await startScrapeProcess();
-      } finally {
-        setTimeout(() => {
-          btn.style.opacity = '1';
-          btn.style.pointerEvents = 'auto';
-          btn.innerHTML = `<span style="font-size: 16px;">⚡</span><span>Cào Vào TAVY (1-Click)</span>`;
-        }, 3000);
-      }
-    });
+      btn.addEventListener('click', async () => {
+        const isExists = btn.getAttribute('data-exists') === 'true';
+        if (isExists) {
+          showMiniToast('Sản phẩm đã tồn tại! Đang cào lại để cập nhật giá & thông số...', 'info');
+        }
+        btn.style.opacity = '0.7';
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = `<span style="font-size: 16px;">⏳</span><span>Đang bóc tách...</span>`;
 
-    document.body.appendChild(btn);
+        try {
+          await startScrapeProcess();
+        } finally {
+          setTimeout(() => {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+            checkAndApplyDuplicateState(btn, goodsNo);
+          }, 3000);
+        }
+      });
+
+      document.body.appendChild(btn);
+    }
+
+    checkAndApplyDuplicateState(btn, goodsNo);
   };
 
   if (document.readyState === 'loading') {

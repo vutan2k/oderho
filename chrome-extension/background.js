@@ -286,6 +286,30 @@ const sendProductToAdminTab = (goodsNoOrObj, name, nameKr, price, mainImage, alb
         }, 3500);
       });
     }
+
+    // Tự động lưu vào Scraped Registry để phục vụ nhận diện sản phẩm trùng lặp
+    const gNo = fullProductData.goodsNo;
+    if (gNo) {
+      chrome.storage.local.get(['scrapedGoodsList', 'scrapedGoodsRegistry'], (storage) => {
+        const list = new Set(storage?.scrapedGoodsList || []);
+        const reg = storage?.scrapedGoodsRegistry || {};
+        list.add(gNo);
+        reg[gNo] = {
+          goodsNo: gNo,
+          name: fullProductData.name,
+          nameKr: fullProductData.nameKr,
+          price: fullProductData.price,
+          productUrl: fullProductData.productUrl,
+          productImage: fullProductData.productImage,
+          scrapedAt: reg[gNo]?.scrapedAt || new Date().toISOString(),
+          lastUpdated: new Date().toISOString()
+        };
+        chrome.storage.local.set({
+          scrapedGoodsList: Array.from(list),
+          scrapedGoodsRegistry: reg
+        });
+      });
+    }
   });
 };
 
@@ -559,8 +583,84 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // 1. Kiểm tra tự động nhận diện sản phẩm trùng lặp
+  if (request.action === "CHECK_PRODUCT_EXISTS") {
+    const goodsNo = (request.goodsNo || '').toUpperCase();
+    const url = request.url || '';
+
+    (async () => {
+      try {
+        const storage = await new Promise(resolve =>
+          chrome.storage.local.get(['scrapedGoodsRegistry', 'scrapedGoodsList'], resolve)
+        );
+        const registry = storage?.scrapedGoodsRegistry || {};
+        const list = new Set(storage?.scrapedGoodsList || []);
+
+        let foundItem = null;
+        let duplicateType = null;
+
+        // Ưu tiên 1: So khớp mã sản phẩm goodsNo
+        if (goodsNo && registry[goodsNo]) {
+          foundItem = registry[goodsNo];
+          duplicateType = 'goodsNo';
+        } else if (goodsNo && list.has(goodsNo)) {
+          foundItem = { goodsNo };
+          duplicateType = 'goodsNo';
+        }
+
+        // Ưu tiên 2: So khớp đường dẫn sản phẩm url
+        if (!foundItem && url) {
+          const matched = Object.values(registry).find(item => item.productUrl && (item.productUrl === url || (goodsNo && item.productUrl.includes(goodsNo))));
+          if (matched) {
+            foundItem = matched;
+            duplicateType = 'url';
+          }
+        }
+
+        sendResponse({
+          success: true,
+          exists: !!foundItem,
+          duplicateType,
+          item: foundItem
+        });
+      } catch (err) {
+        sendResponse({ success: false, exists: false, error: err.message });
+      }
+    })();
+    return true;
+  }
+
+  // 2. Đồng bộ danh mục mã sản phẩm đã có từ Web Admin vào Extension Cache
+  if (request.action === "SYNC_CATALOG_GOODS_NOS") {
+    const goodsNos = request.goodsNos || [];
+    if (Array.isArray(goodsNos) && goodsNos.length > 0) {
+      chrome.storage.local.get(['scrapedGoodsList', 'scrapedGoodsRegistry'], (storage) => {
+        const currentList = new Set(storage?.scrapedGoodsList || []);
+        const currentRegistry = storage?.scrapedGoodsRegistry || {};
+        goodsNos.forEach(g => {
+          if (g) {
+            const upper = String(g).toUpperCase();
+            currentList.add(upper);
+            if (!currentRegistry[upper]) {
+              currentRegistry[upper] = { goodsNo: upper, syncedFromAdmin: true, scrapedAt: new Date().toISOString() };
+            }
+          }
+        });
+        chrome.storage.local.set({
+          scrapedGoodsList: Array.from(currentList),
+          scrapedGoodsRegistry: currentRegistry
+        }, () => {
+          sendResponse({ success: true, count: currentList.size });
+        });
+      });
+      return true;
+    }
+    sendResponse({ success: false, message: 'Danh sách goodsNos trống' });
+    return true;
+  }
+
   if (request.action === "RESET_SCRAPED_CACHE") {
-    chrome.storage.local.set({ scrapedGoodsList: [] }, () => {
+    chrome.storage.local.set({ scrapedGoodsList: [], scrapedGoodsRegistry: {} }, () => {
       sendResponse({ success: true, message: 'Đã làm sạch bộ nhớ đệm mã trùng! Giờ đây bạn có thể cào lại từ đầu.' });
     });
     return true;

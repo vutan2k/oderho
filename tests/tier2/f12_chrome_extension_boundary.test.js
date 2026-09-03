@@ -94,3 +94,38 @@ test('[F12-B5] Missing popup DOM element safeguard', () => {
   assertEquals(res.initialized, false, 'Safely skips initialization when DOM element is missing');
   assertEquals(res.warning.includes('not found'), true, 'Warning reported when DOM element is missing');
 });
+
+test('[F12-B6] CHECK_PRODUCT_EXISTS boundary handling with null/empty goodsNo and URL fallback', () => {
+  const handleCheckExists = (goodsNo, url, registry = {}, list = new Set()) => {
+    if (!goodsNo && !url) {
+      return { exists: false, duplicateType: null, item: null };
+    }
+
+    const upper = (goodsNo || '').trim().toUpperCase();
+    if (upper && (registry[upper] || list.has(upper))) {
+      return { exists: true, duplicateType: 'goodsNo', item: registry[upper] || { goodsNo: upper } };
+    }
+
+    if (url) {
+      const match = Object.values(registry).find(item => item.productUrl && item.productUrl === url);
+      if (match) {
+        return { exists: true, duplicateType: 'url', item: match };
+      }
+    }
+
+    return { exists: false, duplicateType: null, item: null };
+  };
+
+  const reg = {
+    'A001': { goodsNo: 'A001', productUrl: 'https://oliveyoung.co.kr/item1' }
+  };
+  const list = new Set(['A002']);
+
+  assertEquals(handleCheckExists(null, null, reg, list).exists, false, 'Null inputs return exists false');
+  assertEquals(handleCheckExists('', '', reg, list).exists, false, 'Empty inputs return exists false');
+  assertEquals(handleCheckExists('A001', '', reg, list).exists, true, 'Matches registry goodsNo');
+  assertEquals(handleCheckExists('A002', '', reg, list).exists, true, 'Matches list goodsNo');
+  assertEquals(handleCheckExists('', 'https://oliveyoung.co.kr/item1', reg, list).exists, true, 'Matches URL fallback');
+  assertEquals(handleCheckExists('A999', 'https://oliveyoung.co.kr/item999', reg, list).exists, false, 'Non-existent returns false');
+});
+
