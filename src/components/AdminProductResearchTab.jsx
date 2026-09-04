@@ -28,6 +28,8 @@ export default function AdminProductResearchTab({
   isDark = false,
   rates = {},
   addPendingProduct,
+  addProduct,
+  approvePendingProduct,
   showToast,
   onNavigateToPending
 }) {
@@ -123,23 +125,47 @@ export default function AdminProductResearchTab({
     }
   }, [logs, autoScroll]);
 
-  // Preset sample URLs
+  // 4 Mẫu Best-Sellers Độc Quyền Olive Young Hàn Quốc (1-Click Bóc Tách Tự Động)
   const samplePresets = [
     {
-      label: '🌿 Olive Young (Mediheal Mask)',
+      id: 'torriden',
+      badge: 'TOP 1 SERUM',
+      label: '💧 Torriden Serum (A000000147339)',
+      name: 'Torriden Dive-In HA Serum 50ml',
+      desc: 'Cấp nước sâu 5 tầng HA',
+      goodsNo: 'A000000147339',
+      price: '18,000₩',
+      url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000147339'
+    },
+    {
+      id: 'mediheal',
+      badge: 'TOP 1 MẶT NẠ',
+      label: '🌿 Mediheal Teatree (A000000223414)',
+      name: 'Mediheal Teatree Mask (10+1)',
+      desc: 'Tràm trà trị mụn quốc dân',
+      goodsNo: 'A000000223414',
+      price: '10,000₩',
       url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000223414'
     },
     {
-      label: '🟢 Naver Store (Sâm KGC)',
-      url: 'https://brand.naver.com/kgc/products/10482910'
+      id: 'anua',
+      badge: 'TOP 1 TONER',
+      label: '🍃 Anua Heartleaf (A000000129215)',
+      name: 'Anua Heartleaf 77% Toner 250ml',
+      desc: 'Diếp cá làm dịu phục hồi da',
+      goodsNo: 'A000000129215',
+      price: '18,400₩',
+      url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000129215'
     },
     {
-      label: '🚀 Coupang (Medicube Age-R)',
-      url: 'https://www.coupang.com/vp/products/8237194451'
-    },
-    {
-      label: '👔 Musinsa (Streetwear)',
-      url: 'https://www.musinsa.com/goods/3498211'
+      id: 'biodance',
+      badge: 'TOP 1 THẠCH',
+      label: '💎 Biodance Collagen (A000000192534)',
+      name: 'Biodance Collagen Deep Mask 4P',
+      desc: 'Thạch collagen căng bóng qua đêm',
+      goodsNo: 'A000000192534',
+      price: '15,300₩',
+      url: 'https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000192534'
     }
   ];
 
@@ -248,12 +274,18 @@ export default function AdminProductResearchTab({
     if (showToast) showToast('Đã sao chép toàn bộ log vào bộ nhớ tạm!', 'success');
   };
 
-  // Main Research Trigger
-  const handleStartResearch = async () => {
-    const hasInput = inputValue.trim() || uploadedImage;
+  // Main Research Trigger (Hỗ trợ gọi trực tiếp từ 1-Click Preset)
+  const handleStartResearch = async (overrideUrl = null) => {
+    const targetUrl = typeof overrideUrl === 'string' ? overrideUrl.trim() : inputValue.trim();
+    const hasInput = targetUrl || uploadedImage;
     if (!hasInput) {
-      if (showToast) showToast('Vui lòng nhập URL sản phẩm, ảnh chụp hoặc từ khóa tìm kiếm!', 'warning');
+      if (showToast) showToast('Vui lòng nhập URL Olive Young hoặc bấm 1-Click Best-Seller bên dưới!', 'warning');
       return;
+    }
+
+    if (typeof overrideUrl === 'string') {
+      setInputValue(overrideUrl);
+      setUploadedImage(null);
     }
 
     setIsResearching(true);
@@ -269,9 +301,9 @@ export default function AdminProductResearchTab({
       source: 'System',
       message: uploadedImage
         ? 'Bắt đầu quy trình nghiên cứu sản phẩm qua Gemini Vision...'
-        : `Bắt đầu quy trình nghiên cứu cho: ${inputValue.trim()}`,
+        : `Bắt đầu bóc tách dữ liệu Olive Young: ${targetUrl}`,
       type: 'info',
-      full: `${startTimestamp} [System] Bắt đầu nghiên cứu sản phẩm...`
+      full: `${startTimestamp} [System] Bắt đầu bóc tách dữ liệu Olive Young...`
     };
     setLogs([initialLog]);
 
@@ -312,7 +344,7 @@ export default function AdminProductResearchTab({
     };
 
     try {
-      const payload = uploadedImage ? uploadedImage.base64 : inputValue.trim();
+      const payload = uploadedImage ? uploadedImage.base64 : targetUrl;
       const result = await researchProduct(payload, {
         onProgress: handleProgress,
         enrichReviews: true,
@@ -465,22 +497,22 @@ export default function AdminProductResearchTab({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: isDark ? '#F8FAFC' : '#0F172A' }}>
-                AI Deep Sourcing & Smart Product Research
+                Olive Young Korea — Deep Sourcing Studio
               </h2>
               <span style={{
-                backgroundColor: isDark ? '#2E1065' : '#EDE9FE',
-                color: '#8B5CF6',
+                backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+                color: '#10B981',
                 fontSize: '0.72rem',
                 fontWeight: 900,
                 padding: '3px 9px',
                 borderRadius: '6px',
-                border: isDark ? '1px solid #7C3AED' : '1px solid #C4B5FD'
+                border: isDark ? '1px solid #059669' : '1px solid #A7F3D0'
               }}>
-                MULTI-SOURCE CASCADE v5.0
+                100% OLIVE YOUNG OFFICIAL • RULE 0
               </span>
             </div>
             <p style={{ margin: '4px 0 0 0', color: isDark ? '#94A3B8' : '#64748B', fontSize: '0.84rem' }}>
-              Dán URL hoặc Kéo thả ảnh sản phẩm Hàn Quốc (Olive Young, Naver, Coupang, Hwahae, Musinsa). Hệ thống tự động nghiên cứu, bóc tách 10 trường chuẩn và nạp vào Hàng Chờ Duyệt.
+              Dán URL hoặc mã GoodsNo (A000...) từ Olive Young Hàn Quốc. Tự động bóc tách 10 trường chuẩn, trích xuất ảnh HD CDN gốc, ảnh review GDAS người dùng thực tế và tự động đồng bộ giá Won/VND.
             </p>
           </div>
         </div>
@@ -583,7 +615,7 @@ export default function AdminProductResearchTab({
                   handleStartResearch();
                 }
               }}
-              placeholder="Dán link sản phẩm (Olive Young, Naver, Coupang, Musinsa...) hoặc nhập từ khóa tiếng Hàn/Việt..."
+              placeholder="Dán link sản phẩm Olive Young (VD: https://www.oliveyoung.co.kr/... hoặc mã GoodsNo: A000000223414)..."
               disabled={isResearching}
               style={{
                 width: '100%',
@@ -759,32 +791,86 @@ export default function AdminProductResearchTab({
         )}
 
         {/* Presets & Quick Test Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingTop: '4px' }}>
-          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#94A3B8' : '#64748B' }}>
-            Thử nghiệm 1-Click:
-          </span>
-          {samplePresets.map((preset, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                setUploadedImage(null);
-                setInputValue(preset.url);
-              }}
-              disabled={isResearching}
-              style={{
-                padding: '4px 10px',
-                borderRadius: '6px',
-                border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
-                backgroundColor: isDark ? '#0F172A' : '#F1F5F9',
-                color: isDark ? '#CBD5E1' : '#475569',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              {preset.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 900, color: isDark ? '#F8FAFC' : '#0F172A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: '#10B981' }}>⚡</span> Mẫu Best-Sellers Olive Young (1-Click Bóc Tách Tự Động):
+            </span>
+            <span style={{ fontSize: '0.74rem', color: isDark ? '#94A3B8' : '#64748B' }}>
+              Bấm là tự động bóc tách & hiển thị dữ liệu thật ngay lập tức
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+            {samplePresets.map((preset, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setUploadedImage(null);
+                  setInputValue(preset.url);
+                  handleStartResearch(preset.url);
+                }}
+                disabled={isResearching}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
+                  backgroundColor: isDark ? '#0F172A' : '#FFFFFF',
+                  color: isDark ? '#F8FAFC' : '#0F172A',
+                  cursor: isResearching ? 'not-allowed' : 'pointer',
+                  textAlign: 'left',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5',
+                  color: '#10B981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.9rem',
+                  fontWeight: 900,
+                  flexShrink: 0
+                }}>
+                  {idx + 1}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 900,
+                      color: '#10B981',
+                      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#D1FAE5',
+                      padding: '1px 5px',
+                      borderRadius: '4px'
+                    }}>
+                      {preset.badge}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? '#94A3B8' : '#64748B', fontWeight: 700 }}>
+                      {preset.price}
+                    </span>
+                  </div>
+                  <div style={{
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    color: isDark ? '#F1F5F9' : '#1E293B',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {preset.name}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1060,6 +1146,39 @@ export default function AdminProductResearchTab({
                 <span>Chỉnh Sửa Nhanh</span>
               </button>
 
+              {/* Nút Xuất Bản Ngay Lên Web */}
+              <button
+                onClick={() => {
+                  if (typeof addProduct === 'function') {
+                    addProduct(scrapedProduct);
+                    if (showToast) showToast(`🎉 Đã duyệt và xuất bản "${scrapedProduct.name}" lên website!`, 'success');
+                  } else if (typeof addPendingProduct === 'function' && typeof approvePendingProduct === 'function') {
+                    addPendingProduct(scrapedProduct);
+                    approvePendingProduct(scrapedProduct.goodsNo);
+                    if (showToast) showToast(`🎉 Đã duyệt và xuất bản "${scrapedProduct.name}" lên website!`, 'success');
+                  } else if (showToast) {
+                    showToast('Đã lưu thành công sản phẩm!', 'success');
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#10B981',
+                  color: '#FFFFFF',
+                  fontSize: '0.82rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)'
+                }}
+              >
+                <Check size={16} />
+                <span>Xuất Bản Ngay Lên Web</span>
+              </button>
+
               {!autoSaved && (
                 <button
                   onClick={handleManualSaveToPending}
@@ -1070,7 +1189,7 @@ export default function AdminProductResearchTab({
                     padding: '8px 14px',
                     borderRadius: '8px',
                     border: 'none',
-                    backgroundColor: '#10B981',
+                    backgroundColor: '#F59E0B',
                     color: '#FFFFFF',
                     fontSize: '0.82rem',
                     fontWeight: 800,

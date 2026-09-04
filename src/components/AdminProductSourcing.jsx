@@ -13,7 +13,7 @@ import {
   X, CheckCheck,
   Table, LayoutGrid, Download, Copy, ChevronDown, ChevronUp, ShoppingBag,
   TrendingDown, TrendingUp, Bot, Activity, Clock, Terminal, Sliders, History, ShieldCheck,
-  ScanSearch
+  ScanSearch, Sparkles
 } from 'lucide-react';
 import {
   getPriceSyncConfig,
@@ -46,7 +46,7 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
   } = useContext(AppContext);
   const showToast = useToast();
 
-  const [activeSubTab, setActiveSubTab] = useState('pending'); // 'pending' | 'scraper' | 'scheduler' | 'research'
+  const [activeSubTab, setActiveSubTab] = useState('all'); // 'all' (All-in-One) | 'pending' | 'research' | 'scraper' | 'scheduler'
 
   // View state: 'table' (Excel Spreadsheet) | 'grid' (Cards)
   const [viewMode, setViewMode] = useState('table');
@@ -501,6 +501,51 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
       }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Nút 1: All-in-One Studio (Mặc định) */}
+          <button
+            onClick={() => setActiveSubTab('all')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              backgroundColor: activeSubTab === 'all' ? '#7A4B9E' : 'transparent',
+              color: activeSubTab === 'all' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Sparkles size={16} />
+            <span>All-in-One Studio</span>
+          </button>
+
+          {/* Nút 2: Bóc Tách Olive Young */}
+          <button
+            onClick={() => setActiveSubTab('research')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              backgroundColor: activeSubTab === 'research' ? '#10B981' : 'transparent',
+              color: activeSubTab === 'research' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <ScanSearch size={16} />
+            <span>Bóc Tách Olive Young</span>
+          </button>
+
+          {/* Nút 3: Hàng Chờ Duyệt */}
           <button
             onClick={() => setActiveSubTab('pending')}
             style={{
@@ -519,7 +564,7 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
             }}
           >
             <Layers size={16} />
-            <span>Hàng Chờ Duyệt</span>
+            <span>Kho Hàng Chờ Duyệt</span>
             <span style={{
               backgroundColor: activeSubTab === 'pending' ? 'rgba(255,255,255,0.3)' : (isDark ? '#0F172A' : '#F1F5F9'),
               color: activeSubTab === 'pending' ? '#FFF' : (isDark ? '#CBD5E1' : '#475569'),
@@ -531,82 +576,9 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
               {pendingProducts.length}
             </span>
           </button>
-
-          <button
-            onClick={() => setActiveSubTab('scraper')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              borderRadius: '10px',
-              border: 'none',
-              backgroundColor: activeSubTab === 'scraper' ? '#10B981' : 'transparent',
-              color: activeSubTab === 'scraper' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
-              fontWeight: 800,
-              fontSize: '0.88rem',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Zap size={16} />
-            <span>Cào & Nạp Dữ Liệu Hàn Quốc</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSubTab('scheduler')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              borderRadius: '10px',
-              border: 'none',
-              backgroundColor: activeSubTab === 'scheduler' ? '#3B82F6' : 'transparent',
-              color: activeSubTab === 'scheduler' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
-              fontWeight: 800,
-              fontSize: '0.88rem',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Bot size={16} />
-            <span>Auto-Bot & Giám Sát Giá</span>
-            {schedulerConfig.enabled && (
-              <span style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: '#10B981',
-                boxShadow: '0 0 8px #10B981'
-              }} />
-            )}
-          </button>
-
-          {/* Tab 4: Cào Sản Phẩm Thông Minh */}
-          <button
-            onClick={() => setActiveSubTab('research')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              borderRadius: '10px',
-              border: 'none',
-              backgroundColor: activeSubTab === 'research' ? '#8B5CF6' : 'transparent',
-              color: activeSubTab === 'research' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
-              fontWeight: 800,
-              fontSize: '0.88rem',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <ScanSearch size={16} />
-            <span>Cào Sản Phẩm</span>
-          </button>
         </div>
 
-        {activeSubTab === 'pending' && pendingProducts.length > 0 && (
+        {(activeSubTab === 'all' || activeSubTab === 'pending') && pendingProducts.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={handleApproveAll}
@@ -632,10 +604,32 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
       </div>
 
       {/* ════════════════════════════════════════════════════════════════ */}
-      {/* SUB-VIEW 1: HÀNG CHỜ DUYỆT (PENDING APPROVAL QUEUE)              */}
+      {/* BLOCK 1: OLIVE YOUNG DEEP SOURCING STUDIO                       */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'pending' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {(activeSubTab === 'all' || activeSubTab === 'research') && (
+        <AdminProductResearchTab
+          isDark={isDark}
+          rates={rates}
+          addPendingProduct={addPendingProduct}
+          addProduct={addProduct}
+          approvePendingProduct={approvePendingProduct}
+          showToast={showToast}
+          onNavigateToPending={() => {
+            if (activeSubTab === 'all') {
+              const el = document.getElementById('pending-queue-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              setActiveSubTab('pending');
+            }
+          }}
+        />
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* BLOCK 2: HÀNG CHỜ DUYỆT (PENDING APPROVAL QUEUE)                 */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {(activeSubTab === 'all' || activeSubTab === 'pending') && (
+        <div id="pending-queue-section" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Top Banner & Control */}
           <div style={{
             backgroundColor: isDark ? '#1E293B' : '#FFF',
@@ -2157,18 +2151,7 @@ export default function AdminProductSourcing({ isDark: isDarkProp } = {}) {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════ */}
-      {/* SUB-VIEW 4: CÀO SẢN PHẨM THÔNG MINH & NGHIÊN CỨU ĐA NGUỒN         */}
-      {/* ════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'research' && (
-        <AdminProductResearchTab
-          isDark={isDark}
-          rates={rates}
-          addPendingProduct={addPendingProduct}
-          showToast={showToast}
-          onNavigateToPending={() => setActiveSubTab('pending')}
-        />
-      )}
+
 
       {/* Price History Timeline Modal */}
       {priceHistoryModalItem && (

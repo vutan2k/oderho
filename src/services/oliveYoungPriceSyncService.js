@@ -14,6 +14,36 @@ export const VERIFIED_OLIVEYOUNG_PRICES = {
     originalPrice: 29700,
     discountPercent: 20
   },
+  'A000000129215': {
+    goodsNo: 'A000000129215',
+    name: 'Nước Hoa Hồng Làm Dịu Da Chiết Xuất Diếp Cá Anua Heartleaf 77% Soothing Toner 250ml',
+    nameKr: '[1등 진정토너] 아누아 어성초 77 진정 토너 250ml 단품/기획',
+    brand: 'Anua',
+    category: 'skincare',
+    foreignPrice: 18400,
+    originalPrice: 23000,
+    discountPercent: 20
+  },
+  'A000000147339': {
+    goodsNo: 'A000000147339',
+    name: 'Tinh Chất Cấp Nước Phục Hồi Torriden Dive-In Low Molecule Hyaluronic Acid Serum 50ml',
+    nameKr: '[1등세럼/수분충전] 토리든 다이브인 저분자 히알루론산 세럼 50ml 단품/기획',
+    brand: 'Torriden',
+    category: 'skincare',
+    foreignPrice: 18000,
+    originalPrice: 22000,
+    discountPercent: 18
+  },
+  'A000000192534': {
+    goodsNo: 'A000000192534',
+    name: 'Mặt Nạ Thạch Sinh Học Căng Bóng Biodance Bio-Collagen Real Deep Mask [Hộp 4 Miếng]',
+    nameKr: '[올영 1등 마스크팩] 바이오던스 바이오 콜라겐 리얼 딥 마스크 4매',
+    brand: 'Biodance',
+    category: 'skincare',
+    foreignPrice: 15300,
+    originalPrice: 19000,
+    discountPercent: 19
+  },
   'A000000171427': {
     goodsNo: 'A000000171427',
     name: 'Bộ 7 loại mặt nạ dạng miếng Mediheal Derma Pad cỡ lớn 200 miếng',

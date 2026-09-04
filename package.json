@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "test": "node tests/run_all_tests.js",
+    "test:agents": "node scripts/verify_agent_system.js",
     "scrape:health": "node scripts/scrape_korean_health_products.js --all",
     "scrape:ginseng": "node scripts/scrape_korean_health_products.js --category=ginseng",
     "scrape:naver": "node scripts/scrape_korean_health_products.js --source=naver",

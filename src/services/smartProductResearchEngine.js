@@ -851,8 +851,8 @@ export async function scrapeProductFromSource(source, targetUrlOrKeyword, onProg
           ingredients: [],
           description: known?.description || `Sản phẩm chính hãng Olive Young Hàn Quốc. Mã sản phẩm: ${gNo}`,
           origin: known?.origin || 'Store Olive Young Seoul, Hàn Quốc',
-          rating: Number(known?.rating || 4.9),
-          reviewsCount: Number(known?.reviewsCount || 120),
+          rating: Number(known?.rating || 0),
+          reviewsCount: Number(known?.reviewsCount || 0),
           source: 'oliveyoung',
           productUrl: isUrl ? targetUrlOrKeyword : `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${gNo}`
         }

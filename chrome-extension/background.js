@@ -580,6 +580,7 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
       }
     });
   }
+};
 // =========================================================================
 // BATCH SCRAPER QUEUE RUNNER & PIPELINE (v21.0 DEV)
 // Cào hàng loạt sản phẩm với hàng đợi an toàn và độ trễ ngẫu nhiên chống WAF

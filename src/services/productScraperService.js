@@ -19,6 +19,51 @@ export const KNOWN_KOREAN_GOODS_DB = {
     origin: 'Store Olive Young Seoul, Hàn Quốc',
     rating: 4.9
   },
+  'A000000129215': {
+    name: 'Nước Hoa Hồng Làm Dịu Da Chiết Xuất Diếp Cá Anua Heartleaf 77% Soothing Toner 250ml',
+    nameKr: '[1등 진정토너] 아누아 어성초 77 진정 토너 250ml 단품/기획',
+    brand: 'Anua',
+    brandKr: '아누아',
+    category: 'skincare',
+    foreignPrice: 18400,
+    originalPrice: 23000,
+    discountPercent: 20,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0012/A00000012921501ko.jpg',
+    description: 'Nước hoa hồng diếp cá 77% Anua Heartleaf Soothing Toner cân bằng độ ẩm và làm dịu mẩn đỏ tức thì.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.8,
+    reviewsCount: 53200
+  },
+  'A000000147339': {
+    name: 'Tinh Chất Cấp Nước Phục Hồi Torriden Dive-In Low Molecule Hyaluronic Acid Serum 50ml',
+    nameKr: '[1등세럼/수분충전] 토리든 다이브인 저분자 히알루론산 세럼 50ml 단품/기획',
+    brand: 'Torriden',
+    brandKr: '토리든',
+    category: 'skincare',
+    foreignPrice: 18000,
+    originalPrice: 22000,
+    discountPercent: 18,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0014/A00000014733901ko.jpg',
+    description: 'Tinh chất cấp nước phục hồi da sâu chứa 5 loại Hyaluronic Acid đa tầng phân tử Torriden Dive-In Serum bán chạy số 1 Olive Young.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.8,
+    reviewsCount: 42150
+  },
+  'A000000192534': {
+    name: 'Mặt Nạ Thạch Sinh Học Căng Bóng Biodance Bio-Collagen Real Deep Mask [Hộp 4 Miếng]',
+    nameKr: '[올영 1등 마스크팩] 바이오던스 바이오 콜라겐 리얼 딥 마스크 4매',
+    brand: 'Biodance',
+    brandKr: '바이오던스',
+    category: 'skincare',
+    foreignPrice: 15300,
+    originalPrice: 19000,
+    discountPercent: 19,
+    productImage: 'https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0019/A00000019253401ko.jpg',
+    description: 'Mặt nạ thạch collagen sinh học Biodance Bio-Collagen Real Deep Mask thẩm thấu sâu qua đêm làm da căng bóng mọng mượt.',
+    origin: 'Store Olive Young Seoul, Hàn Quốc',
+    rating: 4.9,
+    reviewsCount: 31400
+  },
   'A000000171427': {
     name: 'Bộ 7 loại mặt nạ dạng miếng Mediheal Derma Pad cỡ lớn 200 miếng',
     nameKr: '[업그레이드 리뉴얼/단독기획] 메디힐 더마 패드 200매 대용량 기획 세트 7종 골라담기',
@@ -329,9 +374,9 @@ export const lookupKnownGoods = async (url) => {
         ingredients: [],
         description: known.description || `Sản phẩm chính hãng Olive Young Hàn Quốc (Mã: ${goodsNo})`,
         origin: known.origin || 'Store Olive Young Seoul, Hàn Quốc',
-        rating: Number(known.rating) || 4.9,
+        rating: Number(known.rating) || 0,
         productUrl: url.trim(),
-        reviewsCount: Number(known.reviewsCount) || 100,
+        reviewsCount: Number(known.reviewsCount) || 0,
         source: 'oliveyoung'
       }
     };
@@ -359,9 +404,9 @@ export const lookupKnownGoods = async (url) => {
         ingredients: [],
         description: `Sản phẩm chính hãng Olive Young Hàn Quốc (Mã: ${goodsNo})`,
         origin: 'Store Olive Young Seoul, Hàn Quốc',
-        rating: 4.9,
+        rating: Number(verified.rating) || 0,
         productUrl: url.trim(),
-        reviewsCount: 150,
+        reviewsCount: Number(verified.reviewsCount) || 0,
         source: 'oliveyoung'
       }
     };

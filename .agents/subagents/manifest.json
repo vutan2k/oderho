@@ -1,0 +1,120 @@
+{
+  "version": "2.0.0",
+  "platform": "Antigravity 2.0",
+  "project": "TAVY Korea",
+  "total_subagents": 8,
+  "subagents": [
+    {
+      "id": "task-planner",
+      "name": "Task Planner",
+      "role": "Solution Architect & Business Analyst",
+      "description": "Chuyên gia phân tích kiến trúc, bóc tách yêu cầu nghiệp vụ, phân tích tác động rủi ro và lập kế hoạch thực thi từng bước (Zero-Code Planning) cho TAVY Korea.",
+      "model": "pro",
+      "tools": {
+        "enable_write_tools": false,
+        "enable_subagent_tools": true,
+        "enable_mcp_tools": true
+      },
+      "spec_file": ".agents/subagents/task-planner.json",
+      "skill_file": ".agents/skills/task-planner/SKILL.md"
+    },
+    {
+      "id": "ui-ux-artisan",
+      "name": "UI/UX Artisan",
+      "role": "Luxury Minimalist UI Designer",
+      "description": "Chuyên gia thiết kế và hoàn thiện giao diện người dùng theo chuẩn phong cách Luxury Ivory, Gold & Purple và triết lý tối giản, Mobile-First 100% cho TAVY Korea.",
+      "model": "inherit",
+      "tools": {
+        "enable_write_tools": true,
+        "enable_subagent_tools": false,
+        "enable_mcp_tools": false
+      },
+      "spec_file": ".agents/subagents/ui-ux-artisan.json",
+      "skill_file": ".agents/skills/ui-ux-artisan/SKILL.md"
+    },
+    {
+      "id": "fullstack-developer",
+      "name": "Fullstack Developer",
+      "role": "Senior React 19 Fullstack Dev",
+      "description": "Kỹ sư fullstack phụ trách phát triển tính năng React 19, AppProvider context, logic giỏ hàng, đặt hàng, định danh SĐT 10 số và tính toán chuyển đổi tiền tệ.",
+      "model": "inherit",
+      "tools": {
+        "enable_write_tools": true,
+        "enable_subagent_tools": true,
+        "enable_mcp_tools": true
+      },
+      "spec_file": ".agents/subagents/fullstack-developer.json",
+      "skill_file": ".agents/skills/fullstack-developer/SKILL.md"
+    },
+    {
+      "id": "firebase-backend-specialist",
+      "name": "Firebase Backend Specialist",
+      "role": "Cloud Firestore & Auth Security Expert",
+      "description": "Chuyên gia quản trị cơ sở dữ liệu Cloud Firestore, thiết kế schema, kiểm định Firestore Security Rules, tối ưu chỉ mục và bảo vệ phiên người dùng.",
+      "model": "pro",
+      "tools": {
+        "enable_write_tools": true,
+        "enable_subagent_tools": false,
+        "enable_mcp_tools": true
+      },
+      "spec_file": ".agents/subagents/firebase-backend-specialist.json",
+      "skill_file": ".agents/skills/firebase-backend-specialist/SKILL.md"
+    },
+    {
+      "id": "security-auditor",
+      "name": "Security Auditor",
+      "role": "PayOS Payment & Security Reviewer",
+      "description": "Chuyên gia rà soát bảo mật cổng thanh toán PayOS, thẩm định chữ ký HMAC SHA256 webhook, ngăn ngừa tấn công giả mạo giao dịch và bảo vệ giá tiền.",
+      "model": "pro",
+      "tools": {
+        "enable_write_tools": true,
+        "enable_subagent_tools": false,
+        "enable_mcp_tools": false
+      },
+      "spec_file": ".agents/subagents/security-auditor.json",
+      "skill_file": ".agents/skills/security-auditor/SKILL.md"
+    },
+    {
+      "id": "qc-gatekeeper",
+      "name": "QC Gatekeeper",
+      "role": "Lead QA/QC Automation Gatekeeper",
+      "description": "Người gác cổng chất lượng sản phẩm. Chịu trách nhiệm kiểm duyệt 100% thay đổi, chạy toàn bộ bộ test suite 303/303 tests PASS và xác nhận zero-build-error.",
+      "model": "inherit",
+      "tools": {
+        "enable_write_tools": true,
+        "enable_subagent_tools": true,
+        "enable_mcp_tools": false
+      },
+      "spec_file": ".agents/subagents/qc-gatekeeper.json",
+      "skill_file": ".agents/skills/qc-gatekeeper/SKILL.md"
+    },
+    {
+      "id": "korean-scraper-specialist",
+      "name": "Korean Scraper Specialist",
+      "role": "Korean Multi-Source Scraper Engineer",
+      "description": "Kỹ sư chuyên sâu bóc tách dữ liệu mỹ phẩm và thực phẩm chức năng từ 7 sàn thương mại điện tử Hàn Quốc (Olive Young, Naver, Coupang, Hwahae, Musinsa, Gmarket, 11st).",
+      "model": "pro",
+      "tools": {
+        "enable_write_tools": true,
+        "enable_subagent_tools": false,
+        "enable_mcp_tools": true
+      },
+      "spec_file": ".agents/subagents/korean-scraper-specialist.json",
+      "skill_file": ".agents/skills/korean-scraper-specialist/SKILL.md"
+    },
+    {
+      "id": "devops-deployment-engineer",
+      "name": "DevOps Deployment Engineer",
+      "role": "DevOps & Vercel-Firebase Parity Engineer",
+      "description": "Kỹ sư phụ trách hạ tầng triển khai song song Vercel và Firebase Hosting, serverless functions, CORS headers và tối ưu hóa hiệu năng bundle production.",
+      "model": "inherit",
+      "tools": {
+        "enable_write_tools": true,
+        "enable_subagent_tools": false,
+        "enable_mcp_tools": false
+      },
+      "spec_file": ".agents/subagents/devops-deployment-engineer.json",
+      "skill_file": ".agents/skills/devops-deployment-engineer/SKILL.md"
+    }
+  ]
+}
