@@ -1,5 +1,6 @@
-// content.js - TAVY KOREA Olive Young Interactive Lightbox & Deep Scraper v18.0 PRO
-// 1. Tự động tìm thumbnail -> Click mở Lightbox xem ảnh to -> Bấm Next liên tục bóc 30+ ảnh HD không banner/quảng cáo
+// content.js - TAVY KOREA Olive Young Interactive Lightbox, Deep Scraper & Dev HUD v21.0 DEV
+// 1. Tự động tìm thumbnail -> Click mở Lightbox xem ảnh to -> Bóc 30-50+ ảnh HD & GDAS không banner/quảng cáo
+// 2. Developer Mode HUD: Giám sát selector Next.js, đo lường thời gian thực, Micro-steps execution & JSON live preview
 
 if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
   window.__TAVY_SCRAPER_LOADED__ = true;
@@ -63,6 +64,18 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
     }
 
     mainNodes.forEach((img) => {
+      // 1. Kiểm tra srcset của Next.js Image để lấy ảnh độ phân giải cao nhất
+      const srcset = img.getAttribute('srcset') || '';
+      if (srcset) {
+        const parts = srcset.split(',').map(s => s.trim().split(' ')[0]).filter(Boolean);
+        if (parts.length > 0) {
+          const highestRes = parts[parts.length - 1];
+          if (highestRes && !isJunkImage(highestRes) && !highestRes.includes('gdasEditor')) {
+            productUrls.push(getHighResUrl(highestRes));
+          }
+        }
+      }
+
       const src = img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
       if (!src || isJunkImage(src) || src.includes('gdasEditor') || src.includes('reviewProfile')) return;
 
@@ -182,6 +195,15 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         }
       });
 
+      // Bổ sung quét dung tích từ tiêu đề nếu bảng thông tin chưa có
+      if (!specs.capacity) {
+        const titleText = document.title || '';
+        const capMatch = titleText.match(/([0-9]+(?:\.[0-9]+)?\s*(?:ml|g|kg|매|p|입|개|ea|set))/i);
+        if (capMatch && capMatch[1]) {
+          specs.capacity = capMatch[1].trim();
+        }
+      }
+
       // 2. Điểm đánh giá sao và tổng lượt review
       const ratingEl = document.querySelector('.point, .score, em.total_point, [class*="grade"] strong, span.grade, [class*="rating-star"], [class*="ReviewArea_rating"]');
       if (ratingEl) {
@@ -262,38 +284,41 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         }
       });
 
-      // 5. Thử gọi trực tiếp In-Page Review API v2 cursor với credentials của phiên duyệt
+      // 5. Gọi trực tiếp In-Page Review API v2 cursor với credentials của phiên duyệt (Trang 0 & Trang 1 để gom tới 50+ ảnh)
       if (goodsNo) {
-        try {
-          const apiRes = await fetch('https://m.oliveyoung.co.kr/review/api/v2/reviews/cursor', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json, text/plain, */*'
-            },
-            body: JSON.stringify({
-              goodsNumber: goodsNo,
-              page: 0,
-              size: 30,
-              sortType: 'USEFUL_SCORE_DESC',
-              reviewType: 'PHOTO'
-            })
-          });
-
-          if (apiRes.ok) {
-            const apiJson = await apiRes.json();
-            const list = apiJson?.data?.goodsReviewList || [];
-            list.forEach(item => {
-              (item.photoReviewList || []).forEach(p => {
-                if (p.imagePath) {
-                  photoUrls.push(getHighResUrl('https://image.oliveyoung.co.kr/uploads/images/gdasEditor/' + p.imagePath));
-                }
-              });
+        for (let pageIdx = 0; pageIdx <= 1; pageIdx++) {
+          try {
+            const apiRes = await fetch('https://m.oliveyoung.co.kr/review/api/v2/reviews/cursor', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json, text/plain, */*'
+              },
+              body: JSON.stringify({
+                goodsNumber: goodsNo,
+                page: pageIdx,
+                size: 30,
+                sortType: 'USEFUL_SCORE_DESC',
+                reviewType: 'PHOTO'
+              })
             });
+
+            if (apiRes.ok) {
+              const apiJson = await apiRes.json();
+              const list = apiJson?.data?.goodsReviewList || [];
+              list.forEach(item => {
+                (item.photoReviewList || []).forEach(p => {
+                  if (p.imagePath) {
+                    photoUrls.push(getHighResUrl('https://image.oliveyoung.co.kr/uploads/images/gdasEditor/' + p.imagePath));
+                  }
+                });
+              });
+              if (list.length === 0) break;
+            }
+          } catch(e) {
+            // Bỏ qua nếu bị chặn CORS chéo subdomain
           }
-        } catch(e) {
-          // Bỏ qua nếu bị chặn CORS chéo subdomain
         }
       }
 
@@ -337,24 +362,29 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
     // 1. Lấy Album Ảnh đại diện sản phẩm HD
     showMiniToast('Step 1/5: Bóc tách Album Ảnh Studio HD...', 'info');
+    DevHudController.log('Step 1/5: Bóc tách Album Ảnh Studio HD...', 'info');
     const productImages = pickProductImages();
     await new Promise(r => setTimeout(r, 300));
 
     // 2. Mở rộng & Lấy Album Ảnh Chi Tiết Mô Tả Infographic
     showMiniToast('Step 2/5: Mở rộng & bóc tách Ảnh Infographic Mô Tả...', 'info');
+    DevHudController.log('Step 2/5: Mở rộng & bóc tách Ảnh Infographic Mô Tả...', 'info');
     const detailImages = await pickDetailImages();
     await new Promise(r => setTimeout(r, 300));
 
     // 3. Bóc tách Bảng Thông Số Kỹ Thuật (Dung tích, thành phần, rating)
     showMiniToast('Step 3/5: Bóc tách Bảng Thông Số Kỹ Thuật...', 'info');
+    DevHudController.log('Step 3/5: Bóc tách Bảng Thông Số Kỹ Thuật...', 'info');
     const specifications = parseProductSpecifications();
 
     // 4. Kích hoạt Tab Đánh Giá & Thu thập ảnh GDAS người dùng thật
     showMiniToast('Step 4/5: Kích hoạt Tab Đánh Giá & Thu thập ảnh GDAS thật...', 'info');
+    DevHudController.log('Step 4/5: Kích hoạt Tab Đánh Giá & Thu thập ảnh GDAS thật...', 'info');
     const reviewCandidates = await fetchGdasReviewPhotos(goodsNo);
 
     // 5. Tổng hợp dữ liệu
     showMiniToast(`Step 5/5: Hoàn tất! Gom được ${productImages.length} ảnh HD, ${detailImages.length} ảnh mô tả & ${reviewCandidates.length} ảnh review thật...`, 'info');
+    DevHudController.log(`Step 5/5: Hoàn tất! Gom được ${productImages.length} ảnh HD, ${detailImages.length} ảnh mô tả & ${reviewCandidates.length} ảnh review thật.`, 'success');
 
     return {
       productImages: productImages,
@@ -444,6 +474,8 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         options: specifications?.options || []
       };
 
+      DevHudController.setLatestPayload(rawData);
+
       let hasResponded = false;
 
       const safetyTimer = setTimeout(() => {
@@ -451,6 +483,7 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
           hasResponded = true;
           const shortTitle = (document.title || '').split('|')[0].trim().slice(0, 28);
           showMiniToast(`Đã lưu "${shortTitle}..." vào Admin thành công!`, 'success');
+          DevHudController.log(`Tự động xác nhận thành công cho: "${shortTitle}"`, 'success');
         }
       }, 12000);
 
@@ -462,16 +495,457 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
           if (response && response.error) {
             showMiniToast(`Lỗi AI: ${response.error}`, 'error');
+            DevHudController.log(`Lỗi AI: ${response.error}`, 'error');
           } else if (response && response.success === false) {
             showMiniToast('Chưa cài API Key!', 'error');
+            DevHudController.log('Chưa cài đặt Gemini API Key!', 'error');
           } else {
             showMiniToast(`Thành công! Đã cào ${productImages.length} ảnh HD, ${detailImages.length} ảnh mô tả & ${reviewCandidates.length} ảnh đánh giá về Admin!`, 'success');
+            DevHudController.log(`Đã gửi dữ liệu về Admin thành công!`, 'success');
           }
           resolve(response);
         });
       });
     } catch (error) {
       showMiniToast(`Lỗi bóc tách: ${error.message}`, 'error');
+      DevHudController.log(`Lỗi bóc tách: ${error.message}`, 'error');
+    }
+  };
+
+  // =========================================================================
+  // TAVY KOREA DEVELOPER MODE & FLOATING HUD (v21.0 DEV)
+  // =========================================================================
+  const DevHudController = {
+    isEnabled: false,
+    isMinimized: false,
+    activeTab: 'telemetry',
+    logs: [],
+    latestPayload: null,
+
+    async init() {
+      // 1. Đọc trạng thái từ chrome.storage.local
+      try {
+        const storage = await new Promise(resolve => {
+          chrome.storage.local.get(['devMode', 'devHudMinimized'], resolve);
+        });
+        this.isEnabled = !!storage?.devMode;
+        this.isMinimized = !!storage?.devHudMinimized;
+      } catch {
+        this.isEnabled = false;
+      }
+
+      // 2. Lắng nghe phím tắt Alt + Shift + D
+      window.addEventListener('keydown', (e) => {
+        if (e.altKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+          e.preventDefault();
+          this.toggleDevMode(!this.isEnabled);
+        }
+      });
+
+      // 3. Lắng nghe thay đổi storage từ Popup hoặc Options
+      if (chrome?.storage?.onChanged) {
+        chrome.storage.onChanged.addListener((changes) => {
+          if (changes.devMode) {
+            this.isEnabled = !!changes.devMode.newValue;
+            this.render();
+          }
+          if (changes.devHudMinimized) {
+            this.isMinimized = !!changes.devHudMinimized.newValue;
+            this.render();
+          }
+        });
+      }
+
+      // 4. Render HUD nếu được bật
+      if (this.isEnabled) {
+        this.render();
+      }
+    },
+
+    toggleDevMode(forced) {
+      this.isEnabled = typeof forced === 'boolean' ? forced : !this.isEnabled;
+      try {
+        chrome.storage.local.set({ devMode: this.isEnabled });
+      } catch {}
+
+      showMiniToast(
+        this.isEnabled ? '🛠️ Developer Mode: ĐÃ BẬT (Alt+Shift+D)' : '🛠️ Developer Mode: ĐÃ TẮT',
+        this.isEnabled ? 'success' : 'info'
+      );
+      this.render();
+      this.log(`Dev Mode chuyển sang: ${this.isEnabled ? 'BẬT (ENABLED)' : 'TẮT (DISABLED)'}`, 'info');
+    },
+
+    toggleMinimize(forced) {
+      this.isMinimized = typeof forced === 'boolean' ? forced : !this.isMinimized;
+      try {
+        chrome.storage.local.set({ devHudMinimized: this.isMinimized });
+      } catch {}
+      this.render();
+    },
+
+    log(message, level = 'info') {
+      const time = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+      const entry = { time, level, message };
+      this.logs.push(entry);
+      if (this.logs.length > 80) this.logs.shift();
+
+      const container = document.getElementById('tavy-dev-logs-content');
+      if (container) {
+        const row = document.createElement('div');
+        row.style.cssText = `margin-bottom: 4px; padding: 3px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; line-height: 1.3; ${
+          level === 'success' ? 'background: rgba(16, 185, 129, 0.15); color: #34D399;' :
+          level === 'error' ? 'background: rgba(239, 68, 68, 0.15); color: #F87171;' :
+          level === 'warn' ? 'background: rgba(245, 158, 11, 0.15); color: #FBBF24;' :
+          'color: #94A3B8;'
+        }`;
+        row.innerHTML = `<span style="opacity: 0.6;">[${time}]</span> <span style="font-weight: 700;">[${level.toUpperCase()}]</span> ${message}`;
+        container.appendChild(row);
+        container.scrollTop = container.scrollHeight;
+      }
+      console.log(`[TAVY DEV HUD] [${level.toUpperCase()}] ${message}`);
+    },
+
+    getTelemetry() {
+      const isNextJs = !!(window.__NEXT_DATA__ || document.querySelector('[class*="GoodsDetail"]'));
+      const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/i);
+      const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : 'N/A';
+
+      const carouselEl = document.querySelector('[class*="GoodsDetailCarousel"], #goodsImg, #repImageContainer');
+      const descEl = document.querySelector('[class*="GoodsDetailDescription"], #artcDesc');
+      const reviewTabEl = Array.from(document.querySelectorAll('button, a')).find(b => (b.textContent || '').includes('리뷰'));
+      const specTableEl = document.querySelector('#buyInfo, .prd_info_table, [class*="GoodsDetailSpec"]');
+
+      const studioImgs = document.querySelectorAll('[class*="GoodsDetailCarousel"] img, #mainImg, .goods_thumb img, .prd_thumb_list img');
+      const descImgs = document.querySelectorAll('[class*="GoodsDetailDescription"] img, #artcDesc img');
+      const gdasImgs = document.querySelectorAll('img[src*="gdasEditor"], [class*="ReviewArea"] img');
+
+      const saleEl = document.querySelector('span.price-2 strong, span.tx_cur .tx_num, [class*="GoodsDetailInfo_price__"]');
+      const priceText = saleEl ? (saleEl.textContent || '').replace(/[^0-9]/g, '') : '';
+
+      return {
+        framework: isNextJs ? 'Next.js App Router (Modern)' : 'JSP/Spring (Legacy)',
+        goodsNo,
+        priceWon: priceText ? `${parseInt(priceText, 10).toLocaleString()} ₩` : 'Chưa quét',
+        selectors: {
+          carousel: !!carouselEl,
+          description: !!descEl,
+          reviewTab: !!reviewTabEl,
+          specsTable: !!specTableEl
+        },
+        counts: {
+          studio: studioImgs.length,
+          description: descImgs.length,
+          reviews: gdasImgs.length
+        }
+      };
+    },
+
+    setLatestPayload(payload) {
+      this.latestPayload = payload;
+      const jsonView = document.getElementById('tavy-dev-json-content');
+      if (jsonView) {
+        jsonView.textContent = JSON.stringify(payload, null, 2);
+      }
+      this.log(`Cập nhật payload mới cho ${payload.name || payload.goodsNo} (${payload.images?.length || 0} ảnh HD, ${payload.detailImages?.length || 0} ảnh mô tả, ${payload.photoReviews?.length || 0} ảnh review)`, 'success');
+    },
+
+    render() {
+      let hud = document.getElementById('tavy-dev-hud');
+      if (!this.isEnabled) {
+        if (hud) hud.remove();
+        return;
+      }
+
+      if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'tavy-dev-hud';
+        document.body.appendChild(hud);
+      }
+
+      const t = this.getTelemetry();
+
+      if (this.isMinimized) {
+        hud.style.cssText = `
+          position: fixed;
+          bottom: 25px;
+          left: 25px;
+          z-index: 9999999;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: #0F172A;
+          border: 1.5px solid #C5A059;
+          color: #FAF8F5;
+          padding: 9px 16px;
+          border-radius: 24px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+          cursor: pointer;
+          user-select: none;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        `;
+        hud.innerHTML = `
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981; box-shadow: 0 0 6px #10B981;"></span>
+          <span>🛠️ DEV HUD (v21.0 DEV)</span>
+          <span style="font-size: 10px; background: rgba(197, 160, 89, 0.2); color: #C5A059; padding: 2px 6px; border-radius: 10px; font-weight: 800;">${t.goodsNo}</span>
+          <button id="tavy-hud-expand-btn" style="background: transparent; border: none; color: #94A3B8; cursor: pointer; font-size: 13px; margin-left: 4px; padding: 0;">▢</button>
+        `;
+
+        hud.onclick = (e) => {
+          if (e.target.id === 'tavy-hud-expand-btn' || e.currentTarget === hud) {
+            this.toggleMinimize(false);
+          }
+        };
+        return;
+      }
+
+      hud.style.cssText = `
+        position: fixed;
+        bottom: 25px;
+        left: 25px;
+        width: 440px;
+        max-height: 520px;
+        z-index: 9999999;
+        background: #0F172A;
+        border: 1.5px solid #C5A059;
+        border-radius: 14px;
+        color: #FAF8F5;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        font-size: 12px;
+      `;
+
+      hud.innerHTML = `
+        <!-- HUD Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #1E293B; border-bottom: 1px solid rgba(197, 160, 89, 0.3);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px #10B981;"></span>
+            <span style="font-weight: 800; color: #FAF8F5; font-size: 13px;">TAVY DEV HUD</span>
+            <span style="background: #7A4B9E; color: #FFFFFF; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 800;">v21.0 DEV</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button id="tavy-hud-min-btn" title="Thu gọn" style="background: #334155; border: none; color: #CBD5E1; border-radius: 6px; width: 22px; height: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;">−</button>
+            <button id="tavy-hud-close-btn" title="Đóng Dev Mode" style="background: #334155; border: none; color: #CBD5E1; border-radius: 6px; width: 22px; height: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;">×</button>
+          </div>
+        </div>
+
+        <!-- Tabs Bar -->
+        <div style="display: flex; background: #0F172A; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 4px 6px; gap: 4px;">
+          <button class="tavy-hud-tab-btn" data-tab="telemetry" style="flex: 1; padding: 6px 4px; border: none; border-radius: 6px; background: ${this.activeTab === 'telemetry' ? '#7A4B9E' : 'transparent'}; color: ${this.activeTab === 'telemetry' ? '#FFFFFF' : '#94A3B8'}; font-weight: 700; font-size: 11px; cursor: pointer;">📊 Giám Sát</button>
+          <button class="tavy-hud-tab-btn" data-tab="actions" style="flex: 1; padding: 6px 4px; border: none; border-radius: 6px; background: ${this.activeTab === 'actions' ? '#7A4B9E' : 'transparent'}; color: ${this.activeTab === 'actions' ? '#FFFFFF' : '#94A3B8'}; font-weight: 700; font-size: 11px; cursor: pointer;">⚡ Thử Nghiệm</button>
+          <button class="tavy-hud-tab-btn" data-tab="json" style="flex: 1; padding: 6px 4px; border: none; border-radius: 6px; background: ${this.activeTab === 'json' ? '#7A4B9E' : 'transparent'}; color: ${this.activeTab === 'json' ? '#FFFFFF' : '#94A3B8'}; font-weight: 700; font-size: 11px; cursor: pointer;">🔍 JSON</button>
+          <button class="tavy-hud-tab-btn" data-tab="logs" style="flex: 1; padding: 6px 4px; border: none; border-radius: 6px; background: ${this.activeTab === 'logs' ? '#7A4B9E' : 'transparent'}; color: ${this.activeTab === 'logs' ? '#FFFFFF' : '#94A3B8'}; font-weight: 700; font-size: 11px; cursor: pointer;">📜 Logs</button>
+        </div>
+
+        <!-- Tab 1: Telemetry -->
+        <div id="tavy-hud-view-telemetry" style="display: ${this.activeTab === 'telemetry' ? 'block' : 'none'}; padding: 12px; overflow-y: auto; max-height: 400px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+            <div style="background: #1E293B; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+              <div style="font-size: 10px; color: #94A3B8;">Mã Hàng (GoodsNo)</div>
+              <div style="font-weight: 800; font-size: 13px; color: #C5A059;">${t.goodsNo}</div>
+            </div>
+            <div style="background: #1E293B; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+              <div style="font-size: 10px; color: #94A3B8;">Giá Won DOM</div>
+              <div style="font-weight: 800; font-size: 13px; color: #10B981;">${t.priceWon}</div>
+            </div>
+          </div>
+
+          <div style="background: #1E293B; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.06);">
+            <div style="font-size: 10px; color: #94A3B8; margin-bottom: 4px;">Kiến Trúc Web Frontend:</div>
+            <div style="font-weight: 700; color: #60A5FA; display: flex; align-items: center; gap: 6px;">
+              <span>🌐</span><span>${t.framework}</span>
+            </div>
+          </div>
+
+          <div style="font-size: 11px; font-weight: 800; color: #C5A059; margin-bottom: 6px;">Trạng Thái Selector Next.js:</div>
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; background: #1E293B; padding: 8px 10px; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #94A3B8;">Carousel / Ảnh Studio:</span>
+              <span style="font-weight: 700; color: ${t.selectors.carousel ? '#34D399' : '#F87171'};">${t.selectors.carousel ? '✓ SẴN SÀNG' : '× KHÔNG THẤY'}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #94A3B8;">Mô Tả / Infographic:</span>
+              <span style="font-weight: 700; color: ${t.selectors.description ? '#34D399' : '#F87171'};">${t.selectors.description ? '✓ SẴN SÀNG' : '× KHÔNG THẤY'}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #94A3B8;">Tab Đánh Giá (Review):</span>
+              <span style="font-weight: 700; color: ${t.selectors.reviewTab ? '#34D399' : '#F87171'};">${t.selectors.reviewTab ? '✓ SẴN SÀNG' : '× KHÔNG THẤY'}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #94A3B8;">Bảng Thông Số Kỹ Thuật:</span>
+              <span style="font-weight: 700; color: ${t.selectors.specsTable ? '#34D399' : '#F87171'};">${t.selectors.specsTable ? '✓ SẴN SÀNG' : '× KHÔNG THẤY'}</span>
+            </div>
+          </div>
+
+          <div style="font-size: 11px; font-weight: 800; color: #C5A059; margin-bottom: 6px;">Số Lượng Ảnh Trực Quan Trên DOM:</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+            <div style="background: #1E293B; padding: 8px 6px; border-radius: 6px; text-align: center;">
+              <div style="font-size: 15px; font-weight: 800; color: #38BDF8;">${t.counts.studio}</div>
+              <div style="font-size: 9px; color: #94A3B8;">Ảnh Studio</div>
+            </div>
+            <div style="background: #1E293B; padding: 8px 6px; border-radius: 6px; text-align: center;">
+              <div style="font-size: 15px; font-weight: 800; color: #A78BFA;">${t.counts.description}</div>
+              <div style="font-size: 9px; color: #94A3B8;">Ảnh Mô Tả</div>
+            </div>
+            <div style="background: #1E293B; padding: 8px 6px; border-radius: 6px; text-align: center;">
+              <div style="font-size: 15px; font-weight: 800; color: #34D399;">${t.counts.reviews}</div>
+              <div style="font-size: 9px; color: #94A3B8;">Ảnh Review</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Micro Actions -->
+        <div id="tavy-hud-view-actions" style="display: ${this.activeTab === 'actions' ? 'block' : 'none'}; padding: 12px; overflow-y: auto; max-height: 400px;">
+          <div style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Chạy thử nghiệm từng bước cào nhỏ để kiểm tra độ tin cậy của thuật toán:</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button id="tavy-act-step1" style="background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: #FAF8F5; padding: 9px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <span>📸 Bước 1: Thu Thập Album Ảnh Studio HD (8-10 ảnh)</span>
+              <span style="color: #60A5FA;">Chạy ❯</span>
+            </button>
+            <button id="tavy-act-step2" style="background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: #FAF8F5; padding: 9px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <span>🖼️ Bước 2: Mở Rộng & Bóc Tách Infographic Mô Tả (15-25 ảnh)</span>
+              <span style="color: #60A5FA;">Chạy ❯</span>
+            </button>
+            <button id="tavy-act-step3" style="background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: #FAF8F5; padding: 9px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <span>📋 Bước 3: Bóc Tách Bảng Thông Số & Thành Phần</span>
+              <span style="color: #60A5FA;">Chạy ❯</span>
+            </button>
+            <button id="tavy-act-step4" style="background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: #FAF8F5; padding: 9px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <span>⭐ Bước 4: Kích Hoạt Tab Đánh Giá & Bóc Tách GDAS Thật (50 ảnh)</span>
+              <span style="color: #60A5FA;">Chạy ❯</span>
+            </button>
+            <button id="tavy-act-step5" style="background: linear-gradient(135deg, #7A4B9E 0%, #583377 100%); border: 1px solid #C5A059; color: #FFFFFF; padding: 11px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; text-align: center; cursor: pointer; margin-top: 4px;">
+              ⚡ BƯỚC 5: CÀO TOÀN DIỆN & ĐỒNG BỘ AI GEMINI TRỰC TIẾP
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 3: JSON Inspector -->
+        <div id="tavy-hud-view-json" style="display: ${this.activeTab === 'json' ? 'block' : 'none'}; padding: 12px; overflow-y: auto; max-height: 400px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 11px; color: #94A3B8;">Dữ liệu payload sản phẩm mới nhất:</span>
+            <button id="tavy-hud-copy-json" style="background: #334155; border: 1px solid rgba(255,255,255,0.1); color: #FAF8F5; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer;">📋 Sao Chép JSON</button>
+          </div>
+          <pre id="tavy-dev-json-content" style="background: #020617; border: 1px solid rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; color: #38BDF8; font-family: monospace; font-size: 11px; max-height: 280px; overflow: auto; white-space: pre-wrap; word-break: break-all;">${this.latestPayload ? JSON.stringify(this.latestPayload, null, 2) : '// Chưa chạy cào sản phẩm nào. Hãy bấm "Thử Nghiệm" hoặc nút Cào Nổi để sinh dữ liệu JSON.'}</pre>
+        </div>
+
+        <!-- Tab 4: Logs -->
+        <div id="tavy-hud-view-logs" style="display: ${this.activeTab === 'logs' ? 'block' : 'none'}; padding: 12px; overflow-y: auto; max-height: 400px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 11px; color: #94A3B8;">Nhật ký sự kiện thời gian thực:</span>
+            <button id="tavy-hud-clear-logs" style="background: #334155; border: 1px solid rgba(255,255,255,0.1); color: #FAF8F5; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer;">🧹 Xóa Logs</button>
+          </div>
+          <div id="tavy-dev-logs-content" style="background: #020617; border: 1px solid rgba(255,255,255,0.06); padding: 8px; border-radius: 8px; height: 260px; overflow-y: auto;">
+            ${this.logs.map(l => `
+              <div style="margin-bottom: 4px; padding: 3px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; line-height: 1.3; ${
+                l.level === 'success' ? 'background: rgba(16, 185, 129, 0.15); color: #34D399;' :
+                l.level === 'error' ? 'background: rgba(239, 68, 68, 0.15); color: #F87171;' :
+                l.level === 'warn' ? 'background: rgba(245, 158, 11, 0.15); color: #FBBF24;' :
+                'color: #94A3B8;'
+              }">
+                <span style="opacity: 0.6;">[${l.time}]</span> <span style="font-weight: 700;">[${l.level.toUpperCase()}]</span> ${l.message}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      // Gắn sự kiện chuyển tabs
+      hud.querySelectorAll('.tavy-hud-tab-btn').forEach(btn => {
+        btn.onclick = () => {
+          this.activeTab = btn.getAttribute('data-tab');
+          this.render();
+        };
+      });
+
+      // Sự kiện nút thu gọn & đóng
+      const minBtn = hud.querySelector('#tavy-hud-min-btn');
+      if (minBtn) minBtn.onclick = () => this.toggleMinimize(true);
+
+      const closeBtn = hud.querySelector('#tavy-hud-close-btn');
+      if (closeBtn) closeBtn.onclick = () => this.toggleDevMode(false);
+
+      // Sự kiện nút Sao Chép JSON
+      const copyBtn = hud.querySelector('#tavy-hud-copy-json');
+      if (copyBtn) {
+        copyBtn.onclick = () => {
+          if (!this.latestPayload) {
+            alert("Chưa có dữ liệu JSON để sao chép!");
+            return;
+          }
+          navigator.clipboard.writeText(JSON.stringify(this.latestPayload, null, 2)).then(() => {
+            copyBtn.textContent = '✓ Đã sao chép!';
+            setTimeout(() => { copyBtn.textContent = '📋 Sao Chép JSON'; }, 2000);
+          });
+        };
+      }
+
+      // Sự kiện xóa logs
+      const clearBtn = hud.querySelector('#tavy-hud-clear-logs');
+      if (clearBtn) {
+        clearBtn.onclick = () => {
+          this.logs = [];
+          const logContent = document.getElementById('tavy-dev-logs-content');
+          if (logContent) logContent.innerHTML = '';
+        };
+      }
+
+      // Sự kiện Micro Actions
+      const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/i);
+      const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : '';
+
+      const act1 = hud.querySelector('#tavy-act-step1');
+      if (act1) {
+        act1.onclick = async () => {
+          this.log("Bắt đầu thử nghiệm Bước 1: Thu thập Album Ảnh Studio HD...", 'info');
+          const imgs = pickProductImages();
+          this.log(`Bước 1 hoàn tất! Thu được ${imgs.length} ảnh Studio HD sắc nét.`, 'success');
+          this.render();
+        };
+      }
+
+      const act2 = hud.querySelector('#tavy-act-step2');
+      if (act2) {
+        act2.onclick = async () => {
+          this.log("Bắt đầu thử nghiệm Bước 2: Mở rộng & bóc tách Infographic...", 'info');
+          const dImgs = await pickDetailImages();
+          this.log(`Bước 2 hoàn tất! Thu được ${dImgs.length} ảnh infographic mô tả.`, 'success');
+          this.render();
+        };
+      }
+
+      const act3 = hud.querySelector('#tavy-act-step3');
+      if (act3) {
+        act3.onclick = () => {
+          this.log("Bắt đầu thử nghiệm Bước 3: Bóc tách Thông Số Kỹ Thuật...", 'info');
+          const specs = parseProductSpecifications();
+          this.log(`Bước 3 hoàn tất! Dung tích: "${specs.capacity}", Loại da: "${specs.skinType}", Xuất xứ: "${specs.origin}", Rating: ${specs.rating}`, 'success');
+        };
+      }
+
+      const act4 = hud.querySelector('#tavy-act-step4');
+      if (act4) {
+        act4.onclick = async () => {
+          this.log(`Bắt đầu thử nghiệm Bước 4: Thu hoạch ảnh review GDAS cho ${goodsNo}...`, 'info');
+          const reviews = await fetchGdasReviewPhotos(goodsNo);
+          this.log(`Bước 4 hoàn tất! Thu hoạch được ${reviews.length} ảnh review GDAS từ người dùng thật.`, 'success');
+          this.render();
+        };
+      }
+
+      const act5 = hud.querySelector('#tavy-act-step5');
+      if (act5) {
+        act5.onclick = async () => {
+          this.log("Kích hoạt quy trình cào toàn diện 5 bước...", 'info');
+          await startScrapeProcess();
+        };
+      }
     }
   };
 
@@ -481,6 +955,47 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
         const res = await startScrapeProcess();
         sendResponse(res);
       })();
+      return true;
+    }
+
+    if (request.action === "TOGGLE_DEV_MODE") {
+      DevHudController.toggleDevMode(request.enabled);
+      sendResponse({ success: true, devMode: DevHudController.isEnabled });
+      return true;
+    }
+
+    if (request.action === "GET_DEV_STATUS") {
+      sendResponse({
+        success: true,
+        devMode: DevHudController.isEnabled,
+        telemetry: DevHudController.getTelemetry()
+      });
+      return true;
+    }
+
+    if (request.action === "EXTRACT_PAGE_PRODUCTS") {
+      try {
+        const items = [];
+        const seen = new Set();
+        const links = Array.from(document.querySelectorAll('a[href*="goodsNo="]') || []);
+        links.forEach(a => {
+          const href = a.href || '';
+          const match = href.match(/goodsNo=([A-Za-z0-9_]+)/i);
+          if (match && match[1]) {
+            const goodsNo = match[1].toUpperCase();
+            if (!seen.has(goodsNo)) {
+              seen.add(goodsNo);
+              const card = a.closest('.prd_info, .goods_info, [class*="GoodsItem"], li') || a;
+              const titleEl = card.querySelector('.tx_name, .prd_name, [class*="name"], .name') || a;
+              const title = (titleEl.textContent || '').trim();
+              items.push({ goodsNo, url: href, title });
+            }
+          }
+        });
+        sendResponse({ success: true, count: items.length, items });
+      } catch (err) {
+        sendResponse({ success: false, error: err.message, items: [] });
+      }
       return true;
     }
   });
@@ -586,10 +1101,15 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
     checkAndApplyDuplicateState(btn, goodsNo);
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectFloatingScrapeButton);
-  } else {
+  const initExtension = () => {
     injectFloatingScrapeButton();
+    DevHudController.init();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initExtension);
+  } else {
+    initExtension();
   }
   setInterval(injectFloatingScrapeButton, 2000);
 }

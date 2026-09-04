@@ -14,7 +14,7 @@
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      width: 310px;
+      width: 320px;
       padding: 16px;
       margin: 0;
       background: var(--bg);
@@ -50,7 +50,7 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       font-size: 12px;
       font-weight: 600;
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
@@ -90,7 +90,7 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 10px 12px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .select-label {
@@ -102,7 +102,7 @@
     }
     .model-select {
       width: 100%;
-      padding: 9px 12px;
+      padding: 8px 10px;
       border-radius: 8px;
       border: 1px solid #D1D5DB;
       background: #FFFFFF;
@@ -119,12 +119,12 @@
     }
     .btn {
       width: 100%;
-      padding: 13px 16px;
+      padding: 12px 14px;
       border: none;
       border-radius: 10px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -151,12 +151,12 @@
       background: #F9FAFB;
     }
     .progress-box {
-      margin-top: 12px;
-      padding: 12px;
+      margin-top: 10px;
+      padding: 10px 12px;
       background: #F0E8F5;
       border: 1px solid #C5A059;
       border-radius: 10px;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--primary-hover);
       display: none;
     }
@@ -173,13 +173,54 @@
     .footer a:hover {
       text-decoration: underline;
     }
+
+    /* Switch toggle styles */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #D1D5DB;
+      transition: .25s;
+      border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #7A4B9E;
+    }
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
   </style>
 </head>
 <body>
 
   <div class="header">
     <div class="title">TAVY AI SCRAPER</div>
-    <span class="version-badge">v20.0 PRO</span>
+    <span class="version-badge">v21.0 DEV</span>
   </div>
 
   <div class="status-card">
@@ -190,12 +231,61 @@
     </div>
   </div>
 
+  <!-- Developer Mode Toggle Card -->
+  <div class="status-card">
+    <div>
+      <div style="font-weight: 800; font-size: 12px; color: #1F2937; display: flex; align-items: center; gap: 6px;">
+        <span>🛠️</span><span>Chế Độ Developer (HUD)</span>
+      </div>
+      <div style="font-size: 10px; color: #6B7280; margin-top: 2px;">HUD phân tích trên trang (Alt+Shift+D)</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="devModeToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
   <!-- Khung Báo Trùng Lặp Tự Động -->
-  <div id="duplicateAlertBox" style="display: none; padding: 10px 14px; background: #FEF3C7; border: 1.5px solid #F59E0B; border-radius: 12px; margin-bottom: 12px; font-size: 11px; color: #92400E; line-height: 1.4;">
+  <div id="duplicateAlertBox" style="display: none; padding: 10px 14px; background: #FEF3C7; border: 1.5px solid #F59E0B; border-radius: 12px; margin-bottom: 10px; font-size: 11px; color: #92400E; line-height: 1.4;">
     <div style="font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
       <span>⚠️</span><span>Sản Phẩm Đã Có Trong Hệ Thống</span>
     </div>
     <div id="duplicateItemDetail" style="font-size: 11px; opacity: 0.95;">Sản phẩm này đã được cào trước đây. Bấm cào bên dưới để cập nhật lại giá sale và ảnh mới nhất.</div>
+  </div>
+
+  <!-- Khung Cào Hàng Loạt (Batch Queue) Khi Đang Ở Trang Danh Sách / Ranking -->
+  <div id="batchScrapeSection" style="display: none; background: #FAF5FF; border: 1.5px solid #C084FC; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+      <div style="font-weight: 800; font-size: 12px; color: #6B21A8; display: flex; align-items: center; gap: 5px;">
+        <span>🚀</span><span>Cào Hàng Loạt (Batch Queue)</span>
+      </div>
+      <span id="batchFoundBadge" style="font-size: 10px; background: #E9D5FF; color: #7E22CE; padding: 2px 6px; border-radius: 10px; font-weight: 800;">0 SP</span>
+    </div>
+    <div style="font-size: 10px; color: #7E22CE; margin-bottom: 8px; line-height: 1.3;">
+      Phát hiện danh sách sản phẩm trên trang hiện tại. Tự động bóc tách lần lượt kèm độ trễ an toàn.
+    </div>
+    <div style="display: flex; gap: 6px;">
+      <button id="startBatchBtn" class="btn" style="flex: 2; background: #7A4B9E; color: #FFFFFF; padding: 8px 10px; font-size: 11px;">
+        Khởi Động Cào
+      </button>
+      <button id="pauseBatchBtn" class="btn" style="flex: 1; display: none; background: #F59E0B; color: #FFFFFF; padding: 8px 6px; font-size: 11px;">
+        Tạm Dừng
+      </button>
+      <button id="stopBatchBtn" class="btn" style="flex: 1; display: none; background: #EF4444; color: #FFFFFF; padding: 8px 6px; font-size: 11px;">
+        Dừng
+      </button>
+    </div>
+
+    <!-- Batch Progress Box -->
+    <div id="batchProgressBox" style="display: none; margin-top: 8px; background: #FFFFFF; border: 1px solid #E9D5FF; border-radius: 8px; padding: 8px;">
+      <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: #6B21A8; margin-bottom: 4px;">
+        <span id="batchStatusText">Đang chuẩn bị...</span>
+        <span id="batchCountText">0/0</span>
+      </div>
+      <div style="width: 100%; height: 6px; background: #F3E8FF; border-radius: 4px; overflow: hidden;">
+        <div id="batchProgressBar" style="width: 0%; height: 100%; background: #7A4B9E; transition: width 0.3s ease;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Chọn Mô hình Gemini AI Trực Tiếp -->
@@ -211,7 +301,7 @@
     <div style="font-size: 10px; color: #6B7280; margin-top: 6px; display: flex; flex-direction: column; gap: 2px;">
       <span>✓ 8-10 Ảnh Studio HD & Infographic mô tả</span>
       <span>✓ 50+ Ảnh Đánh Giá GDAS Người Dùng Thật</span>
-      <span>✓ Dung tích, Thành phần & Thông số kỹ thuật</span>
+      <span>✓ Dung tích, Thành phần & Bảng Thông Số</span>
     </div>
   </div>
 
@@ -228,11 +318,11 @@
   <!-- Khung Tiến Trình -->
   <div id="progressBox" class="progress-box">
     <div id="progressTitle" style="font-weight: 800; margin-bottom: 4px;">Đang xử lý dữ liệu...</div>
-    <div id="progressDetail" style="font-size: 11px; opacity: 0.9;">Vui lòng đợi trong giây lát...</div>
+    <div id="progressDetail" style="font-size: 10px; opacity: 0.9;">Vui lòng đợi trong giây lát...</div>
   </div>
 
   <div class="footer">
-    <a href="#" id="optionsLink">Cài đặt Gemini API Key</a>
+    <a href="#" id="optionsLink">Cài đặt API & Cấu hình Nâng cao</a>
   </div>
 
   <script src="popup.js"></script>

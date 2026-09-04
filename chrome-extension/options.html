@@ -2,28 +2,160 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <title>Cài Đặt TAVY AI Scraper Pro v21.0</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 20px; max-width: 400px; margin: 0 auto; background: #FAF8F5; color: #1F2937; }
-    h2 { color: #7A4B9E; }
-    label { font-weight: bold; display: block; margin-bottom: 8px; color: #1F2937; }
-    input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #E5D5B5; border-radius: 5px; box-sizing: border-box; }
-    input:focus { outline: none; border-color: #7A4B9E; }
-    button { padding: 10px 15px; background: #7A4B9E; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
-    button:hover { background: #583377; }
-    .help { font-size: 13px; color: #4B5563; background: #F0E8F5; padding: 10px; border-radius: 5px; margin-bottom: 20px; line-height: 1.5; border: 1px solid #C5A059; }
-    #status { color: #7A4B9E; font-weight: bold; margin-top: 10px; text-align: center; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 24px;
+      max-width: 440px;
+      margin: 0 auto;
+      background: #FAF8F5;
+      color: #1F2937;
+    }
+    h2 {
+      color: #7A4B9E;
+      margin-top: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 10px;
+      background: #F0E8F5;
+      color: #7A4B9E;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+    label {
+      font-weight: 700;
+      display: block;
+      margin-bottom: 6px;
+      color: #1F2937;
+      font-size: 13px;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 14px;
+      border: 1px solid #E5D5B5;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 13px;
+    }
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: #7A4B9E;
+    }
+    .card {
+      background: #FFFFFF;
+      border: 1px solid #E5D5B5;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .help {
+      font-size: 12px;
+      color: #4B5563;
+      background: #F0E8F5;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+      border: 1px solid #C5A059;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .checkbox-row input {
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+    }
+    button {
+      padding: 12px 16px;
+      background: #7A4B9E;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 700;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #583377;
+    }
+    #status {
+      color: #059669;
+      font-weight: 700;
+      margin-top: 12px;
+      text-align: center;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
-  <h2>Cài đặt Tavy AI Scraper</h2>
+  <h2>
+    <span>⚙️ Cài Đặt TAVY Scraper</span>
+    <span class="badge">v21.0 DEV</span>
+  </h2>
+
   <div class="help">
-    Để Bot có thể dùng AI đọc thông tin sản phẩm chuẩn xác nhất, bạn cần cung cấp 1 mã API Key miễn phí từ Google Gemini.<br><br>
-    <a href="https://aistudio.google.com/app/apikey" target="_blank">Bấm vào đây để lấy API Key miễn phí</a>
+    Để Bot có thể dùng AI bóc tách thông tin sản phẩm chuẩn xác nhất, bạn cần cung cấp 1 mã API Key miễn phí từ Google Gemini.<br><br>
+    <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #7A4B9E; font-weight: 700; text-decoration: none;">👉 Bấm vào đây để lấy API Key miễn phí từ Google</a>
   </div>
-  <label for="apiKey">Nhập Gemini API Key của bạn:</label>
-  <input type="text" id="apiKey" placeholder="AIzaSy...">
-  <button id="saveBtn">Lưu Cài Đặt</button>
+
+  <div class="card">
+    <label for="apiKey">Gemini API Key:</label>
+    <input type="text" id="apiKey" placeholder="AIzaSy...">
+
+    <label for="selectedModel">Mô hình AI ưu tiên:</label>
+    <select id="selectedModel">
+      <option value="auto">⚡ Tự động Xoay Vòng (Round-Robin)</option>
+      <option value="gemini-2.0-flash">🔥 Gemini 2.0 Flash (Khuyên dùng)</option>
+      <option value="gemini-2.0-flash-lite">⚡ Gemini 2.0 Flash Lite (Siêu nhanh)</option>
+      <option value="gemini-1.5-flash">🌟 Gemini 1.5 Flash</option>
+      <option value="gemini-1.5-pro">💎 Gemini 1.5 Pro (Chuyên sâu)</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div style="font-weight: 800; font-size: 13px; margin-bottom: 10px; color: #7A4B9E;">
+      🛠️ Tùy Chọn Developer Mode & Thu Thập Ảnh
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="devModeDefault">
+      <span>Tự động bật Developer Mode (HUD) trên trang Olive Young</span>
+    </label>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="debugLogging">
+      <span>Bật ghi nhật ký chi tiết (Debug Logging) ra Dev Console</span>
+    </label>
+
+    <div style="margin-top: 12px;">
+      <label for="maxReviewImages">Giới hạn ảnh đánh giá GDAS tối đa:</label>
+      <select id="maxReviewImages">
+        <option value="20">20 ảnh đánh giá</option>
+        <option value="35">35 ảnh đánh giá</option>
+        <option value="50" selected>50 ảnh đánh giá (Khuyên dùng)</option>
+      </select>
+    </div>
+  </div>
+
+  <button id="saveBtn">Lưu Toàn Bộ Cài Đặt</button>
   <div id="status"></div>
+
   <script src="options.js"></script>
 </body>
 </html>

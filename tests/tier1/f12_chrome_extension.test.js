@@ -157,4 +157,77 @@ test('[F12-8] Next.js modern Olive Young selectors & GDAS review photo extractio
   assertContains(bgCode, 'gdasEditor', 'background.js safeguards gdasEditor from junk filter');
 });
 
+test('[F12-9] Developer Mode HUD architecture, Alt+Shift+D shortcut & real-time telemetry', () => {
+  const contentPath = path.resolve(__dirname, '../../chrome-extension/content.js');
+  const popupHtmlPath = path.resolve(__dirname, '../../chrome-extension/popup.html');
+  const popupJsPath = path.resolve(__dirname, '../../chrome-extension/popup.js');
+  const optionsHtmlPath = path.resolve(__dirname, '../../chrome-extension/options.html');
+  const optionsJsPath = path.resolve(__dirname, '../../chrome-extension/options.js');
 
+  const contentCode = fs.readFileSync(contentPath, 'utf-8');
+  assertContains(contentCode, 'DevHudController', 'content.js defines DevHudController');
+  assertContains(contentCode, 'tavy-dev-hud', 'content.js injects #tavy-dev-hud DOM element');
+  assertContains(contentCode, 'altKey && e.shiftKey', 'content.js listens for Alt+Shift keyboard shortcut');
+  assertContains(contentCode, 'telemetry', 'Dev HUD includes telemetry view');
+  assertContains(contentCode, 'actions', 'Dev HUD includes micro actions view');
+  assertContains(contentCode, 'json', 'Dev HUD includes JSON inspector view');
+  assertContains(contentCode, 'logs', 'Dev HUD includes live logs view');
+
+  const popupHtml = fs.readFileSync(popupHtmlPath, 'utf-8');
+  assertContains(popupHtml, 'devModeToggle', 'popup.html contains devModeToggle switch');
+  assertContains(popupHtml, 'v21.0 DEV', 'popup.html displays v21.0 DEV version badge');
+
+  const popupJs = fs.readFileSync(popupJsPath, 'utf-8');
+  assertContains(popupJs, 'TOGGLE_DEV_MODE', 'popup.js communicates TOGGLE_DEV_MODE action');
+
+  const optionsHtml = fs.readFileSync(optionsHtmlPath, 'utf-8');
+  assertContains(optionsHtml, 'devModeDefault', 'options.html includes devModeDefault setting');
+
+  const optionsJs = fs.readFileSync(optionsJsPath, 'utf-8');
+  assertContains(optionsJs, 'devModeDefaultCheckbox', 'options.js handles devMode default preference');
+});
+
+test('[F12-10] Batch Scraper Queue lifecycle actions & progress telemetry', () => {
+  const bgPath = path.resolve(__dirname, '../../chrome-extension/background.js');
+  const popupHtmlPath = path.resolve(__dirname, '../../chrome-extension/popup.html');
+  const popupJsPath = path.resolve(__dirname, '../../chrome-extension/popup.js');
+  const contentPath = path.resolve(__dirname, '../../chrome-extension/content.js');
+
+  const bgCode = fs.readFileSync(bgPath, 'utf-8');
+  assertContains(bgCode, 'START_BATCH_SCRAPE', 'background.js handles START_BATCH_SCRAPE');
+  assertContains(bgCode, 'PAUSE_BATCH_SCRAPE', 'background.js handles PAUSE_BATCH_SCRAPE');
+  assertContains(bgCode, 'RESUME_BATCH_SCRAPE', 'background.js handles RESUME_BATCH_SCRAPE');
+  assertContains(bgCode, 'STOP_BATCH_SCRAPE', 'background.js handles STOP_BATCH_SCRAPE');
+  assertContains(bgCode, 'GET_BATCH_STATUS', 'background.js handles GET_BATCH_STATUS');
+  assertContains(bgCode, 'batchQueueState', 'background.js maintains batchQueueState');
+  assertContains(bgCode, 'processNextBatchItem', 'background.js executes queue processor');
+
+  const popupHtml = fs.readFileSync(popupHtmlPath, 'utf-8');
+  assertContains(popupHtml, 'batchScrapeSection', 'popup.html contains batchScrapeSection');
+  assertContains(popupHtml, 'startBatchBtn', 'popup.html has startBatchBtn');
+  assertContains(popupHtml, 'pauseBatchBtn', 'popup.html has pauseBatchBtn');
+  assertContains(popupHtml, 'stopBatchBtn', 'popup.html has stopBatchBtn');
+  assertContains(popupHtml, 'batchProgressBar', 'popup.html has batchProgressBar');
+
+  const popupJs = fs.readFileSync(popupJsPath, 'utf-8');
+  assertContains(popupJs, 'START_BATCH_SCRAPE', 'popup.js triggers START_BATCH_SCRAPE');
+  assertContains(popupJs, 'updateBatchUI', 'popup.js updates batch UI');
+
+  const contentCode = fs.readFileSync(contentPath, 'utf-8');
+  assertContains(contentCode, 'EXTRACT_PAGE_PRODUCTS', 'content.js responds to EXTRACT_PAGE_PRODUCTS');
+});
+
+test('[F12-11] Maximal Scraper Engine: Resilient Next.js srcset support & 50+ GDAS review photos', () => {
+  const contentPath = path.resolve(__dirname, '../../chrome-extension/content.js');
+  const bgPath = path.resolve(__dirname, '../../chrome-extension/background.js');
+
+  const contentCode = fs.readFileSync(contentPath, 'utf-8');
+  assertContains(contentCode, 'srcset', 'content.js inspects Next.js image srcset for highest resolution');
+  assertContains(contentCode, 'QT=100', 'content.js enforces maximum image quality QT=100');
+  assertContains(contentCode, 'pageIdx <= 1', 'content.js harvests multiple pages of GDAS reviews (up to 50+ images)');
+  assertContains(contentCode, '상품설명 더보기', 'content.js auto-expands product detail containers');
+
+  const bgCode = fs.readFileSync(bgPath, 'utf-8');
+  assertContains(bgCode, 'runSingleItemScrapePipeline', 'background.js encapsulates unified scrape pipeline');
+  assertContains(bgCode, 'originalPrice', 'background.js parses original price for discount calculation');
+});

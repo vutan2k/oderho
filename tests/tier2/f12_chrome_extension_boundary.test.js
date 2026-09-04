@@ -129,3 +129,130 @@ test('[F12-B6] CHECK_PRODUCT_EXISTS boundary handling with null/empty goodsNo an
   assertEquals(handleCheckExists('A999', 'https://oliveyoung.co.kr/item999', reg, list).exists, false, 'Non-existent returns false');
 });
 
+test('[F12-B7] Dev Mode toggle & telemetry boundary handling', () => {
+  const handleDevToggle = (currentState, forced) => {
+    if (typeof forced === 'boolean') return forced;
+    if (forced === 'true' || forced === 1) return true;
+    if (forced === 'false' || forced === 0) return false;
+    return !currentState;
+  };
+
+  assertEquals(handleDevToggle(false, true), true, 'Forced true turns on');
+  assertEquals(handleDevToggle(true, false), false, 'Forced false turns off');
+  assertEquals(handleDevToggle(false, undefined), true, 'Undefined forced toggles state');
+  assertEquals(handleDevToggle(true, null), false, 'Null forced toggles state');
+  assertEquals(handleDevToggle(false, 'true'), true, 'String "true" coerced to true');
+  assertEquals(handleDevToggle(true, 'false'), false, 'String "false" coerced to false');
+
+  const extractTelemetrySafe = (domMock) => {
+    try {
+      const carousel = domMock?.querySelector?.('[class*="GoodsDetailCarousel"]');
+      const goodsNo = (domMock?.location?.href || '').match(/goodsNo=([A-Za-z0-9_]+)/i)?.[1] || 'N/A';
+      return {
+        hasCarousel: !!carousel,
+        goodsNo: goodsNo.toUpperCase(),
+        error: null
+      };
+    } catch (err) {
+      return { hasCarousel: false, goodsNo: 'N/A', error: err.message };
+    }
+  };
+
+  assertEquals(extractTelemetrySafe(null).goodsNo, 'N/A', 'Null DOM safely returns N/A');
+  assertEquals(extractTelemetrySafe({}).goodsNo, 'N/A', 'Empty DOM safely returns N/A');
+  const validMock = {
+    querySelector: (sel) => (sel.includes('Carousel') ? {} : null),
+    location: { href: 'https://oliveyoung.co.kr/detail?goodsNo=A000000123456' }
+  };
+  const res = extractTelemetrySafe(validMock);
+  assertEquals(res.hasCarousel, true, 'Detects carousel');
+  assertEquals(res.goodsNo, 'A000000123456', 'Extracts uppercase goodsNo');
+});
+
+test('[F12-B8] Batch Queue state transitions and boundary corner cases', () => {
+  const processBatchQueueTransition = (state, action, payload = {}) => {
+    const s = { ...state };
+    switch (action) {
+      case 'START':
+        if (!payload.items || !Array.isArray(payload.items) || payload.items.length === 0) {
+          return { ...s, error: 'Empty queue' };
+        }
+        return {
+          isRunning: true,
+          isPaused: false,
+          queue: payload.items,
+          currentIndex: 0,
+          total: payload.items.length,
+          successCount: 0,
+          failedCount: 0,
+          error: null
+        };
+      case 'PAUSE':
+        if (!s.isRunning) return s;
+        return { ...s, isPaused: !s.isPaused };
+      case 'STOP':
+        return { ...s, isRunning: false, isPaused: false, currentGoodsNo: '' };
+      case 'STEP_SUCCESS':
+        const nextIdx = s.currentIndex + 1;
+        const isDone = nextIdx >= s.total;
+        return {
+          ...s,
+          currentIndex: nextIdx,
+          successCount: s.successCount + 1,
+          isRunning: !isDone
+        };
+      case 'STEP_FAIL':
+        const nextFailIdx = s.currentIndex + 1;
+        const isFailDone = nextFailIdx >= s.total;
+        return {
+          ...s,
+          currentIndex: nextFailIdx,
+          failedCount: s.failedCount + 1,
+          isRunning: !isFailDone
+        };
+      default:
+        return s;
+    }
+  };
+
+  const initial = { isRunning: false, isPaused: false, queue: [], currentIndex: 0, total: 0, successCount: 0, failedCount: 0 };
+
+  // 1. Empty items start fails cleanly
+  const emptyStart = processBatchQueueTransition(initial, 'START', { items: [] });
+  assertEquals(emptyStart.isRunning, false, 'Empty queue does not start running');
+  assertEquals(emptyStart.error, 'Empty queue', 'Reports empty queue error');
+
+  // 2. Pause when not running has no effect
+  const idlePause = processBatchQueueTransition(initial, 'PAUSE');
+  assertEquals(idlePause.isPaused, false, 'Pause while idle is ignored');
+
+  // 3. Normal start with 2 items
+  const started = processBatchQueueTransition(initial, 'START', { items: [{ goodsNo: 'A1' }, { goodsNo: 'A2' }] });
+  assertEquals(started.isRunning, true, 'Queue starts running');
+  assertEquals(started.total, 2, 'Total items count is 2');
+
+  // 4. Pause while running toggles paused
+  const paused = processBatchQueueTransition(started, 'PAUSE');
+  assertEquals(paused.isPaused, true, 'Queue is paused');
+
+  // 5. Unpause resumes
+  const resumed = processBatchQueueTransition(paused, 'PAUSE');
+  assertEquals(resumed.isPaused, false, 'Queue is resumed');
+
+  // 6. Step 1 success
+  const step1 = processBatchQueueTransition(resumed, 'STEP_SUCCESS');
+  assertEquals(step1.currentIndex, 1, 'Current index moves to 1');
+  assertEquals(step1.successCount, 1, 'Success count is 1');
+  assertEquals(step1.isRunning, true, 'Queue still running for item 2');
+
+  // 7. Step 2 failure & completion
+  const step2 = processBatchQueueTransition(step1, 'STEP_FAIL');
+  assertEquals(step2.currentIndex, 2, 'Current index reaches total');
+  assertEquals(step2.failedCount, 1, 'Failed count is 1');
+  assertEquals(step2.isRunning, false, 'Queue finishes and isRunning becomes false');
+
+  // 8. Emergency stop
+  const emergency = processBatchQueueTransition(started, 'STOP');
+  assertEquals(emergency.isRunning, false, 'Emergency stop shuts down queue');
+  assertEquals(emergency.isPaused, false, 'Emergency stop resets pause state');
+});

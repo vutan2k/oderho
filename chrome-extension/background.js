@@ -580,6 +580,173 @@ BẮT BUỘC TRẢ VỀ JSON THUẦN HỢP LỆ:
       }
     });
   }
+// =========================================================================
+// BATCH SCRAPER QUEUE RUNNER & PIPELINE (v21.0 DEV)
+// Cào hàng loạt sản phẩm với hàng đợi an toàn và độ trễ ngẫu nhiên chống WAF
+// =========================================================================
+let batchQueueState = {
+  isRunning: false,
+  isPaused: false,
+  queue: [],
+  currentIndex: 0,
+  total: 0,
+  successCount: 0,
+  failedCount: 0,
+  currentGoodsNo: ''
+};
+
+const updateBatchState = (partial = {}) => {
+  batchQueueState = { ...batchQueueState, ...partial };
+  try {
+    chrome.storage.local.set({ batchScrapeState: batchQueueState });
+  } catch {}
+};
+
+const runSingleItemScrapePipeline = async (item, pageData) => {
+  const goodsNo = item.goodsNo || 'A000000261415';
+  const itemUrl = item.url || `https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=${goodsNo}`;
+
+  // Lấy Gemini API Key & Model
+  const result = await new Promise(resolve => chrome.storage.local.get(['geminiApiKey', 'selectedModel'], resolve));
+  const apiKey = result?.geminiApiKey;
+  const userModel = result?.selectedModel;
+
+  let aiData = {};
+
+  if (apiKey && pageData) {
+    const prompt = `Bạn là chuyên gia trí tuệ nhân tạo (AI) bóc tách mỹ phẩm Hàn Quốc Olive Young.
+Dưới đây là thông tin trang sản phẩm Olive Young thật:
+
+URL: ${pageData.url}
+TÊN GỐC: ${pageData.title}
+GIÁ MUA: ${pageData.priceText}
+THƯƠNG HIỆU: ${pageData.brandText}
+NỘI DUNG TRANG WEB:
+${pageData.fullText}
+
+Trích xuất JSON chính xác tuyệt đối:
+- name: Tên sản phẩm đã được AI dịch sang tiếng Việt mượt mà, đầy đủ, bỏ chữ khuyến mãi.
+- nameKr: Tên sản phẩm tiếng Hàn gốc chính xác từ TITLE.
+- price: Giá Won (KRW) bán thực tế (chỉ chữ số nguyên dương ví dụ 26800, 34900).
+- originalPrice: Giá Won gốc trước giảm (số nguyên dương, >= price).
+- brand: Thương hiệu chính xác (Celimax, Objet, Anua, Torriden, Mediheal, Romand, Skin1004...).
+- brandKr: Thương hiệu tiếng Hàn.
+- category: skincare|makeup|health|pharmacy|haircare|bodycare.
+- description: Công dụng sản phẩm chi tiết bằng tiếng Việt.
+- usage: Hướng dẫn sử dụng bằng tiếng Việt.
+
+Chỉ trả về JSON thuần hợp lệ, KHÔNG markdown.`;
+
+    let MODELS = getRotatedModelsList();
+    if (userModel && userModel !== 'auto') {
+      MODELS = [userModel, ...ALL_SUPPORTED_MODELS.filter(m => m !== userModel)];
+    }
+
+    for (const model of MODELS) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10000);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        const d = await res.json();
+        if (res.ok && d.candidates && d.candidates[0]?.content?.parts?.[0]?.text) {
+          let text = d.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+          aiData = JSON.parse(text);
+          break;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+  }
+
+  const titleRaw = pageData?.title || `Sản phẩm Olive Young ${goodsNo}`;
+  const krName = aiData.nameKr || titleRaw;
+  const viName = aiData.name || translateKoreanToVi(krName);
+
+  const domPrice = parseDomPrice(pageData?.priceText);
+  let parsedAiPrice = parseInt(String(aiData.price).replace(/[^0-9]/g, ''), 10) || 0;
+  if (parsedAiPrice > 200000 || parsedAiPrice < 1000) {
+    parsedAiPrice = 0;
+  }
+
+  const cleanPrice = parsedAiPrice > 0 ? parsedAiPrice : (domPrice || 26800);
+  const origPrice = parseInt(String(aiData.originalPrice), 10) || cleanPrice;
+
+  const mainImage = pageData?.image || (pageData?.images && pageData.images[0]) || `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/${goodsNo.slice(0, 4)}/${goodsNo}01ko.jpg`;
+  const albumImages = (pageData?.images && pageData.images.length > 0) ? pageData.images : (pageData?.image ? [pageData.image] : []);
+  const photoReviews = pageData?.photoReviews || [];
+  const mainImg = albumImages[0] || pageData?.image || '';
+
+  sendProductToAdminTab(
+    goodsNo,
+    viName,
+    krName,
+    cleanPrice,
+    mainImg,
+    albumImages,
+    photoReviews,
+    aiData.brand || pageData?.brandText || 'Olive Young Korea',
+    aiData.brandKr || pageData?.brandText || '올리브영',
+    aiData.category || 'skincare',
+    aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp. Tên gốc: ${krName}`,
+    aiData.usage || 'Thoa nhẹ nhàng lên vùng da cần chăm sóc.',
+    itemUrl,
+    {
+      originalPrice: origPrice >= cleanPrice ? origPrice : cleanPrice
+    }
+  );
+
+  return { success: true, name: viName, goodsNo };
+};
+
+const processNextBatchItem = async () => {
+  if (!batchQueueState.isRunning) return;
+  if (batchQueueState.isPaused) return;
+
+  if (batchQueueState.currentIndex >= batchQueueState.total) {
+    updateBatchState({ isRunning: false, currentGoodsNo: '' });
+    console.log("[BatchScraper] Hoàn thành toàn bộ hàng đợi!");
+    return;
+  }
+
+  const currentItem = batchQueueState.queue[batchQueueState.currentIndex];
+  updateBatchState({ currentGoodsNo: currentItem.goodsNo || `SP-${batchQueueState.currentIndex + 1}` });
+
+  try {
+    const pageData = await fetchOliveYoungPageData(currentItem.goodsNo, currentItem.url);
+    if (pageData) {
+      await runSingleItemScrapePipeline(currentItem, pageData);
+      updateBatchState({
+        currentIndex: batchQueueState.currentIndex + 1,
+        successCount: batchQueueState.successCount + 1
+      });
+    } else {
+      updateBatchState({
+        currentIndex: batchQueueState.currentIndex + 1,
+        failedCount: batchQueueState.failedCount + 1
+      });
+    }
+  } catch (err) {
+    console.warn(`[BatchScraper] Lỗi cào sản phẩm ${currentItem.goodsNo}:`, err);
+    updateBatchState({
+      currentIndex: batchQueueState.currentIndex + 1,
+      failedCount: batchQueueState.failedCount + 1
+    });
+  }
+
+  if (batchQueueState.isRunning && !batchQueueState.isPaused && batchQueueState.currentIndex < batchQueueState.total) {
+    const randomDelay = Math.floor(Math.random() * 1400) + 1800;
+    setTimeout(processNextBatchItem, randomDelay);
+  } else if (batchQueueState.currentIndex >= batchQueueState.total) {
+    updateBatchState({ isRunning: false, currentGoodsNo: '' });
+  }
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -675,8 +842,66 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ success: true, message: 'Đã khởi động tiến trình cào ngầm!' });
     return true;
   }
+  // =========================================================================
+  // XỬ LÝ HÀNG ĐỢI CÀO HÀNG LOẠT (BATCH SCRAPING ACTIONS)
+  // =========================================================================
+  if (request.action === "START_BATCH_SCRAPE") {
+    const rawItems = request.items || [];
+    const validItems = rawItems.filter(it => it && (it.goodsNo || it.url));
+    if (validItems.length === 0) {
+      sendResponse({ success: false, message: 'Danh sách sản phẩm cào trống' });
+      return true;
+    }
+
+    batchQueueState = {
+      isRunning: true,
+      isPaused: false,
+      queue: validItems,
+      currentIndex: 0,
+      total: validItems.length,
+      successCount: 0,
+      failedCount: 0,
+      currentGoodsNo: validItems[0]?.goodsNo || ''
+    };
+    updateBatchState({});
+    processNextBatchItem();
+    sendResponse({ success: true, count: validItems.length, state: batchQueueState });
+    return true;
+  }
+
+  if (request.action === "PAUSE_BATCH_SCRAPE") {
+    batchQueueState.isPaused = !batchQueueState.isPaused;
+    if (!batchQueueState.isPaused) {
+      processNextBatchItem();
+    }
+    updateBatchState({});
+    sendResponse({ success: true, state: batchQueueState });
+    return true;
+  }
+
+  if (request.action === "RESUME_BATCH_SCRAPE") {
+    batchQueueState.isPaused = false;
+    processNextBatchItem();
+    updateBatchState({});
+    sendResponse({ success: true, state: batchQueueState });
+    return true;
+  }
+
+  if (request.action === "STOP_BATCH_SCRAPE") {
+    batchQueueState.isRunning = false;
+    batchQueueState.isPaused = false;
+    updateBatchState({});
+    sendResponse({ success: true, state: batchQueueState });
+    return true;
+  }
+
+  if (request.action === "GET_BATCH_STATUS") {
+    sendResponse({ success: true, state: batchQueueState });
+    return true;
+  }
+
   if (request.action === "START_SINGLE_AUTO_SCRAPE") {
-    const item = request.item;
+    const item = request.item || {};
 
     (async () => {
       try {
@@ -685,94 +910,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         // 1. Tải dữ liệu HTML trang sản phẩm thật từ Olive Young
         const pageData = await fetchOliveYoungPageData(goodsNo, itemUrl);
-
-        // 2. Lấy Gemini API Key
-        const result = await new Promise(resolve => chrome.storage.local.get(['geminiApiKey'], resolve));
-        const apiKey = result?.geminiApiKey;
-
-        let aiData = {};
-
-        if (apiKey && pageData) {
-          const prompt = `Bạn là chuyên gia trí tuệ nhân tạo (AI) bóc tách mỹ phẩm Hàn Quốc Olive Young.
-Dưới đây là thông tin trang sản phẩm Olive Young thật:
-
-URL: ${pageData.url}
-TÊN GỐC: ${pageData.title}
-GIÁ MUA: ${pageData.priceText}
-THƯƠNG HIỆU: ${pageData.brandText}
-NỘI DUNG TRANG WEB:
-${pageData.fullText}
-
-Trích xuất JSON chính xác tuyệt đối:
-- name: Tên sản phẩm đã được AI dịch sang tiếng Việt mượt mà, đầy đủ, bỏ chữ khuyến mãi.
-- nameKr: Tên sản phẩm tiếng Hàn gốc chính xác từ TITLE.
-- price: Giá Won (KRW) bán thực tế (chỉ chữ số nguyên dương ví dụ 26800, 34900).
-- brand: Thương hiệu chính xác (Celimax, Objet, Anua, Torriden, Mediheal, Romand, Skin1004...).
-- category: skincare|makeup|health|pharmacy|haircare|bodycare.
-- description: Công dụng sản phẩm chi tiết bằng tiếng Việt.
-- usage: Hướng dẫn sử dụng bằng tiếng Việt.
-
-Chỉ trả về JSON thuần hợp lệ, KHÔNG markdown.`;
-
-          const MODELS = getRotatedModelsList();
-          for (const model of MODELS) {
-            try {
-              const controller = new AbortController();
-              const timer = setTimeout(() => controller.abort(), 10000);
-              const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-              const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-                signal: controller.signal
-              });
-              clearTimeout(timer);
-              const d = await res.json();
-              if (res.ok && d.candidates && d.candidates[0]?.content?.parts?.[0]?.text) {
-                let text = d.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
-                aiData = JSON.parse(text);
-                break;
-              }
-            } catch (e) {
-              continue;
-            }
-          }
+        if (!pageData) {
+          sendResponse({ success: false, error: 'Không thể tải dữ liệu trang từ Olive Young' });
+          return;
         }
 
-        const titleRaw = pageData?.title || `Sản phẩm Olive Young ${goodsNo}`;
-        const krName = aiData.nameKr || titleRaw;
-        const viName = aiData.name || translateKoreanToVi(krName);
-
-        const domPrice = parseDomPrice(pageData?.priceText);
-        let parsedAiPrice = parseInt(String(aiData.price).replace(/[^0-9]/g, ''), 10) || 0;
-        if (parsedAiPrice > 200000 || parsedAiPrice < 1000) {
-          parsedAiPrice = 0;
-        }
-
-        const cleanPrice = parsedAiPrice > 0 ? parsedAiPrice : (domPrice || 26800);
-
-        const mainImage = pageData?.image || (pageData?.images && pageData.images[0]) || `https://image.oliveyoung.co.kr/uploads/images/goods/550/10/0000/${goodsNo.slice(0, 4)}/${goodsNo}01ko.jpg`;
-        const albumImages = (pageData?.images && pageData.images.length > 0) ? pageData.images : (pageData?.image ? [pageData.image] : []);
-        const photoReviews = pageData?.photoReviews || [];
-        const mainImg = albumImages[0] || pageData?.image || '';
-
-        sendProductToAdminTab(
-          goodsNo,
-          viName,
-          krName,
-          cleanPrice,
-          mainImg,
-          albumImages,
-          photoReviews,
-          aiData.brand || pageData?.brandText || 'Olive Young Korea',
-          aiData.brandKr || pageData?.brandText || '올리브영',
-          aiData.category || 'skincare',
-          aiData.description || `Sản phẩm mỹ phẩm Hàn Quốc cao cấp. Tên gốc: ${krName}`,
-          aiData.usage || 'Thoa nhẹ nhàng lên vùng da cần chăm sóc.',
-          itemUrl
-        );
-
-        sendResponse({ success: true, name: viName });
+        const res = await runSingleItemScrapePipeline(item, pageData);
+        sendResponse(res);
       } catch (err) {
         console.error("Lỗi AI Auto Scrape:", err);
         sendResponse({ success: false, error: err.message });
