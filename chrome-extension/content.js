@@ -6,28 +6,42 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
   const getHighResUrl = (url) => {
     if (!url || typeof url !== 'string') return '';
-    return url
+    let clean = url.trim();
+    if (clean.startsWith('//')) clean = 'https:' + clean;
+    if (clean.startsWith('/')) clean = 'https://www.oliveyoung.co.kr' + clean;
+    return clean
       .replace(/RS=\d+x\d+&?/gi, '')
       .replace(/QT=\d+&?/gi, 'QT=100&')
+      .replace(/SF=\w+&?/gi, '')
+      .replace(/sharpen=[^&]+&?/gi, '')
       .replace(/["')\]]/g, '')
+      .replace(/[?&]$/, '')
       .trim();
   };
 
   const isJunkImage = (src, alt = '') => {
     if (!src || !src.startsWith('http')) return true;
     const combined = (src + ' ' + alt).toLowerCase();
-    // Loại bỏ toàn bộ ảnh banner, quảng cáo, icon, badge, sprite, quà tặng, event
-    return /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_|blank|loading|sprite|common|arrow|btn-|icon_|ico_|nav_|footer|header|ad_|popup_|gift|promo/i.test(combined);
+    // Loại bỏ toàn bộ ảnh banner, quảng cáo, icon, badge, sprite, quà tặng, event (KHÔNG chặn gdasEditor hay ảnh sản phẩm)
+    return /\/display\/banner|\/event\/|Logo\.|IconMenu|IconClose|reviewProfile|avatar|star_|btn_|badge|tag_|flag_|blank|loading|sprite|common|arrow|btn-|icon_|ico_|nav_|footer|header|ad_|popup_/i.test(combined);
   };
 
   /**
    * BƯỚC 1: Lấy Album Ảnh Sản Phẩm Studio HD từ Đầu Trang (Rõ nét, lên tới 8-10 ảnh góc chụp khác nhau)
+   * Tương thích cả giao diện Olive Young Next.js mới lẫn giao diện Legacy
    */
   const pickProductImages = () => {
     const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/i);
-    const goodsNo = goodsNoMatch ? goodsNoMatch[1] : '';
+    const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : '';
 
     const productSelectors = [
+      '[class*="GoodsDetailCarousel"] img',
+      '[class*="carousel"] img',
+      '[class*="Thumbnail"] img',
+      '[class*="GoodsDetailGallery"] img',
+      '[class*="product-details"] img',
+      '[class*="GoodsDetailInfo"] img',
+      '[class*="Image_image"] img',
       '#mainImg',
       '#goodsImg',
       '#repImageContainer img',
@@ -44,15 +58,15 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
     const productUrls = [];
 
     const ogImage = document.querySelector('meta[property="og:image"]')?.content || '';
-    if (ogImage && !isJunkImage(ogImage) && !ogImage.includes('gdasEditor') && !ogImage.includes('review')) {
+    if (ogImage && !isJunkImage(ogImage) && !ogImage.includes('gdasEditor') && !ogImage.includes('reviewProfile')) {
       productUrls.push(getHighResUrl(ogImage));
     }
 
     mainNodes.forEach((img) => {
       const src = img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
-      if (!src || isJunkImage(src) || src.includes('gdasEditor') || src.includes('review')) return;
+      if (!src || isJunkImage(src) || src.includes('gdasEditor') || src.includes('reviewProfile')) return;
 
-      if (src.includes('/goods/') || (goodsNo && src.includes(goodsNo)) || /thumbnails/i.test(src) || /item/i.test(src)) {
+      if (src.includes('/goods/') || (goodsNo && src.includes(goodsNo)) || src.includes('thumbnails') || src.includes('/item/')) {
         productUrls.push(getHighResUrl(src));
       }
     });
@@ -63,30 +77,56 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
       const allImgs = Array.from(document.images || []);
       allImgs.forEach((img) => {
         const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
-        if (!src || isJunkImage(src) || src.includes('gdasEditor') || src.includes('review')) return;
-        if (src.includes('/goods/') || (goodsNo && src.includes(goodsNo))) {
+        if (!src || isJunkImage(src) || src.includes('gdasEditor') || src.includes('reviewProfile')) return;
+        if (src.includes('/goods/') || (goodsNo && src.includes(goodsNo)) || src.includes('thumbnails')) {
           uniqueUrls.push(getHighResUrl(src));
         }
       });
     }
 
     const finalImages = Array.from(new Set(uniqueUrls)).slice(0, 10);
-    return finalImages.length > 0 ? finalImages : [getHighResUrl(ogImage || '')];
+    return finalImages.length > 0 ? finalImages : [getHighResUrl(ogImage || '')].filter(Boolean);
   };
 
   /**
    * BƯỚC 1.2: Lấy Album Ảnh Chi Tiết Mô Tả / Infographic / Swatches Bảng Màu từ Thân Trang
+   * Tự động bấm mở rộng "상품설명 더보기" để tải đầy đủ ảnh chất lượng cao
    */
-  const pickDetailImages = () => {
+  const pickDetailImages = async () => {
+    // 1. Tự động click mở rộng nội dung mô tả chi tiết nếu bị thu gọn (Next.js & Legacy)
+    try {
+      const expandButtons = Array.from(document.querySelectorAll('button, a, div[role="button"]'))
+        .filter(b => {
+          const t = (b.textContent || '').trim();
+          return (t.includes('상품설명 더보기') || t.includes('상세정보 더보기') || t.includes('더보기') || t.includes('펼쳐보기')) &&
+                 !t.includes('리뷰') && !t.includes('Q&A');
+        });
+      expandButtons.forEach(b => { try { b.click(); } catch(e){} });
+
+      // Mở rộng các container ẩn nếu có
+      document.querySelectorAll('#artcDesc, [class*="GoodsDetailDescription"], [class*="tab-panels"], .detail_info_area, .prd_detail_box').forEach(el => {
+        try {
+          el.style.display = 'block';
+          el.style.maxHeight = 'none';
+          el.style.height = 'auto';
+        } catch(e){}
+      });
+      await new Promise(r => setTimeout(r, 400));
+    } catch(e){}
+
     const detailSelectors = [
+      '[class*="GoodsDetailDescription"] img',
+      '[class*="GoodsDetailTabs_tab-panel"] img',
       '#artcDesc img',
       '#artcDesc_scroll img',
+      '.tab-panels img',
       '.detail_editor img',
       '.cont_editor img',
       '.prd_detail_box img',
-      '[class*="GoodsDetailDescription"] img',
       '.detail_area img',
-      '.d_editor img'
+      '.d_editor img',
+      'img[src*="html/crop"]',
+      'img[src*="display"]'
     ];
 
     const detailNodes = Array.from(document.querySelectorAll(detailSelectors.join(',')) || []);
@@ -95,12 +135,12 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
     detailNodes.forEach(img => {
       const src = img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
       if (!src || !src.startsWith('http') || isJunkImage(src)) return;
-      if (src.includes('gdasEditor') || src.includes('review')) return;
+      if (src.includes('gdasEditor') || src.includes('reviewProfile')) return;
       const cleanUrl = getHighResUrl(src);
       if (cleanUrl) detailUrls.push(cleanUrl);
     });
 
-    return Array.from(new Set(detailUrls)).slice(0, 20);
+    return Array.from(new Set(detailUrls)).slice(0, 25);
   };
 
   /**
@@ -121,10 +161,10 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
 
     try {
       // 1. Quét các hàng bảng thông tin sản phẩm
-      const rows = Array.from(document.querySelectorAll('#buyInfo tr, .prd_info_table tr, .detail_info_list li, .goods_buy_info tr, .goods_buy_info dl') || []);
+      const rows = Array.from(document.querySelectorAll('#buyInfo tr, .prd_info_table tr, .detail_info_list li, .goods_buy_info tr, .goods_buy_info dl, [class*="GoodsDetailSpec"] tr, [class*="table"] tr') || []);
       rows.forEach(row => {
-        const th = (row.querySelector('th, dt, .tit')?.textContent || '').trim();
-        const td = (row.querySelector('td, dd, .txt')?.textContent || '').trim();
+        const th = (row.querySelector('th, dt, .tit, [class*="tit"]')?.textContent || '').trim();
+        const td = (row.querySelector('td, dd, .txt, [class*="txt"]')?.textContent || '').trim();
         if (!th || !td) return;
 
         if (/용량|중량|규격/i.test(th)) {
@@ -143,20 +183,20 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
       });
 
       // 2. Điểm đánh giá sao và tổng lượt review
-      const ratingEl = document.querySelector('.point, .score, em.total_point, [class*="grade"] strong, span.grade');
+      const ratingEl = document.querySelector('.point, .score, em.total_point, [class*="grade"] strong, span.grade, [class*="rating-star"], [class*="ReviewArea_rating"]');
       if (ratingEl) {
         const parsedRating = parseFloat((ratingEl.textContent || '').replace(/[^0-9.]/g, ''));
         if (parsedRating > 0 && parsedRating <= 5) specs.rating = parsedRating;
       }
 
-      const reviewCountEl = document.querySelector('.num, em.total_num, [class*="review_count"], .review_total, #gdasInfo em');
+      const reviewCountEl = document.querySelector('.num, em.total_num, [class*="review_count"], .review_total, #gdasInfo em, [class*="ReviewArea_review-count"], [class*="btn-review"]');
       if (reviewCountEl) {
         const parsedCount = parseInt((reviewCountEl.textContent || '').replace(/[^0-9]/g, ''), 10);
         if (parsedCount > 0) specs.reviewsCount = parsedCount;
       }
 
       // 3. Phân loại tùy chọn / combo màu sắc
-      const optionEls = Array.from(document.querySelectorAll('.sel_option select option, select[name*="opt"] option, .prd_option_box li') || []);
+      const optionEls = Array.from(document.querySelectorAll('.sel_option select option, select[name*="opt"] option, .prd_option_box li, [class*="Option"] li, [class*="option-item"]') || []);
       const optionsFound = [];
       optionEls.forEach(opt => {
         const txt = (opt.textContent || '').trim();
@@ -174,120 +214,118 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
   };
 
   /**
-   * BƯỚC 2: CÀO SÂU ĐA TRANG & ĐA SẮP XẾP GDAS API từ Server Olive Young (Tới 50+ Ảnh Đánh Giá Thật)
+   * BƯỚC 2: KÍCH HOẠT TAB ĐÁNH GIÁ & BÓC TÁCH TOÀN BỘ ẢNH REVIEW GDAS NGƯỜI DÙNG THẬT (Tới 50+ Ảnh)
+   * Tương thích hoàn hảo Next.js Architecture mới của Olive Young
    */
-  const fetchDeepMultiPageReviewPhotos = async (goodsNo) => {
-    if (!goodsNo) return [];
+  const fetchGdasReviewPhotos = async (goodsNo) => {
     const photoUrls = [];
-    const sorts = ['05', '01', '02']; // Mới nhất, Hữu ích nhất, Đánh giá cao
 
     try {
-      for (const sortMode of sorts) {
-        for (let pageIdx = 1; pageIdx <= 8; pageIdx++) {
-          const ajaxUrl = `https://www.oliveyoung.co.kr/store/goods/getGdasListAjax.do?goodsNo=${goodsNo}&gdasSort=${sortMode}&pageIdx=${pageIdx}`;
-          const res = await fetch(ajaxUrl, {
-            headers: {
-              'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          });
-
-          if (res.ok) {
-            const htmlText = await res.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            const imgs = Array.from(doc.querySelectorAll('img') || []);
-
-            imgs.forEach(img => {
-              let src = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
-              if (src.startsWith('//')) src = 'https:' + src;
-              if (!src.startsWith('http')) return;
-
-              const clean = getHighResUrl(src);
-              if (clean && !isJunkImage(clean)) {
-                if (clean.includes('gdas') || clean.includes('review') || clean.includes('Editor') || clean.includes('cfimages') || clean.includes('uploads')) {
-                  photoUrls.push(clean);
-                }
-              }
-            });
-
-            const rawMatches = htmlText.match(/https?:\/\/[^"'\s\>\)]+(?:gdas|review|Editor|cfimages|uploads)[^"'\s\>\)]+/gi) || [];
-            rawMatches.forEach(m => {
-              const clean = getHighResUrl(m);
-              if (clean && !isJunkImage(clean)) {
-                photoUrls.push(clean);
-              }
-            });
-          }
-          if (photoUrls.length >= 60) break;
-        }
-        if (photoUrls.length >= 60) break;
-      }
-    } catch (err) {
-      console.warn("Deep GDAS fetch note:", err);
-    }
-    return Array.from(new Set(photoUrls)).filter(u => !isJunkImage(u));
-  };
-
-  /**
-   * BƯỚC 3: CLICK VÀO THẺ THUMBNAIL ĐÁNH GIÁ ĐỂ MỞ LIGHTBOX POPUP & BẤM NEXT CHỤP ẢNH THẬT
-   */
-  const interactiveLightboxClickScrape = async () => {
-    const photoUrls = [];
-    try {
-      const reviewThumbs = Array.from(document.querySelectorAll('#searchGdasList img, .gReviewList img, .rw-img-list img, [class*=gdas] img, .thumb_list img, .photo_list img, .img_box img, .review_thumb img') || []);
-      const validThumbs = reviewThumbs.filter(img => {
-        const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
-        return src && src.startsWith('http') && !isJunkImage(src);
+      // 1. Tìm chính xác Tab Review trong danh sách tabs (Next.js & Legacy)
+      const allTabs = Array.from(document.querySelectorAll('button[class*="GoodsDetailTabs_tab-item"], button[class*="tab-item"], [class*="tabs-list"] button, [class*="tab"] button, .goods_tab_list li a, button'));
+      const reviewTab = allTabs.find(b => {
+        const t = (b.textContent || '').trim();
+        return (t.includes('리뷰&셔터') || t.includes('리뷰')) && !t.includes('더보기');
       });
 
-      console.log(`[TAVY Scraper v20.0] Tìm thấy ${validThumbs.length} thumbnail ảnh đánh giá.`);
-
-      if (validThumbs.length > 0) {
-        const firstThumb = validThumbs[0];
-        const clickableEl = firstThumb.closest('a, button, li, [onclick]') || firstThumb;
-
-        clickableEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        await new Promise(r => setTimeout(r, 400));
-
-        try { clickableEl.click(); } catch {}
+      if (reviewTab) {
         try {
-          clickableEl.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-        } catch {}
+          reviewTab.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          await new Promise(r => setTimeout(r, 400));
+          reviewTab.click();
+          reviewTab.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+        } catch(e){}
+      }
 
-        await new Promise(r => setTimeout(r, 800));
+      // 2. Cuộn mượt qua vùng đánh giá để kích hoạt React lazy-loading
+      window.scrollBy({ top: 1200, behavior: 'smooth' });
+      await new Promise(r => setTimeout(r, 500));
+      window.scrollBy({ top: 1500, behavior: 'smooth' });
+      await new Promise(r => setTimeout(r, 600));
+      window.scrollBy({ top: 2000, behavior: 'smooth' });
+      await new Promise(r => setTimeout(r, 800));
 
-        // Lặp tối đa 50 lần bấm nút Next trong Popup xem ảnh to để thu thập trọn bộ ảnh review
-        for (let i = 0; i < 50; i++) {
-          const popImgs = Array.from(document.querySelectorAll('#layer_gdas_photo img, .gdas_photo_pop img, .pop_layer img, [class*=gdas] img, [class*=photo] img, [class*=pop] img') || []);
-          popImgs.forEach(img => {
-            const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
-            if (src && src.startsWith('http') && !isJunkImage(src)) {
-              photoUrls.push(getHighResUrl(src));
-            }
+      // 3. Click nút "리뷰 더보기" / "포토리뷰" nếu xuất hiện
+      const moreReviewBtns = Array.from(document.querySelectorAll('button, a'))
+        .filter(b => {
+          const t = (b.textContent || '').trim();
+          return t.includes('리뷰 더보기') || t.includes('포토리뷰') || (b.className || '').includes('review-thumbs');
+        });
+      moreReviewBtns.forEach(b => { try { b.click(); } catch(e){} });
+      await new Promise(r => setTimeout(r, 600));
+
+      // 4. Quét toàn bộ DOM để thu hoạch tất cả ảnh gdasEditor (ảnh review thật từ người dùng)
+      Array.from(document.images || []).forEach(img => {
+        const src = img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-original') || '';
+        if (src && src.includes('gdasEditor') && !isJunkImage(src)) {
+          photoUrls.push(getHighResUrl(src));
+        }
+      });
+
+      // 5. Thử gọi trực tiếp In-Page Review API v2 cursor với credentials của phiên duyệt
+      if (goodsNo) {
+        try {
+          const apiRes = await fetch('https://m.oliveyoung.co.kr/review/api/v2/reviews/cursor', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json, text/plain, */*'
+            },
+            body: JSON.stringify({
+              goodsNumber: goodsNo,
+              page: 0,
+              size: 30,
+              sortType: 'USEFUL_SCORE_DESC',
+              reviewType: 'PHOTO'
+            })
           });
 
-          const nextBtn = document.querySelector('.btn_next, .next, [class*=next], .btn_right, button[class*=right], a[class*=right]');
-          if (nextBtn && nextBtn.offsetParent !== null) {
-            try { nextBtn.click(); } catch {}
-            try {
-              nextBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-            } catch {}
-            await new Promise(r => setTimeout(r, 300));
-          } else {
-            break;
+          if (apiRes.ok) {
+            const apiJson = await apiRes.json();
+            const list = apiJson?.data?.goodsReviewList || [];
+            list.forEach(item => {
+              (item.photoReviewList || []).forEach(p => {
+                if (p.imagePath) {
+                  photoUrls.push(getHighResUrl('https://image.oliveyoung.co.kr/uploads/images/gdasEditor/' + p.imagePath));
+                }
+              });
+            });
           }
-        }
-
-        const closeBtn = document.querySelector('.btn_close, .close, [class*=close]');
-        if (closeBtn && closeBtn.offsetParent !== null) {
-          try { closeBtn.click(); } catch {}
+        } catch(e) {
+          // Bỏ qua nếu bị chặn CORS chéo subdomain
         }
       }
+
+      // 6. Fallback tương thích Lightbox legacy nếu có
+      const reviewThumbs = Array.from(document.querySelectorAll('#searchGdasList img, .gReviewList img, .rw-img-list img, [class*=gdas] img') || []);
+      if (photoUrls.length < 5 && reviewThumbs.length > 0) {
+        const firstThumb = reviewThumbs[0];
+        const clickable = firstThumb.closest('a, button, li') || firstThumb;
+        try { clickable.click(); } catch(e){}
+        await new Promise(r => setTimeout(r, 600));
+
+        for (let i = 0; i < 20; i++) {
+          const popImgs = Array.from(document.querySelectorAll('#layer_gdas_photo img, .gdas_photo_pop img, .pop_layer img') || []);
+          popImgs.forEach(img => {
+            const src = img.currentSrc || img.src || '';
+            if (src && !isJunkImage(src)) photoUrls.push(getHighResUrl(src));
+          });
+          const nextBtn = document.querySelector('.btn_next, .next, [class*=next], .btn_right');
+          if (nextBtn && nextBtn.offsetParent !== null) {
+            try { nextBtn.click(); } catch(e){}
+            await new Promise(r => setTimeout(r, 200));
+          } else break;
+        }
+      }
+
+      // Cuộn mượt lại đầu trang
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      console.warn("Lightbox click note:", err);
+      console.warn("[TAVY Scraper] Review photo harvest error:", err);
     }
-    return Array.from(new Set(photoUrls)).filter(u => !isJunkImage(u));
+
+    return Array.from(new Set(photoUrls)).filter(u => u.startsWith('http') && !isJunkImage(u));
   };
 
   /**
@@ -295,71 +333,33 @@ if (typeof window.__TAVY_SCRAPER_LOADED__ === 'undefined') {
    */
   const executeStepByStepScrape = async () => {
     const goodsNoMatch = window.location.href.match(/goodsNo=([A-Za-z0-9_]+)/i);
-    const goodsNo = goodsNoMatch ? goodsNoMatch[1] : '';
+    const goodsNo = goodsNoMatch ? goodsNoMatch[1].toUpperCase() : '';
 
     // 1. Lấy Album Ảnh đại diện sản phẩm HD
-    showMiniToast('Step 1/6: Bóc tách Album Ảnh Studio HD...', 'info');
+    showMiniToast('Step 1/5: Bóc tách Album Ảnh Studio HD...', 'info');
     const productImages = pickProductImages();
     await new Promise(r => setTimeout(r, 300));
 
-    // 2. Lấy Album Ảnh Chi Tiết Mô Tả Infographic & Swatches
-    showMiniToast('Step 2/6: Bóc tách Ảnh Infographic Mô Tả...', 'info');
-    const detailImages = pickDetailImages();
+    // 2. Mở rộng & Lấy Album Ảnh Chi Tiết Mô Tả Infographic
+    showMiniToast('Step 2/5: Mở rộng & bóc tách Ảnh Infographic Mô Tả...', 'info');
+    const detailImages = await pickDetailImages();
     await new Promise(r => setTimeout(r, 300));
 
     // 3. Bóc tách Bảng Thông Số Kỹ Thuật (Dung tích, thành phần, rating)
-    showMiniToast('Step 3/6: Bóc tách Bảng Thông Số Kỹ Thuật...', 'info');
+    showMiniToast('Step 3/5: Bóc tách Bảng Thông Số Kỹ Thuật...', 'info');
     const specifications = parseProductSpecifications();
 
-    // 4. Cào sâu Đa trang GDAS API từ Server Olive Young
-    showMiniToast('Step 4/6: Bóc tách GDAS Review API từ Server...', 'info');
-    const deepReviewPhotos = await fetchDeepMultiPageReviewPhotos(goodsNo);
+    // 4. Kích hoạt Tab Đánh Giá & Thu thập ảnh GDAS người dùng thật
+    showMiniToast('Step 4/5: Kích hoạt Tab Đánh Giá & Thu thập ảnh GDAS thật...', 'info');
+    const reviewCandidates = await fetchGdasReviewPhotos(goodsNo);
 
-    // 5. Kéo xuống & Click Tab 리뷰 trên màn hình
-    showMiniToast('Step 5/6: Mở Tab Đánh Giá & Lightbox...', 'info');
-    window.scrollTo({ top: 1100, behavior: 'smooth' });
-    await new Promise(r => setTimeout(r, 500));
-
-    const elements = Array.from(document.querySelectorAll('a, button, li, span, div[class*=tab]') || []);
-    const reviewTabEl = elements.find(el => {
-      const txt = (el.textContent || '').trim();
-      const title = el.getAttribute('title') || '';
-      const href = el.getAttribute('href') || '';
-      return (txt.includes('리뷰') || title.includes('리뷰') || href.includes('review') || href.includes('gdas')) &&
-             !el.querySelector('img') && el.offsetParent !== null;
-    });
-
-    if (reviewTabEl) {
-      try {
-        reviewTabEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        await new Promise(r => setTimeout(r, 300));
-        reviewTabEl.click();
-        reviewTabEl.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-      } catch {}
-    } else {
-      const fallbackTab = document.querySelector('#reviewInfo, #gdasInfo, .goods_tab_list li:nth-child(2) a, a[href*="review"]');
-      if (fallbackTab) {
-        try { fallbackTab.click(); } catch {}
-      }
-    }
-
-    await new Promise(r => setTimeout(r, 800));
-
-    // 6. Click mở Lightbox xem ảnh to & tự động bấm Next liên tục
-    window.scrollTo({ top: 2200, behavior: 'smooth' });
-    await new Promise(r => setTimeout(r, 600));
-
-    const lightboxPhotos = await interactiveLightboxClickScrape();
-
-    // 7. Tổng hợp danh sách Ảnh Đánh Giá Thực Tế (Loại bỏ hoàn toàn ảnh rác quà tặng)
-    showMiniToast('Step 6/6: Lọc sạch ảnh rác & Gom bộ sưu tập ảnh thật...', 'info');
-    const combinedCandidates = Array.from(new Set([...lightboxPhotos, ...deepReviewPhotos]))
-      .filter(u => !isJunkImage(u) && u.startsWith('http'));
+    // 5. Tổng hợp dữ liệu
+    showMiniToast(`Step 5/5: Hoàn tất! Gom được ${productImages.length} ảnh HD, ${detailImages.length} ảnh mô tả & ${reviewCandidates.length} ảnh review thật...`, 'info');
 
     return {
       productImages: productImages,
       detailImages: detailImages,
-      reviewCandidates: combinedCandidates.slice(0, 55),
+      reviewCandidates: reviewCandidates.slice(0, 50),
       specifications: specifications
     };
   };

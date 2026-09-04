@@ -895,8 +895,11 @@ Yêu cầu BẮT BUỘC trả về JSON thuần (không markdown, không giải 
           ? rawData.detailImages.slice(0, 20)
           : [];
 
-        const isJunkUrl = (u) => !u || typeof u !== 'string' || !u.startsWith('http') ||
-          /\/display\/|\/event\/|\/banner\/|\/static\/|\/item\/|logo|icon|avatar|star_|btn_|badge|tag_|flag_|blank|loading|sprite/i.test(u);
+        const isJunkUrl = (u) => {
+          if (!u || typeof u !== 'string' || !u.startsWith('http')) return true;
+          if (u.includes('gdasEditor')) return false; // Ảnh review GDAS người dùng thật 100% được giữ lại
+          return /\/display\/banner|\/event\/|Logo\.|IconMenu|IconClose|reviewProfile|avatar|star_|btn_|badge|tag_|flag_|blank|loading|sprite|common|ico_|nav_|footer|header|ad_|popup_/i.test(u);
+        };
 
         // Lọc ảnh review: Ưu tiên ảnh thật người dùng, không lấy ảnh rác/quảng cáo, lấy tối đa 50 tấm
         let candidateList = (rawData.reviewCandidates || []).filter(u => !isJunkUrl(u));

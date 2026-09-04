@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "TAVY AI Scraper Pro",
-  "version": "20.0",
-  "description": "TAVY AI Scraper v20.0 PRO - Bóc tách 50+ Ảnh Đánh Giá GDAS, Album Ảnh HD & Infographic Mô Tả, Bảng Thông Số Kỹ Thuật Olive Young, Dịch Thuật Gemini AI Độc Quyền",
+  "version": "20.2",
+  "description": "TAVY AI Scraper v20.2 PRO - Bóc tách 50+ Ảnh Đánh Giá GDAS, Album Ảnh HD & Infographic Mô Tả, Bảng Thông Số Kỹ Thuật Olive Young, Dịch Thuật Gemini AI Độc Quyền",
   "permissions": [
     "activeTab",
     "scripting",

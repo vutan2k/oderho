@@ -141,3 +141,20 @@ test('[F12-7] Content Script & Popup duplicate alert indicators', () => {
   assertContains(popupJs, 'CHECK_PRODUCT_EXISTS', 'popup.js checks CHECK_PRODUCT_EXISTS');
 });
 
+test('[F12-8] Next.js modern Olive Young selectors & GDAS review photo extraction verification', () => {
+  const contentPath = path.resolve(__dirname, '../../chrome-extension/content.js');
+  const bgPath = path.resolve(__dirname, '../../chrome-extension/background.js');
+
+  const contentCode = fs.readFileSync(contentPath, 'utf-8');
+  assertContains(contentCode, 'GoodsDetailCarousel', 'content.js scans Next.js product carousel');
+  assertContains(contentCode, 'GoodsDetailDescription', 'content.js scans Next.js product description');
+  assertContains(contentCode, 'fetchGdasReviewPhotos', 'content.js includes fetchGdasReviewPhotos function');
+  assertContains(contentCode, 'gdasEditor', 'content.js filters and harvests gdasEditor user review photos');
+  assertContains(contentCode, 'review/api/v2/reviews/cursor', 'content.js connects to modern review API endpoint');
+
+  const bgCode = fs.readFileSync(bgPath, 'utf-8');
+  assertContains(bgCode, 'photoReviews', 'background.js persists photoReviews');
+  assertContains(bgCode, 'gdasEditor', 'background.js safeguards gdasEditor from junk filter');
+});
+
+
